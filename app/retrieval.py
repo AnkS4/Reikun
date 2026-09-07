@@ -71,23 +71,23 @@ def _sparse(vec) -> SparseVector:
 
 # ── Retrieval arms ───────────────────────────────────────────────────────────
 
-def vector_search(query: str, num_results: int = 5) -> list[dict]:
+def vector_search(query: str, num_results: int = 5, *, vectors=None) -> list[dict]:
     """Dense cosine search only."""
-    dense, _ = embed_query(query)
+    dense, _ = vectors or embed_query(query)
     hits = qdrant_client().query_points(COLLECTION, query=dense, using=DENSE_VECTOR, limit=num_results).points
     return [_hit_to_dict(h) for h in hits]
 
 
-def text_search(query: str, num_results: int = 5) -> list[dict]:
+def text_search(query: str, num_results: int = 5, *, vectors=None) -> list[dict]:
     """Sparse BM25 search only."""
-    _, sparse = embed_query(query)
+    _, sparse = vectors or embed_query(query)
     hits = qdrant_client().query_points(COLLECTION, query=_sparse(sparse), using=SPARSE_VECTOR, limit=num_results).points
     return [_hit_to_dict(h) for h in hits]
 
 
-def hybrid_search(query: str, num_results: int = 5) -> list[dict]:
+def hybrid_search(query: str, num_results: int = 5, *, vectors=None) -> list[dict]:
     """Dense + BM25 + exact-match arms fused with RRF inside Qdrant."""
-    dense, sparse = embed_query(query)
+    dense, sparse = vectors or embed_query(query)
     pool = num_results * 2
     hits = qdrant_client().query_points(
         COLLECTION,
@@ -142,19 +142,35 @@ def search(
     """Full pipeline: rewrite → retrieve (mode) → optional rerank."""
     if mode not in _SEARCHERS:
         raise ValueError(f"mode must be one of {MODES}, got {mode!r}")
-    t0 = time.perf_counter()
+    def ms_since(t: float) -> int:
+        return int((time.perf_counter() - t) * 1000)
 
+    t0 = time.perf_counter()
     rw = rewrite_query(query, rewrite_mode)
+    t1 = time.perf_counter()
+    vectors = embed_query(rw.query)
+    t2 = time.perf_counter()
     do_rerank = use_rerank and (rerank_backend or RERANKER) != "none"
     fetch = num_results * RERANK_CANDIDATES if do_rerank else num_results
-    results = _SEARCHERS[mode](rw.query, fetch)
+    results = _SEARCHERS[mode](rw.query, fetch, vectors=vectors)
+    t3 = time.perf_counter()
     if do_rerank:
         results = rerank(rw.query, results, num_results, rerank_backend)
 
+    latency_ms = ms_since(t0)
+    meta = {
+        "rewrite_ms": int((t1 - t0) * 1000),
+        "embed_ms": int((t2 - t1) * 1000),
+        "retrieve_ms": int((t3 - t2) * 1000),
+        "rerank_ms": int((time.perf_counter() - t3) * 1000),
+    }
+    print(f"search {mode!r}: embed={meta['embed_ms']}ms retrieve={meta['retrieve_ms']}ms "
+          f"rerank={meta['rerank_ms']}ms total={latency_ms}ms")
     return SearchResponse(
         results=results,
         rewrite=rw,
         mode=mode,
         reranked=do_rerank,
-        latency_ms=int((time.perf_counter() - t0) * 1000),
+        latency_ms=latency_ms,
+        meta=meta,
     )

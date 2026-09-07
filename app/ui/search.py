@@ -164,6 +164,9 @@ if last := st.session_state.last_search:
 
     head = st.container(horizontal=True, vertical_alignment="center")
     head.markdown(f"**{len(resp.results)} entries** · {resp.mode}{' + rerank' if resp.reranked else ''} · {resp.latency_ms} ms")
+    if resp.meta.get("embed_ms") is not None:
+        head.caption(f"embed {resp.meta['embed_ms']} ms · retrieve {resp.meta['retrieve_ms']} ms"
+                     + (f" · rerank {resp.meta['rerank_ms']} ms" if resp.reranked else ""))
     head.feedback("thumbs", key=f"fb_search_{last['id']}", on_change=_feedback_cb,
                   args=(f"fb_search_{last['id']}", "search", last["id"], last["query"]))
     if resp.rewrite.changed:
