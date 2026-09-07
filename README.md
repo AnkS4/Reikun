@@ -8,6 +8,8 @@ An end-to-end RAG application that helps Japanese learners find natural example 
 
 Full recording: [docs/videos/demo.mp4](docs/videos/demo.mp4)
 
+**Live demo:** https://reikun.onrender.com/ — the app runs on Render, with the vector database on Qdrant Cloud and ingestion orchestrated via Prefect Cloud. All on free tiers with limited shared resources (512 MB RAM, shared CPU), so expect a slow first load (~30–60 s cold start after inactivity) and a few seconds per search. For the best experience, run it locally with Docker Compose.
+
 ## Screenshots
 
 ![Search results for "cat"](docs/screenshots/02-search-results.png)
@@ -29,7 +31,7 @@ More captures — kanji hover tooltip, kanji detail dialog with stroke order, JL
 - **Vector Database**: Qdrant (named dense + sparse vectors, server-side RRF hybrid)
 - **Embeddings**: FastEmbed — `all-MiniLM-L6-v2` (dense, 384-dim) + `Qdrant/bm25` (sparse), ONNX-quantized for CPU
 - **LLM**: Cohere `command-a-plus-05-2026` — grammar explanations, optional query rewriting and re-ranking, LLM-judged evals (all token-budgeted)
-- **Ingestion orchestration**: Prefect 3 flow (`scripts/startup.py`), ephemeral mode — no extra services
+- **Ingestion orchestration**: Prefect 3 flow (`scripts/startup.py`) — ephemeral locally, Prefect Cloud when `PREFECT_API_URL` is set
 - **Monitoring**: SQLite telemetry + feedback logging (`monitoring/feedback_log.py`)
 - **Data Sources**: JMdict, KANJIDIC2, Tatoeba Corpus, KanjiVG
 - **Containerization**: Docker & Docker Compose
