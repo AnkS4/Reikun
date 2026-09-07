@@ -42,17 +42,24 @@ def wait_for_qdrant() -> None:
 
 @task(name="check-state")
 def check_state() -> str:
-    """'full' (no processed data), 'ingest' (data but empty collection), or 'ready'."""
-    if not (PROC_DIR / "chunks.json").exists():
-        return "full"
+    """'full' (no processed data), 'ingest' (chunks but empty collection), or 'ready'.
+
+    Qdrant is checked first: on hosts with ephemeral disks (e.g. Render) the
+    container filesystem is wiped on each deploy, but a populated collection in
+    Qdrant Cloud means ingestion can be skipped entirely. The app only needs
+    kanji_table.json at runtime; it is baked into the image from the repo.
+    """
     try:
         client = qdrant_client()
-        if not (client.collection_exists(COLLECTION) and client.count(COLLECTION).count > 0):
-            return "ingest"
+        populated = client.collection_exists(COLLECTION) and client.count(COLLECTION).count > 0
     except Exception as exc:
-        print(f"check-state: treating as needs-ingest ({exc})")
+        print(f"check-state: Qdrant check failed, treating as needs-ingest ({exc})")
+        populated = False
+    if populated and (PROC_DIR / "kanji_table.json").exists():
+        return "ready"
+    if (PROC_DIR / "chunks.json").exists():
         return "ingest"
-    return "ready"
+    return "full"
 
 
 @task(name="download-data", retries=2, retry_delay_seconds=30,

@@ -19,7 +19,8 @@ app/.streamlit/secrets.toml
 # Data (populated at runtime or via volumes)
 data/raw/
 data/kanjivg/
-data/processed/
+data/processed/*
+!data/processed/kanji_table.json
 data/monitoring/
 
 # Models (pre-warmed in Dockerfile or mounted)

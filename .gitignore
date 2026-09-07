@@ -22,7 +22,11 @@ htmlcov/
 
 # Data (downloaded/generated at runtime)
 data/raw/
-data/processed/
+# processed/chunks.json is generated locally by build_chunks.py (58 MB, only
+# needed by the ingest step). kanji_table.json is committed — the app needs it
+# at runtime and it is small enough (~4 MB) to ship in the Docker image.
+data/processed/*
+!data/processed/kanji_table.json
 data/kanjivg/
 data/monitoring/
 
@@ -44,7 +48,7 @@ Thumbs.db
 .Trashes
 
 # Project planning notes (kept for context but not committed)
-docs/notes/
+# docs/notes/
 
 # Logs
 *.log
