@@ -44,8 +44,7 @@ Thumbs.db
 .Trashes
 
 # Project planning notes (kept for context but not committed)
-Plan.md
-STEPS.md
+docs/notes/
 
 # Logs
 *.log

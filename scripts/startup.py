@@ -2,7 +2,11 @@
 """Docker entrypoint + Prefect ingestion flow.
 
 Flow: wait for Qdrant → decide what work is needed → (download → build →)
-ingest → launch Streamlit. Runs in ephemeral mode — no Prefect server needed.
+ingest → launch Streamlit.
+
+Automatically detects orchestration mode:
+- PREFECT_API_URL set → Prefect Cloud (production/Render)
+- Otherwise → ephemeral Prefect server (local development)
 
 Each data stage wraps an existing script's entry point, so every step stays
 independently runnable for debugging:
@@ -16,11 +20,12 @@ Usage:
 """
 
 import argparse
+import os
 import subprocess
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from prefect import flow, task  # noqa: E402
 
@@ -43,8 +48,9 @@ def check_state() -> str:
         client = qdrant_client()
         if not (client.collection_exists(COLLECTION) and client.count(COLLECTION).count > 0):
             return "ingest"
-    except Exception:
-        return "ingest"  # can't tell → try; load() retries if Qdrant hiccups
+    except Exception as exc:
+        print(f"check-state: treating as needs-ingest ({exc})")
+        return "ingest"
     return "ready"
 
 
@@ -86,16 +92,36 @@ def main() -> None:
     args = parser.parse_args()
 
     print("Starting Reikun …")
+    
+    # Automatically detect which Prefect mode to use:
+    # - If PREFECT_API_URL is set → Prefect Cloud
+    # - Otherwise → ephemeral Prefect server (local development)
+    use_prefect_cloud = bool(os.getenv("PREFECT_API_URL"))
+    
+    if use_prefect_cloud:
+        print("Using Prefect Cloud for orchestration…")
+    else:
+        print("Using ephemeral Prefect server (local mode)…")
+    
     try:
         ingest_pipeline()
-    except Exception as exc:  # prefect raises on a failed terminal state
-        print(f"✗ Ingestion pipeline failed: {exc}")
+    except Exception:
+        print("✗ Ingestion pipeline failed:")
+        traceback.print_exc()
         sys.exit(1)
 
     if args.ingest_only:
         return
-    print("Launching Streamlit …")
-    subprocess.run(["streamlit", "run", "app/streamlit_app.py"], check=False)
+    
+    port = os.getenv("PORT", "8501")
+    print(f"Launching Streamlit on 0.0.0.0:{port} …")
+    subprocess.run([
+        "streamlit", "run", "app/streamlit_app.py",
+        "--server.address", "0.0.0.0",
+        "--server.port", port,
+        "--server.headless", "true",
+        "--browser.gatherUsageStats", "false",
+    ], check=False)
 
 
 if __name__ == "__main__":
