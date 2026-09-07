@@ -16,6 +16,7 @@ Files downloaded:
 
 import io
 import json
+import os
 import sys
 import tarfile
 from pathlib import Path
@@ -35,13 +36,21 @@ WANTED: dict[str, str] = {
 }
 
 
+def github_headers() -> dict[str, str]:
+    """GitHub API headers — authenticate with GITHUB_TOKEN when available.
+
+    Unauthenticated calls are limited to 60 req/hr per IP, which shared
+    hosting egress IPs (e.g. Render) exhaust almost immediately.
+    """
+    headers = {"Accept": "application/vnd.github+json"}
+    if token := os.getenv("GITHUB_TOKEN"):
+        headers["Authorization"] = f"Bearer {token}"
+    return headers
+
+
 def fetch_release_assets() -> list[dict]:
     print("Fetching latest jmdict-simplified release info from GitHub…")
-    resp = httpx.get(
-        GITHUB_API,
-        headers={"Accept": "application/vnd.github+json"},
-        timeout=30,
-    )
+    resp = httpx.get(GITHUB_API, headers=github_headers(), timeout=30)
     resp.raise_for_status()
     data = resp.json()
     print(f"  Release tag: {data['tag_name']}")
