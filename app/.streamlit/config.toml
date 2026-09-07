@@ -1,0 +1,25 @@
+[server]
+port = 8501
+address = "0.0.0.0"
+headless = true
+
+[browser]
+gatherUsageStats = false
+
+[client]
+toolbarMode = "minimal"
+
+[theme]
+base = "light"
+primaryColor = "#B4432F"          # 朱 (shu) vermilion, muted
+backgroundColor = "#FFFFFF"
+secondaryBackgroundColor = "#F6F4EF"
+textColor = "#1F2328"
+linkColor = "#B4432F"
+baseRadius = "medium"
+buttonRadius = "medium"
+showWidgetBorder = true
+font = "sans-serif"
+
+[theme.sidebar]
+backgroundColor = "#F6F4EF"

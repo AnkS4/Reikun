@@ -1,0 +1,36 @@
+[
+  {
+    "model": "sentence-transformers/all-MiniLM-L6-v2",
+    "embed_seconds": 813.5,
+    "docs_per_second": 45.5,
+    "hit@1": 0.292,
+    "hit@3": 0.458,
+    "hit@5": 0.5,
+    "hit@10": 0.583,
+    "mrr": 0.377,
+    "mrr_by_category": {
+      "exact_ja": 0.45,
+      "kana": 0.048,
+      "en_word": 0.611,
+      "en_phrase": 0.625,
+      "descriptive": 0.083
+    }
+  },
+  {
+    "model": "snowflake/snowflake-arctic-embed-xs",
+    "embed_seconds": 415.5,
+    "docs_per_second": 89.0,
+    "hit@1": 0.083,
+    "hit@3": 0.125,
+    "hit@5": 0.125,
+    "hit@10": 0.125,
+    "mrr": 0.104,
+    "mrr_by_category": {
+      "exact_ja": 0.0,
+      "kana": 0.0,
+      "en_word": 0.417,
+      "en_phrase": 0.0,
+      "descriptive": 0.0
+    }
+  }
+]

@@ -1,0 +1,50 @@
+services:
+  qdrant:
+    image: qdrant/qdrant:v1.19.1
+    ports:
+      - "6333:6333"   # REST / HTTP
+      - "6334:6334"   # gRPC
+    volumes:
+      - qdrant_data:/qdrant/storage
+    environment:
+      - QDRANT__TELEMETRY_DISABLED=true
+    restart: unless-stopped
+    healthcheck:
+      # wget/curl are absent from the qdrant image; a TCP connect to the REST
+      # port is enough — Qdrant only listens once it is ready to serve.
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/localhost/6333"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "${APP_PORT:-8000}:8501"
+    environment:
+      - QDRANT_HOST=qdrant
+      - QDRANT_PORT=6333
+      - QDRANT_COLLECTION=jmdict_chunks
+      - COHERE_API_KEY=${COHERE_API_KEY}
+      - EMBED_MODEL=${EMBED_MODEL:-sentence-transformers/all-MiniLM-L6-v2}
+      - RERANKER=${RERANKER:-none}
+      - QUERY_REWRITE=${QUERY_REWRITE:-heuristic}
+      - PREFECT_LOGGING_LEVEL=WARNING
+    dns:
+      - 8.8.8.8
+    volumes:
+      - ./data/processed:/app/data/processed
+      - ./data/raw:/app/data/raw
+      - ./data/kanjivg:/app/data/kanjivg
+      - ./data/monitoring:/app/data/monitoring
+      - ./models:/app/models
+    depends_on:
+      qdrant:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  qdrant_data:

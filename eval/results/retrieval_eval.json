@@ -1,0 +1,746 @@
+[
+  {
+    "config": "vector",
+    "hit@1": 0.292,
+    "hit@3": 0.458,
+    "hit@5": 0.5,
+    "ndcg@1": 0.292,
+    "ndcg@3": 0.368,
+    "ndcg@5": 0.389,
+    "recall@1": 0.229,
+    "recall@3": 0.438,
+    "recall@5": 0.479,
+    "mrr": 0.365,
+    "map": 0.35,
+    "mrr_by_category": {
+      "exact_ja": 0.45,
+      "kana": 0.0,
+      "en_word": 0.611,
+      "en_phrase": 0.625,
+      "descriptive": 0.056
+    },
+    "avg_latency_ms": 54,
+    "misses": [
+      {
+        "query": "電車",
+        "rewritten": "電車",
+        "got": [
+          "車軸",
+          "車窓",
+          "車体"
+        ]
+      },
+      {
+        "query": "約束",
+        "rewritten": "約束",
+        "got": [
+          "フォト",
+          "ネス",
+          "ガソール"
+        ]
+      },
+      {
+        "query": "たべる",
+        "rewritten": "たべる",
+        "got": [
+          "夜なべ",
+          "頬っぺた",
+          "浮かべる"
+        ]
+      },
+      {
+        "query": "やくそく",
+        "rewritten": "やくそく",
+        "got": [
+          "試薬",
+          "厄",
+          "全訳"
+        ]
+      },
+      {
+        "query": "としょかん",
+        "rewritten": "としょかん",
+        "got": [
+          "フォト",
+          "ネス",
+          "ガソール"
+        ]
+      },
+      {
+        "query": "eat",
+        "rewritten": "eat",
+        "got": [
+          "食",
+          "大食い",
+          "飽食"
+        ]
+      },
+      {
+        "query": "thank you",
+        "rewritten": "thank you",
+        "got": [
+          "圧巻",
+          "絶妙",
+          "慶弔"
+        ]
+      },
+      {
+        "query": "how do you say hospital in Japanese",
+        "rewritten": "how do you say hospital in Japanese",
+        "got": [
+          "病棟",
+          "病室",
+          "入院"
+        ]
+      },
+      {
+        "query": "the vehicle that flies in the sky",
+        "rewritten": "the vehicle that flies in the sky",
+        "got": [
+          "夜空",
+          "大空",
+          "空"
+        ]
+      },
+      {
+        "query": "quiet and peaceful place",
+        "rewritten": "quiet and peaceful place",
+        "got": [
+          "閑静",
+          "静穏",
+          "長閑"
+        ]
+      },
+      {
+        "query": "what is the word for weather",
+        "rewritten": "what is the word for weather",
+        "got": [
+          "天候",
+          "気象",
+          "晴天続き"
+        ]
+      },
+      {
+        "query": "something hard to do",
+        "rewritten": "something hard to do",
+        "got": [
+          "難い",
+          "骨が折れる",
+          "簡単"
+        ]
+      }
+    ]
+  },
+  {
+    "config": "text (bm25)",
+    "hit@1": 0.458,
+    "hit@3": 0.625,
+    "hit@5": 0.708,
+    "ndcg@1": 0.458,
+    "ndcg@3": 0.526,
+    "ndcg@5": 0.566,
+    "recall@1": 0.417,
+    "recall@3": 0.562,
+    "recall@5": 0.646,
+    "mrr": 0.556,
+    "map": 0.526,
+    "mrr_by_category": {
+      "exact_ja": 1.0,
+      "kana": 1.0,
+      "en_word": 0.542,
+      "en_phrase": 0.438,
+      "descriptive": 0.056
+    },
+    "avg_latency_ms": 17,
+    "misses": [
+      {
+        "query": "eat",
+        "rewritten": "eat",
+        "got": [
+          "外食",
+          "食べ方",
+          "大食い"
+        ]
+      },
+      {
+        "query": "to be late",
+        "rewritten": "to be late",
+        "got": [
+          "夜更かし",
+          "遅咲き",
+          "遅刻"
+        ]
+      },
+      {
+        "query": "how do you say hospital in Japanese",
+        "rewritten": "how do you say hospital in Japanese",
+        "got": [
+          "広辞苑",
+          "気象庁",
+          "言う"
+        ]
+      },
+      {
+        "query": "the vehicle that flies in the sky",
+        "rewritten": "the vehicle that flies in the sky",
+        "got": [
+          "空",
+          "夜空",
+          "空を飛ぶ"
+        ]
+      },
+      {
+        "query": "a promise you make to someone",
+        "rewritten": "a promise you make to someone",
+        "got": [
+          "顔を潰す",
+          "念を押す",
+          "立て替える"
+        ]
+      },
+      {
+        "query": "quiet and peaceful place",
+        "rewritten": "quiet and peaceful place",
+        "got": [
+          "ひっそり",
+          "静けさ",
+          "安らぎ"
+        ]
+      },
+      {
+        "query": "something hard to do",
+        "rewritten": "something hard to do",
+        "got": [
+          "凍りつく",
+          "ハイファイ",
+          "根を詰める"
+        ]
+      }
+    ]
+  },
+  {
+    "config": "hybrid",
+    "hit@1": 0.625,
+    "hit@3": 0.708,
+    "hit@5": 0.75,
+    "ndcg@1": 0.625,
+    "ndcg@3": 0.655,
+    "ndcg@5": 0.682,
+    "recall@1": 0.521,
+    "recall@3": 0.688,
+    "recall@5": 0.75,
+    "mrr": 0.668,
+    "map": 0.654,
+    "mrr_by_category": {
+      "exact_ja": 0.9,
+      "kana": 1.0,
+      "en_word": 0.833,
+      "en_phrase": 0.833,
+      "descriptive": 0.033
+    },
+    "avg_latency_ms": 23,
+    "misses": [
+      {
+        "query": "eat",
+        "rewritten": "eat",
+        "got": [
+          "外食",
+          "大食い",
+          "食"
+        ]
+      },
+      {
+        "query": "how do you say hospital in Japanese",
+        "rewritten": "how do you say hospital in Japanese",
+        "got": [
+          "病棟",
+          "広辞苑",
+          "病室"
+        ]
+      },
+      {
+        "query": "the vehicle that flies in the sky",
+        "rewritten": "the vehicle that flies in the sky",
+        "got": [
+          "夜空",
+          "空",
+          "大空"
+        ]
+      },
+      {
+        "query": "quiet and peaceful place",
+        "rewritten": "quiet and peaceful place",
+        "got": [
+          "閑静",
+          "ひっそり",
+          "静けさ"
+        ]
+      },
+      {
+        "query": "what is the word for weather",
+        "rewritten": "what is the word for weather",
+        "got": [
+          "天候",
+          "重苦しい",
+          "気象"
+        ]
+      },
+      {
+        "query": "something hard to do",
+        "rewritten": "something hard to do",
+        "got": [
+          "難い",
+          "凍りつく",
+          "根を詰める"
+        ]
+      }
+    ]
+  },
+  {
+    "config": "hybrid + rewrite(heuristic)",
+    "hit@1": 0.667,
+    "hit@3": 0.792,
+    "hit@5": 0.833,
+    "ndcg@1": 0.667,
+    "ndcg@3": 0.71,
+    "ndcg@5": 0.737,
+    "recall@1": 0.562,
+    "recall@3": 0.75,
+    "recall@5": 0.812,
+    "mrr": 0.724,
+    "map": 0.703,
+    "mrr_by_category": {
+      "exact_ja": 0.9,
+      "kana": 1.0,
+      "en_word": 0.833,
+      "en_phrase": 0.833,
+      "descriptive": 0.256
+    },
+    "avg_latency_ms": 23,
+    "misses": [
+      {
+        "query": "eat",
+        "rewritten": "eat",
+        "got": [
+          "外食",
+          "大食い",
+          "食"
+        ]
+      },
+      {
+        "query": "the vehicle that flies in the sky",
+        "rewritten": "the vehicle that flies in the sky",
+        "got": [
+          "夜空",
+          "空",
+          "大空"
+        ]
+      },
+      {
+        "query": "quiet and peaceful place",
+        "rewritten": "quiet and peaceful place",
+        "got": [
+          "閑静",
+          "ひっそり",
+          "静けさ"
+        ]
+      },
+      {
+        "query": "something hard to do",
+        "rewritten": "something hard to do",
+        "got": [
+          "凍りつく",
+          "難い",
+          "根を詰める"
+        ]
+      }
+    ]
+  },
+  {
+    "config": "vector + rerank(local)",
+    "hit@1": 0.292,
+    "hit@3": 0.333,
+    "hit@5": 0.458,
+    "ndcg@1": 0.292,
+    "ndcg@3": 0.282,
+    "ndcg@5": 0.344,
+    "recall@1": 0.188,
+    "recall@3": 0.292,
+    "recall@5": 0.438,
+    "mrr": 0.34,
+    "map": 0.301,
+    "mrr_by_category": {
+      "exact_ja": 0.05,
+      "kana": 0.067,
+      "en_word": 0.75,
+      "en_phrase": 0.75,
+      "descriptive": 0.033
+    },
+    "avg_latency_ms": 277,
+    "misses": [
+      {
+        "query": "空",
+        "rewritten": "空",
+        "got": [
+          "空想",
+          "空母",
+          "空気"
+        ]
+      },
+      {
+        "query": "図書館",
+        "rewritten": "図書館",
+        "got": [
+          "覚書",
+          "書簡",
+          "翻訳書"
+        ]
+      },
+      {
+        "query": "電車",
+        "rewritten": "電車",
+        "got": [
+          "単車",
+          "降車",
+          "急停車"
+        ]
+      },
+      {
+        "query": "約束",
+        "rewritten": "約束",
+        "got": [
+          "満杯",
+          "嗚呼嗚呼",
+          "老若"
+        ]
+      },
+      {
+        "query": "やくそく",
+        "rewritten": "やくそく",
+        "got": [
+          "やって来る",
+          "輝く",
+          "兎や角"
+        ]
+      },
+      {
+        "query": "としょかん",
+        "rewritten": "としょかん",
+        "got": [
+          "満杯",
+          "黒煙",
+          "碁盤"
+        ]
+      },
+      {
+        "query": "eat",
+        "rewritten": "eat",
+        "got": [
+          "完食",
+          "飽食",
+          "飲食"
+        ]
+      },
+      {
+        "query": "thank you",
+        "rewritten": "thank you",
+        "got": [
+          "読了",
+          "慶弔",
+          "寿"
+        ]
+      },
+      {
+        "query": "how do you say hospital in Japanese",
+        "rewritten": "how do you say hospital in Japanese",
+        "got": [
+          "通院",
+          "退院",
+          "医療制度"
+        ]
+      },
+      {
+        "query": "the vehicle that flies in the sky",
+        "rewritten": "the vehicle that flies in the sky",
+        "got": [
+          "空",
+          "空を飛ぶ",
+          "頭上"
+        ]
+      },
+      {
+        "query": "quiet and peaceful place",
+        "rewritten": "quiet and peaceful place",
+        "got": [
+          "閑静",
+          "静けさ",
+          "長閑"
+        ]
+      },
+      {
+        "query": "what is the word for weather",
+        "rewritten": "what is the word for weather",
+        "got": [
+          "晴天",
+          "晴れ間",
+          "気象"
+        ]
+      },
+      {
+        "query": "something hard to do",
+        "rewritten": "something hard to do",
+        "got": [
+          "し難い",
+          "骨が折れる",
+          "励む"
+        ]
+      }
+    ]
+  },
+  {
+    "config": "hybrid + rerank(local)",
+    "hit@1": 0.292,
+    "hit@3": 0.417,
+    "hit@5": 0.542,
+    "ndcg@1": 0.292,
+    "ndcg@3": 0.324,
+    "ndcg@5": 0.385,
+    "recall@1": 0.188,
+    "recall@3": 0.375,
+    "recall@5": 0.521,
+    "mrr": 0.367,
+    "map": 0.329,
+    "mrr_by_category": {
+      "exact_ja": 0.05,
+      "kana": 0.067,
+      "en_word": 0.75,
+      "en_phrase": 0.833,
+      "descriptive": 0.089
+    },
+    "avg_latency_ms": 301,
+    "misses": [
+      {
+        "query": "空",
+        "rewritten": "空",
+        "got": [
+          "空母",
+          "空気",
+          "空所"
+        ]
+      },
+      {
+        "query": "図書館",
+        "rewritten": "図書館",
+        "got": [
+          "覚書",
+          "書簡",
+          "翻訳書"
+        ]
+      },
+      {
+        "query": "電車",
+        "rewritten": "電車",
+        "got": [
+          "単車",
+          "降車",
+          "急停車"
+        ]
+      },
+      {
+        "query": "約束",
+        "rewritten": "約束",
+        "got": [
+          "満杯",
+          "嗚呼嗚呼",
+          "老若"
+        ]
+      },
+      {
+        "query": "やくそく",
+        "rewritten": "やくそく",
+        "got": [
+          "やって来る",
+          "輝く",
+          "兎や角"
+        ]
+      },
+      {
+        "query": "としょかん",
+        "rewritten": "としょかん",
+        "got": [
+          "満杯",
+          "黒煙",
+          "碁盤"
+        ]
+      },
+      {
+        "query": "eat",
+        "rewritten": "eat",
+        "got": [
+          "飽食",
+          "飲食",
+          "間食"
+        ]
+      },
+      {
+        "query": "the vehicle that flies in the sky",
+        "rewritten": "the vehicle that flies in the sky",
+        "got": [
+          "鷲",
+          "空",
+          "空を飛ぶ"
+        ]
+      },
+      {
+        "query": "quiet and peaceful place",
+        "rewritten": "quiet and peaceful place",
+        "got": [
+          "閑静",
+          "ひっそり",
+          "静けさ"
+        ]
+      },
+      {
+        "query": "what is the word for weather",
+        "rewritten": "what is the word for weather",
+        "got": [
+          "晴天",
+          "晴れ間",
+          "快晴"
+        ]
+      },
+      {
+        "query": "something hard to do",
+        "rewritten": "something hard to do",
+        "got": [
+          "骨が折れる",
+          "得難い",
+          "尻をたたく"
+        ]
+      }
+    ]
+  },
+  {
+    "config": "hybrid + rewrite + rerank(local)",
+    "hit@1": 0.292,
+    "hit@3": 0.458,
+    "hit@5": 0.542,
+    "ndcg@1": 0.292,
+    "ndcg@3": 0.345,
+    "ndcg@5": 0.39,
+    "recall@1": 0.188,
+    "recall@3": 0.417,
+    "recall@5": 0.521,
+    "mrr": 0.373,
+    "map": 0.335,
+    "mrr_by_category": {
+      "exact_ja": 0.05,
+      "kana": 0.067,
+      "en_word": 0.75,
+      "en_phrase": 0.833,
+      "descriptive": 0.111
+    },
+    "avg_latency_ms": 282,
+    "misses": [
+      {
+        "query": "空",
+        "rewritten": "空",
+        "got": [
+          "空母",
+          "空気",
+          "空所"
+        ]
+      },
+      {
+        "query": "図書館",
+        "rewritten": "図書館",
+        "got": [
+          "覚書",
+          "書簡",
+          "翻訳書"
+        ]
+      },
+      {
+        "query": "電車",
+        "rewritten": "電車",
+        "got": [
+          "単車",
+          "降車",
+          "急停車"
+        ]
+      },
+      {
+        "query": "約束",
+        "rewritten": "約束",
+        "got": [
+          "満杯",
+          "嗚呼嗚呼",
+          "老若"
+        ]
+      },
+      {
+        "query": "やくそく",
+        "rewritten": "やくそく",
+        "got": [
+          "やって来る",
+          "輝く",
+          "兎や角"
+        ]
+      },
+      {
+        "query": "としょかん",
+        "rewritten": "としょかん",
+        "got": [
+          "満杯",
+          "黒煙",
+          "碁盤"
+        ]
+      },
+      {
+        "query": "eat",
+        "rewritten": "eat",
+        "got": [
+          "飽食",
+          "飲食",
+          "大食い"
+        ]
+      },
+      {
+        "query": "the vehicle that flies in the sky",
+        "rewritten": "the vehicle that flies in the sky",
+        "got": [
+          "鷲",
+          "空",
+          "空を飛ぶ"
+        ]
+      },
+      {
+        "query": "quiet and peaceful place",
+        "rewritten": "quiet and peaceful place",
+        "got": [
+          "閑静",
+          "ひっそり",
+          "静けさ"
+        ]
+      },
+      {
+        "query": "what is the word for weather",
+        "rewritten": "weather",
+        "got": [
+          "晴天",
+          "快晴",
+          "晴れ間"
+        ]
+      },
+      {
+        "query": "something hard to do",
+        "rewritten": "something hard to do",
+        "got": [
+          "骨が折れる",
+          "得難い",
+          "尻をたたく"
+        ]
+      }
+    ]
+  }
+]

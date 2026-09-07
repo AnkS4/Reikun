@@ -1,0 +1,58 @@
+# Python
+.venv/
+venv/
+env/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.so
+*.egg-info/
+*.egg
+dist/
+build/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Environment secrets
+.env
+
+# Data (downloaded/generated at runtime)
+data/raw/
+data/processed/
+data/kanjivg/
+data/monitoring/
+
+# Local model weights (cached at runtime)
+models/
+
+# IDE & editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+*.sublime-*
+
+# OS
+Thumbs.db
+.Spotlight-V100
+.Trashes
+
+# Project planning notes (kept for context but not committed)
+Plan.md
+STEPS.md
+
+# Logs
+*.log
+logs/
+
+# Streamlit secrets
+app/.streamlit/secrets.toml
+
+# UV lock file (platform-specific)
+uv.lock

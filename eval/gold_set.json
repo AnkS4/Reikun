@@ -1,0 +1,29 @@
+{
+  "_comment": "Gold set for retrieval evaluation. relevant_ids are JMdict entry IDs (Qdrant point IDs); a hit is any relevant id appearing in the top-k. Categories: exact_ja (kanji form typed directly), kana (reading typed directly), en_word (single English word), en_phrase (short English gloss), descriptive (natural-language question/description).",
+  "queries": [
+    {"query": "食べる", "category": "exact_ja", "relevant_ids": [1358280], "note": "to eat"},
+    {"query": "空", "category": "exact_ja", "relevant_ids": [1245290, 1245280], "note": "sky / empty"},
+    {"query": "図書館", "category": "exact_ja", "relevant_ids": [1370420], "note": "library"},
+    {"query": "電車", "category": "exact_ja", "relevant_ids": [1443530], "note": "train"},
+    {"query": "約束", "category": "exact_ja", "relevant_ids": [1538130], "note": "promise"},
+    {"query": "たべる", "category": "kana", "relevant_ids": [1358280], "note": "reading of 食べる"},
+    {"query": "やくそく", "category": "kana", "relevant_ids": [1538130], "note": "reading of 約束"},
+    {"query": "としょかん", "category": "kana", "relevant_ids": [1370420], "note": "reading of 図書館"},
+    {"query": "sky", "category": "en_word", "relevant_ids": [1245290, 1353020], "note": "空 / 上空"},
+    {"query": "library", "category": "en_word", "relevant_ids": [1370420], "note": "図書館"},
+    {"query": "cat", "category": "en_word", "relevant_ids": [1467640], "note": "猫"},
+    {"query": "birthday", "category": "en_word", "relevant_ids": [1419110, 2852392], "note": "誕生日"},
+    {"query": "eat", "category": "en_word", "relevant_ids": [1358280], "note": "食べる (stemming / no 'to')"},
+    {"query": "umbrella", "category": "en_word", "relevant_ids": [1301940, 1586610], "note": "傘 / 雨傘"},
+    {"query": "to forget", "category": "en_phrase", "relevant_ids": [1519210], "note": "忘れる"},
+    {"query": "to be late", "category": "en_phrase", "relevant_ids": [1589040, 2519770], "note": "遅れる"},
+    {"query": "to hurry", "category": "en_phrase", "relevant_ids": [1228650, 2010760], "note": "急ぐ"},
+    {"query": "thank you", "category": "en_phrase", "relevant_ids": [1586820], "note": "有難う"},
+    {"query": "how do you say hospital in Japanese", "category": "descriptive", "relevant_ids": [1490220], "note": "病院"},
+    {"query": "the vehicle that flies in the sky", "category": "descriptive", "relevant_ids": [1485470], "note": "飛行機"},
+    {"query": "a promise you make to someone", "category": "descriptive", "relevant_ids": [1538130], "note": "約束"},
+    {"query": "quiet and peaceful place", "category": "descriptive", "relevant_ids": [1381820], "note": "静か"},
+    {"query": "what is the word for weather", "category": "descriptive", "relevant_ids": [1438690, 1002470], "note": "天気"},
+    {"query": "something hard to do", "category": "descriptive", "relevant_ids": [1460850], "note": "難しい"}
+  ]
+}

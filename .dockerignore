@@ -1,0 +1,53 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+*.so
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Environment & secrets
+.env
+.env.*
+!.env.example
+app/.streamlit/secrets.toml
+
+# Data (populated at runtime or via volumes)
+data/raw/
+data/kanjivg/
+data/processed/
+data/monitoring/
+
+# Models (pre-warmed in Dockerfile or mounted)
+models/
+
+# Evaluation outputs (not needed in container)
+eval/
+eval/results/
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Documentation & planning
+README.md
+Plan.md
+STEPS.md
+docs/
+
+# IDE & editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Misc
+uv.lock
+*.log
