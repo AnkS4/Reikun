@@ -8,7 +8,7 @@ An end-to-end RAG application that helps Japanese learners find natural example 
 
 Full recording: [docs/videos/demo.mp4](docs/videos/demo.mp4)
 
-**Live demo:** https://reikun.onrender.com/ — the app runs on Render, with the vector database on Qdrant Cloud and ingestion orchestrated via Prefect Cloud. All on free tiers with limited shared resources (512 MB RAM, shared CPU), so expect a slow first load (~30–60 s cold start after inactivity) and a few seconds per search. For the best experience, run it locally with Docker Compose.
+> **Try it live:** https://reikun.app/
 
 ## Screenshots
 
