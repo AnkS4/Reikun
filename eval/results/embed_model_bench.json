@@ -1,36 +1,70 @@
 [
   {
     "model": "sentence-transformers/all-MiniLM-L6-v2",
-    "embed_seconds": 813.5,
-    "docs_per_second": 45.5,
-    "hit@1": 0.292,
-    "hit@3": 0.458,
-    "hit@5": 0.5,
-    "hit@10": 0.583,
-    "mrr": 0.377,
+    "embed_seconds": 615.5,
+    "docs_per_second": 60.1,
+    "hit@1": 0.125,
+    "hit@3": 0.417,
+    "hit@5": 0.583,
+    "hit@10": 0.667,
+    "mrr": 0.307,
     "mrr_by_category": {
-      "exact_ja": 0.45,
-      "kana": 0.048,
-      "en_word": 0.611,
-      "en_phrase": 0.625,
-      "descriptive": 0.083
+      "exact_ja": 0.217,
+      "kana": 0.067,
+      "en_word": 0.625,
+      "en_phrase": 0.375,
+      "descriptive": 0.14
     }
   },
   {
-    "model": "snowflake/snowflake-arctic-embed-xs",
-    "embed_seconds": 415.5,
-    "docs_per_second": 89.0,
-    "hit@1": 0.083,
-    "hit@3": 0.125,
-    "hit@5": 0.125,
-    "hit@10": 0.125,
-    "mrr": 0.104,
+    "model": "BAAI/bge-small-en-v1.5",
+    "embed_seconds": 2805.7,
+    "docs_per_second": 13.2,
+    "hit@1": 0.167,
+    "hit@3": 0.417,
+    "hit@5": 0.5,
+    "hit@10": 0.583,
+    "mrr": 0.29,
     "mrr_by_category": {
-      "exact_ja": 0.0,
+      "exact_ja": 0.127,
       "kana": 0.0,
-      "en_word": 0.417,
-      "en_phrase": 0.0,
-      "descriptive": 0.0
+      "en_word": 0.528,
+      "en_phrase": 0.675,
+      "descriptive": 0.076
+    }
+  },
+  {
+    "model": "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
+    "embed_seconds": 2924.2,
+    "docs_per_second": 12.7,
+    "hit@1": 0.208,
+    "hit@3": 0.375,
+    "hit@5": 0.542,
+    "hit@10": 0.625,
+    "mrr": 0.33,
+    "mrr_by_category": {
+      "exact_ja": 0.322,
+      "kana": 0.0,
+      "en_word": 0.506,
+      "en_phrase": 0.675,
+      "descriptive": 0.096
+    }
+  },
+  {
+    "model": "sentence-transformers/paraphrase-multilingual-mpnet-base-v2",
+    "embed_seconds": 1646.3,
+    "docs_per_second": 22.5,
+    "hit@1": 0.167,
+    "hit@3": 0.292,
+    "hit@5": 0.458,
+    "hit@10": 0.625,
+    "mrr": 0.279,
+    "mrr_by_category": {
+      "exact_ja": 0.273,
+      "kana": 0.0,
+      "en_word": 0.565,
+      "en_phrase": 0.237,
+      "descriptive": 0.163
     }
   }
 ]

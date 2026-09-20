@@ -1,7 +1,9 @@
 """Deterministic kanji lookups (KANJIDIC2 table + KanjiVG stroke order) — no LLM involved."""
 
 import json
-from functools import lru_cache
+import random
+from collections.abc import Collection
+from functools import cache, lru_cache
 from pathlib import Path
 
 import httpx
@@ -29,6 +31,18 @@ def _load_kanji_table() -> dict[str, dict]:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+@lru_cache(maxsize=1)
+def _common_kanji() -> tuple[str, ...]:
+    """Kanji with a KANJIDIC2 frequency rank — the ~2500 most common."""
+    return tuple(c for c, d in _load_kanji_table().items() if d.get("freq"))
+
+
+def random_kanji(within: Collection[str] | None = None) -> str:
+    """Uniform pick from the frequency-ranked kanji, optionally restricted to `within`."""
+    pool = _common_kanji() if within is None else tuple(c for c in _common_kanji() if c in within)
+    return random.choice(pool or _common_kanji())
+
+
 def lookup_kanji(char: str) -> dict | None:
     """
     Full details for one kanji, or None if not in KANJIDIC2.
@@ -39,12 +53,12 @@ def lookup_kanji(char: str) -> dict | None:
     return _load_kanji_table().get(char)
 
 
-@lru_cache(maxsize=None)
+@cache
 def get_stroke_diagram(char: str) -> Path | None:
     """
     Local path to the kanji's KanjiVG stroke-order SVG, or None.
 
-    SVGs live offline under data/kanjivg/ (populated by scripts/download_data.py).
+    SVGs live offline under data/kanjivg/ (populated by scripts/download_kanjivg.py).
     A missing file is fetched once and cached on disk.
     """
     svg_path = KANJIVG_DIR / f"{ord(char):05x}.svg"
@@ -66,7 +80,7 @@ def get_stroke_diagram(char: str) -> Path | None:
     return None
 
 
-@lru_cache(maxsize=None)
+@cache
 def stroke_svg(char: str) -> str | None:
     """Inline-able SVG markup (XML prolog stripped, whitespace collapsed)."""
     path = get_stroke_diagram(char)

@@ -1,0 +1,143 @@
+@import url("https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700&display=optional");
+
+/* App-wide styling, loaded once per page by ui.common.inject_css().
+   Streamlit has no scoped-CSS API, so every rule here is global — keep the
+   selectors on our own class names. Streamlit's internal DOM (data-testid=…)
+   is not a public API and breaks between releases; the only exception below
+   is `st-key-*`, the documented class Streamlit puts on keyed widgets.
+   NB: never put a literal less-than sign anywhere in this file (even in
+   comments) — it is inlined into a style tag, and DOMPurify drops the whole
+   element if the content parses as stray markup.
+   The font stack lives in app/.streamlit/config.toml (Inter sourced there,
+   Noto Sans JP @imported above since the config accepts only one source
+   URL) — Inter has no CJK glyphs, so Japanese text falls through to Noto
+   Sans JP automatically, everywhere, without a marker class. */
+
+:root {
+  --muted: .7;
+  --stroke-w: 160px;   /* width of the stroke-order diagram and its caption */
+  --tip-w: 280px;
+}
+
+/* ── Page header ─────────────────────────────────────────────────────────── */
+/* Landing state: large, centred, vertically offset. */
+.hero {
+  text-align: center;
+  margin: 12vh 0 1.5rem;
+}
+/* .title-heading is a div role="heading", not h1 — Streamlit slugs heading
+   ids from element text, and kanji tooltip bodies inside an h1 polluted it
+   (see render_title in common.py). */
+.title-heading { font-weight: 700; margin: 0; padding: 0; }
+.hero .title-heading { font-size: clamp(2rem, 7vw, 3.2rem); margin-bottom: .2rem; }
+.hero p { opacity: var(--muted); margin: 0; }
+/* Results state: the same title, shrunk to a normal page heading. */
+.compact .title-heading { font-size: clamp(1.5rem, 5vw, 2rem); margin: 0 0 .4rem; }
+/* The title doubles as a link home — keep it looking like plain text. */
+a.title-home { color: inherit; text-decoration: none; }
+
+.st-key-q input { height: 3rem; font-size: 1.15rem; padding: 0 1.1rem; border-radius: .8rem; }
+
+/* The search row (text box, Search button, JLPT popover): pinned to the top
+   of the viewport while scrolling a long result list, so changing JLPT
+   level for "Explain grammar" never needs a scroll back up. One rule, on
+   the same documented st-key-* hook used elsewhere — the deliberate
+   exception to "no custom positioning" in this app, everything else stays
+   native-Streamlit layout.
+
+   Three Streamlit-DOM realities shape it (all verified in headless
+   Chromium on 1.64):
+   - The keyed element sits inside a stLayoutWrapper no taller than the
+     row itself, so position:sticky on .st-key-query_row has no room to
+     travel — the sticky must go on its parent, selected via :has() (the
+     same parent-targeting trick the reverted mobile-nav workaround used).
+   - stHeader is position:absolute with a fixed 3.75rem height — top:0
+     would pin the row underneath it, so top clears it instead.
+   - No theme background var exists (1.64 exposes no CSS custom props) and
+     color-scheme is unset, so any opaque colour would be wrong in one
+     theme. backdrop-filter frosts whatever scrolls beneath instead —
+     light and dark both stay readable with zero colour guessing. */
+div:has(> .st-key-query_row) {
+  position: sticky;
+  top: 3.75rem;
+  z-index: 5;
+  padding: .5rem 0;
+  backdrop-filter: blur(14px) saturate(1.4);
+  -webkit-backdrop-filter: blur(14px) saturate(1.4);
+}
+
+/* An OPEN tertiary popover trigger (Theme button) paints its label in a
+   darkened primary — computed rgb(20,29,41) in both themes — which is
+   ~1.1:1 on the dark background, i.e. invisible. inherit falls back to
+   the surrounding text colour, readable in light and dark alike. Scoped
+   to the open state so the closed/idle styling stays untouched; secondary
+   popovers already keep text colour when open, so only tertiary needs it. */
+[data-testid="stPopover"] button[kind="tertiary"][aria-expanded="true"] { color: inherit; }
+
+/* ── Dictionary entries ──────────────────────────────────────────────────── */
+.headword { font-size: 2rem; font-weight: 600; line-height: 1.3; margin: 0; }
+.headword ruby > rt { font-size: .42em; font-weight: 400; opacity: var(--muted); letter-spacing: .02em; }
+.meanings { margin: 0 0 .75rem; }
+.sentence { font-size: 1.2rem; line-height: 1.9; margin: 0; }
+.sentence ruby > rt { font-size: .55em; opacity: var(--muted); }
+.en { opacity: var(--muted); margin: 0 0 .25rem; }
+
+/* ── Inline kanji hover card ─────────────────────────────────────────────── */
+/* format_kanji_text() gives each span tabindex="0", so the card is reachable
+   by keyboard and by tap (a tap focuses the span) — hence :focus-within
+   alongside :hover, which on its own would leave touch users with nothing. */
+.kanji-tip {
+  position: relative;
+  cursor: help;
+  border-bottom: 1px dotted currentColor;
+}
+.kanji-tip > .kanji-tip-body {
+  display: none;
+  position: absolute; top: 1.6em; inset-inline-start: 0; z-index: 1000;
+  /* min() keeps the card on screen for kanji near the right edge. */
+  width: min(var(--tip-w), 90vw);
+  background: var(--background-color, #fff); color: var(--text-color, #111);
+  border: 1px solid rgba(128, 128, 128, .35); border-radius: .5rem; padding: .6rem .8rem;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .14);
+  font-size: .85rem; font-weight: 400; line-height: 1.5;
+  text-align: left; white-space: normal;
+}
+.kanji-tip:hover > .kanji-tip-body,
+.kanji-tip:focus-within > .kanji-tip-body { display: block; }
+.kanji-tip-body .big { display: block; font-size: 1.9rem; font-weight: 600; line-height: 1.1; margin-bottom: .2rem; }
+
+/* ── Kanji detail card ───────────────────────────────────────────────────── */
+/* .stMarkdown ancestor lifts specificity past Streamlit's own
+   ".st-emotion-cache-* p { font-size: inherit }" (class+element beats the
+   bare class) — without it the glyph computed at 16px, not the clamp. */
+.stMarkdown .kanji-big { font-size: clamp(3rem, 12vw, 4.5rem); line-height: 1; font-weight: 500; margin: 0; }
+
+/* Stroke-order diagram (see _stroke_diagram in common.py). Browsers won't
+   replay an animation whose name didn't change, so the Replay button flips
+   the wrapper between .pa/.pb — two identical keyframe pairs — to restart
+   the draw on every click. The glyph and Replay button sit in the same row
+   above this (plain st.container default gap, no CSS needed for that part). */
+.stroke-svg {
+  display: block; width: 100%; max-width: var(--stroke-w); color: inherit;
+  margin-top: .5rem;
+}
+.stroke-svg svg { width: 100%; height: auto; }
+/* KanjiVG hard-codes stroke/fill on the elements themselves, so these need
+   !important to win. */
+.stroke-svg path { stroke: currentColor !important; stroke-dasharray: 100; stroke-dashoffset: 100; }
+.stroke-svg text { opacity: 0; fill: var(--primary-color, #3D5A80) !important; }
+.stroke-svg.pa path { animation: kvg-draw-a .55s ease-out forwards; }
+.stroke-svg.pb path { animation: kvg-draw-b .55s ease-out forwards; }
+.stroke-svg.pa text { animation: kvg-fade-a .25s ease-out forwards; }
+.stroke-svg.pb text { animation: kvg-fade-b .25s ease-out forwards; }
+@keyframes kvg-draw-a { to { stroke-dashoffset: 0; } }
+@keyframes kvg-draw-b { to { stroke-dashoffset: 0; } }
+@keyframes kvg-fade-a { to { opacity: .9; } }
+@keyframes kvg-fade-b { to { opacity: .9; } }
+/* Reduced motion: show the finished diagram instead of drawing it.
+   Equal-specificity .pa/.pb selectors needed — they must beat the rules
+   above, not just the base .stroke-svg ones. */
+@media (prefers-reduced-motion: reduce) {
+  .stroke-svg.pa path, .stroke-svg.pb path { stroke-dashoffset: 0; animation: none; }
+  .stroke-svg.pa text, .stroke-svg.pb text { opacity: .9; animation: none; }
+}

@@ -20,6 +20,9 @@ htmlcov/
 # Environment secrets
 .env
 
+# Host-specific compose overrides (see docker-compose.override.yml.example)
+docker-compose.override.yml
+
 # Data (downloaded/generated at runtime)
 data/raw/
 # processed/chunks.json is generated locally by build_chunks.py (58 MB, only
@@ -48,7 +51,7 @@ Thumbs.db
 .Trashes
 
 # Project planning notes (kept for context but not committed)
-# docs/notes/
+docs/notes/
 
 # Logs
 *.log
@@ -56,6 +59,3 @@ logs/
 
 # Streamlit secrets
 app/.streamlit/secrets.toml
-
-# UV lock file (platform-specific)
-uv.lock

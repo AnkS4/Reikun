@@ -6,11 +6,74 @@ build-backend = "setuptools.build_meta"
 name = "japanese-assistant"
 version = "0.1.0"
 description = "例訓 (れいくん) - Japanese Sentence-Mining & Kanji Assistant"
-requires-python = ">=3.11"
-dynamic = ["dependencies"]
+requires-python = ">=3.13"
+dependencies = [
+    "qdrant-client==1.19.1",
+    "fastembed==0.8.0",
+    "cohere==7.1.1",
+    "python-dotenv==1.2.3",
+    "httpx==0.28.1",
+    "pydantic==2.13.5",
+    "streamlit==1.64.0",
+    "pandas==3.0.6",
+    "altair==6.3.0",
+    "fastapi==0.141.1",
+    # Plain uvicorn, not [standard]: the container runs Streamlit (which mounts
+    # the API in-process), never uvicorn, so the extra's uvloop/httptools/
+    # watchfiles/websockets were ~25 MB of unused image. The extra is in the
+    # dev group for the standalone `uvicorn app.api:app --reload` path.
+    "uvicorn==0.53.0",
+]
 
-[tool.setuptools.dynamic]
-dependencies = {file = ["requirements.txt"]}
+[project.scripts]
+reikun = "scripts.startup:main"
+
+# Ingest/build-time and local-dev only, never imported by the app at runtime.
+# Kept out of the runtime dependencies so the Docker image stays leaner.
+# uv sync/uv run install the dev group by default.
+#   wordfreq — scripts/build_chunks.py (the wf_score canonical-ranking prior);
+#     mecab-python3 + ipadic are its Japanese tokenizer backend (the `cjk`
+#     extra), loaded at tokenize() time.
+#   uvicorn[standard] — only for running the API standalone with --reload
+#     (needs watchfiles); the container serves it through Streamlit instead.
+[dependency-groups]
+dev = [
+    "wordfreq==3.1.1",
+    "mecab-python3==1.0.12",
+    "ipadic==1.0.0",
+    "uvicorn[standard]==0.53.0",
+]
 
 [tool.setuptools.packages.find]
-include = ["app*"]
+include = ["app*", "scripts*"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py313"
+
+[tool.ruff.lint]
+# E/F/I: pyflakes + import order. UP: pyupgrade (keeps us on 3.13 idioms).
+# B: bugbear, C4: comprehensions, PERF: performance, RUF: ruff-specific.
+select = ["E", "F", "I", "UP", "B", "C4", "PERF", "RUF"]
+ignore = [
+    "E501",     # long lines: prose-heavy docstrings/comments are deliberate here
+    # RUF001-003 flag "ambiguous" Unicode (full-width ／：（）, CJK punctuation).
+    # This is a Japanese-language corpus — those characters are the domain, not typos.
+    "RUF001",
+    "RUF002",
+    "RUF003",
+    "B008",     # FastAPI's Depends()/Query() in argument defaults is the idiom
+    # itertools.batched()'s final batch is intentionally short at ingest
+    # (218,786 chunks is not a multiple of BATCH_SIZE), so strict=True is wrong.
+    "B911",
+    "C408",     # dict(a=…, b=…) reads better than a literal for kwargs-style params
+    "PERF401",  # the explicit append loops are in one-off build/eval code, not hot paths
+    # The `# noqa: E402` after each sys.path bootstrap is kept for flake8/
+    # pycodestyle; ruff itself tolerates imports after sys.path.insert and so
+    # reports the directive as redundant.
+    "RUF100",
+]
+
+# Note: the script entrypoints need a sys.path bootstrap before importing
+# `app`, and already carry explicit `# noqa: E402` on those lines — that is
+# kept instead of a blanket per-file ignore so the exception stays visible.

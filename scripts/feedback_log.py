@@ -12,9 +12,9 @@ SQLite in WAL mode is plenty for a single-instance Streamlit app.
 """
 
 import sqlite3
+from collections.abc import Iterator
 from contextlib import contextmanager
-from datetime import datetime, timezone
-from typing import Iterator
+from datetime import UTC, datetime
 
 import pandas as pd
 
@@ -28,7 +28,6 @@ CREATE TABLE IF NOT EXISTS searches (
     rewritten_query TEXT,
     rewrite_method TEXT,
     mode TEXT,
-    reranked INTEGER,
     num_results INTEGER,
     result_count INTEGER,
     top_result TEXT,
@@ -61,7 +60,7 @@ CREATE TABLE IF NOT EXISTS explanations (
 
 
 def _now() -> str:
-    return datetime.now(timezone.utc).isoformat(timespec="seconds")
+    return datetime.now(UTC).isoformat(timespec="seconds")
 
 
 @contextmanager
@@ -88,12 +87,12 @@ def _insert(table: str, **values) -> int:
 # ── Writers ──────────────────────────────────────────────────────────────────
 
 def log_search(
-    query: str, *, rewritten_query: str, rewrite_method: str, mode: str, reranked: bool,
+    query: str, *, rewritten_query: str, rewrite_method: str, mode: str,
     num_results: int, result_count: int, top_result: str | None, latency_ms: int,
 ) -> int:
     return _insert(
         "searches", ts=_now(), query=query, rewritten_query=rewritten_query, rewrite_method=rewrite_method,
-        mode=mode, reranked=int(reranked), num_results=num_results, result_count=result_count,
+        mode=mode, num_results=num_results, result_count=result_count,
         top_result=top_result, latency_ms=latency_ms,
     )
 

@@ -14,13 +14,24 @@ from qdrant_client import QdrantClient
 
 load_dotenv(find_dotenv(usecwd=True))
 
+
+def _env(name: str, default: str) -> str:
+    """os.getenv with whitespace stripped, so a stray space in .env doesn't
+    silently break equality checks (e.g. QUERY_REWRITE=heuristic )."""
+    return os.getenv(name, default).strip()
+
+
 ROOT = Path(__file__).resolve().parent.parent
 DATA_DIR = ROOT / "data"
 RAW_DIR = DATA_DIR / "raw"
 PROC_DIR = DATA_DIR / "processed"
 KANJIVG_DIR = DATA_DIR / "kanjivg"
-MODELS_DIR = Path(os.getenv("MODELS_DIR", ROOT / "models" / "fastembed"))
-MONITORING_DB = Path(os.getenv("MONITORING_DB", DATA_DIR / "monitoring" / "reikun.db"))
+MODELS_DIR = Path(_env("MODELS_DIR", str(ROOT / "models" / "fastembed")))
+MONITORING_DB = Path(_env("MONITORING_DB", str(DATA_DIR / "monitoring" / "reikun.db")))
+
+# Ensure directories we write to actually exist (first-run safety).
+for _dir in (RAW_DIR, PROC_DIR, KANJIVG_DIR, MODELS_DIR, MONITORING_DB.parent):
+    _dir.mkdir(parents=True, exist_ok=True)
 
 # ── Qdrant ───────────────────────────────────────────────────────────────────
 # QDRANT_URL wins (e.g. a Qdrant Cloud endpoint); otherwise host/port are used.
@@ -37,20 +48,21 @@ COLLECTION = os.getenv("QDRANT_COLLECTION", "jmdict_chunks")
 # queries, while this corpus mixes English glosses with Japanese kanji/kana.
 EMBED_MODEL = os.getenv("EMBED_MODEL", "sentence-transformers/all-MiniLM-L6-v2")
 SPARSE_MODEL = os.getenv("SPARSE_MODEL", "Qdrant/bm25")
-RERANK_MODEL = os.getenv("RERANK_MODEL", "Xenova/ms-marco-MiniLM-L-6-v2")
-# Default "none": eval/retrieval_eval.py shows both the local cross-encoder
-# (English-only MS MARCO training) and Cohere Rerank *hurt* MRR on this
-# bilingual EN/JA corpus relative to plain hybrid search — see
-# eval/results/retrieval_eval.md. Kept selectable for the best-practice
-# rubric point ("at least evaluating" re-ranking) and future multilingual
-# rerankers.
-RERANKER = os.getenv("RERANKER", "none").lower()  # local | cohere | none
+
 COHERE_MODEL = os.getenv("COHERE_MODEL", "command-a-plus-05-2026")
-COHERE_RERANK_MODEL = os.getenv("COHERE_RERANK_MODEL", "rerank-v3.5")
+COHERE_API_KEY = os.getenv("COHERE_API_KEY") or None
+
 # Default "heuristic": free regex normalisation only. "auto" additionally
 # spends one Cohere call on long English sentence-like queries (best MRR in
 # eval/results/retrieval_eval.md, but costs trial-tier tokens per query).
-QUERY_REWRITE = os.getenv("QUERY_REWRITE", "heuristic").lower()  # auto | heuristic | off
+_VALID_QUERY_REWRITE = {"auto", "heuristic", "off"}
+QUERY_REWRITE = _env("QUERY_REWRITE", "heuristic").lower()
+if QUERY_REWRITE not in _VALID_QUERY_REWRITE:
+    raise ValueError(
+        f"QUERY_REWRITE={QUERY_REWRITE!r} invalid; expected one of {sorted(_VALID_QUERY_REWRITE)}"
+    )
+if QUERY_REWRITE == "auto" and not COHERE_API_KEY:
+    raise ValueError("QUERY_REWRITE=auto requires COHERE_API_KEY to be set")
 
 DENSE_VECTOR = "dense"
 SPARSE_VECTOR = "bm25"
@@ -58,5 +70,10 @@ SPARSE_VECTOR = "bm25"
 
 @lru_cache(maxsize=1)
 def qdrant_client(timeout: int = 30) -> QdrantClient:
-    """Process-wide Qdrant client (cheap to share; thread-safe for REST)."""
+    """Process-wide Qdrant client (cheap to share; thread-safe for REST).
+
+    NOTE: cached by lru_cache(maxsize=1), so only the `timeout` passed on the
+    *first* call takes effect for the life of the process — later calls with
+    a different timeout silently reuse the first client instead of rebuilding.
+    """
     return QdrantClient(url=QDRANT_URL, api_key=QDRANT_API_KEY, timeout=timeout)

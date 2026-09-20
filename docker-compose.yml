@@ -1,9 +1,14 @@
+name: reikun-app
+
 services:
   qdrant:
     image: qdrant/qdrant:v1.19.1
+    # Bound to loopback: Qdrant has no auth by default, so these must not be
+    # reachable from the LAN. The app talks to it over the internal compose
+    # network (QDRANT_HOST=qdrant), not through these host mappings.
     ports:
-      - "6333:6333"   # REST / HTTP
-      - "6334:6334"   # gRPC
+      - "127.0.0.1:6333:6333"   # REST / HTTP (what the app + dashboard use)
+      - "127.0.0.1:6334:6334"   # gRPC (unused by the app; for local ingest with prefer_grpc)
     volumes:
       - qdrant_data:/qdrant/storage
     environment:
@@ -19,32 +24,45 @@ services:
       start_period: 10s
 
   app:
+    # One knob for ingestion: INGEST_VIA_DOCKER=1 in .env or the shell
+    # reaches the build here (rsync + dev deps) and the container env via
+    # env_file/baked ENV —
+    #     INGEST_VIA_DOCKER=1 docker compose up -d --build
     build:
       context: .
-      dockerfile: Dockerfile
+      args:
+        INGEST_VIA_DOCKER: ${INGEST_VIA_DOCKER:-0}
+    image: reikun:latest
     ports:
-      - "${APP_PORT:-8000}:8501"
+      - "127.0.0.1:${APP_PORT:-8000}:8501"
+    # Only QDRANT_HOST differs from the defaults in app/config.py, so it is the
+    # only value hardcoded here; everything else (COHERE_API_KEY, EMBED_MODEL,
+    # QUERY_REWRITE, QDRANT_*) is read from .env when present, and otherwise
+    # falls back to those same defaults.
+    env_file:
+      - path: .env
+        required: false
     environment:
-      - QDRANT_HOST=qdrant
-      - QDRANT_PORT=6333
-      - QDRANT_COLLECTION=jmdict_chunks
-      - COHERE_API_KEY=${COHERE_API_KEY}
-      - EMBED_MODEL=${EMBED_MODEL:-sentence-transformers/all-MiniLM-L6-v2}
-      - RERANKER=${RERANKER:-none}
-      - QUERY_REWRITE=${QUERY_REWRITE:-heuristic}
-      - PREFECT_LOGGING_LEVEL=WARNING
-    dns:
-      - 8.8.8.8
+      QDRANT_HOST: qdrant
     volumes:
       - ./data/processed:/app/data/processed
       - ./data/raw:/app/data/raw
       - ./data/kanjivg:/app/data/kanjivg
       - ./data/monitoring:/app/data/monitoring
-      - ./models:/app/models
+      # Named volume, not a bind mount: named volumes seed from the image on
+      # first creation, so the ONNX models pre-warmed in the Dockerfile are
+      # actually used. A bind mount would mask them and force a re-download.
+      - models:/app/models
+    # The app serves the Streamlit UI and the HTTP API in one process:
+    # UI at /, API + Swagger docs under /api (see app/asgi_app.py).
     depends_on:
       qdrant:
         condition: service_healthy
-    restart: unless-stopped
+    # on-failure, not unless-stopped: scripts/startup.py exits 1 when the
+    # ingest pipeline fails, and unless-stopped would retry that forever,
+    # re-downloading JMdict on every attempt.
+    restart: on-failure:3
 
 volumes:
   qdrant_data:
+  models:

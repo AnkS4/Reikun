@@ -19,5 +19,8 @@ st.navigation(
     [
         st.Page("ui/search.py", title="Search", icon=":material/search:", default=True),
         st.Page("ui/dashboard.py", title="Dashboard", icon=":material/monitoring:"),
-    ]
+    ],
+    # Top navigation: with only two pages the sidebar was pure overhead — its
+    # only non-nav control (the theme picker) now lives in each page's top bar.
+    position="top",
 ).run()

@@ -4,15 +4,15 @@ import altair as alt
 import pandas as pd
 import streamlit as st
 
-from app.config import MONITORING_DB
-from app.ui.common import APP_ICON, APP_TITLE, footer, inject_css, render_title
-from monitoring.feedback_log import load_table
+from app.ui.common import APP_ICON, APP_TITLE, footer, header, inject_css
+from scripts.feedback_log import load_table
 
 st.set_page_config(page_title=f"{APP_TITLE} — Dashboard", page_icon=APP_ICON, layout="wide")
 inject_css()
+header("Dashboard")
+st.caption("Live usage and feedback metrics")
 
-render_title("Dashboard")
-st.caption(f"Live usage and feedback metrics · source: `{MONITORING_DB}`")
+TZ = st.context.timezone or "UTC"   # viewer's browser timezone for charts/tables
 
 
 @st.cache_data(ttl=15, show_spinner=False)
@@ -54,10 +54,11 @@ expl_fb = feedback[feedback["kind"] == "explanation"] if not feedback.empty else
 k1, k2, k3, k4, k5 = st.columns(5)
 k1.metric("Searches", f"{len(searches):,}", border=True)
 k2.metric("Median latency", f"{int(searches['latency_ms'].median()) if not searches.empty else 0} ms", border=True)
-k3.metric("Search 👍 rate", f"{up_rate(search_fb):.0%}" if up_rate(search_fb) is not None else "—",
+k3.metric("Search approval", f"{up_rate(search_fb):.0%}" if up_rate(search_fb) is not None else "—",
           delta=f"{len(search_fb)} votes", delta_arrow="off", border=True)
 k4.metric("Explanations", f"{len(expl):,}",
-          delta=f"{up_rate(expl_fb):.0%} 👍" if up_rate(expl_fb) is not None else "no votes", delta_arrow="off", border=True)
+          delta=f"{up_rate(expl_fb):.0%} approval" if up_rate(expl_fb) is not None else "no votes",
+          delta_arrow="off", border=True)
 k5.metric("Kanji lookups", f"{len(kanji):,}", border=True)
 
 st.divider()
@@ -65,19 +66,20 @@ st.divider()
 # ── Row 1: volume + top queries ──────────────────────────────────────────────
 c1, c2 = st.columns(2)
 with c1:
-    st.subheader("1 · Query volume")
+    st.subheader("Query volume")
     if searches.empty:
         st.caption("No searches yet.")
     else:
-        vol = searches.assign(hour=searches["ts"].dt.floor("h")).groupby("hour").size().reset_index(name="searches")
+        local_ts = searches["ts"].dt.tz_convert(TZ)
+        vol = searches.assign(hour=local_ts.dt.floor("h")).groupby("hour").size().reset_index(name="searches")
         st.altair_chart(
             alt.Chart(vol).mark_area(line=True, opacity=0.35, interpolate="monotone")
-            .encode(x=alt.X("hour:T", title="Time (UTC, hourly)"), y=alt.Y("searches:Q", title="Searches"),
+            .encode(x=alt.X("hour:T", title=f"Time ({TZ}, hourly)"), y=alt.Y("searches:Q", title="Searches"),
                     tooltip=["hour:T", "searches:Q"]).properties(height=280),
             width="stretch",
         )
 with c2:
-    st.subheader("2 · Top searched words")
+    st.subheader("Top searched words")
     if searches.empty:
         st.caption("No searches yet.")
     else:
@@ -88,21 +90,21 @@ with c2:
 # ── Row 2: feedback + kanji ──────────────────────────────────────────────────
 c3, c4 = st.columns(2)
 with c3:
-    st.subheader("3 · Thumbs-up rate")
+    st.subheader("Thumbs-up rate")
     if feedback.empty:
         st.caption("No feedback yet — use 👍 / 👎 on the Search page.")
     else:
-        fb = feedback.assign(vote=feedback["rating"].map({1: "👍 up", -1: "👎 down"})).groupby(["kind", "vote"]).size().reset_index(name="count")
+        fb = feedback.assign(vote=feedback["rating"].map({1: "Up", -1: "Down"})).groupby(["kind", "vote"]).size().reset_index(name="count")
         st.altair_chart(
             alt.Chart(fb).mark_bar(cornerRadiusEnd=3)
             .encode(x=alt.X("count:Q", title="Votes", stack="normalize", axis=alt.Axis(format="%")),
                     y=alt.Y("kind:N", title=None),
-                    color=alt.Color("vote:N", title=None, scale=alt.Scale(domain=["👍 up", "👎 down"], range=["#3C9D6B", "#B4432F"])),
+                    color=alt.Color("vote:N", title=None, scale=alt.Scale(domain=["Up", "Down"], range=["#3C9D6B", "#B4432F"])),
                     tooltip=["kind", "vote", "count"]).properties(height=280),
             width="stretch",
         )
 with c4:
-    st.subheader("4 · Kanji lookup frequency")
+    st.subheader("Kanji lookup frequency")
     if kanji.empty:
         st.caption("No kanji lookups yet.")
     else:
@@ -112,7 +114,7 @@ with c4:
 # ── Row 3: JLPT levels + retrieval settings + latency ────────────────────────
 c5, c6, c7 = st.columns(3)
 with c5:
-    st.subheader("5 · JLPT level of explanation requests")
+    st.subheader("JLPT level of explanation requests")
     if expl.empty:
         st.caption("No explanations requested yet.")
     else:
@@ -124,16 +126,16 @@ with c5:
             width="stretch",
         )
 with c6:
-    st.subheader("6 · Retrieval settings used")
+    st.subheader("Retrieval settings used")
     if searches.empty:
         st.caption("No searches yet.")
     else:
-        cfg = searches.assign(setting=searches["mode"] + searches["reranked"].map({1: " + rerank", 0: ""})
+        cfg = searches.assign(setting=searches["mode"]
                               + searches["rewrite_method"].map(lambda m: f" · {m}" if m and m != "none" else ""))
         cfg = cfg["setting"].value_counts().rename_axis("setting").reset_index(name="count")
         st.altair_chart(bar(cfg, "count:Q", "setting:N", x_title="Searches", y_title=None), width="stretch")
 with c7:
-    st.subheader("7 · Search latency")
+    st.subheader("Search latency")
     if searches.empty:
         st.caption("No searches yet.")
     else:
@@ -149,8 +151,10 @@ with st.expander("Recent searches"):
         st.caption("No searches yet.")
     else:
         st.dataframe(
-            searches.sort_values("id", ascending=False).head(50)
-            [["ts", "query", "rewritten_query", "rewrite_method", "mode", "reranked", "result_count", "top_result", "latency_ms"]],
+            searches.assign(ts=searches["ts"].dt.tz_convert(TZ))
+            .sort_values("id", ascending=False).head(50)
+            [["ts", "query", "rewritten_query", "rewrite_method", "mode", "result_count", "top_result", "latency_ms"]],
+            column_config={"ts": st.column_config.DatetimeColumn("Time", format="MMM D, HH:mm")},
             width="stretch", hide_index=True,
         )
 

@@ -9,6 +9,8 @@ __pycache__/
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
+build/
+dist/
 
 # Environment & secrets
 .env
@@ -48,5 +50,4 @@ docs/
 .DS_Store
 
 # Misc
-uv.lock
 *.log

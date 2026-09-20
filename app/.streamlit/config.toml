@@ -7,19 +7,40 @@ headless = true
 gatherUsageStats = false
 
 [client]
+# "minimal" removes the whole viewer menu (Print / Record / Settings). Theme
+# switching is handled in-app instead (Settings dialog → stActiveTheme bridge).
 toolbarMode = "minimal"
 
+# Shared by both colour schemes. `font` takes a single "Name:url" spec, but
+# the name may itself be a CSS fallback list: Inter covers Latin, and
+# characters it lacks (all CJK) fall through to Noto Sans JP — so Japanese
+# renders correctly in every widget, not just elements carrying a marker
+# class. Only Inter is sourced here (one source URL max); Noto Sans JP is
+# @imported at the top of ui/style.css with display=optional (not swap):
+# paint with the fallback font immediately and never swap in later — a late
+# CJK swap visibly shifts glyph boxes (a past source of misalignment).
 [theme]
-base = "light"
-primaryColor = "#B4432F"          # 朱 (shu) vermilion, muted
-backgroundColor = "#FFFFFF"
-secondaryBackgroundColor = "#F6F4EF"
-textColor = "#1F2328"
-linkColor = "#B4432F"
+primaryColor = "#3D5A80"          # 藍 (ai) indigo, muted
+font = "Inter, 'Noto Sans JP', sans-serif:https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
 baseRadius = "medium"
 buttonRadius = "medium"
 showWidgetBorder = true
-font = "sans-serif"
 
-[theme.sidebar]
+[theme.light]
+backgroundColor = "#FFFFFF"
+secondaryBackgroundColor = "#F6F4EF"
+textColor = "#1F2328"
+linkColor = "#3D5A80"
+
+[theme.light.sidebar]
 backgroundColor = "#F6F4EF"
+
+[theme.dark]
+primaryColor = "#3D5A80"          # same indigo as the light theme
+backgroundColor = "#15171A"
+secondaryBackgroundColor = "#1F2226"
+textColor = "#E8E6E1"
+linkColor = "#3D5A80"
+
+[theme.dark.sidebar]
+backgroundColor = "#1F2226"

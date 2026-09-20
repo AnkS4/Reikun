@@ -1,0 +1,333 @@
+# Reikun eval gold set — one row per query cluster (not one row per
+# alternative — a single query is exactly one row).
+#
+# Columns: category <TAB> query <TAB> expected_answers <TAB> notes (optional)
+#   expected_answers — every accepted alternative for that query, joined by
+#     " / ", ordered most-to-least preferred (top-ranked answer listed first).
+#   notes — optional; explains a nuance, disambiguates near-synonyms, or
+#     flags why a listed alternative counts as acceptable.
+#
+# Categories (50 queries each, 300 total):
+#   en_words        common English nouns/adjectives   -> Japanese headword
+#   en_verbs        "to X" English verb phrases        -> dictionary-form verb
+#   en_descriptive  descriptive/paraphrased English    -> target Japanese word
+#   ja_words        Japanese kanji-form words           -> exact self-match
+#                     (tests indexing completeness / exact-lookup route)
+#   ja_hiragana     hiragana readings                   -> kanji form (preferred)
+#                     + hiragana self-match
+#   ja_katakana     katakana loanwords                  -> self-match
+#                     (+ unabbreviated form where one commonly exists)
+
+category	query	expected_answers	notes
+
+# --- en_words (50 queries) ---
+en_words	sky	空
+en_words	cat	猫
+en_words	dog	犬
+en_words	water	水
+en_words	fire	火
+en_words	book	本
+en_words	car	車 / 自動車	車 is the everyday word; 自動車 is the formal/technical term
+en_words	house	家
+en_words	school	学校
+en_words	friend	友達
+en_words	family	家族
+en_words	money	お金
+en_words	time	時間
+en_words	morning	朝
+en_words	night	夜
+en_words	rain	雨
+en_words	snow	雪
+en_words	wind	風
+en_words	mountain	山
+en_words	river	川
+en_words	sea	海
+en_words	tree	木
+en_words	flower	花
+en_words	bird	鳥
+en_words	fish	魚
+en_words	door	ドア
+en_words	window	窓
+en_words	table	テーブル
+en_words	chair	椅子
+en_words	phone	電話
+en_words	computer	コンピュータ / パソコン	パソコン is the common colloquial term; コンピュータ is more general/technical
+en_words	music	音楽
+en_words	movie	映画
+en_words	game	ゲーム
+en_words	work	仕事
+en_words	dream	夢
+en_words	love	愛
+en_words	happy	嬉しい	adjective form; 幸せ (happiness) is the noun
+en_words	sad	悲しい
+en_words	hot	暑い / 熱い	暑い = weather/air; 熱い = temperature of an object or food
+en_words	cold	寒い / 冷たい	寒い = weather/air; 冷たい = temperature of an object or food
+en_words	beautiful	美しい / 綺麗 / 素敵	美しい = aesthetic/elegant; 綺麗 = pretty/clean; 素敵 = lovely/nice
+en_words	difficult	難しい
+en_words	train station	駅
+en_words	hospital	病院
+en_words	teacher	先生
+en_words	student	学生
+en_words	library	図書館
+en_words	umbrella	傘 / 雨傘	雨傘 is the explicit rain-umbrella form, less common as a default translation
+en_words	birthday	誕生日
+
+# --- en_verbs (50 queries) ---
+en_verbs	to eat	食べる
+en_verbs	to drink	飲む
+en_verbs	to sleep	寝る
+en_verbs	to run	走る
+en_verbs	to walk	歩く
+en_verbs	to speak	話す
+en_verbs	to listen	聞く
+en_verbs	to read	読む
+en_verbs	to write	書く
+en_verbs	to buy	買う
+en_verbs	to sell	売る
+en_verbs	to forget	忘れる
+en_verbs	to remember	覚える / 思い出す	覚える = to memorize/retain; 思い出す = to recall something specific
+en_verbs	to arrive	入る / 来る	入る = to enter, 来る = to come; 着く is the literal "arrive" but rare as a learner answer
+en_verbs	to leave	出る
+en_verbs	to wait	待つ
+en_verbs	to hurry	急ぐ
+en_verbs	to help	手伝う / 助ける	手伝う = assist with a task; 助ける = rescue/save or help more broadly
+en_verbs	to borrow	借りる
+en_verbs	to lend	貸す
+en_verbs	to see	見る
+en_verbs	to go	行く
+en_verbs	to come	来る
+en_verbs	to make	作る
+en_verbs	to open	開ける / 開く	開ける is transitive; 開く can be transitive or intransitive
+en_verbs	to close	閉める / 閉じる
+en_verbs	to swim	泳ぐ
+en_verbs	to sing	歌う
+en_verbs	to dance	踊る
+en_verbs	to laugh	笑う
+en_verbs	to cry	泣く
+en_verbs	to smile	微笑む
+en_verbs	to think	考える / 思う
+en_verbs	to know	知る
+en_verbs	to understand	分かる
+en_verbs	to teach	教える
+en_verbs	to learn	学ぶ
+en_verbs	to live	住む / 生きる	住む = reside; 生きる = live/be alive — both valid; 有る's "to live" is a minor sense
+en_verbs	to die	死ぬ
+en_verbs	to stand	立つ
+en_verbs	to sit	座る
+en_verbs	to stop	止まる / 止める	止まる is intransitive (something stops); 止める is transitive (you stop something)
+en_verbs	to start	始まる / 始める	始まる is intransitive; 始める is transitive
+en_verbs	to finish	終わる
+en_verbs	to use	使う
+en_verbs	to need	要る / 必要とする
+en_verbs	to want	求める / 望む / 欲する	verb forms of "want"; 欲しい is the い-adjective headword, not a true verb
+en_verbs	to be late	遅れる
+en_verbs	to ask	尋ねる / 問う	尋ねる = ask (a question, someone); 問う = inquire; 頼む/誘う/聞く also valid but excluded
+en_verbs	to answer	答える
+
+# --- en_descriptive (50 queries) ---
+en_descriptive	how do you say thank you in japanese	ありがとう
+en_descriptive	what is the word for weather	天気
+en_descriptive	the vehicle that flies in the sky	飛行機
+en_descriptive	a place where you borrow books	図書館
+en_descriptive	something that is hard to do	難しい
+en_descriptive	a person who teaches students	先生
+en_descriptive	a quiet and peaceful place	静か	静かな場所 is compositional, not a dictionary entry — 静か is the actual headword
+en_descriptive	the season after winter	春
+en_descriptive	a small animal that says meow	猫
+en_descriptive	the opposite of hot	寒い
+en_descriptive	a place where you buy food	スーパー
+en_descriptive	when you arrive somewhere late	遅刻
+en_descriptive	a document that proves your identity	身分証明書
+en_descriptive	the meal you eat in the morning	朝食
+en_descriptive	a place where you watch movies	映画館
+en_descriptive	how do you say hospital in japanese	病院
+en_descriptive	a promise you make to someone	約束
+en_descriptive	a word for feeling very sleepy	眠い
+en_descriptive	a word for feeling very tired	疲れた
+en_descriptive	the place where trains stop	駅
+en_descriptive	a word meaning very delicious	美味しい
+en_descriptive	someone who studies at a school	学生
+en_descriptive	a large animal that barks	犬
+en_descriptive	the opposite of big	小さい
+en_descriptive	a word for a feeling of loneliness	寂しい
+en_descriptive	the season when it snows the most	冬
+en_descriptive	a vehicle with four wheels you drive	車
+en_descriptive	a place where sick people go for treatment	病院
+en_descriptive	a word for someone you love romantically	恋人
+en_descriptive	the meal eaten in the evening	夕食
+en_descriptive	a word for being extremely happy	嬉しい
+en_descriptive	a word for something very expensive	高い
+en_descriptive	a word for something cheap	安い
+en_descriptive	a person who cooks food professionally	料理人 / シェフ
+en_descriptive	a small yellow fruit that is sour	レモン
+en_descriptive	the day before today	昨日
+en_descriptive	the day after today	明日
+en_descriptive	a place where you can swim	プール
+en_descriptive	a word for feeling nervous or anxious	不安
+en_descriptive	a casual way to say goodbye	じゃあね
+en_descriptive	a polite way to say goodbye	さようなら
+en_descriptive	people who are close to you but not family	友達
+en_descriptive	the tool you use to open a locked door	鍵
+en_descriptive	a feeling of wanting to eat something	空腹 / 空腹感 / お腹が空く / お腹が空いた	お腹が空く is the dictionary headword; お腹が空いた is the conjugated everyday form people actually say
+en_descriptive	a word for something that is boring	つまらない
+en_descriptive	a word for something that is interesting	面白い
+en_descriptive	the place where airplanes take off	空港
+en_descriptive	a word for a sudden strong urge to sleep	眠気
+en_descriptive	a formal word for a workplace	職場
+en_descriptive	a word for congratulations	おめでとう / おめでとうございます	おめでとうございます is the polite/formal form
+
+# --- ja_words (50 queries) ---
+ja_words	食べる	食べる
+ja_words	空	空
+ja_words	図書館	図書館
+ja_words	電車	電車
+ja_words	約束	約束
+ja_words	本	本
+ja_words	水	水
+ja_words	学校	学校
+ja_words	犬	犬
+ja_words	車	車
+ja_words	家	家
+ja_words	先生	先生
+ja_words	日本	日本
+ja_words	山	山
+ja_words	川	川
+ja_words	猫	猫
+ja_words	友達	友達
+ja_words	学生	学生
+ja_words	病院	病院
+ja_words	教室	教室
+ja_words	会社	会社
+ja_words	仕事	仕事
+ja_words	電話	電話
+ja_words	天気	天気
+ja_words	音楽	音楽
+ja_words	映画	映画
+ja_words	時間	時間
+ja_words	部屋	部屋
+ja_words	公園	公園
+ja_words	銀行	銀行
+ja_words	駅	駅
+ja_words	空港	空港
+ja_words	新聞	新聞
+ja_words	手紙	手紙
+ja_words	財布	財布
+ja_words	眼鏡	眼鏡
+ja_words	携帯電話	携帯電話
+ja_words	誕生日	誕生日
+ja_words	結婚	結婚
+ja_words	旅行	旅行
+ja_words	料理	料理
+ja_words	野菜	野菜
+ja_words	果物	果物
+ja_words	動物	動物
+ja_words	植物	植物
+ja_words	世界	世界
+ja_words	歴史	歴史
+ja_words	科学	科学
+ja_words	経済	経済
+ja_words	文化	文化
+
+# --- ja_hiragana (50 queries) ---
+ja_hiragana	たべる	食べる / たべる
+ja_hiragana	やくそく	約束 / やくそく
+ja_hiragana	としょかん	図書館 / としょかん
+ja_hiragana	ねこ	猫 / ねこ
+ja_hiragana	いぬ	犬 / いぬ
+ja_hiragana	ありがとう	有難う / ありがとう	有難う is a legitimate but old-fashioned kanji rendering; ありがとう is standard today
+ja_hiragana	こんにちは	今日は / こんにちは	今日は is the etymological kanji form, essentially never used in modern writing
+ja_hiragana	おはよう	お早う / おはよう	お早う is likewise archaic; おはよう is standard today
+ja_hiragana	ほん	本 / ほん
+ja_hiragana	みず	水 / みず
+ja_hiragana	がっこう	学校 / がっこう
+ja_hiragana	せんせい	先生 / せんせい
+ja_hiragana	がくせい	学生 / がくせい
+ja_hiragana	びょういん	病院 / びょういん
+ja_hiragana	でんしゃ	電車 / でんしゃ
+ja_hiragana	くるま	車 / くるま
+ja_hiragana	いえ	家 / いえ
+ja_hiragana	やま	山 / やま
+ja_hiragana	かわ	川 / かわ
+ja_hiragana	うみ	海 / うみ
+ja_hiragana	そら	空 / そら
+ja_hiragana	あめ	雨 / あめ
+ja_hiragana	ゆき	雪 / ゆき
+ja_hiragana	かぜ	風 / かぜ
+ja_hiragana	き	木 / き
+ja_hiragana	はな	花 / はな
+ja_hiragana	とり	鳥 / とり
+ja_hiragana	さかな	魚 / さかな
+ja_hiragana	でんわ	電話 / でんわ
+ja_hiragana	おんがく	音楽 / おんがく
+ja_hiragana	えいが	映画 / えいが
+ja_hiragana	じかん	時間 / じかん
+ja_hiragana	へや	部屋 / へや
+ja_hiragana	こうえん	公園 / こうえん
+ja_hiragana	ぎんこう	銀行 / ぎんこう
+ja_hiragana	えき	駅 / えき
+ja_hiragana	くうこう	空港 / くうこう
+ja_hiragana	しんぶん	新聞 / しんぶん
+ja_hiragana	てがみ	手紙 / てがみ
+ja_hiragana	さいふ	財布 / さいふ
+ja_hiragana	めがね	眼鏡 / めがね
+ja_hiragana	たんじょうび	誕生日 / たんじょうび
+ja_hiragana	りょこう	旅行 / りょこう
+ja_hiragana	りょうり	料理 / りょうり
+ja_hiragana	やさい	野菜 / やさい
+ja_hiragana	くだもの	果物 / くだもの
+ja_hiragana	どうぶつ	動物 / どうぶつ
+ja_hiragana	しょくじ	食事 / しょくじ
+ja_hiragana	かいもの	買い物 / かいもの
+ja_hiragana	さようなら	さようなら	no common kanji form in modern usage
+
+# --- ja_katakana (50 queries) ---
+ja_katakana	パン	パン
+ja_katakana	テレビ	テレビ / テレビジョン	unabbreviated form
+ja_katakana	コーヒー	コーヒー
+ja_katakana	パソコン	パソコン
+ja_katakana	ゲーム	ゲーム
+ja_katakana	スーパー	スーパー / スーパーマーケット	unabbreviated form
+ja_katakana	タクシー	タクシー
+ja_katakana	ホテル	ホテル
+ja_katakana	カメラ	カメラ
+ja_katakana	ドア	ドア
+ja_katakana	テーブル	テーブル
+ja_katakana	レストラン	レストラン
+ja_katakana	バス	バス
+ja_katakana	タオル	タオル
+ja_katakana	ノート	ノート
+ja_katakana	ペン	ペン
+ja_katakana	アイスクリーム	アイスクリーム
+ja_katakana	チョコレート	チョコレート
+ja_katakana	サラダ	サラダ
+ja_katakana	ジュース	ジュース
+ja_katakana	ビール	ビール
+ja_katakana	ワイン	ワイン
+ja_katakana	レモン	レモン
+ja_katakana	トマト	トマト
+ja_katakana	バナナ	バナナ
+ja_katakana	オレンジ	オレンジ
+ja_katakana	チーズ	チーズ
+ja_katakana	ハンバーガー	ハンバーガー
+ja_katakana	ピザ	ピザ
+ja_katakana	サンドイッチ	サンドイッチ
+ja_katakana	エレベーター	エレベーター
+ja_katakana	エスカレーター	エスカレーター
+ja_katakana	アパート	アパート
+ja_katakana	マンション	マンション
+ja_katakana	デパート	デパート	standalone clipped loanword; no common unabbreviated form in everyday use
+ja_katakana	コンビニ	コンビニ / コンビニエンスストア	unabbreviated form
+ja_katakana	インターネット	インターネット
+ja_katakana	メール	メール
+ja_katakana	カード	カード
+ja_katakana	クレジットカード	クレジットカード
+ja_katakana	パスポート	パスポート
+ja_katakana	チケット	チケット
+ja_katakana	スポーツ	スポーツ
+ja_katakana	サッカー	サッカー
+ja_katakana	テニス	テニス
+ja_katakana	ピアノ	ピアノ
+ja_katakana	ギター	ギター
+ja_katakana	ラジオ	ラジオ
+ja_katakana	カレンダー	カレンダー
+ja_katakana	シャワー	シャワー

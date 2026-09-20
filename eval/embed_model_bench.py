@@ -5,6 +5,7 @@ Compare candidate dense embedding models on the gold set (vector-only, in-memory
 This is a one-off model-selection benchmark, independent of Qdrant: every
 candidate embeds the full ingest subset of chunks.json, then we measure
 Hit@k / MRR for the gold queries by brute-force cosine similarity.
+Gold loading lives in eval/eval.py.
 
 Usage:
     python eval/embed_model_bench.py
@@ -22,8 +23,10 @@ from fastembed import TextEmbedding
 
 ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(ROOT))
+sys.path.insert(0, str(Path(__file__).parent))
 
 from app.embedder import CACHE_DIR  # noqa: E402
+from eval import GOLD, load_gold_qrels  # noqa: E402
 from scripts.ingest import load_chunks  # noqa: E402
 
 DEFAULT_MODELS = [
@@ -45,10 +48,10 @@ def evaluate(model_name: str, chunks: list[dict], gold: list[dict]) -> dict:
     queries = np.array(list(model.query_embed([g["query"] for g in gold])), dtype=np.float32)
     queries /= np.linalg.norm(queries, axis=1, keepdims=True)
 
-    hits = {k: 0 for k in K_VALUES}
+    hits = dict.fromkeys(K_VALUES, 0)
     rr_sum = 0.0
     per_category: dict[str, list[float]] = {}
-    for g, qvec in zip(gold, queries):
+    for g, qvec in zip(gold, queries, strict=True):
         top = ids[np.argsort(-(docs @ qvec))[: max(K_VALUES)]].tolist()
         rank = next((i for i, pid in enumerate(top, 1) if pid in g["relevant_ids"]), None)
         for k in K_VALUES:
@@ -72,10 +75,12 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--models", nargs="+", default=DEFAULT_MODELS)
     parser.add_argument("--out", type=Path, default=ROOT / "eval" / "results" / "embed_model_bench.json")
+    parser.add_argument("--subsets", nargs="+", default=list(GOLD), choices=list(GOLD),
+                        metavar="NAME", help="gold subsets to evaluate (default: all)")
     args = parser.parse_args()
 
-    chunks = load_chunks(ingest_all=False)
-    gold = json.loads((ROOT / "eval" / "gold_set.json").read_text(encoding="utf-8"))["queries"]
+    chunks = load_chunks(common_only=True)
+    gold = load_gold_qrels(tuple(args.subsets))
     print(f"{len(chunks):,} chunks, {len(gold)} gold queries\n")
 
     results = []

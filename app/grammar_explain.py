@@ -2,12 +2,26 @@
 LLM-powered, JLPT-level-calibrated grammar explanations via Cohere.
 
 Reads COHERE_API_KEY from .env (or the environment). Two prompt variants are
-kept side by side so eval/llm_eval.py can compare them; the app uses the
+kept side by side so eval/eval.py --llm can compare them; the app uses the
 level-aware one (see eval/results/llm_eval.md).
+
+Level calibration is grounded in the JLPT's own level descriptions and the
+commonly-cited kanji-count estimates (JLPT stopped publishing official
+vocab/kanji lists in 2010, but exam-derived estimates are consistent across
+independent sources): N5/N4 are explicitly "basic Japanese mainly learned in
+class" (JLPT's own wording) and benefit from plain English and analogies;
+N3 is the acknowledged bridging level where standard terminology gets
+introduced; N2/N1 assume real-world fluency, so explanations there should
+read as notes between competent speakers, not lessons — concise, precise,
+nuance-focused. `_LEVEL` below encodes that progression explicitly (style,
+target word count, bullet range) instead of applying one flat length/tone
+ceiling to every level, which was the previous version's core gap.
 """
 
 import re
 import time
+from collections.abc import Iterator
+from dataclasses import dataclass
 from functools import lru_cache
 
 import cohere
@@ -18,28 +32,84 @@ _LEAKED_SPECIAL_TOKEN = re.compile(r"<\|[^|]*\|>.*", re.DOTALL)
 
 JLPT_LEVELS = ("N5", "N4", "N3", "N2", "N1")
 
-# Human-readable JLPT level descriptions used inside the prompt
-_JLPT_DESC: dict[str, str] = {
-    "N5": "absolute beginner — knows hiragana, katakana, ~100 kanji, very basic grammar (は/が/を/です)",
-    "N4": "beginner — knows ~300 kanji, basic verb conjugations, simple sentence patterns",
-    "N3": "intermediate — knows ~650 kanji, can read everyday texts with some difficulty",
-    "N2": "upper-intermediate — knows ~1000 kanji, reads most Japanese with a dictionary",
-    "N1": "advanced — knows 2000+ kanji, understands complex and nuanced Japanese",
+
+@dataclass(frozen=True)
+class LevelConfig:
+    desc: str  # learner profile, injected into the prompt
+    style: str  # tone/depth instruction, injected into the system prompt
+    bullets: str  # e.g. "4-6"
+    words: int  # target word ceiling for this level
+    max_tokens: int  # response token ceiling (thinking + text)
+
+
+_LEVEL: dict[str, LevelConfig] = {
+    "N5": LevelConfig(
+        desc="absolute beginner — knows hiragana, katakana, ~100 kanji, only は/が/を/です-level grammar",
+        style=(
+            "Use plain, everyday English with no jargon. Briefly define any grammar term the "
+            "first time you use it, in your own words (e.g. \"particle — a small word marking "
+            "the noun's role\"). Include one short comparison to a similar English construction "
+            "where it genuinely clarifies the pattern."
+        ),
+        bullets="4-6",
+        words=280,
+        max_tokens=950,
+    ),
+    "N4": LevelConfig(
+        desc="beginner — knows ~300 kanji, basic verb conjugations, simple sentence patterns",
+        style=(
+            "Use mostly plain English. You may name a grammar form (e.g. \"te-form\"), but "
+            "briefly say what it does the first time. A short English comparison is fine but "
+            "not required."
+        ),
+        bullets="4-5",
+        words=220,
+        max_tokens=800,
+    ),
+    "N3": LevelConfig(
+        desc="intermediate — knows ~650 kanji, can read everyday texts with some difficulty",
+        style=(
+            "Use standard grammar terminology (て-form, potential form, conditional, etc.) "
+            "without redefining basics. Briefly note any nuance that distinguishes this pattern "
+            "from a similar one the learner may already know."
+        ),
+        bullets="3-5",
+        words=170,
+        max_tokens=650,
+    ),
+    "N2": LevelConfig(
+        desc="upper-intermediate — knows ~1000 kanji, reads most Japanese with a dictionary",
+        style=(
+            "Assume comfort with standard grammar terminology — do not define basic terms. "
+            "Be efficient: focus on nuance, formality level, and why this construction was used "
+            "over a close alternative."
+        ),
+        bullets="3-4",
+        words=120,
+        max_tokens=550,
+    ),
+    "N1": LevelConfig(
+        desc="advanced — knows 2000+ kanji, understands complex and nuanced Japanese",
+        style=(
+            "Be maximally concise and precise, as if writing a note to a fluent peer. Use exact "
+            "linguistic terminology with no definitions. Skip anything an N2 speaker would "
+            "already know — cover only subtle nuance, register, or literary/rhetorical effect."
+        ),
+        bullets="2-4",
+        words=90,
+        max_tokens=450,
+    ),
 }
 
-LEVEL_AWARE_SYSTEM = """\
-You are a Japanese language teacher who explains Japanese grammar concisely
-and at exactly the right difficulty for the student's JLPT level.
+_BASE_RULES = """\
+You are a Japanese language teacher explaining grammar to a student at a \
+specific JLPT level.
 
-Rules:
-- Use 3–6 bullet points maximum.
+Rules that apply regardless of level:
 - Bold the grammar pattern name on each bullet: **〜ている** → explanation.
-- For N5/N4: use plain English, avoid jargon, give an English analogy.
-- For N3: introduce standard grammar terminology (て-form, potential form …).
-- For N2/N1: use precise linguistic terms; mention nuance and formality.
 - Do NOT repeat the sentence or its translation.
-- Keep the total response under 200 words.
-- Focus on grammar patterns, not vocabulary.\
+- Focus on grammar patterns, not vocabulary.
+- Output Markdown bullet points only — no preamble, no closing summary.\
 """
 
 GENERIC_SYSTEM = """\
@@ -48,6 +118,21 @@ sentence in concise Markdown bullet points (3–6 bullets, under 200 words).
 Bold the grammar pattern name on each bullet. Do not repeat the sentence or
 its translation. Focus on grammar, not vocabulary.\
 """
+
+
+def level_aware_system(jlpt_level: str) -> str:
+    """Build a system prompt whose depth, tone, and length scale with
+    `jlpt_level` — N5 gets more room and plain-English scaffolding, N1 gets
+    a hard, terse ceiling. Falls back to N3 (the bridging-level default) if
+    an unrecognised level string slips through."""
+    cfg = _LEVEL.get(jlpt_level, _LEVEL["N3"])
+    return (
+        f"{_BASE_RULES}\n\n"
+        f"Student level: {jlpt_level} ({cfg.desc}).\n"
+        f"Depth and tone: {cfg.style}\n"
+        f"Length: {cfg.bullets} bullets, {cfg.words} words maximum — treat this as a hard "
+        f"ceiling, not a target to fill."
+    )
 
 
 @lru_cache(maxsize=1)
@@ -82,8 +167,8 @@ def chat(
     user: str,
     *,
     model: str = COHERE_MODEL,
-    thinking_budget: int = 120,
-    max_tokens: int = 600,
+    thinking_budget: int = 150,
+    max_tokens: int = 900,
     retries: int = 3,
     **kwargs,
 ) -> str:
@@ -94,11 +179,10 @@ def chat(
     spurious 422 INVALID_TOOL_GENERATION when thinking is disabled, even
     with no tools configured — but `thinking_budget` caps how many tokens it
     may spend reasoning, which keeps free-tier token usage low without
-    reintroducing that flakiness. Tune per call site: short structured
-    outputs (query rewriting, judging) need a small budget; multi-bullet
-    explanations need more room. `max_tokens` bounds the whole response
-    (thinking + text) and should leave enough headroom above the budget for
-    the actual answer.
+    reintroducing that flakiness. `max_tokens` bounds the whole response
+    (thinking + text); callers should pass a per-level ceiling with enough
+    headroom above `thinking_budget` for the target word count (see
+    `LevelConfig.max_tokens`).
 
     If generation is cut off by `max_tokens` mid-answer, the model can spill
     raw reasoning/channel markers (e.g. "<|channel|>...") into the text
@@ -130,17 +214,10 @@ def chat(
     raise last_exc
 
 
-def rerank(query: str, documents: list[str], top_n: int, *, model: str, retries: int = 8):
-    """Cohere Rerank with retry/backoff on trial-key rate limits."""
-    return _with_retries(
-        lambda: cohere_client().rerank(model=model, query=query, documents=documents, top_n=top_n), retries
-    )
-
-
 def level_aware_prompt(sentence: str, english: str, jlpt_level: str) -> str:
-    desc = _JLPT_DESC.get(jlpt_level, "intermediate learner")
+    cfg = _LEVEL.get(jlpt_level, _LEVEL["N3"])
     return (
-        f"Explain the Japanese grammar patterns for a {jlpt_level} learner ({desc}).\n\n"
+        f"Explain the Japanese grammar patterns for a {jlpt_level} learner ({cfg.desc}).\n\n"
         f"Sentence: {sentence}\nMeaning:  {english}"
     )
 
@@ -160,13 +237,64 @@ def explain_grammar(
     """
     Generate a grammar explanation for `sentence`.
 
-    level_aware=True (default, used by the app) calibrates the explanation to
-    `jlpt_level`; False uses the one-size-fits-all baseline prompt.
-    Returns Markdown bullet points (~100–200 words).
+    level_aware=True (default, used by the app) calibrates both the *depth*
+    (plain English + analogies at N5, terse jargon at N1) and the *length*
+    (per-level word ceiling, see `_LEVEL`) to `jlpt_level`. False uses the
+    one-size-fits-all baseline prompt (fixed ~200-word cap for every level)
+    — kept only for eval/eval.py --llm's level-aware-vs-generic comparison.
     """
-    # 200-word cap in the prompt is ~280 tokens; token_budget=150 covers
-    # reasoning for even N1-level sentences (see eval/results/llm_eval.md).
-    kwargs = dict(model=model, thinking_budget=150, max_tokens=900)
     if level_aware:
-        return chat(LEVEL_AWARE_SYSTEM, level_aware_prompt(sentence, english, jlpt_level), **kwargs)
-    return chat(GENERIC_SYSTEM, generic_prompt(sentence, english), **kwargs)
+        cfg = _LEVEL.get(jlpt_level, _LEVEL["N3"])
+        return chat(
+            level_aware_system(jlpt_level),
+            level_aware_prompt(sentence, english, jlpt_level),
+            model=model,
+            thinking_budget=150,
+            max_tokens=cfg.max_tokens,
+        )
+    return chat(GENERIC_SYSTEM, generic_prompt(sentence, english), model=model, thinking_budget=150, max_tokens=900)
+
+
+def explain_grammar_stream(
+    sentence: str,
+    english: str,
+    jlpt_level: str = "N5",
+    *,
+    model: str = COHERE_MODEL,
+) -> Iterator[str]:
+    """
+    Generator variant of `explain_grammar` for `st.write_stream` / SSE.
+
+    Yields answer text chunks as Cohere streams them (reasoning blocks are
+    dropped). Stream creation retries via `_with_retries`; if the stream
+    fails before any text was emitted, falls back to the blocking
+    `explain_grammar` (which has the same retry/backoff) and yields its
+    result as a single chunk. Once text has been emitted, errors propagate —
+    partial output has already been shown and can't be safely retried.
+    """
+    cfg = _LEVEL.get(jlpt_level, _LEVEL["N3"])
+    thinking_budget = 150
+    emitted = False
+    try:
+        stream = _with_retries(
+            lambda: cohere_client().chat_stream(
+                model=model,
+                messages=[{"role": "system", "content": level_aware_system(jlpt_level)},
+                          {"role": "user", "content": level_aware_prompt(sentence, english, jlpt_level)}],
+                thinking={"type": "enabled", "token_budget": thinking_budget},
+                max_tokens=cfg.max_tokens,
+            ),
+            retries=3,
+        )
+        for event in stream:
+            if event.type == "content-delta":
+                text = getattr(getattr(getattr(event.delta, "message", None), "content", None), "text", None)
+                if text:
+                    emitted = True
+                    yield text
+            elif event.type == "message-end" and getattr(event.delta, "finish_reason", None) == "MAX_TOKENS":
+                yield "\n\n*(truncated)*"
+    except Exception:
+        if emitted:
+            raise
+        yield explain_grammar(sentence, english, jlpt_level, model=model)

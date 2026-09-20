@@ -52,6 +52,33 @@ def is_japanese(text: str) -> bool:
     return bool(_JAPANESE.search(text))
 
 
+_PAREN_TAIL = re.compile(r"\s*\(.*")
+_TRAILING_PUNCT = re.compile(r"[,;:.!\s]+$")
+
+
+def gloss_key(text: str) -> str:
+    """
+    Normalise a gloss (or query) for exact keyword matching: lowercase, drop
+    parenthetical qualifiers ("dog (Canis lupus)" → "dog"), collapse spaces.
+    """
+    key = _PAREN_TAIL.sub("", text.strip().lower())
+    return _TRAILING_PUNCT.sub("", " ".join(key.split()))
+
+
+def gloss_keys(gloss: str) -> set[str]:
+    """
+    Match keys for one gloss: the normalised form plus, for verb glosses, the
+    infinitive-stripped variant ("to eat" also matches "eat").
+    """
+    key = gloss_key(gloss)
+    if not key:
+        return set()
+    keys = {key}
+    if key.startswith("to "):
+        keys.add(key[3:])
+    return keys
+
+
 def normalise(query: str) -> str:
     """Trim, drop trailing punctuation, lowercase English (Japanese left untouched)."""
     q = _TRAILING.sub("", query.strip())
