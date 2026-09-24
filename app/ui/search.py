@@ -9,7 +9,7 @@ from app.config import COHERE_MODEL
 from app.grammar_explain import JLPT_LEVELS, explain_grammar_stream
 from app.kanji_lookup import is_kanji, kanji_in, random_kanji
 from app.query_rewrite import is_japanese
-from app.retrieval import headword_index, search
+from app.retrieval import entry_forms, headword_index, search
 from app.ui.common import (
     APP_ICON,
     APP_NAME,
@@ -229,7 +229,7 @@ if last := st.session_state.last_search:
         st.caption(f"Searched for **{resp.rewrite.query}** (rewritten from “{resp.rewrite.original}”, {resp.rewrite.method})")
 
     searched = resp.rewrite.query
-    exact = any((r.get("kanji_form") or r.get("reading")) == searched for r in resp.results)
+    exact = any(searched in entry_forms(r) for r in resp.results)
     if resp.results and is_japanese(searched) and not exact:
         hint = " Tip: enter a single kanji at a time for its full details." if sum(map(is_kanji, searched)) > 1 else ""
         st.info(f"“{searched}” is not a JMdict entry — showing the closest matches instead.{hint}", icon=":material/info:")

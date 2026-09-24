@@ -1,5 +1,5 @@
 """
-Reikun (例訓) — Japanese Assistant.
+Reikun (例訓) — Semantic Japanese Dictionary.
 
 Entry point for Streamlit multipage navigation:
 

@@ -13,8 +13,8 @@ from app.kanji_lookup import is_kanji, lookup_kanji, stroke_svg
 from scripts.feedback_log import log_kanji_lookup
 
 APP_TITLE = "Reikun (例訓)"
-APP_NAME = "Reikun (例訓) — Japanese Assistant"
-APP_ICON = ":material/translate:"
+APP_NAME = "Reikun (例訓) — Semantic Japanese Dictionary"
+APP_ICON = str(Path(__file__).resolve().parent.parent / "assets" / "logo.png")
 
 _CSS_PATH = Path(__file__).with_name("style.css")
 
@@ -367,11 +367,22 @@ def show_pending_dialog() -> None:
 
 
 def footer() -> None:
+    """Project copyright first, then the third-party data attributions the
+    CC BY-SA licences require — the latter smaller and dimmer (.footer-data),
+    since they are a legal notice rather than something to read."""
     st.divider()
-    st.caption(
-        "Data: [JMdict & KANJIDIC2 © EDRDG](https://www.edrdg.org/edrdg/licence.html) "
-        "([CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/)) · "
-        "[Tatoeba](https://tatoeba.org) ([CC BY 2.0 FR](https://creativecommons.org/licenses/by/2.0/fr/)) · "
-        "[KanjiVG © Ulrich Apel](https://kanjivg.tagaini.net/) "
-        "([CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/))"
+    st.markdown(
+        '<p class="footer-license">Reikun © 2026 Aniket Satbhai · '
+        '<a href="https://github.com/AnkS4/Reikun/blob/main/LICENSE">Apache-2.0</a></p>',
+        unsafe_allow_html=True,
+    )
+    st.markdown(
+        '<p class="footer-data">Data: '
+        '<a href="https://www.edrdg.org/edrdg/licence.html">JMdict &amp; KANJIDIC2 © EDRDG</a> '
+        '(<a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>) · '
+        '<a href="https://tatoeba.org">Tatoeba</a> '
+        '(<a href="https://creativecommons.org/licenses/by/2.0/fr/">CC BY 2.0 FR</a>) · '
+        '<a href="https://kanjivg.tagaini.net/">KanjiVG © Ulrich Apel</a> '
+        '(<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC BY-SA 3.0</a>)</p>',
+        unsafe_allow_html=True,
     )

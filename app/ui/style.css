@@ -106,6 +106,28 @@ div:has(> .st-key-query_row) {
 .kanji-tip:focus-within > .kanji-tip-body { display: block; }
 .kanji-tip-body .big { display: block; font-size: 1.9rem; font-weight: 600; line-height: 1.1; margin-bottom: .2rem; }
 
+/* ── Footer ──────────────────────────────────────────────────────────────── */
+.stMarkdown .footer-license {
+  font-size: .95rem;
+  font-weight: 500;
+  line-height: 1.5;
+  opacity: .95;
+  margin: 0 0 .15rem;
+}
+.stMarkdown .footer-license a { color: inherit; text-decoration: underline; }
+.stMarkdown .footer-data {
+  font-size: .72rem;
+  line-height: 1.6;
+  opacity: .5;
+  margin: 0;
+}
+.stMarkdown .footer-data a {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: rgba(128, 128, 128, .45);
+}
+.stMarkdown .footer-data a:hover { opacity: .8; }
+
 /* ── Kanji detail card ───────────────────────────────────────────────────── */
 /* .stMarkdown ancestor lifts specificity past Streamlit's own
    ".st-emotion-cache-* p { font-size: inherit }" (class+element beats the

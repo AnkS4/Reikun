@@ -1,0 +1,26 @@
+Reikun (例訓)
+Copyright 2026 Aniket Satbhai
+
+This project includes dictionary and linguistic data that remains under
+the licenses of its original sources:
+
+- JMdict — Japanese-Multilingual Dictionary, (c) Jim Breen and the
+  Electronic Dictionary Research and Development Group (EDRDG).
+  Licensed under CC BY-SA 4.0
+  https://creativecommons.org/licenses/by-sa/4.0/
+
+- KANJIDIC2 — kanji dictionary, (c) Jim Breen and EDRDG.
+  Licensed under CC BY-SA 4.0
+  https://creativecommons.org/licenses/by-sa/4.0/
+
+- Tatoeba Corpus — example sentences.
+  Licensed under CC BY 2.0 FR
+  https://creativecommons.org/licenses/by/2.0/fr/
+
+- KanjiVG — kanji stroke-order data, (c) Ulrich Apel.
+  Licensed under CC BY-SA 3.0
+  https://creativecommons.org/licenses/by-sa/3.0/
+
+Files under data/ derived from these sources (e.g. chunks.json,
+kanji_table.json, data/kanjivg/) are distributed under their original
+licenses, not the Apache-2.0 license covering the code.

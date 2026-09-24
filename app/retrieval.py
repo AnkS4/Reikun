@@ -106,12 +106,23 @@ def _hit_to_dict(hit, score: float | None = None) -> dict:
         "id": int(hit.id),
         "kanji_form": p.get("kanji_form"),
         "reading": p.get("reading", ""),
+        "kanji_forms": p.get("kanji_forms") or [],
+        "readings": p.get("readings") or [],
         "meanings": p.get("meanings", []),
         "example_sentences": p.get("example_sentences", []),
         "is_common": p.get("is_common", False),
         "text": p.get("text", ""),
         "score": round(float(hit.score if score is None else score), 4),
     }
+
+
+def entry_forms(r: dict) -> tuple:
+    """Every written form of a result — primary kanji_form/reading plus the
+    variant lists — the same fields _exact_filter matches a Japanese query
+    against (a kana query like しごと hits via `reading`, an alternate like
+    しまうま via `readings`)."""
+    return (r.get("kanji_form"), r.get("reading"),
+            *(r.get("kanji_forms") or []), *(r.get("readings") or []))
 
 
 def _exact_filter(query: str) -> Filter:
@@ -393,9 +404,7 @@ def _search_cached(
         meta["route"] = route
         # A Japanese query with no exact headword hit may be a compound
         # expression — decompose it so the UI can show the parts.
-        if route == "ja" and not any(
-            rw.query in (r.get("kanji_form"), r.get("reading")) for r in results
-        ):
+        if route == "ja" and not any(rw.query in entry_forms(r) for r in results):
             try:
                 if segments := segment_japanese(rw.query):
                     meta["segments"] = segments

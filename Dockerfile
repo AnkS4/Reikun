@@ -3,8 +3,10 @@
 FROM python:3.13-slim-trixie
 
 LABEL org.opencontainers.image.title="Reikun" \
-      org.opencontainers.image.description="例訓 (れいくん) - Japanese Sentence-Mining & Kanji Assistant" \
-      org.opencontainers.image.source="https://github.com/AnkS4/Reikun"
+      org.opencontainers.image.description="例訓 (れいくん) - Semantic Japanese Dictionary" \
+      org.opencontainers.image.source="https://github.com/AnkS4/Reikun" \
+      org.opencontainers.image.authors="Aniket Satbhai" \
+      org.opencontainers.image.licenses="Apache-2.0"
 
 # PYTHONDONTWRITEBYTECODE: nothing should write .pyc at *runtime* — everything
 # importable is precompiled at build time (UV_COMPILE_BYTECODE for deps,

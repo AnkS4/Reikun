@@ -1,6 +1,9 @@
-# Reikun (例訓) — Japanese Assistant
+<p align="center">
+  <img src="docs/logos/icon-rei-lens.png" alt="Reikun logo" width="128">
+</p>
+<h1 align="center">Reikun (例訓) — Semantic Japanese Dictionary</h1>
 
-An end-to-end RAG application that helps Japanese learners find natural example sentences from an English or Japanese word query, look up any kanji in those sentences in detail, and get a JLPT-level-calibrated grammar explanation on demand.
+A semantic Japanese dictionary that helps learners find natural example sentences from an English or Japanese word query, look up any kanji in those sentences in detail, and get a JLPT-level-calibrated grammar explanation on demand.
 
 ## Demo
 
@@ -298,3 +301,9 @@ Headline results (`eval/results/retrieval_eval.md`, 300-query gold set): auto + 
 - **KANJIDIC2**: Kanji dictionary data © Jim Breen & EDRDG (CC BY-SA 4.0)
 - **Tatoeba Corpus**: Example sentences (CC-BY 2.0 FR)
 - **KanjiVG**: Kanji stroke order diagrams (CC BY-SA 3.0)
+
+## License
+
+Code is licensed under [Apache-2.0](LICENSE). Dictionary data remains under its
+source licenses (see [NOTICE](NOTICE)) — derived files under `data/` are
+share-alike per CC BY-SA.
