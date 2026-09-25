@@ -9,7 +9,7 @@ from app.config import COHERE_MODEL
 from app.grammar_explain import JLPT_LEVELS, explain_grammar_stream
 from app.kanji_lookup import is_kanji, kanji_in, random_kanji
 from app.query_rewrite import is_japanese
-from app.retrieval import entry_forms, headword_index, search
+from app.retrieval import entry_forms, is_headword, search
 from app.ui.common import (
     APP_ICON,
     APP_NAME,
@@ -19,9 +19,8 @@ from app.ui.common import (
     furigana,
     header,
     inject_css,
-    open_kanji_dialog,
     render_kanji_card,
-    show_pending_dialog,
+    search_kanji,
 )
 from scripts.feedback_log import log_explanation, log_feedback, log_kanji_lookup, log_search
 
@@ -31,8 +30,8 @@ st.session_state.setdefault("explanations", {})
 st.session_state.setdefault("last_search", None)
 
 TAGLINE = ("Type a word or question in English or Japanese — get kanji details, "
-           "real example sentences and level-aware grammar help.")
-EXAMPLES = ("office", "歩く", "魚", "How do you say air conditioner in Japanese")
+           "example sentences and level-aware grammar help.")
+EXAMPLES = ("sea", "歩く", "家", "How do you say air conditioner in Japanese")
 DEFAULT_LEVEL = "N5"
 # Retrieval is ~25 ms, so a page of ten costs the same as five;
 # "Show more" refetches +PAGE_RESULTS.
@@ -52,19 +51,26 @@ def _random_kanji() -> None:
     """Random button → fill the box; the rerun triggers the search."""
     # Restrict to kanji that are themselves JMdict headwords — a lone kanji
     # often isn't a standalone word, so an unrestricted pick showed the card
-    # above an empty result list about a quarter of the time.
+    # above an empty result list about a quarter of the time. Probe with a
+    # filtered count per pick (~1 request each, expected ~1.3 tries) instead
+    # of building headword_index() — that one-time ~40-request scroll was the
+    # slow first click.
     try:
-        st.session_state.q = random_kanji(within=headword_index())
+        for _ in range(8):
+            if is_headword(c := random_kanji()):
+                st.session_state.q = c
+                return
     except Exception:
-        st.session_state.q = random_kanji()  # index unreachable → unrestricted pick
+        pass
+    st.session_state.q = random_kanji()  # Qdrant unreachable / all misses → unrestricted pick
 
 
-# ?kanji=猫 deep link opens the kanji dialog once, then drops the param.
+# ?kanji=猫 deep link (kept for old links) becomes a single-kanji search: the
+# param is dropped and the kanji goes into the URL-bound search box instead.
 if (deep := st.query_params.get("kanji")) is not None:
     del st.query_params["kanji"]
     if is_kanji(deep):
-        st.session_state.kanji_dialog = deep
-        log_kanji_lookup(deep, source="dialog")
+        st.session_state.q = deep
 
 ready, _ = data_status()
 has_results = st.session_state.last_search is not None
@@ -98,7 +104,6 @@ level = str(st.query_params.get("level") or st.session_state.get("level") or DEF
 with row.popover(level, icon=":material/school:", help="JLPT level for grammar explanations"):
     st.segmented_control(
         "JLPT level", JLPT_LEVELS, key="level", bind="query-params", default=DEFAULT_LEVEL,
-        help="Grammar explanations are calibrated to this level — saved in the URL until you change it",
     )
 
 # A new query (or a cleared box) resets pagination to the first page.
@@ -202,7 +207,7 @@ def render_result(r: dict, idx: int) -> None:
             top.badge("common", color="green")
         if chars := kanji_in(head + "".join(ex["japanese"] for ex in examples[:3])):
             key = f"pills_{idx}_{r['id']}"
-            top.pills("Kanji details", chars, key=key, on_change=open_kanji_dialog, args=(key,),
+            top.pills("Kanji details", chars, key=key, on_change=search_kanji, args=(key,),
                       label_visibility="collapsed", help="Click a kanji for stroke order and details")
         st.markdown(f'<p class="meanings">{html.escape("; ".join(r["meanings"][:6]))}</p>', unsafe_allow_html=True)
 
@@ -243,7 +248,13 @@ if last := st.session_state.last_search:
         st.markdown(f"Parsed as: {parts}", unsafe_allow_html=True)
 
     if not resp.results:
-        st.warning("Nothing found. Try a different English or Japanese word.")
+        if last["kanji"]:
+            # A lone kanji that isn't a JMdict headword (進, 猫 is one, 進 isn't):
+            # the card above already shows it in use, so no scary warning.
+            st.info(f"“{last['kanji']}” isn't a standalone dictionary word — see the common words above for it in use.",
+                    icon=":material/info:")
+        else:
+            st.warning("Nothing found. Try a different English or Japanese word.")
     for i, r in enumerate(resp.results):
         render_result(r, i)
     if len(resp.results) >= num_results and num_results < MAX_RESULTS:
@@ -254,5 +265,4 @@ if last := st.session_state.last_search:
 else:
     st.pills("Try an example", EXAMPLES, key="example", on_change=_pick_example, label_visibility="collapsed")
 
-show_pending_dialog()
 footer()

@@ -45,7 +45,7 @@ CREATE TABLE IF NOT EXISTS kanji_lookups (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     ts TEXT NOT NULL,
     kanji TEXT NOT NULL,
-    source TEXT                  -- 'search' | 'dialog'
+    source TEXT                  -- 'search' | 'pill' | 'dialog' (legacy)
 );
 CREATE TABLE IF NOT EXISTS explanations (
     id INTEGER PRIMARY KEY AUTOINCREMENT,

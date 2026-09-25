@@ -3,7 +3,7 @@
 </p>
 <h1 align="center">Reikun (例訓) — Semantic Japanese Dictionary</h1>
 
-A semantic Japanese dictionary that helps learners find natural example sentences from an English or Japanese word query, look up any kanji in those sentences in detail, and get a JLPT-level-calibrated grammar explanation on demand.
+A semantic Japanese dictionary that helps learners find example sentences from an English or Japanese word query, look up any kanji in those sentences in detail, and get a JLPT-level-calibrated grammar explanation on demand.
 
 ## Demo
 
@@ -299,8 +299,8 @@ Headline results (`eval/results/retrieval_eval.md`, 300-query gold set): auto + 
 
 - **JMdict**: Japanese-English dictionary data © Jim Breen & EDRDG (CC BY-SA 4.0)
 - **KANJIDIC2**: Kanji dictionary data © Jim Breen & EDRDG (CC BY-SA 4.0)
-- **Tatoeba Corpus**: Example sentences (CC-BY 2.0 FR)
-- **KanjiVG**: Kanji stroke order diagrams (CC BY-SA 3.0)
+- **Tanaka Corpus / Tatoeba**: Example sentences (CC BY 2.0 FR)
+- **KanjiVG**: Kanji stroke order diagrams © Ulrich Apel (CC BY-SA 3.0)
 
 ## License
 

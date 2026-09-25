@@ -151,6 +151,21 @@ def _primary_filter(query: str) -> Filter:
     ])
 
 
+def is_headword(term: str) -> bool:
+    """True if `term` is a written form of any entry — one filtered count, ~ms.
+
+    Used by the random-kanji button to skip kanji that aren't standalone
+    words. Cheaper than touching headword_index(): that one builds the whole
+    index in a ~40-request scroll on first call, which is what made the first
+    random click slow.
+    """
+    flt = Filter(should=[
+        FieldCondition(key="kanji_form", match=MatchValue(value=term)),
+        FieldCondition(key="kanji_forms", match=MatchValue(value=term)),
+    ])
+    return qdrant_client().count(COLLECTION, count_filter=flt, exact=True).count > 0
+
+
 def _sparse(vec) -> SparseVector:
     return SparseVector(indices=vec.indices.tolist(), values=vec.values.tolist())
 
