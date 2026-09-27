@@ -135,9 +135,7 @@ def rank_of_expected(resp, expected: list[str]) -> int:
 
 def headword_markdown(rows: list[dict], title: str, meta: dict | None = None) -> str:
     lat = [r["latency_ms"] for r in rows]
-    lat_sorted = sorted(lat)
-    n = len(lat_sorted)
-    median = lat_sorted[n // 2] if n % 2 else (lat_sorted[n // 2 - 1] + lat_sorted[n // 2]) / 2
+    n, median = len(lat), statistics.median(lat)
     scored = [r for r in rows if r.get("expected")]
     hit1 = sum(1 for r in scored if r["results"] and _hit(r["results"][0], r["expected"]))
     hit2 = sum(1 for r in scored if any(_hit(res, r["expected"]) for res in r["results"][:2]))

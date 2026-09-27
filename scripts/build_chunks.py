@@ -29,12 +29,15 @@ import re
 import sys
 import xml.etree.ElementTree as ET
 from collections import defaultdict
+from functools import lru_cache
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from wordfreq import tokenize, zipf_frequency  # noqa: E402
+from wordfreq import zipf_frequency  # noqa: E402
 
 from app.config import PROC_DIR, RAW_DIR  # noqa: E402
+from app.headword_index import add_entry, build_trie  # noqa: E402
+from app.kanji_lookup import is_kanji  # noqa: E402
 from app.query_rewrite import gloss_keys  # noqa: E402
 
 log = logging.getLogger(__name__)
@@ -51,32 +54,25 @@ COMMON_PRI = frozenset({"news1", "ichi1", "spec1", "spec2", "gai1"})
 COMMON_PRI2 = frozenset({"news2", "ichi2", "gai2"})
 _NF_RE = re.compile(r"nf(\d{2})")
 
-# Unicode ranges covering CJK kanji
-_CJK_RANGES = [
-    (0x4E00, 0x9FFF),   # CJK Unified Ideographs
-    (0x3400, 0x4DBF),   # CJK Extension A
-    (0xF900, 0xFAFF),   # CJK Compatibility Ideographs
-    (0x20000, 0x2A6DF), # CJK Extension B
-]
-
-
-def is_kanji(ch: str) -> bool:
-    cp = ord(ch)
-    return any(lo <= cp <= hi for lo, hi in _CJK_RANGES)
-
 
 def iter_elements(path: Path, tag: str):
-    """Yield each <tag> element, streaming so the tree never fills memory."""
+    """Yield each <tag> element, streaming so the tree never fills memory.
+
+    `elem.clear()` alone isn't enough: the (now empty) element stays attached
+    to the root, so ~219k husks still accumulate. Clearing the root after each
+    yield drops them — the root's own attributes aren't needed."""
     if not path.exists():
         raise FileNotFoundError(
             f"Missing: {path}\nRun  python scripts/download_edrdg.py  first."
         )
     size_mb = path.stat().st_size / (1024 * 1024)
     log.info("Streaming %s  (%.0f MB) …", path.name, size_mb)
-    for _event, elem in ET.iterparse(path, events=("end",)):
-        if elem.tag == tag:
+    events = ET.iterparse(path, events=("start", "end"))
+    _, root = next(events)
+    for event, elem in events:
+        if event == "end" and elem.tag == tag:
             yield elem
-            elem.clear()
+            root.clear()
 
 
 # ── JMdict parsing ────────────────────────────────────────────────────────────
@@ -120,12 +116,52 @@ def _wf_score(kanji: str | None, kana: str | None, kana_pref: bool) -> float:
     if not form:
         return 0.0
     # wordfreq has no phrase frequencies: for multi-token input it returns
-    # roughly the average of the tokens, so 犬の顔 (4.94) lands next to 犬 (5.10)
-    # and 口にする (5.19) above 食べる (4.92). A phrase is strictly rarer than
+    # roughly the average of the tokens — a phrase is strictly rarer than
     # its rarest token, so charge one Zipf decade (10×) per extra token — still
     # far more conservative than the ~9 decades independence would imply.
-    tokens = tokenize(form, "ja")
-    return round(zipf_frequency(form, "ja") - max(0, len(tokens) - 1), 3)
+    # Tokenized by Sudachi (the runtime segmenter) — wordfreq's own `tokenize`
+    # needs mecab-python3/ipadic, which are no longer dependencies; the shim
+    # in _ja_tokenizer routes wordfreq's ja path through Sudachi instead.
+    # Without Sudachi, return 0.0 — a wrong score is worse than none.
+    if _ja_tokenizer() is None:
+        return 0.0
+    # zipf_frequency tokenizes `form` through the shim; _ja_tokens is cached,
+    # so this second call for the token count is a dict hit, not a re-parse.
+    return round(zipf_frequency(form, "ja") - max(0, len(_ja_tokens(form)) - 1), 3)
+
+
+@lru_cache(maxsize=1)
+def _ja_tokenizer():
+    """Sudachi tokenizer — also shims `wordfreq.mecab` so every ja lookup
+    (zipf_frequency tokenizes internally) uses it instead of the removed
+    mecab-python3. wordfreq lazy-imports wordfreq.mecab per call, so a
+    sys.modules stub installed before the first lookup is enough."""
+    try:
+        from sudachipy import Dictionary
+        for name in ("core", "small"):
+            try:
+                tok = Dictionary(dict=name).tokenizer()
+                break
+            except Exception:
+                pass
+        else:
+            raise RuntimeError("no sudachidict package")
+    except Exception:
+        log.warning("sudachipy unavailable — wf_score returns 0 for all entries")
+        return None
+    import types
+    shim = types.ModuleType("wordfreq.mecab")
+    shim.mecab_tokenize = lambda text, lang: _ja_tokens(text) if lang == "ja" else [text]
+    sys.modules.setdefault("wordfreq.mecab", shim)
+    return tok
+
+
+@lru_cache(maxsize=4096)
+def _ja_tokens(text: str) -> list[str]:
+    """Sudachi surfaces for `text`. Shared by the wordfreq shim and _wf_score,
+    which look up the same form back to back — Sudachi is the dominant cost
+    of the build, so this halves the tokenizer work."""
+    return [m.surface() for m in _ja_tokenizer().tokenize(text)]
 
 
 def _entry_to_chunk(entry: ET.Element) -> dict | None:
@@ -425,6 +461,18 @@ def main() -> None:
     log.info("  Writing %s …", kanji_path.name)
     with open(kanji_path, "w", encoding="utf-8") as f:
         json.dump(kanji_table, f, ensure_ascii=False, separators=(",", ":"))
+
+    # Compact form→[entry, …] map for sentence splits, packed as a marisa
+    # BytesTrie (~26 MB — small enough to commit and ship in the image,
+    # unlike the ~70 MB JSON / ~340 MB in-memory dict it replaced). The app
+    # falls back to a Qdrant scroll rebuild when the file is absent, through
+    # the same add_entry/build_trie, so both paths produce identical tries.
+    index: dict[str, list[dict]] = {}
+    for c in chunks:
+        add_entry(index, c)
+    index_path = PROC_DIR / "headword_index.marisa"
+    log.info("  Writing %s …", index_path.name)
+    build_trie(index, index_path)
 
     total_examples = sum(len(c["example_sentences"]) for c in chunks)
     log.info(

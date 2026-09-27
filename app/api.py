@@ -18,9 +18,10 @@ from dataclasses import asdict
 from pathlib import Path
 from typing import Literal
 
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import BackgroundTasks, FastAPI, HTTPException, Query
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
+from qdrant_client.http.exceptions import UnexpectedResponse
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
@@ -66,9 +67,12 @@ class FeedbackRequest(BaseModel):
 @app.get("/health", tags=["meta"])
 def health() -> dict:
     """Qdrant reachability and index size. 503 when the collection is missing or empty."""
-    try:
-        client = qdrant_client()
-        count = client.count(COLLECTION).count if client.collection_exists(COLLECTION) else 0
+    try:  # one round-trip: a missing collection is a 404 from count, not a second request
+        count = qdrant_client().count(COLLECTION).count
+    except UnexpectedResponse as exc:
+        if exc.status_code != 404:
+            raise HTTPException(503, f"Qdrant error: {exc.status_code}") from exc
+        count = 0
     except Exception as exc:  # connection refused, DNS, …
         raise HTTPException(503, f"Qdrant unreachable: {type(exc).__name__}") from exc
     if not count:
@@ -78,6 +82,7 @@ def health() -> dict:
 
 @app.get("/search", tags=["search"])
 def search_endpoint(
+    background: BackgroundTasks,
     q: str = Query(..., min_length=1, description="English or Japanese word, or a natural-language question"),
     n: int = Query(10, ge=1, le=50, description="Number of results"),
     mode: Mode = Query("auto", description="auto routes the query to the best plan; the rest are fixed pipelines"),
@@ -92,20 +97,31 @@ def search_endpoint(
         raise HTTPException(502, f"Search failed: {exc}") from exc
     search_id = None
     if log:
+        # log_search stays inline — its row id is part of the response; the
+        # kanji-lookup row isn't, so it's written after the response is sent.
         top = resp.results[0] if resp.results else {}
         search_id = log_search(
             q, rewritten_query=resp.rewrite.query, rewrite_method=resp.rewrite.method, mode=resp.mode,
             num_results=n, result_count=len(resp.results),
             top_result=top.get("kanji_form") or top.get("reading"), latency_ms=resp.latency_ms,
+            cached=bool(resp.meta.get("cached")),
         )
         if is_kanji(q):
-            log_kanji_lookup(q, source="search")
-    return {"search_id": search_id, **asdict(resp), "rewrite": {**asdict(resp.rewrite), "changed": resp.rewrite.changed}}
+            background.add_task(log_kanji_lookup, q, source="search")
+    return {
+        "search_id": search_id,
+        "results": list(resp.results),
+        "rewrite": {**asdict(resp.rewrite), "changed": resp.rewrite.changed},
+        "mode": resp.mode,
+        "latency_ms": resp.latency_ms,
+        "meta": dict(resp.meta),
+    }
 
 
 @app.get("/kanji/{char}", tags=["kanji"])
 def kanji_endpoint(
     char: str,
+    background: BackgroundTasks,
     svg: bool = Query(False, description="Include the KanjiVG stroke-order SVG markup"),
     log: bool = Query(True),
 ) -> dict:
@@ -116,7 +132,7 @@ def kanji_endpoint(
     if not d:
         raise HTTPException(404, f"No KANJIDIC2 entry for {char!r}")
     if log:
-        log_kanji_lookup(char, source="api")
+        background.add_task(log_kanji_lookup, char, source="api")
     return {**d, **({"stroke_svg": stroke_svg(char)} if svg else {})}
 
 

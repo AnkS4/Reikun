@@ -98,11 +98,18 @@ def load_wanted_codepoints() -> set[str] | None:
         return None
     import xml.etree.ElementTree as ET
 
-    return {
-        f"{ord(literal):05x}"
-        for _ev, char in ET.iterparse(kd, events=("end",))
-        if char.tag == "character" and (literal := char.findtext("literal"))
-    }
+    # Streamed the same way as build_chunks.iter_elements: clear the root
+    # after each <character> or the 15 MB tree is held whole for a set of
+    # ~13k five-character strings.
+    wanted: set[str] = set()
+    events = ET.iterparse(kd, events=("start", "end"))
+    _, root = next(events)
+    for event, char in events:
+        if event == "end" and char.tag == "character":
+            if literal := char.findtext("literal"):
+                wanted.add(f"{ord(literal):05x}")
+            root.clear()
+    return wanted
 
 
 def already_current(tag: str, wanted: set[str] | None) -> bool:

@@ -23,18 +23,16 @@ import tempfile
 from pathlib import Path
 
 import httpx
-from dotenv import load_dotenv, find_dotenv
 from qdrant_client import QdrantClient
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from app.config import COLLECTION, QDRANT_API_KEY, QDRANT_URL  # noqa: E402
 
-load_dotenv(find_dotenv(usecwd=True))
-
 log = logging.getLogger(__name__)
 
 # Source must NOT fall back to QDRANT_URL — that's the target now that .env
-# points at the cloud. Default is the local compose Qdrant.
+# points at the cloud. Default is the local compose Qdrant. (.env is already
+# loaded by app.config on import.)
 SOURCE_URL = os.getenv("SOURCE_QDRANT_URL", "http://localhost:6333")
 SOURCE_API_KEY = os.getenv("SOURCE_QDRANT_API_KEY") or None
 

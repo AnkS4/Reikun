@@ -141,6 +141,11 @@ def cohere_client() -> cohere.ClientV2:
     return cohere.ClientV2()
 
 
+class _Truncated(RuntimeError):
+    """A completion cut off by max_tokens or with leaked channel markers —
+    retryable with a bigger budget."""
+
+
 def _with_retries(call, retries: int, backoff: float = 7.0):
     """
     Retry `call()` on transient Cohere errors:
@@ -148,6 +153,8 @@ def _with_retries(call, retries: int, backoff: float = 7.0):
         wait a full `backoff` seconds so the per-minute window clears
       - 422 UnprocessableEntityError (intermittent server-side flake on this
         model with thinking disabled, even with no tools configured) → retry immediately
+      - _Truncated (see `chat`) → retry immediately; the caller raises the
+        budget between attempts
     """
     last_exc: Exception | None = None
     for attempt in range(retries + 1):
@@ -157,7 +164,7 @@ def _with_retries(call, retries: int, backoff: float = 7.0):
             last_exc = exc
             if attempt < retries:
                 time.sleep(backoff)
-        except (cohere.UnprocessableEntityError, RuntimeError) as exc:
+        except (cohere.UnprocessableEntityError, _Truncated) as exc:
             last_exc = exc
     raise last_exc
 
@@ -190,28 +197,23 @@ def chat(
     (with a larger budget) rather than returned to the caller.
     """
     budget = max_tokens
-    last_exc: Exception | None = None
-    for attempt in range(retries + 1):
-        try:
-            response = cohere_client().chat(
-                model=model,
-                messages=[{"role": "system", "content": system}, {"role": "user", "content": user}],
-                thinking={"type": "enabled", "token_budget": thinking_budget},
-                max_tokens=budget,
-                **kwargs,
-            )
-            text = "".join(item.text for item in response.message.content or [] if item.type == "text").strip()
-            if text and not _LEAKED_SPECIAL_TOKEN.search(text) and response.finish_reason != "MAX_TOKENS":
-                return text
-            last_exc = RuntimeError(f"Truncated/malformed response (finish_reason={response.finish_reason})")
-            budget = int(budget * 1.5)  # give the retry more room to finish cleanly
-        except cohere.TooManyRequestsError as exc:
-            last_exc = exc
-            if attempt < retries:
-                time.sleep(7.0)
-        except cohere.UnprocessableEntityError as exc:
-            last_exc = exc
-    raise last_exc
+
+    def _once() -> str:
+        nonlocal budget
+        response = cohere_client().chat(
+            model=model,
+            messages=[{"role": "system", "content": system}, {"role": "user", "content": user}],
+            thinking={"type": "enabled", "token_budget": thinking_budget},
+            max_tokens=budget,
+            **kwargs,
+        )
+        text = "".join(item.text for item in response.message.content or [] if item.type == "text").strip()
+        if text and not _LEAKED_SPECIAL_TOKEN.search(text) and response.finish_reason != "MAX_TOKENS":
+            return text
+        budget = int(budget * 1.5)  # give the retry more room to finish cleanly
+        raise _Truncated(f"Truncated/malformed response (finish_reason={response.finish_reason})")
+
+    return _with_retries(_once, retries)
 
 
 def level_aware_prompt(sentence: str, english: str, jlpt_level: str) -> str:
@@ -233,6 +235,7 @@ def explain_grammar(
     *,
     model: str = COHERE_MODEL,
     level_aware: bool = True,
+    retries: int = 3,
 ) -> str:
     """
     Generate a grammar explanation for `sentence`.
@@ -251,8 +254,10 @@ def explain_grammar(
             model=model,
             thinking_budget=150,
             max_tokens=cfg.max_tokens,
+            retries=retries,
         )
-    return chat(GENERIC_SYSTEM, generic_prompt(sentence, english), model=model, thinking_budget=150, max_tokens=900)
+    return chat(GENERIC_SYSTEM, generic_prompt(sentence, english), model=model,
+                thinking_budget=150, max_tokens=900, retries=retries)
 
 
 def explain_grammar_stream(
@@ -266,25 +271,25 @@ def explain_grammar_stream(
     Generator variant of `explain_grammar` for `st.write_stream` / SSE.
 
     Yields answer text chunks as Cohere streams them (reasoning blocks are
-    dropped). Stream creation retries via `_with_retries`; if the stream
-    fails before any text was emitted, falls back to the blocking
-    `explain_grammar` (which has the same retry/backoff) and yields its
-    result as a single chunk. Once text has been emitted, errors propagate —
-    partial output has already been shown and can't be safely retried.
+    dropped). If the stream fails before any text was emitted, falls back to
+    the blocking `explain_grammar` and yields its result as a single chunk.
+    The retry budget is shared: one stream attempt plus the blocking call's
+    own retries — not two full retry ladders back to back, which on a
+    rate-limited key meant up to ~8 calls and ~50 s of sleeping before the
+    user saw an error. A 429 on the stream skips straight to the blocking
+    path, whose backoff already waits out the per-minute window. Once text
+    has been emitted, errors propagate — partial output has already been
+    shown and can't be safely retried.
     """
     cfg = _LEVEL.get(jlpt_level, _LEVEL["N3"])
-    thinking_budget = 150
+    messages = [{"role": "system", "content": level_aware_system(jlpt_level)},
+                {"role": "user", "content": level_aware_prompt(sentence, english, jlpt_level)}]
     emitted = False
     try:
-        stream = _with_retries(
-            lambda: cohere_client().chat_stream(
-                model=model,
-                messages=[{"role": "system", "content": level_aware_system(jlpt_level)},
-                          {"role": "user", "content": level_aware_prompt(sentence, english, jlpt_level)}],
-                thinking={"type": "enabled", "token_budget": thinking_budget},
-                max_tokens=cfg.max_tokens,
-            ),
-            retries=3,
+        stream = cohere_client().chat_stream(
+            model=model, messages=messages,
+            thinking={"type": "enabled", "token_budget": 150},
+            max_tokens=cfg.max_tokens,
         )
         for event in stream:
             if event.type == "content-delta":
@@ -297,4 +302,4 @@ def explain_grammar_stream(
     except Exception:
         if emitted:
             raise
-        yield explain_grammar(sentence, english, jlpt_level, model=model)
+        yield explain_grammar(sentence, english, jlpt_level, model=model, retries=2)

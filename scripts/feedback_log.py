@@ -31,7 +31,8 @@ CREATE TABLE IF NOT EXISTS searches (
     num_results INTEGER,
     result_count INTEGER,
     top_result TEXT,
-    latency_ms INTEGER
+    latency_ms INTEGER,
+    cached INTEGER               -- 1 when served from the in-process result cache
 );
 CREATE TABLE IF NOT EXISTS feedback (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -63,17 +64,41 @@ def _now() -> str:
     return datetime.now(UTC).isoformat(timespec="seconds")
 
 
+_initialised = False
+
+
 @contextmanager
 def _conn() -> Iterator[sqlite3.Connection]:
-    MONITORING_DB.parent.mkdir(parents=True, exist_ok=True)
+    global _initialised
+    # mkdir + WAL + CREATE TABLE IF NOT EXISTS are idempotent, so they run
+    # once per process rather than in every request's write path. The
+    # journal mode is persistent in the database file.
+    if not _initialised:
+        MONITORING_DB.parent.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(MONITORING_DB, timeout=5)
     try:
-        conn.execute("PRAGMA journal_mode=WAL")
-        conn.executescript(_SCHEMA)
+        if not _initialised:
+            conn.execute("PRAGMA journal_mode=WAL")
+            conn.executescript(_SCHEMA)
+            _migrate(conn)
+            _initialised = True
         yield conn
         conn.commit()
     finally:
         conn.close()
+
+
+# Columns added after a table's first release: CREATE TABLE IF NOT EXISTS
+# leaves an existing database untouched, so they're bolted on here.
+_ADDED_COLUMNS = {"searches": {"cached": "INTEGER"}}
+
+
+def _migrate(conn: sqlite3.Connection) -> None:
+    for table, cols in _ADDED_COLUMNS.items():
+        have = {row[1] for row in conn.execute(f"PRAGMA table_info({table})")}
+        for name, sql_type in cols.items():
+            if name not in have:
+                conn.execute(f"ALTER TABLE {table} ADD COLUMN {name} {sql_type}")
 
 
 def _insert(table: str, **values) -> int:
@@ -89,11 +114,12 @@ def _insert(table: str, **values) -> int:
 def log_search(
     query: str, *, rewritten_query: str, rewrite_method: str, mode: str,
     num_results: int, result_count: int, top_result: str | None, latency_ms: int,
+    cached: bool = False,
 ) -> int:
     return _insert(
         "searches", ts=_now(), query=query, rewritten_query=rewritten_query, rewrite_method=rewrite_method,
         mode=mode, num_results=num_results, result_count=result_count,
-        top_result=top_result, latency_ms=latency_ms,
+        top_result=top_result, latency_ms=latency_ms, cached=int(cached),
     )
 
 

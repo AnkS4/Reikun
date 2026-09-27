@@ -51,13 +51,19 @@ def up_rate(df: pd.DataFrame) -> float | None:
 # ── KPI row ──────────────────────────────────────────────────────────────────
 search_fb = feedback[feedback["kind"] == "search"] if not feedback.empty else feedback
 expl_fb = feedback[feedback["kind"] == "explanation"] if not feedback.empty else feedback
+search_rate, expl_rate = up_rate(search_fb), up_rate(expl_fb)
 k1, k2, k3, k4, k5 = st.columns(5)
 k1.metric("Searches", f"{len(searches):,}", border=True)
-k2.metric("Median latency", f"{int(searches['latency_ms'].median()) if not searches.empty else 0} ms", border=True)
-k3.metric("Search approval", f"{up_rate(search_fb):.0%}" if up_rate(search_fb) is not None else "—",
+# Latency is reported for cold searches only — a cache hit is ~0 ms and would
+# drag the median down as the same queries recur; the hit rate is shown instead.
+is_cached = searches["cached"].fillna(0).astype(bool) if not searches.empty else searches
+cold = searches[~is_cached] if not searches.empty else searches
+k2.metric("Median latency (cold)", f"{int(cold['latency_ms'].median()) if not cold.empty else 0} ms",
+          delta=f"{is_cached.mean():.0%} cache hits" if not searches.empty else None, delta_arrow="off", border=True)
+k3.metric("Search approval", f"{search_rate:.0%}" if search_rate is not None else "—",
           delta=f"{len(search_fb)} votes", delta_arrow="off", border=True)
 k4.metric("Explanations", f"{len(expl):,}",
-          delta=f"{up_rate(expl_fb):.0%} approval" if up_rate(expl_fb) is not None else "no votes",
+          delta=f"{expl_rate:.0%} approval" if expl_rate is not None else "no votes",
           delta_arrow="off", border=True)
 k5.metric("Kanji lookups", f"{len(kanji):,}", border=True)
 
@@ -130,32 +136,21 @@ with c6:
     if searches.empty:
         st.caption("No searches yet.")
     else:
-        cfg = searches.assign(setting=searches["mode"]
-                              + searches["rewrite_method"].map(lambda m: f" · {m}" if m and m != "none" else ""))
+        method = searches["rewrite_method"].fillna("none")
+        cfg = searches.assign(setting=searches["mode"].fillna("?")
+                              + method.where(method == "none", " · " + method).replace("none", ""))
         cfg = cfg["setting"].value_counts().rename_axis("setting").reset_index(name="count")
         st.altair_chart(bar(cfg, "count:Q", "setting:N", x_title="Searches", y_title=None), width="stretch")
 with c7:
-    st.subheader("Search latency")
-    if searches.empty:
-        st.caption("No searches yet.")
+    st.subheader("Search latency (cold)")
+    if cold.empty:
+        st.caption("No cold searches yet.")
     else:
         st.altair_chart(
-            alt.Chart(searches).mark_bar(cornerRadiusEnd=3)
+            alt.Chart(cold).mark_bar(cornerRadiusEnd=3)
             .encode(x=alt.X("latency_ms:Q", bin=alt.Bin(maxbins=20), title="Latency (ms)"),
                     y=alt.Y("count():Q", title="Searches"), tooltip=["count()"]).properties(height=280),
             width="stretch",
-        )
-
-with st.expander("Recent searches"):
-    if searches.empty:
-        st.caption("No searches yet.")
-    else:
-        st.dataframe(
-            searches.assign(ts=searches["ts"].dt.tz_convert(TZ))
-            .sort_values("id", ascending=False).head(50)
-            [["ts", "query", "rewritten_query", "rewrite_method", "mode", "result_count", "top_result", "latency_ms"]],
-            column_config={"ts": st.column_config.DatetimeColumn("Time", format="MMM D, HH:mm")},
-            width="stretch", hide_index=True,
         )
 
 footer()

@@ -30,17 +30,23 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from app.config import COLLECTION, PROC_DIR, qdrant_client  # noqa: E402
+from qdrant_client import QdrantClient  # noqa: E402
+
+from app.config import COLLECTION, PROC_DIR, QDRANT_API_KEY, QDRANT_URL, qdrant_client  # noqa: E402
 from scripts import download_edrdg, download_kanjivg, ingest  # noqa: E402
 
 log = logging.getLogger(__name__)
 
 
 def wait_for_qdrant(retries: int = 30, delay_s: float = 2.0) -> None:
-    """Fail until Qdrant answers — retries give the container time to boot."""
+    """Fail until Qdrant answers — retries give the container time to boot.
+
+    Uses a throwaway short-timeout client: the shared `qdrant_client()` is
+    cached per process, and ingest needs its full timeout for bulk uploads."""
+    probe = QdrantClient(url=QDRANT_URL, api_key=QDRANT_API_KEY, timeout=2)
     for attempt in range(1, retries + 1):
         try:
-            qdrant_client(timeout=2).get_collections()
+            probe.get_collections()
             return
         except Exception as exc:
             if attempt == retries:

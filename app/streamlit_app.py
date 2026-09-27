@@ -15,6 +15,14 @@ import streamlit as st
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+from app.retrieval import warm_headword_index  # noqa: E402
+
+# Warm the sentence-lookup pieces in the background — the headword index
+# (an mmap'd ~26 MB marisa trie shipped in the image, or one ~44-request
+# Qdrant scroll rebuild when absent) plus the Sudachi dictionary load — so
+# the first user searching a Japanese sentence doesn't pay it.
+warm_headword_index()
+
 st.navigation(
     [
         st.Page("ui/search.py", title="Search", icon=":material/search:", default=True),

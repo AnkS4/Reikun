@@ -1,12 +1,15 @@
 """Shared UI helpers: CSS, cached lookups, kanji/furigana rendering, footer."""
 
 import html
+import itertools
 import json
 import re
+from functools import cache
 from pathlib import Path
 from urllib.parse import urlencode
 
 import streamlit as st
+from qdrant_client.http.exceptions import UnexpectedResponse
 
 from app.config import COLLECTION, qdrant_client
 from app.kanji_lookup import is_kanji, lookup_kanji, stroke_svg
@@ -194,12 +197,13 @@ def render_title(suffix: str | None = None, *, hero: bool = False, tagline: str 
 @st.cache_data(ttl=60, show_spinner=False)
 def data_status() -> tuple[bool, str]:
     """(ready, message) for the Qdrant collection; cached for a minute."""
-    try:
-        client = qdrant_client()
-        if not client.collection_exists(COLLECTION):
-            return False, "Collection missing — run scripts/ingest.py"
-        count = client.count(COLLECTION).count
+    try:  # one round-trip: a missing collection is a 404 from count itself
+        count = qdrant_client().count(COLLECTION).count
         return (count > 0), (f"{count:,} entries indexed" if count else "Collection empty — run scripts/ingest.py")
+    except UnexpectedResponse as exc:
+        if exc.status_code == 404:
+            return False, "Collection missing — run scripts/ingest.py"
+        return False, f"Qdrant error: {exc.status_code}"
     except Exception as exc:  # connection refused, DNS, …
         return False, f"Qdrant unreachable: {type(exc).__name__}"
 
@@ -236,16 +240,40 @@ def _meta_line(d: dict) -> str:
     return " · ".join(label for label, _ in _meta_parts(d))
 
 
+def set_query(value: str, *, sync_box: bool = True) -> None:
+    """Commit a query: the search channel, the box contents and ?q= move together.
+
+    The search box lives in a st.form (enter_to_submit) so a mere blur doesn't
+    commit — but bind="query-params" doesn't reach inside forms, so the ?q=
+    URL sync is manual here. `sync_box` writes the widget's session state,
+    which is only legal before the widget is drawn this run — callbacks and
+    top-of-script seeding get True; the form's own submit passes False since
+    the box already holds the submitted text.
+    """
+    st.session_state.q = value
+    if sync_box:
+        st.session_state.q_input = value
+    if value:
+        st.query_params["q"] = value
+    elif "q" in st.query_params:
+        del st.query_params["q"]
+
+
 def home_href(**params: str) -> str:
     """URL back to the search page, carrying the URL-bound theme/level preferences plus `params`."""
-    keep = {k: v for k in ("theme", "level") if isinstance(v := st.query_params.get(k), str)}
+    keep = {k: v for k in ("theme", "level") if (v := st.query_params.get(k))}
     keep.update(params)
     return "/" + (f"?{urlencode(keep)}" if keep else "")
 
 
-@st.cache_data(show_spinner=False)
+@cache
 def kanji_tooltip(char: str) -> str:
-    """Compact hover card (no SVG) for a kanji; '' if unknown."""
+    """Compact hover card (no SVG) for a kanji; '' if unknown.
+
+    functools.cache, not st.cache_data: this runs once per kanji character
+    of every sentence on the page (hundreds of calls per render) over a
+    static in-memory table, and st.cache_data's pickle/hash/lock overhead
+    per call dwarfs the string building it would save."""
     d = lookup_kanji(char)
     if not d:
         return ""
@@ -319,7 +347,7 @@ def furigana(word: str, reading: str | None, *, tips: bool = True) -> str:
             + fmt(word[len(word) - j:]))
 
 
-@st.cache_data(show_spinner=False)
+@cache
 def animated_stroke_svg(char: str) -> str | None:
     """
     KanjiVG SVG with per-stroke animation delays so strokes draw in order.
@@ -338,7 +366,7 @@ def animated_stroke_svg(char: str) -> str | None:
     svg = _KVG_PATH.sub(
         lambda m: f'{m.group(0)} pathLength="100" style="animation-delay:{(int(m.group(1)) - 1) * _STROKE_STEP_S:.2f}s"', svg
     )
-    n = iter(range(10_000))
+    n = itertools.count()
     return _KVG_NUMBER.sub(lambda _: f'<text style="animation-delay:{next(n) * _STROKE_STEP_S:.2f}s" ', svg)
 
 
@@ -445,7 +473,7 @@ def _word_row(word: dict) -> str:
     gloss = html.escape((word.get("meanings") or [""])[0])
     href = html.escape(home_href(q=head))
     return (f'<a class="kanji-word" href="{href}" target="_self" title="Search {html.escape(head)}">'
-            f'<span class="kanji-word-head">{furigana(head, word["reading"], tips=False)}</span>'
+            f'<span class="kanji-word-head">{furigana(head, word.get("reading"), tips=False)}</span>'
             f'<span class="kanji-word-gloss">{gloss}</span></a>')
 
 
@@ -460,7 +488,7 @@ def _readings_section(on: list[str], kun: list[str]) -> None:
         return
     rows = [f'<div class="kanji-readings-row">{_term_label(text, reading, tip)}'
             f'<span class="kanji-readings-list">{"".join(map(_reading_chip, chips))}</span></div>'
-            for (text, reading, tip), chips in zip(_READING_TYPES, (on, kun)) if chips]
+            for (text, reading, tip), chips in zip(_READING_TYPES, (on, kun), strict=True) if chips]
     _section("Readings", "".join(rows))
 
 
@@ -480,7 +508,7 @@ def search_kanji(pills_key: str) -> None:
     The rerun then runs a normal single-kanji search, which renders the full
     kanji card above the results — same view as typing the kanji yourself."""
     if char := st.session_state.get(pills_key):
-        st.session_state.q = char
+        set_query(char)
         st.session_state[pills_key] = None
         log_kanji_lookup(char, source="pill")
 

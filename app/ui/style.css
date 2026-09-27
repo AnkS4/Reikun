@@ -36,7 +36,7 @@
 /* The title doubles as a link home — keep it looking like plain text. */
 a.title-home { color: inherit; text-decoration: none; }
 
-.st-key-q input { height: 3rem; font-size: 1.15rem; padding: 0 1.1rem; border-radius: .8rem; }
+.st-key-q_input input { height: 3rem; font-size: 1.15rem; padding: 0 1.1rem; border-radius: .8rem; }
 
 /* The search row (text box, Search button, JLPT popover): pinned to the top
    of the viewport while scrolling a long result list, so changing JLPT
@@ -210,6 +210,23 @@ div:has(> .st-key-query_row) {
 .stMarkdown .kanji-word-head { font-size: 1.3rem; line-height: 1.6; font-weight: 500; white-space: nowrap; }
 .kanji-word-head ruby > rt { font-size: .5em; opacity: var(--muted); }
 .kanji-word-gloss { flex: 1 1 auto; min-width: 0; opacity: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Parsed-row segments (search.py): stacked furigana-over-word + gloss chips. */
+.stMarkdown .seg-row { display: flex; flex-wrap: wrap; gap: .4rem; align-items: flex-end; margin: .1rem 0 .5rem; }
+.stMarkdown .seg {
+  display: flex; flex-direction: column; align-items: center; min-width: 0;
+  padding: .15rem .5rem .25rem; border: 1px solid rgba(128, 128, 128, .35);
+  border-radius: .5rem; line-height: 1.2; max-width: 12rem;
+}
+.stMarkdown .seg-word { font-size: 1.05rem; font-weight: 500; white-space: nowrap; }
+.stMarkdown .seg-word ruby > rt { font-size: .55em; font-weight: 400; opacity: var(--muted); }
+.stMarkdown .seg-mean {
+  font-size: .68rem; opacity: var(--muted); text-align: center;
+  max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+/* Greedy-fallback segments (approx): dashed border signals dictionary
+   longest-match guesses, not morphology — the caption says so too. */
+.stMarkdown .seg-approx { border-style: dashed; opacity: .75; }
 
 /* Reduced motion: show the finished diagram instead of drawing it.
    Equal-specificity .pa/.pb selectors needed — they must beat the rules

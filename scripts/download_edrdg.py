@@ -55,6 +55,8 @@ WANTED: list[RemoteSpec] = [
 ]
 
 _GEN_DATE_RE = re.compile(r'created[=:]\s*"?(\d{4}-\d{2}-\d{2})')
+_HEAD_BYTES = 512 * 1024  # header window searched for the generation date
+_TAIL_BYTES = 4096        # enough to hold the closing tag plus trailing whitespace
 
 
 def check_rsync_available() -> None:
@@ -100,27 +102,70 @@ def rsync_fetch(spec: RemoteSpec, dest: Path) -> None:
         time.sleep(delay)
 
 
-def generation_date(content: bytes) -> str | None:
+def generation_date(head: bytes) -> str | None:
     """Upstream export date stamped in the file header — the true version
     marker for reproducibility, distinct from when we happened to sync."""
-    head = content[: 512 * 1024].decode("utf-8", errors="replace")
-    m = _GEN_DATE_RE.search(head)
+    m = _GEN_DATE_RE.search(head.decode("utf-8", errors="replace"))
     return m.group(1) if m else None
 
 
-def write_meta(out_path: Path, spec: RemoteSpec, content: bytes, gz_mtime: float) -> None:
-    gen_date = generation_date(content)
+def _meta_path(out_path: Path) -> Path:
+    return out_path.with_suffix(out_path.suffix + ".meta.json")
+
+
+def _iso(ts: float) -> str:
+    return datetime.fromtimestamp(ts, tz=UTC).isoformat(timespec="seconds")
+
+
+def write_meta(out_path: Path, spec: RemoteSpec, head: bytes, sha256: str, gz_mtime: float) -> None:
+    gen_date = generation_date(head)
     if gen_date is None:
         log.warning("  %s: no generation date found in header — check _GEN_DATE_RE", spec.remote)
     meta = {
         "remote_file": spec.remote,
         "synced_at": datetime.now(UTC).isoformat(timespec="seconds"),
-        "remote_mtime": datetime.fromtimestamp(gz_mtime, tz=UTC).isoformat(timespec="seconds"),
+        "remote_mtime": _iso(gz_mtime),
         "generation_date_from_header": gen_date,
-        "sha256": hashlib.sha256(content).hexdigest(),
+        "sha256": sha256,
     }
-    meta_path = out_path.with_suffix(out_path.suffix + ".meta.json")
-    meta_path.write_text(json.dumps(meta, indent=2) + "\n", encoding="utf-8")
+    _meta_path(out_path).write_text(json.dumps(meta, indent=2) + "\n", encoding="utf-8")
+
+
+def _unchanged(out_path: Path, gz_mtime: float) -> bool:
+    """True when the .gz rsync left behind is the one already decompressed —
+    rsync -a preserves the upstream mtime, and the sidecar recorded it."""
+    meta_path = _meta_path(out_path)
+    if not (out_path.exists() and meta_path.exists()):
+        return False
+    try:
+        return json.loads(meta_path.read_text(encoding="utf-8")).get("remote_mtime") == _iso(gz_mtime)
+    except (OSError, ValueError):
+        return False
+
+
+def _decompress(gz_path: Path, out_path: Path, closing: bytes) -> tuple[bytes, str]:
+    """Stream .gz → out_path in 1 MB blocks, hashing as it goes and keeping
+    only the head (for the generation date) and the tail (integrity check) —
+    never the whole ~70 MB file, let alone a second `rstrip()` copy of it.
+    Writes to a temp file so a failed check can't leave a truncated XML that
+    build_chunks would then choke on."""
+    tmp = out_path.with_suffix(out_path.suffix + ".tmp")
+    digest, head, tail = hashlib.sha256(), b"", b""
+    with gzip.open(gz_path, "rb") as src, tmp.open("wb") as dst:
+        while block := src.read(1 << 20):
+            digest.update(block)
+            dst.write(block)
+            if len(head) < _HEAD_BYTES:
+                head += block[: _HEAD_BYTES - len(head)]
+            tail = (tail + block)[-_TAIL_BYTES:]
+    if not tail.rstrip().endswith(closing):
+        tmp.unlink(missing_ok=True)
+        raise ValueError(
+            f"{gz_path.name}: decompressed content doesn't end with {closing!r} — "
+            "truncated or corrupt transfer"
+        )
+    tmp.replace(out_path)
+    return head, digest.hexdigest()
 
 
 def sync_one(spec: RemoteSpec) -> None:
@@ -128,16 +173,13 @@ def sync_one(spec: RemoteSpec) -> None:
     out_path = RAW_DIR / spec.out_name
 
     rsync_fetch(spec, gz_path)
-    content = gzip.decompress(gz_path.read_bytes())
+    gz_mtime = gz_path.stat().st_mtime
+    if _unchanged(out_path, gz_mtime):
+        log.info("  %s unchanged upstream — keeping %s", spec.remote, out_path.name)
+        return
 
-    if not content.rstrip().endswith(spec.closing):
-        raise ValueError(
-            f"{spec.remote}: decompressed content doesn't end with {spec.closing!r} — "
-            "truncated or corrupt transfer"
-        )
-
-    out_path.write_bytes(content)
-    write_meta(out_path, spec, content, gz_path.stat().st_mtime)
+    head, sha256 = _decompress(gz_path, out_path, spec.closing)
+    write_meta(out_path, spec, head, sha256, gz_mtime)
     log.info("  Saved → %s (%.1f MB)", out_path, out_path.stat().st_size / (1024 * 1024))
 
 

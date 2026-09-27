@@ -30,6 +30,7 @@ data/raw/
 # at runtime and it is small enough (~4 MB) to ship in the Docker image.
 data/processed/*
 !data/processed/kanji_table.json
+!data/processed/headword_index.marisa
 data/kanjivg/
 data/monitoring/
 

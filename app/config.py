@@ -68,12 +68,16 @@ DENSE_VECTOR = "dense"
 SPARSE_VECTOR = "bm25"
 
 
+QDRANT_TIMEOUT = int(_env("QDRANT_TIMEOUT", "30"))
+
+
 @lru_cache(maxsize=1)
-def qdrant_client(timeout: int = 30) -> QdrantClient:
+def qdrant_client() -> QdrantClient:
     """Process-wide Qdrant client (cheap to share; thread-safe for REST).
 
-    NOTE: cached by lru_cache(maxsize=1), so only the `timeout` passed on the
-    *first* call takes effect for the life of the process — later calls with
-    a different timeout silently reuse the first client instead of rebuilding.
+    Deliberately parameterless: it is cached once per process, so a per-call
+    timeout would silently be decided by whoever called first. Code that
+    needs a different timeout (a boot-time reachability probe) builds its
+    own short-lived client from QDRANT_URL / QDRANT_API_KEY.
     """
-    return QdrantClient(url=QDRANT_URL, api_key=QDRANT_API_KEY, timeout=timeout)
+    return QdrantClient(url=QDRANT_URL, api_key=QDRANT_API_KEY, timeout=QDRANT_TIMEOUT)

@@ -23,6 +23,7 @@ data/raw/
 data/kanjivg/
 data/processed/*
 !data/processed/kanji_table.json
+!data/processed/headword_index.marisa
 data/monitoring/
 
 # Models (pre-warmed in Dockerfile or mounted)

@@ -39,7 +39,10 @@ def _common_kanji() -> tuple[str, ...]:
 
 def random_kanji(within: Collection[str] | None = None) -> str:
     """Uniform pick from the frequency-ranked kanji, optionally restricted to `within`."""
-    pool = _common_kanji() if within is None else tuple(c for c in _common_kanji() if c in within)
+    if within is None:
+        return random.choice(_common_kanji())
+    allowed = within if isinstance(within, (set, frozenset, dict)) else set(within)  # O(1) membership
+    pool = tuple(c for c in _common_kanji() if c in allowed)
     return random.choice(pool or _common_kanji())
 
 

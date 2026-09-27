@@ -22,12 +22,14 @@ import argparse
 import json
 import logging
 import sys
+from concurrent.futures import Future, ThreadPoolExecutor
 from itertools import batched
 from pathlib import Path
 
 from qdrant_client.models import (
     Distance,
     Modifier,
+    OptimizersConfigDiff,
     PayloadSchemaType,
     PointStruct,
     SparseVector,
@@ -44,6 +46,10 @@ log = logging.getLogger(__name__)
 
 BATCH_SIZE = 256
 CHUNKS_PATH = PROC_DIR / "chunks.json"
+# Qdrant's default indexing_threshold (KB of vectors per segment before HNSW
+# is built). Set to 0 for the bulk upload so segments aren't re-indexed as
+# they fill, then restored — the documented fast path for bulk loads.
+INDEXING_THRESHOLD_KB = 20_000
 # The --common subset filter: entries with example sentences, a common flag, or
 # an nf band at or under this cutoff (nfNN ≈ each band = 500 words, so 24 ≈ top
 # ~12k by frequency). Rare markerless entries like 縞馬 are outside it — they
@@ -81,6 +87,7 @@ def recreate_collection(client) -> None:
         collection_name=COLLECTION,
         vectors_config={DENSE_VECTOR: VectorParams(size=VECTOR_DIM, distance=Distance.COSINE)},
         sparse_vectors_config={SPARSE_VECTOR: SparseVectorParams(modifier=Modifier.IDF)},
+        optimizers_config=OptimizersConfigDiff(indexing_threshold=0),  # see INDEXING_THRESHOLD_KB
     )
     # gloss_keys (normalised meanings) drives the exact-match arm for English
     # queries; kanji_form/reading cover Japanese input; kanji_forms/readings
@@ -142,28 +149,43 @@ def run(
     log.info("Embedding + uploading (batch=%d) …", BATCH_SIZE)
     step = max(1, total // BATCH_SIZE // 10) * BATCH_SIZE  # ~10 progress logs
     done = 0
-    for batch in batched(chunks, BATCH_SIZE):
-        vectors = embed_documents(
-            # Dense: glosses only — the dense model only ever sees English
-            # queries (the `ja` route skips it), so headword/reading add
-            # noise, not signal.
-            (", ".join(c["meanings"]) for c in batch),
-            batch_size=BATCH_SIZE,
-            # Sparse: all variant forms + readings + glosses — BM25 must index
-            # every headword variant or the BM25-only Japanese route misses
-            # alternate forms (しまうま → 縞馬, 斑馬 → 縞馬).
-            sparse_texts=(c.get("sparse_text") or c["text"] for c in batch),
-        )
-        client.upsert(
-            COLLECTION,
-            points=[to_point(c, d, s) for c, (d, s) in zip(batch, vectors, strict=True)],
-        )
-        done += len(batch)
-        if done % step < BATCH_SIZE or done == total:
-            log.info("  %d%%  (%s / %s)", done * 100 // total, f"{done:,}", f"{total:,}")
+    # One upsert in flight while the next batch embeds: the CPU-bound embed
+    # and the network-bound upload no longer serialise. A single worker
+    # bounds memory to one pending batch of points.
+    pending: tuple[Future, int] | None = None  # (upsert future, batch length)
+
+    def _await(p: tuple[Future, int]) -> int:
+        p[0].result()  # surfaces upload errors before queuing more
+        return p[1]
+
+    with ThreadPoolExecutor(max_workers=1) as pool:
+        for batch in batched(chunks, BATCH_SIZE):
+            vectors = embed_documents(
+                # Dense: glosses only — the dense model only ever sees English
+                # queries (the `ja` route skips it), so headword/reading add
+                # noise, not signal.
+                (", ".join(c["meanings"]) for c in batch),
+                batch_size=BATCH_SIZE,
+                # Sparse: all variant forms + readings + glosses — BM25 must index
+                # every headword variant or the BM25-only Japanese route misses
+                # alternate forms (しまうま → 縞馬, 斑馬 → 縞馬).
+                sparse_texts=(c.get("sparse_text") or c["text"] for c in batch),
+            )
+            points = [to_point(c, d, s) for c, (d, s) in zip(batch, vectors, strict=True)]
+            if pending is not None:
+                done += _await(pending)
+                if done % step < BATCH_SIZE:
+                    log.info("  %d%%  (%s / %s)", done * 100 // total, f"{done:,}", f"{total:,}")
+            pending = (pool.submit(client.upsert, COLLECTION, points=points), len(batch))
+        if pending is not None:
+            done += _await(pending)
+    log.info("  100%%  (%s / %s)", f"{done:,}", f"{total:,}")
+
+    log.info("  Re-enabling HNSW indexing (threshold %d KB) …", INDEXING_THRESHOLD_KB)
+    client.update_collection(COLLECTION, optimizers_config=OptimizersConfigDiff(indexing_threshold=INDEXING_THRESHOLD_KB))
 
     count = client.count(COLLECTION).count
-    log.info("Ingest complete. Collection '%s' → %s points.", COLLECTION, f"{count:,}")
+    log.info("Ingest complete. Collection '%s' → %s points (HNSW builds in the background).", COLLECTION, f"{count:,}")
 
 
 def main() -> None:

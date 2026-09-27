@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "reikun"
-version = "0.1.0"
+version = "0.2.0"
 description = "例訓 (れいくん) - Semantic Japanese Dictionary"
 authors = [{ name = "Aniket Satbhai" }]
 license = "Apache-2.0"
@@ -26,6 +26,16 @@ dependencies = [
     # watchfiles/websockets were ~25 MB of unused image. The extra is in the
     # dev group for the standalone `uvicorn app.api:app --reload` path.
     "uvicorn==0.53.0",
+    # Japanese morphological analyzer for runtime sentence segmentation
+    # (SplitMode.B word units) and build_chunks' wf_score token counts.
+    # sudachidict-small (~110 MB unpacked vs ~200 MB for -core) covers the
+    # deployment target; over-split compounds get re-merged by
+    # retrieval._segment_sudachi's compound-rescue stage. Pinned exactly per
+    # the upstream v0.8.* advisory; the dict format is paired to the
+    # binding, so bump both together.
+    "sudachipy==0.7.0",
+    "sudachidict-small==20260723.1",
+    "marisa-trie==1.4.1",
 ]
 
 [project.scripts]
@@ -35,15 +45,12 @@ reikun = "scripts.startup:main"
 # Kept out of the runtime dependencies so the Docker image stays leaner.
 # uv sync/uv run install the dev group by default.
 #   wordfreq — scripts/build_chunks.py (the wf_score canonical-ranking prior);
-#     mecab-python3 + ipadic are its Japanese tokenizer backend (the `cjk`
-#     extra), loaded at tokenize() time.
+#     its ja lookups are shimmed onto sudachipy (wordfreq.mecab shim).
 #   uvicorn[standard] — only for running the API standalone with --reload
 #     (needs watchfiles); the container serves it through Streamlit instead.
 [dependency-groups]
 dev = [
     "wordfreq==3.1.1",
-    "mecab-python3==1.0.12",
-    "ipadic==1.0.0",
     "uvicorn[standard]==0.53.0",
 ]
 

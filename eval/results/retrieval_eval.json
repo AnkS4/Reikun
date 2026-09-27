@@ -20,7 +20,7 @@
       "ja_hiragana": 0.0,
       "ja_katakana": 0.0
     },
-    "avg_latency_ms": 114,
+    "avg_latency_ms": 107,
     "misses": [
       {
         "query": "sky",
@@ -3354,7 +3354,7 @@
       "ja_hiragana": 1.0,
       "ja_katakana": 0.552
     },
-    "avg_latency_ms": 93,
+    "avg_latency_ms": 75,
     "misses": [
       {
         "query": "sky",
@@ -5076,24 +5076,24 @@
     "config": "hybrid",
     "hit@1": 0.57,
     "hit@3": 0.65,
-    "hit@5": 0.687,
+    "hit@5": 0.683,
     "ndcg@1": 0.57,
-    "ndcg@3": 0.578,
+    "ndcg@3": 0.577,
     "ndcg@5": 0.587,
     "recall@1": 0.437,
-    "recall@3": 0.568,
-    "recall@5": 0.612,
+    "recall@3": 0.567,
+    "recall@5": 0.611,
     "mrr": 0.612,
     "map": 0.547,
     "mrr_by_category": {
       "en_words": 0.316,
       "en_verbs": 0.292,
-      "en_descriptive": 0.067,
+      "en_descriptive": 0.063,
       "ja_words": 1.0,
       "ja_hiragana": 1.0,
       "ja_katakana": 1.0
     },
-    "avg_latency_ms": 137,
+    "avg_latency_ms": 78,
     "misses": [
       {
         "query": "sky",
@@ -5115,8 +5115,8 @@
         ],
         "got": [
           "ワン公",
-          "犬の顔",
-          "愛犬"
+          "愛犬",
+          "犬の顔"
         ]
       },
       {
@@ -5128,7 +5128,7 @@
         "got": [
           "ウォーター",
           "水をかける",
-          "井水"
+          "水をやる"
         ]
       },
       {
@@ -5201,7 +5201,7 @@
         "got": [
           "ノーチェ",
           "ナイト",
-          "暮夜"
+          "幾夜"
         ]
       },
       {
@@ -5224,8 +5224,8 @@
         ],
         "got": [
           "ウインド",
-          "峡谷風",
-          "空風"
+          "空風",
+          "峡谷風"
         ]
       },
       {
@@ -5309,7 +5309,7 @@
         "got": [
           "憂わしい",
           "哀話",
-          "哀音"
+          "哀思"
         ]
       },
       {
@@ -5516,7 +5516,7 @@
         ],
         "got": [
           "御覧ぜらる",
-          "ご覧なさる",
+          "目の当たりにする",
           "お目にかける"
         ]
       },
@@ -5587,9 +5587,9 @@
           "知る"
         ],
         "got": [
-          "存じ上げる",
+          "知る者は言わず言う者は知らず",
           "探り当てる",
-          "知る者は言わず言う者は知らず"
+          "存じ上げる"
         ]
       },
       {
@@ -5674,8 +5674,8 @@
         ],
         "got": [
           "出で立つ",
-          "スタート",
-          "やり出す"
+          "やり出す",
+          "スタート"
         ]
       },
       {
@@ -5710,9 +5710,9 @@
           "ありがとう"
         ],
         "got": [
-          "謝する",
           "丁寧体",
-          "邦訳"
+          "謝する",
+          "謝す"
         ]
       },
       {
@@ -5748,7 +5748,7 @@
         "got": [
           "がりがり",
           "し難い",
-          "致しかねる"
+          "金太郎飴"
         ]
       },
       {
@@ -5758,9 +5758,9 @@
           "先生"
         ],
         "got": [
-          "教生",
           "劣機",
-          "教育実習生"
+          "教生",
+          "貧生"
         ]
       },
       {
@@ -5808,7 +5808,7 @@
         "got": [
           "対面",
           "熱っちぃ",
-          "非熱"
+          "野党第一党"
         ]
       },
       {
@@ -5818,9 +5818,21 @@
           "スーパー"
         ],
         "got": [
-          "のれん街",
           "イートイン脱税",
+          "のれん街",
           "台の物"
+        ]
+      },
+      {
+        "query": "the meal you eat in the morning",
+        "rewritten": "the meal you eat in the morning",
+        "expected": [
+          "朝食"
+        ],
+        "got": [
+          "朝腹",
+          "朝",
+          "二食"
         ]
       },
       {
@@ -5856,7 +5868,7 @@
         "got": [
           "言質を取る",
           "棄約",
-          "下"
+          "約束に背く"
         ]
       },
       {
@@ -5914,8 +5926,8 @@
           "学生"
         ],
         "got": [
-          "上げる",
           "アカデミック",
+          "上げる",
           "苦学"
         ]
       },
@@ -5940,7 +5952,7 @@
         "got": [
           "対面",
           "でかい",
-          "大型"
+          "野党第一党"
         ]
       },
       {
@@ -5964,7 +5976,7 @@
         "got": [
           "終雪",
           "毎冬",
-          "プリンクル"
+          "冬季"
         ]
       },
       {
@@ -6119,8 +6131,8 @@
           "じゃあね"
         ],
         "got": [
-          "別れを告げる",
           "おさらば",
+          "別れを告げる",
           "失敬"
         ]
       },
@@ -6145,7 +6157,7 @@
         "got": [
           "近親憎悪",
           "家族達",
-          "爾汝の交わり"
+          "親戚知己"
         ]
       },
       {
@@ -6170,8 +6182,8 @@
           "お腹が空いた"
         ],
         "got": [
-          "食欲",
           "気がする",
+          "食欲",
           "アペタイト"
         ]
       },
@@ -6206,8 +6218,8 @@
           "眠気"
         ],
         "got": [
-          "狸寝入り",
           "切に勧める",
+          "狸寝入り",
           "睡眠障害"
         ]
       },
@@ -6240,26 +6252,26 @@
   },
   {
     "config": "hybrid + rewrite(heuristic)",
-    "hit@1": 0.567,
-    "hit@3": 0.65,
-    "hit@5": 0.687,
-    "ndcg@1": 0.567,
-    "ndcg@3": 0.575,
-    "ndcg@5": 0.585,
-    "recall@1": 0.433,
-    "recall@3": 0.568,
-    "recall@5": 0.612,
-    "mrr": 0.61,
-    "map": 0.545,
+    "hit@1": 0.563,
+    "hit@3": 0.647,
+    "hit@5": 0.683,
+    "ndcg@1": 0.563,
+    "ndcg@3": 0.571,
+    "ndcg@5": 0.583,
+    "recall@1": 0.43,
+    "recall@3": 0.563,
+    "recall@5": 0.611,
+    "mrr": 0.607,
+    "map": 0.542,
     "mrr_by_category": {
-      "en_words": 0.316,
-      "en_verbs": 0.292,
-      "en_descriptive": 0.051,
+      "en_words": 0.306,
+      "en_verbs": 0.29,
+      "en_descriptive": 0.047,
       "ja_words": 1.0,
       "ja_hiragana": 1.0,
       "ja_katakana": 1.0
     },
-    "avg_latency_ms": 74,
+    "avg_latency_ms": 77,
     "misses": [
       {
         "query": "sky",
@@ -6281,8 +6293,8 @@
         ],
         "got": [
           "ワン公",
-          "犬の顔",
-          "愛犬"
+          "愛犬",
+          "犬の顔"
         ]
       },
       {
@@ -6294,7 +6306,7 @@
         "got": [
           "ウォーター",
           "水をかける",
-          "水をやる"
+          "井水"
         ]
       },
       {
@@ -6355,7 +6367,7 @@
         "got": [
           "時辰",
           "時宣",
-          "歳月"
+          "時の流れ"
         ]
       },
       {
@@ -6367,7 +6379,7 @@
         "got": [
           "ノーチェ",
           "ナイト",
-          "暮夜"
+          "幾夜"
         ]
       },
       {
@@ -6562,1668 +6574,7 @@
         "got": [
           "御寝る",
           "睡眠を取る",
-          "夢を結ぶ"
-        ]
-      },
-      {
-        "query": "to speak",
-        "rewritten": "to speak",
-        "expected": [
-          "話す"
-        ],
-        "got": [
-          "言葉を吐く",
-          "声がする",
-          "口を揃える"
-        ]
-      },
-      {
-        "query": "to write",
-        "rewritten": "to write",
-        "expected": [
-          "書く"
-        ],
-        "got": [
-          "書き綴る",
-          "書き送る",
-          "書き出す"
-        ]
-      },
-      {
-        "query": "to buy",
-        "rewritten": "to buy",
-        "expected": [
-          "買う"
-        ],
-        "got": [
-          "買い求める",
-          "購う",
-          "買い取る"
-        ]
-      },
-      {
-        "query": "to sell",
-        "rewritten": "to sell",
-        "expected": [
-          "売る"
-        ],
-        "got": [
-          "鬻ぐ",
-          "売りどころ",
-          "安く譲る"
-        ]
-      },
-      {
-        "query": "to arrive",
-        "rewritten": "to arrive",
-        "expected": [
-          "入る",
-          "来る"
-        ],
-        "got": [
-          "アライブ",
-          "お見えになる",
-          "発場"
-        ]
-      },
-      {
-        "query": "to leave",
-        "rewritten": "to leave",
-        "expected": [
-          "出る"
-        ],
-        "got": [
-          "去り行く",
-          "出て行く",
-          "育休"
-        ]
-      },
-      {
-        "query": "to hurry",
-        "rewritten": "to hurry",
-        "expected": [
-          "急ぐ"
-        ],
-        "got": [
-          "先を急ぐ",
-          "取り急ぐ",
-          "道を急ぐ"
-        ]
-      },
-      {
-        "query": "to borrow",
-        "rewritten": "to borrow",
-        "expected": [
-          "借りる"
-        ],
-        "got": [
-          "借り込む",
-          "借り出す",
-          "又借り"
-        ]
-      },
-      {
-        "query": "to lend",
-        "rewritten": "to lend",
-        "expected": [
-          "貸す"
-        ],
-        "got": [
-          "貸し付ける",
-          "貸し下げる",
-          "名義貸し"
-        ]
-      },
-      {
-        "query": "to see",
-        "rewritten": "to see",
-        "expected": [
-          "見る"
-        ],
-        "got": [
-          "御覧ぜらる",
-          "お目にかける",
-          "目の当たりにする"
-        ]
-      },
-      {
-        "query": "to go",
-        "rewritten": "to go",
-        "expected": [
-          "行く"
-        ],
-        "got": [
-          "出でる",
-          "お越しになる",
-          "狂う"
-        ]
-      },
-      {
-        "query": "to make",
-        "rewritten": "to make",
-        "expected": [
-          "作る"
-        ],
-        "got": [
-          "作す",
-          "製する",
-          "立てる"
-        ]
-      },
-      {
-        "query": "to sing",
-        "rewritten": "to sing",
-        "expected": [
-          "歌う"
-        ],
-        "got": [
-          "奉唱",
-          "節をつける",
-          "合唱"
-        ]
-      },
-      {
-        "query": "to laugh",
-        "rewritten": "to laugh",
-        "expected": [
-          "笑う"
-        ],
-        "got": [
-          "草生える",
-          "笑ける",
-          "笑える"
-        ]
-      },
-      {
-        "query": "to cry",
-        "rewritten": "to cry",
-        "expected": [
-          "泣く"
-        ],
-        "got": [
-          "涙する",
-          "大泣き",
-          "泣き通す"
-        ]
-      },
-      {
-        "query": "to know",
-        "rewritten": "to know",
-        "expected": [
-          "知る"
-        ],
-        "got": [
-          "探り当てる",
-          "存じ上げる",
-          "知る者は言わず言う者は知らず"
-        ]
-      },
-      {
-        "query": "to understand",
-        "rewritten": "to understand",
-        "expected": [
-          "分かる"
-        ],
-        "got": [
-          "会す",
-          "解せる",
-          "解す"
-        ]
-      },
-      {
-        "query": "to teach",
-        "rewritten": "to teach",
-        "expected": [
-          "教える"
-        ],
-        "got": [
-          "教鞭をとる",
-          "教法",
-          "もみ込む"
-        ]
-      },
-      {
-        "query": "to live",
-        "rewritten": "to live",
-        "expected": [
-          "住む",
-          "生きる"
-        ],
-        "got": [
-          "やって行く",
-          "ライブ配信",
-          "住する"
-        ]
-      },
-      {
-        "query": "to die",
-        "rewritten": "to die",
-        "expected": [
-          "死ぬ"
-        ],
-        "got": [
-          "土に帰る",
-          "ステる",
-          "死する"
-        ]
-      },
-      {
-        "query": "to stand",
-        "rewritten": "to stand",
-        "expected": [
-          "立つ"
-        ],
-        "got": [
-          "突っ立つ",
-          "差し立てる",
-          "どなり立てる"
-        ]
-      },
-      {
-        "query": "to sit",
-        "rewritten": "to sit",
-        "expected": [
-          "座る"
-        ],
-        "got": [
-          "腰掛ける",
-          "尻を据える",
-          "割座"
-        ]
-      },
-      {
-        "query": "to start",
-        "rewritten": "to start",
-        "expected": [
-          "始まる",
-          "始める"
-        ],
-        "got": [
-          "出で立つ",
-          "やり出す",
-          "スタート"
-        ]
-      },
-      {
-        "query": "to finish",
-        "rewritten": "to finish",
-        "expected": [
-          "終わる"
-        ],
-        "got": [
-          "し終える",
-          "なし終わる",
-          "ゴール"
-        ]
-      },
-      {
-        "query": "to ask",
-        "rewritten": "to ask",
-        "expected": [
-          "尋ねる",
-          "問う"
-        ],
-        "got": [
-          "お聞きいただく",
-          "聞きそびれる",
-          "質問をする"
-        ]
-      },
-      {
-        "query": "how do you say thank you in japanese",
-        "rewritten": "thank you",
-        "expected": [
-          "ありがとう"
-        ],
-        "got": [
-          "３９",
-          "コップンカー",
-          "メルシー"
-        ]
-      },
-      {
-        "query": "the vehicle that flies in the sky",
-        "rewritten": "the vehicle that flies in the sky",
-        "expected": [
-          "飛行機"
-        ],
-        "got": [
-          "飛行体",
-          "空飛ぶ",
-          "飛雲"
-        ]
-      },
-      {
-        "query": "a place where you borrow books",
-        "rewritten": "a place where you borrow books",
-        "expected": [
-          "図書館"
-        ],
-        "got": [
-          "二酉",
-          "帯出",
-          "本代"
-        ]
-      },
-      {
-        "query": "something that is hard to do",
-        "rewritten": "something that is hard to do",
-        "expected": [
-          "難しい"
-        ],
-        "got": [
-          "がりがり",
-          "し難い",
-          "金太郎飴"
-        ]
-      },
-      {
-        "query": "a person who teaches students",
-        "rewritten": "a person who teaches students",
-        "expected": [
-          "先生"
-        ],
-        "got": [
-          "教生",
-          "劣機",
-          "貧生"
-        ]
-      },
-      {
-        "query": "a quiet and peaceful place",
-        "rewritten": "a quiet and peaceful place",
-        "expected": [
-          "静か"
-        ],
-        "got": [
-          "幽閑",
-          "静かに",
-          "無事太平"
-        ]
-      },
-      {
-        "query": "the season after winter",
-        "rewritten": "the season after winter",
-        "expected": [
-          "春"
-        ],
-        "got": [
-          "冬季",
-          "冬月",
-          "霜枯れ時"
-        ]
-      },
-      {
-        "query": "a small animal that says meow",
-        "rewritten": "a small animal that says meow",
-        "expected": [
-          "猫"
-        ],
-        "got": [
-          "にゃん",
-          "鳴き声",
-          "みゃー"
-        ]
-      },
-      {
-        "query": "the opposite of hot",
-        "rewritten": "the opposite of hot",
-        "expected": [
-          "寒い"
-        ],
-        "got": [
-          "熱っちぃ",
-          "対面",
-          "野党第一党"
-        ]
-      },
-      {
-        "query": "a place where you buy food",
-        "rewritten": "a place where you buy food",
-        "expected": [
-          "スーパー"
-        ],
-        "got": [
-          "のれん街",
-          "イートイン脱税",
-          "食店"
-        ]
-      },
-      {
-        "query": "the meal you eat in the morning",
-        "rewritten": "the meal you eat in the morning",
-        "expected": [
-          "朝食"
-        ],
-        "got": [
-          "朝腹",
-          "朝",
-          "二食"
-        ]
-      },
-      {
-        "query": "a place where you watch movies",
-        "rewritten": "a place where you watch movies",
-        "expected": [
-          "映画館"
-        ],
-        "got": [
-          "見終える",
-          "シネマ",
-          "貸切状態"
-        ]
-      },
-      {
-        "query": "a promise you make to someone",
-        "rewritten": "a promise you make to someone",
-        "expected": [
-          "約束"
-        ],
-        "got": [
-          "言質を取る",
-          "棄約",
-          "約束に背く"
-        ]
-      },
-      {
-        "query": "a word for feeling very sleepy",
-        "rewritten": "feeling very sleepy",
-        "expected": [
-          "眠い"
-        ],
-        "got": [
-          "眠たい",
-          "お眠",
-          "眠気"
-        ]
-      },
-      {
-        "query": "a word for feeling very tired",
-        "rewritten": "feeling very tired",
-        "expected": [
-          "疲れた"
-        ],
-        "got": [
-          "疲れ",
-          "ほっこり",
-          "疲労感"
-        ]
-      },
-      {
-        "query": "the place where trains stop",
-        "rewritten": "the place where trains stop",
-        "expected": [
-          "駅"
-        ],
-        "got": [
-          "通過駅",
-          "普通電車",
-          "駅に止まる"
-        ]
-      },
-      {
-        "query": "a word meaning very delicious",
-        "rewritten": "very delicious",
-        "expected": [
-          "美味しい"
-        ],
-        "got": [
-          "デリシャス",
-          "Ｂ級グルメ",
-          "マーサン"
-        ]
-      },
-      {
-        "query": "someone who studies at a school",
-        "rewritten": "someone who studies at a school",
-        "expected": [
-          "学生"
-        ],
-        "got": [
-          "上げる",
-          "アカデミック",
-          "苦学"
-        ]
-      },
-      {
-        "query": "a large animal that barks",
-        "rewritten": "a large animal that barks",
-        "expected": [
-          "犬"
-        ],
-        "got": [
-          "巨獣",
-          "皮剥ぎ",
-          "狗吠"
-        ]
-      },
-      {
-        "query": "the opposite of big",
-        "rewritten": "the opposite of big",
-        "expected": [
-          "小さい"
-        ],
-        "got": [
-          "対面",
-          "でかい",
-          "野党第一党"
-        ]
-      },
-      {
-        "query": "a word for a feeling of loneliness",
-        "rewritten": "feeling of loneliness",
-        "expected": [
-          "寂しい"
-        ],
-        "got": [
-          "寂寥感",
-          "ロンリネス",
-          "寂しさ"
-        ]
-      },
-      {
-        "query": "the season when it snows the most",
-        "rewritten": "the season when it snows the most",
-        "expected": [
-          "冬"
-        ],
-        "got": [
-          "終雪",
-          "毎冬",
-          "プリンクル"
-        ]
-      },
-      {
-        "query": "a vehicle with four wheels you drive",
-        "rewritten": "a vehicle with four wheels you drive",
-        "expected": [
-          "車"
-        ],
-        "got": [
-          "四輪駆動車",
-          "ＲＶ車",
-          "四駆"
-        ]
-      },
-      {
-        "query": "a place where sick people go for treatment",
-        "rewritten": "a place where sick people go for treatment",
-        "expected": [
-          "病院"
-        ],
-        "got": [
-          "シックハウス",
-          "処置室",
-          "シックスクール"
-        ]
-      },
-      {
-        "query": "a word for someone you love romantically",
-        "rewritten": "someone you love romantically",
-        "expected": [
-          "恋人"
-        ],
-        "got": [
-          "ロマンチック",
-          "ロマンス",
-          "恋"
-        ]
-      },
-      {
-        "query": "a word for being extremely happy",
-        "rewritten": "being extremely happy",
-        "expected": [
-          "嬉しい"
-        ],
-        "got": [
-          "清福",
-          "天にも昇る気持ち",
-          "天にも昇る心地"
-        ]
-      },
-      {
-        "query": "a word for something very expensive",
-        "rewritten": "something very expensive",
-        "expected": [
-          "高い"
-        ],
-        "got": [
-          "激高",
-          "金に糸目をつけない",
-          "エクスペンシブ"
-        ]
-      },
-      {
-        "query": "a word for something cheap",
-        "rewritten": "something cheap",
-        "expected": [
-          "安い"
-        ],
-        "got": [
-          "チープ",
-          "安く譲る",
-          "低廉"
-        ]
-      },
-      {
-        "query": "a small yellow fruit that is sour",
-        "rewritten": "a small yellow fruit that is sour",
-        "expected": [
-          "レモン"
-        ],
-        "got": [
-          "黄飯",
-          "珍果",
-          "単果"
-        ]
-      },
-      {
-        "query": "the day before today",
-        "rewritten": "the day before today",
-        "expected": [
-          "昨日"
-        ],
-        "got": [
-          "今日という今日",
-          "一昨日",
-          "弥明後日"
-        ]
-      },
-      {
-        "query": "the day after today",
-        "rewritten": "the day after today",
-        "expected": [
-          "明日"
-        ],
-        "got": [
-          "よりによって今日",
-          "今日という今日",
-          "弥明後日"
-        ]
-      },
-      {
-        "query": "a place where you can swim",
-        "rewritten": "a place where you can swim",
-        "expected": [
-          "プール"
-        ],
-        "got": [
-          "スイミングクラブ",
-          "流す",
-          "泳法"
-        ]
-      },
-      {
-        "query": "a word for feeling nervous or anxious",
-        "rewritten": "feeling nervous or anxious",
-        "expected": [
-          "不安"
-        ],
-        "got": [
-          "ハラハラ",
-          "ナーバス",
-          "気がもめる"
-        ]
-      },
-      {
-        "query": "a casual way to say goodbye",
-        "rewritten": "a casual way to say goodbye",
-        "expected": [
-          "じゃあね"
-        ],
-        "got": [
-          "別れを告げる",
-          "おさらば",
-          "失敬"
-        ]
-      },
-      {
-        "query": "a polite way to say goodbye",
-        "rewritten": "a polite way to say goodbye",
-        "expected": [
-          "さようなら"
-        ],
-        "got": [
-          "別れを告げる",
-          "おさらば",
-          "失敬"
-        ]
-      },
-      {
-        "query": "people who are close to you but not family",
-        "rewritten": "people who are close to you but not family",
-        "expected": [
-          "友達"
-        ],
-        "got": [
-          "近親憎悪",
-          "家族達",
-          "親戚知己"
-        ]
-      },
-      {
-        "query": "the tool you use to open a locked door",
-        "rewritten": "the tool you use to open a locked door",
-        "expected": [
-          "鍵"
-        ],
-        "got": [
-          "鍵開け道具",
-          "じょっぴんかる",
-          "ドアロック"
-        ]
-      },
-      {
-        "query": "a feeling of wanting to eat something",
-        "rewritten": "a feeling of wanting to eat something",
-        "expected": [
-          "空腹",
-          "空腹感",
-          "お腹が空く",
-          "お腹が空いた"
-        ],
-        "got": [
-          "食欲",
-          "気がする",
-          "撥ね箸"
-        ]
-      },
-      {
-        "query": "a word for something that is boring",
-        "rewritten": "something that is boring",
-        "expected": [
-          "つまらない"
-        ],
-        "got": [
-          "中刳り",
-          "飽かず",
-          "退屈"
-        ]
-      },
-      {
-        "query": "a word for something that is interesting",
-        "rewritten": "something that is interesting",
-        "expected": [
-          "面白い"
-        ],
-        "got": [
-          "希望者",
-          "面黒い",
-          "興味"
-        ]
-      },
-      {
-        "query": "the place where airplanes take off",
-        "rewritten": "the place where airplanes take off",
-        "expected": [
-          "空港"
-        ],
-        "got": [
-          "射爆場",
-          "格納庫",
-          "発艦"
-        ]
-      },
-      {
-        "query": "a word for a sudden strong urge to sleep",
-        "rewritten": "sudden strong urge to sleep",
-        "expected": [
-          "眠気"
-        ],
-        "got": [
-          "切に勧める",
-          "バタンキュー",
-          "矢の催促"
-        ]
-      },
-      {
-        "query": "a formal word for a workplace",
-        "rewritten": "a formal word for a workplace",
-        "expected": [
-          "職場"
-        ],
-        "got": [
-          "正式名",
-          "職住",
-          "フォーマル"
-        ]
-      },
-      {
-        "query": "a word for congratulations",
-        "rewritten": "congratulations",
-        "expected": [
-          "おめでとう",
-          "おめでとうございます"
-        ],
-        "got": [
-          "祝意",
-          "祝着",
-          "コングラチュレーションズ"
-        ]
-      }
-    ]
-  },
-  {
-    "config": "auto + rewrite(heuristic)",
-    "hit@1": 0.8,
-    "hit@3": 0.853,
-    "hit@5": 0.87,
-    "ndcg@1": 0.8,
-    "ndcg@3": 0.792,
-    "ndcg@5": 0.797,
-    "recall@1": 0.627,
-    "recall@3": 0.764,
-    "recall@5": 0.798,
-    "mrr": 0.828,
-    "map": 0.76,
-    "mrr_by_category": {
-      "en_words": 0.923,
-      "en_verbs": 0.917,
-      "en_descriptive": 0.131,
-      "ja_words": 1.0,
-      "ja_hiragana": 1.0,
-      "ja_katakana": 1.0
-    },
-    "avg_latency_ms": 172,
-    "misses": [
-      {
-        "query": "the vehicle that flies in the sky",
-        "rewritten": "the vehicle that flies in the sky",
-        "expected": [
-          "飛行機"
-        ],
-        "got": [
-          "飛行体",
-          "空飛ぶ",
-          "飛雲"
-        ]
-      },
-      {
-        "query": "a place where you borrow books",
-        "rewritten": "a place where you borrow books",
-        "expected": [
-          "図書館"
-        ],
-        "got": [
-          "二酉",
-          "本代",
-          "帯出"
-        ]
-      },
-      {
-        "query": "something that is hard to do",
-        "rewritten": "something that is hard to do",
-        "expected": [
-          "難しい"
-        ],
-        "got": [
-          "し難い",
-          "がりがり",
-          "致しかねる"
-        ]
-      },
-      {
-        "query": "a person who teaches students",
-        "rewritten": "a person who teaches students",
-        "expected": [
-          "先生"
-        ],
-        "got": [
-          "教生",
-          "教育実習生",
-          "劣機"
-        ]
-      },
-      {
-        "query": "a quiet and peaceful place",
-        "rewritten": "a quiet and peaceful place",
-        "expected": [
-          "静か"
-        ],
-        "got": [
-          "幽閑",
-          "静かに",
-          "幽然"
-        ]
-      },
-      {
-        "query": "the season after winter",
-        "rewritten": "the season after winter",
-        "expected": [
-          "春"
-        ],
-        "got": [
-          "冬季",
-          "冬月",
-          "玄冬"
-        ]
-      },
-      {
-        "query": "a small animal that says meow",
-        "rewritten": "a small animal that says meow",
-        "expected": [
-          "猫"
-        ],
-        "got": [
-          "にゃん",
-          "みゃー",
-          "鳴き声"
-        ]
-      },
-      {
-        "query": "the opposite of hot",
-        "rewritten": "the opposite of hot",
-        "expected": [
-          "寒い"
-        ],
-        "got": [
-          "熱っちぃ",
-          "対面",
-          "非熱"
-        ]
-      },
-      {
-        "query": "a place where you buy food",
-        "rewritten": "a place where you buy food",
-        "expected": [
-          "スーパー"
-        ],
-        "got": [
-          "のれん街",
-          "イートイン脱税",
-          "食店"
-        ]
-      },
-      {
-        "query": "a place where you watch movies",
-        "rewritten": "a place where you watch movies",
-        "expected": [
-          "映画館"
-        ],
-        "got": [
-          "シネマ",
-          "見終える",
-          "ホームシアター"
-        ]
-      },
-      {
-        "query": "a promise you make to someone",
-        "rewritten": "a promise you make to someone",
-        "expected": [
-          "約束"
-        ],
-        "got": [
-          "棄約",
-          "言質を取る",
-          "約束に背く"
-        ]
-      },
-      {
-        "query": "a word for feeling very tired",
-        "rewritten": "feeling very tired",
-        "expected": [
-          "疲れた"
-        ],
-        "got": [
-          "疲れ",
-          "退屈",
-          "眠たい"
-        ]
-      },
-      {
-        "query": "the place where trains stop",
-        "rewritten": "the place where trains stop",
-        "expected": [
-          "駅"
-        ],
-        "got": [
-          "通過駅",
-          "普通電車",
-          "駅に止まる"
-        ]
-      },
-      {
-        "query": "someone who studies at a school",
-        "rewritten": "someone who studies at a school",
-        "expected": [
-          "学生"
-        ],
-        "got": [
-          "アカデミック",
-          "上げる",
-          "アカデミシャン"
-        ]
-      },
-      {
-        "query": "a large animal that barks",
-        "rewritten": "a large animal that barks",
-        "expected": [
-          "犬"
-        ],
-        "got": [
-          "巨獣",
-          "狗吠",
-          "皮剥ぎ"
-        ]
-      },
-      {
-        "query": "the opposite of big",
-        "rewritten": "the opposite of big",
-        "expected": [
-          "小さい"
-        ],
-        "got": [
-          "でかい",
-          "対面",
-          "大型"
-        ]
-      },
-      {
-        "query": "a word for a feeling of loneliness",
-        "rewritten": "feeling of loneliness",
-        "expected": [
-          "寂しい"
-        ],
-        "got": [
-          "寂寥感",
-          "孤独",
-          "孤立"
-        ]
-      },
-      {
-        "query": "the season when it snows the most",
-        "rewritten": "the season when it snows the most",
-        "expected": [
-          "冬"
-        ],
-        "got": [
-          "毎冬",
-          "終雪",
-          "冬季"
-        ]
-      },
-      {
-        "query": "a vehicle with four wheels you drive",
-        "rewritten": "a vehicle with four wheels you drive",
-        "expected": [
-          "車"
-        ],
-        "got": [
-          "四輪駆動車",
-          "四駆",
-          "４ＷＤ"
-        ]
-      },
-      {
-        "query": "a place where sick people go for treatment",
-        "rewritten": "a place where sick people go for treatment",
-        "expected": [
-          "病院"
-        ],
-        "got": [
-          "処置室",
-          "シックハウス",
-          "医療施設"
-        ]
-      },
-      {
-        "query": "a word for someone you love romantically",
-        "rewritten": "someone you love romantically",
-        "expected": [
-          "恋人"
-        ],
-        "got": [
-          "ロマンチック",
-          "恋",
-          "ロマンス"
-        ]
-      },
-      {
-        "query": "a word for being extremely happy",
-        "rewritten": "being extremely happy",
-        "expected": [
-          "嬉しい"
-        ],
-        "got": [
-          "極端",
-          "ハッピー",
-          "笑顔"
-        ]
-      },
-      {
-        "query": "a word for something very expensive",
-        "rewritten": "something very expensive",
-        "expected": [
-          "高い"
-        ],
-        "got": [
-          "上げる",
-          "安上がり",
-          "割安"
-        ]
-      },
-      {
-        "query": "a word for something cheap",
-        "rewritten": "something cheap",
-        "expected": [
-          "安い"
-        ],
-        "got": [
-          "安上がり",
-          "小手先",
-          "安価"
-        ]
-      },
-      {
-        "query": "a small yellow fruit that is sour",
-        "rewritten": "a small yellow fruit that is sour",
-        "expected": [
-          "レモン"
-        ],
-        "got": [
-          "珍果",
-          "黄飯",
-          "単果"
-        ]
-      },
-      {
-        "query": "the day before today",
-        "rewritten": "the day before today",
-        "expected": [
-          "昨日"
-        ],
-        "got": [
-          "一昨日",
-          "今日という今日",
-          "前々日"
-        ]
-      },
-      {
-        "query": "the day after today",
-        "rewritten": "the day after today",
-        "expected": [
-          "明日"
-        ],
-        "got": [
-          "よりによって今日",
-          "今日という今日",
-          "一昨日"
-        ]
-      },
-      {
-        "query": "a place where you can swim",
-        "rewritten": "a place where you can swim",
-        "expected": [
-          "プール"
-        ],
-        "got": [
-          "スイミングクラブ",
-          "泳法",
-          "流す"
-        ]
-      },
-      {
-        "query": "a word for feeling nervous or anxious",
-        "rewritten": "feeling nervous or anxious",
-        "expected": [
-          "不安"
-        ],
-        "got": [
-          "ナーバス",
-          "気がもめる",
-          "ハラハラ"
-        ]
-      },
-      {
-        "query": "a casual way to say goodbye",
-        "rewritten": "a casual way to say goodbye",
-        "expected": [
-          "じゃあね"
-        ],
-        "got": [
-          "別れを告げる",
-          "おさらば",
-          "バイバイ"
-        ]
-      },
-      {
-        "query": "a polite way to say goodbye",
-        "rewritten": "a polite way to say goodbye",
-        "expected": [
-          "さようなら"
-        ],
-        "got": [
-          "別れを告げる",
-          "おさらば",
-          "バイバイ"
-        ]
-      },
-      {
-        "query": "people who are close to you but not family",
-        "rewritten": "people who are close to you but not family",
-        "expected": [
-          "友達"
-        ],
-        "got": [
-          "家族達",
-          "近親憎悪",
-          "親戚知己"
-        ]
-      },
-      {
-        "query": "the tool you use to open a locked door",
-        "rewritten": "the tool you use to open a locked door",
-        "expected": [
-          "鍵"
-        ],
-        "got": [
-          "鍵開け道具",
-          "じょっぴんかる",
-          "ドアロック"
-        ]
-      },
-      {
-        "query": "a feeling of wanting to eat something",
-        "rewritten": "a feeling of wanting to eat something",
-        "expected": [
-          "空腹",
-          "空腹感",
-          "お腹が空く",
-          "お腹が空いた"
-        ],
-        "got": [
-          "食欲",
-          "気がする",
-          "アペタイト"
-        ]
-      },
-      {
-        "query": "a word for something that is boring",
-        "rewritten": "something that is boring",
-        "expected": [
-          "つまらない"
-        ],
-        "got": [
-          "中刳り",
-          "飽かず",
-          "おもんねー"
-        ]
-      },
-      {
-        "query": "a word for something that is interesting",
-        "rewritten": "something that is interesting",
-        "expected": [
-          "面白い"
-        ],
-        "got": [
-          "面黒い",
-          "希望者",
-          "おもろい"
-        ]
-      },
-      {
-        "query": "the place where airplanes take off",
-        "rewritten": "the place where airplanes take off",
-        "expected": [
-          "空港"
-        ],
-        "got": [
-          "格納庫",
-          "射爆場",
-          "航空機"
-        ]
-      },
-      {
-        "query": "a word for a sudden strong urge to sleep",
-        "rewritten": "sudden strong urge to sleep",
-        "expected": [
-          "眠気"
-        ],
-        "got": [
-          "バタンキュー",
-          "切に勧める",
-          "入眠"
-        ]
-      },
-      {
-        "query": "a formal word for a workplace",
-        "rewritten": "a formal word for a workplace",
-        "expected": [
-          "職場"
-        ],
-        "got": [
-          "正式名",
-          "フォーマル",
-          "職住"
-        ]
-      }
-    ]
-  },
-  {
-    "config": "hybrid + rewrite(auto/llm)",
-    "hit@1": 0.58,
-    "hit@3": 0.683,
-    "hit@5": 0.727,
-    "ndcg@1": 0.58,
-    "ndcg@3": 0.597,
-    "ndcg@5": 0.612,
-    "recall@1": 0.445,
-    "recall@3": 0.593,
-    "recall@5": 0.649,
-    "mrr": 0.635,
-    "map": 0.567,
-    "mrr_by_category": {
-      "en_words": 0.306,
-      "en_verbs": 0.292,
-      "en_descriptive": 0.211,
-      "ja_words": 1.0,
-      "ja_hiragana": 1.0,
-      "ja_katakana": 1.0
-    },
-    "avg_latency_ms": 292,
-    "misses": [
-      {
-        "query": "sky",
-        "rewritten": "sky",
-        "expected": [
-          "空"
-        ],
-        "got": [
-          "天",
-          "スカイ",
-          "シエル"
-        ]
-      },
-      {
-        "query": "dog",
-        "rewritten": "dog",
-        "expected": [
-          "犬"
-        ],
-        "got": [
-          "ワン公",
-          "愛犬",
-          "犬の顔"
-        ]
-      },
-      {
-        "query": "water",
-        "rewritten": "water",
-        "expected": [
-          "水"
-        ],
-        "got": [
-          "ウォーター",
-          "水をかける",
-          "水をやる"
-        ]
-      },
-      {
-        "query": "book",
-        "rewritten": "book",
-        "expected": [
-          "本"
-        ],
-        "got": [
-          "ご本",
-          "書冊",
-          "成書"
-        ]
-      },
-      {
-        "query": "car",
-        "rewritten": "car",
-        "expected": [
-          "車",
-          "自動車"
-        ],
-        "got": [
-          "カー",
-          "お車",
-          "レンタカー"
-        ]
-      },
-      {
-        "query": "friend",
-        "rewritten": "friend",
-        "expected": [
-          "友達"
-        ],
-        "got": [
-          "友人",
-          "友朋",
-          "アミ"
-        ]
-      },
-      {
-        "query": "money",
-        "rewritten": "money",
-        "expected": [
-          "お金"
-        ],
-        "got": [
-          "じぇんこ",
-          "ゲルト",
-          "上納金"
-        ]
-      },
-      {
-        "query": "time",
-        "rewritten": "time",
-        "expected": [
-          "時間"
-        ],
-        "got": [
-          "時辰",
-          "時宣",
-          "歳月"
-        ]
-      },
-      {
-        "query": "night",
-        "rewritten": "night",
-        "expected": [
-          "夜"
-        ],
-        "got": [
-          "ノーチェ",
-          "ナイト",
-          "暮夜"
-        ]
-      },
-      {
-        "query": "rain",
-        "rewritten": "rain",
-        "expected": [
-          "雨"
-        ],
-        "got": [
-          "レーン",
-          "恵みの雨",
-          "降雨"
-        ]
-      },
-      {
-        "query": "wind",
-        "rewritten": "wind",
-        "expected": [
-          "風"
-        ],
-        "got": [
-          "ウインド",
-          "峡谷風",
-          "空風"
-        ]
-      },
-      {
-        "query": "tree",
-        "rewritten": "tree",
-        "expected": [
-          "木"
-        ],
-        "got": [
-          "木本",
-          "菩提樹",
-          "林木"
-        ]
-      },
-      {
-        "query": "flower",
-        "rewritten": "flower",
-        "expected": [
-          "花"
-        ],
-        "got": [
-          "フラワー",
-          "草花",
-          "お花畑"
-        ]
-      },
-      {
-        "query": "work",
-        "rewritten": "work",
-        "expected": [
-          "仕事"
-        ],
-        "got": [
-          "ワーク",
-          "出勤",
-          "稼げる"
-        ]
-      },
-      {
-        "query": "dream",
-        "rewritten": "dream",
-        "expected": [
-          "夢"
-        ],
-        "got": [
-          "ドリーム",
-          "夢の夢",
-          "夢を見る"
-        ]
-      },
-      {
-        "query": "love",
-        "rewritten": "love",
-        "expected": [
-          "愛"
-        ],
-        "got": [
-          "アモーレ",
-          "アムール",
-          "リーベ"
-        ]
-      },
-      {
-        "query": "happy",
-        "rewritten": "happy",
-        "expected": [
-          "嬉しい"
-        ],
-        "got": [
-          "ハッピー",
-          "栩栩",
-          "慶福"
-        ]
-      },
-      {
-        "query": "sad",
-        "rewritten": "sad",
-        "expected": [
-          "悲しい"
-        ],
-        "got": [
-          "憂わしい",
-          "哀話",
-          "哀音"
-        ]
-      },
-      {
-        "query": "cold",
-        "rewritten": "cold",
-        "expected": [
-          "寒い",
-          "冷たい"
-        ],
-        "got": [
-          "寒",
-          "冷寒",
-          "コールド"
-        ]
-      },
-      {
-        "query": "beautiful",
-        "rewritten": "beautiful",
-        "expected": [
-          "美しい",
-          "綺麗",
-          "素敵"
-        ],
-        "got": [
-          "ふつくしい",
-          "美美しい",
-          "ビューティフル"
-        ]
-      },
-      {
-        "query": "difficult",
-        "rewritten": "difficult",
-        "expected": [
-          "難しい"
-        ],
-        "got": [
-          "むずい",
-          "難い",
-          "難し"
-        ]
-      },
-      {
-        "query": "teacher",
-        "rewritten": "teacher",
-        "expected": [
-          "先生"
-        ],
-        "got": [
-          "ティーチャー",
-          "教師",
-          "担任の先生"
-        ]
-      },
-      {
-        "query": "to eat",
-        "rewritten": "to eat",
-        "expected": [
-          "食べる"
-        ],
-        "got": [
-          "食す",
-          "召し上がる",
-          "犬食い"
-        ]
-      },
-      {
-        "query": "to drink",
-        "rewritten": "to drink",
-        "expected": [
-          "飲む"
-        ],
-        "got": [
-          "召し上がる",
-          "飲み干す",
-          "飲み比べ"
-        ]
-      },
-      {
-        "query": "to sleep",
-        "rewritten": "to sleep",
-        "expected": [
-          "寝る"
-        ],
-        "got": [
-          "御寝る",
-          "睡眠を取る",
-          "夢を結ぶ"
+          "浮き寝"
         ]
       },
       {
@@ -8501,8 +6852,8 @@
         ],
         "got": [
           "出で立つ",
-          "スタート",
-          "やり出す"
+          "やり出す",
+          "スタート"
         ]
       },
       {
@@ -8543,87 +6894,147 @@
         ]
       },
       {
+        "query": "the vehicle that flies in the sky",
+        "rewritten": "the vehicle that flies in the sky",
+        "expected": [
+          "飛行機"
+        ],
+        "got": [
+          "飛行体",
+          "空飛ぶ",
+          "飛雲"
+        ]
+      },
+      {
+        "query": "a place where you borrow books",
+        "rewritten": "a place where you borrow books",
+        "expected": [
+          "図書館"
+        ],
+        "got": [
+          "二酉",
+          "帯出",
+          "本代"
+        ]
+      },
+      {
         "query": "something that is hard to do",
-        "rewritten": "difficult task",
+        "rewritten": "something that is hard to do",
         "expected": [
           "難しい"
         ],
         "got": [
-          "一仕事",
-          "厄介事",
-          "難事"
+          "し難い",
+          "がりがり",
+          "金太郎飴"
         ]
       },
       {
         "query": "a person who teaches students",
-        "rewritten": "teacher",
+        "rewritten": "a person who teaches students",
         "expected": [
           "先生"
         ],
         "got": [
-          "ティーチャー",
-          "教師",
-          "担任の先生"
+          "劣機",
+          "教生",
+          "教育実習生"
         ]
       },
       {
         "query": "a quiet and peaceful place",
-        "rewritten": "quiet peaceful place",
+        "rewritten": "a quiet and peaceful place",
         "expected": [
           "静か"
         ],
         "got": [
+          "幽閑",
           "静かに",
-          "ピースフル",
           "無事太平"
         ]
       },
       {
         "query": "the season after winter",
-        "rewritten": "spring",
+        "rewritten": "the season after winter",
         "expected": [
           "春"
         ],
         "got": [
-          "陽春",
-          "芳春",
-          "春季"
+          "冬季",
+          "冬月",
+          "霜枯れ時"
+        ]
+      },
+      {
+        "query": "a small animal that says meow",
+        "rewritten": "a small animal that says meow",
+        "expected": [
+          "猫"
+        ],
+        "got": [
+          "にゃん",
+          "鳴き声",
+          "みゃー"
         ]
       },
       {
         "query": "the opposite of hot",
-        "rewritten": "cold",
+        "rewritten": "the opposite of hot",
         "expected": [
           "寒い"
         ],
         "got": [
-          "寒",
-          "冷寒",
-          "コールド"
+          "熱っちぃ",
+          "対面",
+          "野党第一党"
         ]
       },
       {
-        "query": "when you arrive somewhere late",
-        "rewritten": "to be late",
+        "query": "a place where you buy food",
+        "rewritten": "a place where you buy food",
         "expected": [
-          "遅刻"
+          "スーパー"
         ],
         "got": [
-          "時間に遅れる",
-          "遅咲き",
-          "延び延びになる"
+          "のれん街",
+          "イートイン脱税",
+          "台の物"
+        ]
+      },
+      {
+        "query": "the meal you eat in the morning",
+        "rewritten": "the meal you eat in the morning",
+        "expected": [
+          "朝食"
+        ],
+        "got": [
+          "朝腹",
+          "朝",
+          "二食"
+        ]
+      },
+      {
+        "query": "a place where you watch movies",
+        "rewritten": "a place where you watch movies",
+        "expected": [
+          "映画館"
+        ],
+        "got": [
+          "見終える",
+          "シネマ",
+          "貸切状態"
         ]
       },
       {
         "query": "a promise you make to someone",
-        "rewritten": "pledge",
+        "rewritten": "a promise you make to someone",
         "expected": [
           "約束"
         ],
         "got": [
-          "プレッジ",
-          "言質",
-          "神前に誓う"
+          "言質を取る",
+          "棄約",
+          "約束に背く"
         ]
       },
       {
@@ -8651,6 +7062,18 @@
         ]
       },
       {
+        "query": "the place where trains stop",
+        "rewritten": "the place where trains stop",
+        "expected": [
+          "駅"
+        ],
+        "got": [
+          "通過駅",
+          "普通電車",
+          "駅に止まる"
+        ]
+      },
+      {
         "query": "a word meaning very delicious",
         "rewritten": "very delicious",
         "expected": [
@@ -8663,27 +7086,39 @@
         ]
       },
       {
+        "query": "someone who studies at a school",
+        "rewritten": "someone who studies at a school",
+        "expected": [
+          "学生"
+        ],
+        "got": [
+          "アカデミック",
+          "上げる",
+          "苦学"
+        ]
+      },
+      {
         "query": "a large animal that barks",
-        "rewritten": "dog",
+        "rewritten": "a large animal that barks",
         "expected": [
           "犬"
         ],
         "got": [
-          "ワン公",
-          "犬の顔",
-          "愛犬"
+          "巨獣",
+          "皮剥ぎ",
+          "狗吠"
         ]
       },
       {
         "query": "the opposite of big",
-        "rewritten": "small",
+        "rewritten": "the opposite of big",
         "expected": [
           "小さい"
         ],
         "got": [
-          "プチ",
-          "スモール",
-          "雑魚"
+          "でかい",
+          "対面",
+          "大型"
         ]
       },
       {
@@ -8699,15 +7134,27 @@
         ]
       },
       {
+        "query": "the season when it snows the most",
+        "rewritten": "the season when it snows the most",
+        "expected": [
+          "冬"
+        ],
+        "got": [
+          "終雪",
+          "毎冬",
+          "プリンクル"
+        ]
+      },
+      {
         "query": "a vehicle with four wheels you drive",
-        "rewritten": "car",
+        "rewritten": "a vehicle with four wheels you drive",
         "expected": [
           "車"
         ],
         "got": [
-          "カー",
-          "お車",
-          "レンタカー"
+          "四輪駆動車",
+          "ＲＶ車",
+          "四駆"
         ]
       },
       {
@@ -8730,8 +7177,8 @@
         ],
         "got": [
           "ロマンチック",
-          "恋",
-          "ロマンス"
+          "ロマンス",
+          "恋"
         ]
       },
       {
@@ -8771,6 +7218,67 @@
         ]
       },
       {
+        "query": "a person who cooks food professionally",
+        "rewritten": "a person who cooks food professionally",
+        "expected": [
+          "料理人",
+          "シェフ"
+        ],
+        "got": [
+          "膳部",
+          "料理研究家",
+          "自炊"
+        ]
+      },
+      {
+        "query": "a small yellow fruit that is sour",
+        "rewritten": "a small yellow fruit that is sour",
+        "expected": [
+          "レモン"
+        ],
+        "got": [
+          "黄飯",
+          "珍果",
+          "小玉"
+        ]
+      },
+      {
+        "query": "the day before today",
+        "rewritten": "the day before today",
+        "expected": [
+          "昨日"
+        ],
+        "got": [
+          "今日という今日",
+          "一昨日",
+          "弥明後日"
+        ]
+      },
+      {
+        "query": "the day after today",
+        "rewritten": "the day after today",
+        "expected": [
+          "明日"
+        ],
+        "got": [
+          "よりによって今日",
+          "今日という今日",
+          "弥明後日"
+        ]
+      },
+      {
+        "query": "a place where you can swim",
+        "rewritten": "a place where you can swim",
+        "expected": [
+          "プール"
+        ],
+        "got": [
+          "スイミングクラブ",
+          "流す",
+          "泳法"
+        ]
+      },
+      {
         "query": "a word for feeling nervous or anxious",
         "rewritten": "feeling nervous or anxious",
         "expected": [
@@ -8784,55 +7292,55 @@
       },
       {
         "query": "a casual way to say goodbye",
-        "rewritten": "bye",
+        "rewritten": "a casual way to say goodbye",
         "expected": [
           "じゃあね"
         ],
         "got": [
-          "バイ",
-          "又ね",
-          "ではでは"
+          "おさらば",
+          "別れを告げる",
+          "バイバイ"
         ]
       },
       {
         "query": "a polite way to say goodbye",
-        "rewritten": "farewell phrase",
+        "rewritten": "a polite way to say goodbye",
         "expected": [
           "さようなら"
         ],
         "got": [
-          "別杯",
           "別れを告げる",
+          "失敬",
           "おさらば"
         ]
       },
       {
         "query": "people who are close to you but not family",
-        "rewritten": "close friends",
+        "rewritten": "people who are close to you but not family",
         "expected": [
           "友達"
         ],
         "got": [
-          "親しい",
-          "深交",
-          "知友"
+          "近親憎悪",
+          "家族達",
+          "爾汝の交わり"
         ]
       },
       {
         "query": "the tool you use to open a locked door",
-        "rewritten": "key",
+        "rewritten": "the tool you use to open a locked door",
         "expected": [
           "鍵"
         ],
         "got": [
-          "キー",
-          "じょっぴん",
-          "キーイン"
+          "鍵開け道具",
+          "じょっぴんかる",
+          "ドアロック"
         ]
       },
       {
         "query": "a feeling of wanting to eat something",
-        "rewritten": "hunger",
+        "rewritten": "a feeling of wanting to eat something",
         "expected": [
           "空腹",
           "空腹感",
@@ -8840,9 +7348,9 @@
           "お腹が空いた"
         ],
         "got": [
-          "ハンガー",
-          "満腹度",
-          "飢え"
+          "気がする",
+          "食欲",
+          "撥ね箸"
         ]
       },
       {
@@ -8871,14 +7379,14 @@
       },
       {
         "query": "the place where airplanes take off",
-        "rewritten": "runway",
+        "rewritten": "the place where airplanes take off",
         "expected": [
           "空港"
         ],
         "got": [
-          "ランウェイ",
-          "滑走路",
-          "キャットウォーク"
+          "射爆場",
+          "格納庫",
+          "発艦"
         ]
       },
       {
@@ -8890,19 +7398,19 @@
         "got": [
           "切に勧める",
           "バタンキュー",
-          "入眠"
+          "矢の催促"
         ]
       },
       {
         "query": "a formal word for a workplace",
-        "rewritten": "office",
+        "rewritten": "a formal word for a workplace",
         "expected": [
           "職場"
         ],
         "got": [
-          "オフィス",
-          "事務所",
-          "事務職員"
+          "正式名",
+          "職住",
+          "フォーマル"
         ]
       },
       {
@@ -8916,6 +7424,502 @@
           "祝意",
           "祝着",
           "コングラチュレーションズ"
+        ]
+      }
+    ]
+  },
+  {
+    "config": "auto + rewrite(heuristic)",
+    "hit@1": 0.8,
+    "hit@3": 0.853,
+    "hit@5": 0.87,
+    "ndcg@1": 0.8,
+    "ndcg@3": 0.792,
+    "ndcg@5": 0.797,
+    "recall@1": 0.627,
+    "recall@3": 0.764,
+    "recall@5": 0.798,
+    "mrr": 0.828,
+    "map": 0.76,
+    "mrr_by_category": {
+      "en_words": 0.923,
+      "en_verbs": 0.917,
+      "en_descriptive": 0.131,
+      "ja_words": 1.0,
+      "ja_hiragana": 1.0,
+      "ja_katakana": 1.0
+    },
+    "avg_latency_ms": 154,
+    "misses": [
+      {
+        "query": "the vehicle that flies in the sky",
+        "rewritten": "the vehicle that flies in the sky",
+        "expected": [
+          "飛行機"
+        ],
+        "got": [
+          "飛行体",
+          "空飛ぶ",
+          "飛雲"
+        ]
+      },
+      {
+        "query": "a place where you borrow books",
+        "rewritten": "a place where you borrow books",
+        "expected": [
+          "図書館"
+        ],
+        "got": [
+          "二酉",
+          "本代",
+          "帯出"
+        ]
+      },
+      {
+        "query": "something that is hard to do",
+        "rewritten": "something that is hard to do",
+        "expected": [
+          "難しい"
+        ],
+        "got": [
+          "し難い",
+          "がりがり",
+          "致しかねる"
+        ]
+      },
+      {
+        "query": "a person who teaches students",
+        "rewritten": "a person who teaches students",
+        "expected": [
+          "先生"
+        ],
+        "got": [
+          "教生",
+          "教育実習生",
+          "劣機"
+        ]
+      },
+      {
+        "query": "a quiet and peaceful place",
+        "rewritten": "a quiet and peaceful place",
+        "expected": [
+          "静か"
+        ],
+        "got": [
+          "幽閑",
+          "静かに",
+          "幽然"
+        ]
+      },
+      {
+        "query": "the season after winter",
+        "rewritten": "the season after winter",
+        "expected": [
+          "春"
+        ],
+        "got": [
+          "冬季",
+          "冬月",
+          "玄冬"
+        ]
+      },
+      {
+        "query": "a small animal that says meow",
+        "rewritten": "a small animal that says meow",
+        "expected": [
+          "猫"
+        ],
+        "got": [
+          "にゃん",
+          "みゃー",
+          "鳴き声"
+        ]
+      },
+      {
+        "query": "the opposite of hot",
+        "rewritten": "the opposite of hot",
+        "expected": [
+          "寒い"
+        ],
+        "got": [
+          "熱っちぃ",
+          "非熱",
+          "対面"
+        ]
+      },
+      {
+        "query": "a place where you buy food",
+        "rewritten": "a place where you buy food",
+        "expected": [
+          "スーパー"
+        ],
+        "got": [
+          "のれん街",
+          "イートイン脱税",
+          "食店"
+        ]
+      },
+      {
+        "query": "a place where you watch movies",
+        "rewritten": "a place where you watch movies",
+        "expected": [
+          "映画館"
+        ],
+        "got": [
+          "シネマ",
+          "見終える",
+          "ホームシアター"
+        ]
+      },
+      {
+        "query": "a promise you make to someone",
+        "rewritten": "a promise you make to someone",
+        "expected": [
+          "約束"
+        ],
+        "got": [
+          "棄約",
+          "言質を取る",
+          "約束に背く"
+        ]
+      },
+      {
+        "query": "a word for feeling very tired",
+        "rewritten": "feeling very tired",
+        "expected": [
+          "疲れた"
+        ],
+        "got": [
+          "疲れ",
+          "退屈",
+          "眠たい"
+        ]
+      },
+      {
+        "query": "the place where trains stop",
+        "rewritten": "the place where trains stop",
+        "expected": [
+          "駅"
+        ],
+        "got": [
+          "通過駅",
+          "普通電車",
+          "駅に止まる"
+        ]
+      },
+      {
+        "query": "someone who studies at a school",
+        "rewritten": "someone who studies at a school",
+        "expected": [
+          "学生"
+        ],
+        "got": [
+          "アカデミック",
+          "アカデミシャン",
+          "上げる"
+        ]
+      },
+      {
+        "query": "a large animal that barks",
+        "rewritten": "a large animal that barks",
+        "expected": [
+          "犬"
+        ],
+        "got": [
+          "巨獣",
+          "狗吠",
+          "皮剥ぎ"
+        ]
+      },
+      {
+        "query": "the opposite of big",
+        "rewritten": "the opposite of big",
+        "expected": [
+          "小さい"
+        ],
+        "got": [
+          "でかい",
+          "対面",
+          "大型"
+        ]
+      },
+      {
+        "query": "a word for a feeling of loneliness",
+        "rewritten": "feeling of loneliness",
+        "expected": [
+          "寂しい"
+        ],
+        "got": [
+          "寂寥感",
+          "孤独",
+          "孤立"
+        ]
+      },
+      {
+        "query": "the season when it snows the most",
+        "rewritten": "the season when it snows the most",
+        "expected": [
+          "冬"
+        ],
+        "got": [
+          "毎冬",
+          "終雪",
+          "冬季"
+        ]
+      },
+      {
+        "query": "a vehicle with four wheels you drive",
+        "rewritten": "a vehicle with four wheels you drive",
+        "expected": [
+          "車"
+        ],
+        "got": [
+          "四輪駆動車",
+          "四駆",
+          "４ＷＤ"
+        ]
+      },
+      {
+        "query": "a place where sick people go for treatment",
+        "rewritten": "a place where sick people go for treatment",
+        "expected": [
+          "病院"
+        ],
+        "got": [
+          "処置室",
+          "シックハウス",
+          "医療施設"
+        ]
+      },
+      {
+        "query": "a word for someone you love romantically",
+        "rewritten": "someone you love romantically",
+        "expected": [
+          "恋人"
+        ],
+        "got": [
+          "ロマンチック",
+          "恋",
+          "ロマンス"
+        ]
+      },
+      {
+        "query": "a word for being extremely happy",
+        "rewritten": "being extremely happy",
+        "expected": [
+          "嬉しい"
+        ],
+        "got": [
+          "極端",
+          "ハッピー",
+          "笑顔"
+        ]
+      },
+      {
+        "query": "a word for something very expensive",
+        "rewritten": "something very expensive",
+        "expected": [
+          "高い"
+        ],
+        "got": [
+          "上げる",
+          "安上がり",
+          "割安"
+        ]
+      },
+      {
+        "query": "a word for something cheap",
+        "rewritten": "something cheap",
+        "expected": [
+          "安い"
+        ],
+        "got": [
+          "安上がり",
+          "小手先",
+          "安価"
+        ]
+      },
+      {
+        "query": "a small yellow fruit that is sour",
+        "rewritten": "a small yellow fruit that is sour",
+        "expected": [
+          "レモン"
+        ],
+        "got": [
+          "珍果",
+          "黄飯",
+          "単果"
+        ]
+      },
+      {
+        "query": "the day before today",
+        "rewritten": "the day before today",
+        "expected": [
+          "昨日"
+        ],
+        "got": [
+          "一昨日",
+          "今日という今日",
+          "前々日"
+        ]
+      },
+      {
+        "query": "the day after today",
+        "rewritten": "the day after today",
+        "expected": [
+          "明日"
+        ],
+        "got": [
+          "よりによって今日",
+          "今日という今日",
+          "一昨日"
+        ]
+      },
+      {
+        "query": "a place where you can swim",
+        "rewritten": "a place where you can swim",
+        "expected": [
+          "プール"
+        ],
+        "got": [
+          "スイミングクラブ",
+          "泳法",
+          "流す"
+        ]
+      },
+      {
+        "query": "a word for feeling nervous or anxious",
+        "rewritten": "feeling nervous or anxious",
+        "expected": [
+          "不安"
+        ],
+        "got": [
+          "ナーバス",
+          "気がもめる",
+          "ハラハラ"
+        ]
+      },
+      {
+        "query": "a casual way to say goodbye",
+        "rewritten": "a casual way to say goodbye",
+        "expected": [
+          "じゃあね"
+        ],
+        "got": [
+          "別れを告げる",
+          "おさらば",
+          "バイバイ"
+        ]
+      },
+      {
+        "query": "a polite way to say goodbye",
+        "rewritten": "a polite way to say goodbye",
+        "expected": [
+          "さようなら"
+        ],
+        "got": [
+          "別れを告げる",
+          "おさらば",
+          "バイバイ"
+        ]
+      },
+      {
+        "query": "people who are close to you but not family",
+        "rewritten": "people who are close to you but not family",
+        "expected": [
+          "友達"
+        ],
+        "got": [
+          "家族達",
+          "近親憎悪",
+          "親戚知己"
+        ]
+      },
+      {
+        "query": "the tool you use to open a locked door",
+        "rewritten": "the tool you use to open a locked door",
+        "expected": [
+          "鍵"
+        ],
+        "got": [
+          "鍵開け道具",
+          "じょっぴんかる",
+          "ドアロック"
+        ]
+      },
+      {
+        "query": "a feeling of wanting to eat something",
+        "rewritten": "a feeling of wanting to eat something",
+        "expected": [
+          "空腹",
+          "空腹感",
+          "お腹が空く",
+          "お腹が空いた"
+        ],
+        "got": [
+          "食欲",
+          "気がする",
+          "アペタイト"
+        ]
+      },
+      {
+        "query": "a word for something that is boring",
+        "rewritten": "something that is boring",
+        "expected": [
+          "つまらない"
+        ],
+        "got": [
+          "中刳り",
+          "飽かず",
+          "おもんねー"
+        ]
+      },
+      {
+        "query": "a word for something that is interesting",
+        "rewritten": "something that is interesting",
+        "expected": [
+          "面白い"
+        ],
+        "got": [
+          "面黒い",
+          "おもろい",
+          "希望者"
+        ]
+      },
+      {
+        "query": "the place where airplanes take off",
+        "rewritten": "the place where airplanes take off",
+        "expected": [
+          "空港"
+        ],
+        "got": [
+          "格納庫",
+          "射爆場",
+          "航空機"
+        ]
+      },
+      {
+        "query": "a word for a sudden strong urge to sleep",
+        "rewritten": "sudden strong urge to sleep",
+        "expected": [
+          "眠気"
+        ],
+        "got": [
+          "バタンキュー",
+          "切に勧める",
+          "入眠"
+        ]
+      },
+      {
+        "query": "a formal word for a workplace",
+        "rewritten": "a formal word for a workplace",
+        "expected": [
+          "職場"
+        ],
+        "got": [
+          "正式名",
+          "フォーマル",
+          "職住"
         ]
       }
     ]

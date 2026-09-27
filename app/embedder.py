@@ -35,17 +35,20 @@ def sparse_model() -> SparseTextEmbedding:
     return SparseTextEmbedding(SPARSE_MODEL, cache_dir=CACHE_DIR)
 
 
-def embed_query(text: str, *, dense: bool = True) -> tuple[list[float] | None, SparseEmbedding]:
+def embed_query(
+    text: str, *, dense: bool = True, sparse: bool = True,
+) -> tuple[list[float] | None, SparseEmbedding | None]:
     """
     Dense + sparse embeddings for a single query (uses query-side prefixes).
 
-    `dense=False` returns (None, sparse) and skips the dense model entirely —
-    used by the Japanese route, where the English-tuned dense model adds
-    nothing but latency.
+    Either side can be switched off to skip that model entirely — the
+    Japanese route and `text` mode never read the dense vector (the
+    English-tuned dense model adds nothing but latency there), `vector` mode
+    never reads the sparse one. A skipped side comes back as None.
     """
-    dense_vec = next(iter(dense_model().query_embed(text))) if dense else None
-    sparse = next(iter(sparse_model().query_embed(text)))
-    return (np.asarray(dense_vec, dtype=np.float32).tolist() if dense_vec is not None else None), sparse
+    dense_vec = next(iter(dense_model().query_embed(text))).tolist() if dense else None
+    sparse_vec = next(iter(sparse_model().query_embed(text))) if sparse else None
+    return dense_vec, sparse_vec
 
 
 def embed_documents(
