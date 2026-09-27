@@ -46,6 +46,19 @@ def random_kanji(within: Collection[str] | None = None) -> str:
     return random.choice(pool or _common_kanji())
 
 
+# KANJIDIC2's jlpt field is the *former* 4-level test scale (4 most elementary
+# → 1 most advanced); the file's own DTD notes old level 2 now straddles N2–N3,
+# so both modern levels map to it.
+_JLPT_TO_OLD: dict[str, tuple[int, ...]] = {"N5": (4,), "N4": (3,), "N3": (2,), "N2": (2,), "N1": (1,)}
+
+
+@lru_cache(maxsize=5)
+def jlpt_kanji(level: str) -> frozenset[str]:
+    """Kanji at JLPT `level` ("N5"…"N1"); empty frozenset for an unknown level."""
+    old = _JLPT_TO_OLD.get(level.upper())
+    return frozenset(c for c, d in _load_kanji_table().items() if d.get("jlpt_level") in (old or ()))
+
+
 def lookup_kanji(char: str) -> dict | None:
     """
     Full details for one kanji, or None if not in KANJIDIC2.

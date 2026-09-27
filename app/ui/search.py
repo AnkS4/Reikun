@@ -7,7 +7,7 @@ import streamlit as st
 
 from app.config import COHERE_MODEL
 from app.grammar_explain import JLPT_LEVELS, explain_grammar_stream
-from app.kanji_lookup import is_kanji, kanji_in, random_kanji
+from app.kanji_lookup import is_kanji, jlpt_kanji, kanji_in, random_kanji
 from app.retrieval import MAX_JA_QUERY_CHARS, MAX_QUERY_CHARS, is_headword, search
 from app.ui.common import (
     APP_ICON,
@@ -30,9 +30,9 @@ st.session_state.setdefault("explanations", {})
 st.session_state.setdefault("last_search", None)
 st.session_state.setdefault("q", "")
 
-TAGLINE = ("Type a word or question in English or Japanese — get kanji details, "
-           "example sentences and level-aware grammar help.")
-EXAMPLES = ("sea", "歩く", "家", "How do you say air conditioner in Japanese", "日本は中国の東に位置しています")
+TAGLINE = ("Search in English or Japanese, break down sentences word-by-word "
+           "with furigana and meanings, inspect kanji, and get grammar explanations.")
+EXAMPLES = ("sea", "会う", "家", "How do you say library in Japanese", "昨日かっぱ巻きを食べました")
 DEFAULT_LEVEL = "N5"
 # Retrieval is ~25 ms, so a page of ten costs the same as five;
 # "Show more" refetches +PAGE_RESULTS.
@@ -52,17 +52,21 @@ def _random_kanji() -> None:
     """Random button → set the query; the rerun triggers the search."""
     # Restrict to kanji that are themselves JMdict headwords — a lone kanji
     # often isn't a standalone word, so an unrestricted pick showed the card
-    # above an empty result list about a quarter of the time. is_headword()
+    # above an empty result list about a quarter of the time. Picks are also
+    # limited to the selected JLPT level (KANJIDIC2's jlpt field); an empty or
+    # malformed level falls back to the unrestricted pool. is_headword()
     # answers from the warm mmap'd trie (~µs); only before the boot warm-up
     # finishes does it cost a filtered Qdrant count per try (expected ~1.3).
+    lvl = str(st.query_params.get("level") or st.session_state.get("level") or DEFAULT_LEVEL)
+    pool = jlpt_kanji(lvl)  # unknown level → empty → random_kanji falls back to common pool
     try:
         for _ in range(8):
-            if is_headword(c := random_kanji()):
+            if is_headword(c := random_kanji(within=pool)):
                 set_query(c)
                 return
     except Exception:
         pass
-    set_query(random_kanji())  # Qdrant unreachable / all misses → unrestricted pick
+    set_query(random_kanji(within=pool))  # Qdrant unreachable / all misses → level pick, no headword check
 
 
 # ?kanji=猫 deep link (kept for old links) becomes a single-kanji search: the
@@ -115,10 +119,10 @@ with pair.form("search_form", border=False, enter_to_submit=True):
     go = inner.form_submit_button("", type="primary", icon=":material/search:", help="Search")
 if go:
     set_query(st.session_state.q_input, sync_box=False)
-row.button("", icon=":material/shuffle:", help="Random kanji", on_click=_random_kanji)
+level = str(st.query_params.get("level") or st.session_state.get("level") or DEFAULT_LEVEL)
+row.button("", icon=":material/shuffle:", help=f"Random {level} kanji", on_click=_random_kanji)
 # JLPT level lives next to the search box as a compact popover — it only
 # matters when the user opens "Explain grammar", which is on this same page.
-level = str(st.query_params.get("level") or st.session_state.get("level") or DEFAULT_LEVEL)
 with row.popover(level, icon=":material/school:", help="JLPT level for grammar explanations"):
     st.segmented_control(
         "JLPT level", JLPT_LEVELS, key="level", bind="query-params", default=DEFAULT_LEVEL,

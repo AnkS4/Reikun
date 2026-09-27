@@ -3,7 +3,7 @@
 </p>
 <h1 align="center">Reikun (例訓) — Semantic Japanese Dictionary</h1>
 
-A semantic Japanese dictionary that helps learners find example sentences from an English or Japanese word query, look up any kanji in those sentences in detail, and get a JLPT-level-calibrated grammar explanation on demand.
+A Japanese reading assistant — search in English or Japanese, break down sentences word-by-word with furigana and meanings, inspect kanji, and get grammar explanations tuned to your JLPT level.
 
 ## Demo
 
@@ -17,6 +17,7 @@ Full recording: [docs/videos/demo_v2.mp4](docs/videos/demo_v2.mp4)
 
 - **Hybrid Search with query routing**: Dense vector embeddings (FastEmbed) + BM25 sparse vectors fused server-side in Qdrant (RRF). `mode=auto` routes the query: Japanese → BM25 + exact match, English word → hybrid + commonness prior, English sentence → dense-weighted fusion. Explicit `vector`/`text`/`hybrid` modes remain for evaluation
 - **Query Rewriting**: Natural-language questions ("how do you say hospital") are normalised to dictionary glosses before retrieval — free regex heuristics by default, optional Cohere LLM rewriting for descriptive queries
+- **Sentence Breakdown**: Paste Japanese text and Sudachi splits it into word units — furigana on top, gloss underneath, full breakdown on hover. Inflection tails merge into single chips and adjacent segments re-resolve into JMdict compounds
 - **Kanji Lookup**: Deterministic kanji information (no LLM) — stroke-order diagrams (KanjiVG), readings, meanings, and common compound words
 - **Grammar Explanations**: AI-generated grammar explanations calibrated to your JLPT level (N5–N1) using Cohere, on demand only
 - **Feedback & Monitoring**: Thumbs-up/down feedback and query telemetry logged to SQLite, with a built-in dashboard (query volume, top words, feedback rate, kanji lookups, JLPT-level distribution, retrieval settings, latency)

@@ -103,15 +103,16 @@ MAX_QUERY_CHARS = 150   # input cap, any language — longer text is pasted pros
                         # embed / retrieval, so a long paste costs no model or
                         # DB call. ~3.5× the longest real question in the gold
                         # set (42 chars).
-MAX_JA_QUERY_CHARS = 80  # post-rewrite ceiling for Japanese input, shared with
-                         # segment_japanese: up to it a ja string gets the
-                         # morphological parse — multi-clause sentences stay
-                         # usable since each morpheme is its own chip.
-                         # Sized from data: ~100% of the Tatoeba example corpus
-                         # is ≤80 chars (p99 = 55, median 19) — past it the
-                         # input is pasted prose, not a lookup. The cap also
-                         # kills the old fall-through where too-long ja
-                        # queries got a bare "Nothing found".
+MAX_JA_QUERY_CHARS = 100  # post-rewrite ceiling for Japanese input, shared with
+                          # segment_japanese: up to it a ja string gets the
+                          # morphological parse — multi-clause sentences stay
+                          # usable since each morpheme is its own chip.
+                          # Sized from data: ~100% of the Tatoeba example corpus
+                          # is ≤80 chars (p99 = 55, median 19); the extra room
+                          # covers longer multi-clause input — past it the
+                          # input is pasted prose, not a lookup. The cap also
+                          # kills the old fall-through where too-long ja
+                          # queries got a bare "Nothing found".
 
 
 @dataclass(frozen=True)

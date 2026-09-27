@@ -211,13 +211,17 @@ def data_status() -> tuple[bool, str]:
 # ── Kanji rendering ──────────────────────────────────────────────────────────
 
 def _grade(grade: int) -> tuple[str, str]:
-    """(label, tooltip) for a KANJIDIC2 grade code: 1–6 primary school, 8 jōyō (secondary), 9–10 jinmeiyō."""
+    """(label, tooltip) for a KANJIDIC2 grade code — the label is always "Grade N";
+    the tooltip carries what the code means: 1–6 kyōiku (primary school year),
+    8 jōyō (secondary school, general use), 9–10 jinmeiyō (name kanji)."""
     if grade <= 6:
-        return f"Grade {grade}", f"Kyōiku kanji — taught in year {grade} of Japanese primary school"
-    if grade == 8:
-        return "Jōyō", "Jōyō kanji — taught in secondary school; one of the 2,136 characters for general use"
-    return "Jinmeiyō", ("Jinmeiyō kanji — approved for use in personal names"
-                        + (" (variant form of a jōyō kanji)" if grade == 10 else ""))
+        tip = f"Kyōiku kanji — general-use characters taught in year {grade} of primary school"
+    elif grade == 8:
+        tip = "Jōyō kanji — one of the 2,136 general-use characters, taught in secondary school"
+    else:
+        tip = ("Jinmeiyō kanji — characters approved for use in personal names"
+               + ("; variant form of a jōyō kanji" if grade == 10 else ""))
+    return f"Grade {grade}", tip
 
 
 def _meta_parts(d: dict) -> list[tuple[str, str]]:
@@ -228,7 +232,10 @@ def _meta_parts(d: dict) -> list[tuple[str, str]]:
     if d.get("grade"):
         parts.append(_grade(d["grade"]))
     if d.get("jlpt_level"):
-        parts.append((f"JLPT N{d['jlpt_level']}",
+        # kanji_table stores KANJIDIC2's former 4-level scale (4 elementary →
+        # 1 advanced); old level 2 spans N2–N3 so it can't be shown as one level.
+        label = {4: "N5", 3: "N4", 2: "N2–N3", 1: "N1"}.get(d["jlpt_level"], f"N{d['jlpt_level']}")
+        parts.append((f"JLPT {label}",
                       "Japanese Language Proficiency Test level this kanji is expected at (N5 easiest, N1 hardest)"))
     if d.get("freq"):
         parts.append((f"Freq #{d['freq']}",
