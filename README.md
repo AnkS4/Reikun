@@ -7,9 +7,9 @@ A Japanese reading assistant — search in English or Japanese, break down sente
 
 ## Demo
 
-![Reikun demo — search, kanji tooltip, kanji dialog, dashboard](docs/videos/demo_v2.gif)
+![Reikun demo — search, grammar explanation, kanji tooltip and card, sentence breakdown](docs/videos/demo_v3.gif)
 
-Full recording: [docs/videos/demo_v2.mp4](docs/videos/demo_v2.mp4)
+Full recording: [docs/videos/demo_v3.mp4](docs/videos/demo_v3.mp4)
 
 > **Try it live:** https://reikun.app/
 
