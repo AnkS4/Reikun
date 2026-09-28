@@ -33,6 +33,12 @@ MONITORING_DB = Path(_env("MONITORING_DB", str(DATA_DIR / "monitoring" / "reikun
 for _dir in (RAW_DIR, PROC_DIR, KANJIVG_DIR, MODELS_DIR, MONITORING_DB.parent):
     _dir.mkdir(parents=True, exist_ok=True)
 
+# Schema stamp for data/processed/chunks.json — build_chunks writes it into
+# chunks.meta.json and startup's check_state() refuses to ingest files that
+# lack it, so a stale pre-v2 chunks.json can't crash-loop ingest on missing
+# keys (Issues.md D5). Bump when the chunk payload shape changes.
+CHUNKS_SCHEMA = 2
+
 # ── Qdrant ───────────────────────────────────────────────────────────────────
 # QDRANT_URL wins (e.g. a Qdrant Cloud endpoint); otherwise host/port are used.
 QDRANT_URL = os.getenv("QDRANT_URL") or (

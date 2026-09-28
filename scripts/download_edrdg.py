@@ -28,6 +28,7 @@ import shutil
 import subprocess
 import sys
 import time
+from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import NamedTuple
@@ -168,7 +169,8 @@ def _decompress(gz_path: Path, out_path: Path, closing: bytes) -> tuple[bytes, s
     return head, digest.hexdigest()
 
 
-def sync_one(spec: RemoteSpec) -> None:
+def sync_one(spec: RemoteSpec) -> bool:
+    """Sync one file; True when upstream moved and a fresh XML was written."""
     gz_path = RAW_DIR / spec.remote
     out_path = RAW_DIR / spec.out_name
 
@@ -176,24 +178,30 @@ def sync_one(spec: RemoteSpec) -> None:
     gz_mtime = gz_path.stat().st_mtime
     if _unchanged(out_path, gz_mtime):
         log.info("  %s unchanged upstream — keeping %s", spec.remote, out_path.name)
-        return
+        return False
 
     head, sha256 = _decompress(gz_path, out_path, spec.closing)
     write_meta(out_path, spec, head, sha256, gz_mtime)
     log.info("  Saved → %s (%.1f MB)", out_path, out_path.stat().st_size / (1024 * 1024))
+    return True
 
 
-def main() -> None:
+def main() -> bool:
+    """Sync all WANTED files; returns True when at least one XML changed —
+    startup.py's refresh path uses that to skip an unnecessary rebuild."""
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
     check_rsync_available()
     RAW_DIR.mkdir(parents=True, exist_ok=True)
 
-    for spec in WANTED:
-        sync_one(spec)
+    # Two independent remote files — sync them concurrently. Materialize the
+    # results before any() so a short-circuit can't swallow a raised sync.
+    with ThreadPoolExecutor(max_workers=len(WANTED)) as pool:
+        changed = any(list(pool.map(sync_one, WANTED)))
 
     log.info("Done. Files in %s:", RAW_DIR)
     for f in sorted(RAW_DIR.glob("*.xml")):
         log.info("  %s  (%.1f MB)", f.name, f.stat().st_size / (1024 * 1024))
+    return changed
 
 
 if __name__ == "__main__":

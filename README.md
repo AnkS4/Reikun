@@ -31,7 +31,7 @@ Full recording: [docs/videos/demo_v2.mp4](docs/videos/demo_v2.mp4)
 - **Vector Database**: Qdrant (named dense + sparse vectors, server-side RRF hybrid)
 - **Embeddings**: FastEmbed — `all-MiniLM-L6-v2` (dense, 384-dim) + `Qdrant/bm25` (sparse), ONNX-quantized for CPU
 - **LLM**: Cohere `command-a-plus-05-2026` — grammar explanations, optional query rewriting and re-ranking, LLM-judged evals (all token-budgeted)
-- **Ingestion pipeline**: `scripts/startup.py` can run wait-for-Qdrant → check-state → download → build → ingest with retries, then launch the app — opt-in via `INGEST=1` or `--ingest` (off by default; `--ingest-only` runs it without the UI)
+- **Ingestion pipeline**: `scripts/startup.py` can run wait-for-Qdrant → check-state → download → build → ingest with retries, then launch the app — opt-in via `INGEST_VIA_DOCKER=1` or `--ingest` (off by default; `--ingest-only` runs it without the UI). Populated collections get an incremental top-up instead — rsync delta + upsert of new/edited entries only
 - **Monitoring**: SQLite telemetry + feedback logging (`monitoring/feedback_log.py`)
 - **Data Sources**: JMdict, KANJIDIC2, Tatoeba Corpus, KanjiVG
 - **Containerization**: Docker & Docker Compose

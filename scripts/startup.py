@@ -22,17 +22,20 @@ Usage:
 """
 
 import argparse
+import json
 import logging
 import os
 import sys
 import time
+from datetime import UTC, datetime
+from functools import partial
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from qdrant_client import QdrantClient  # noqa: E402
 
-from app.config import COLLECTION, PROC_DIR, QDRANT_API_KEY, QDRANT_URL, qdrant_client  # noqa: E402
+from app.config import CHUNKS_SCHEMA, COLLECTION, PROC_DIR, QDRANT_API_KEY, QDRANT_URL, qdrant_client  # noqa: E402
 from scripts import download_edrdg, download_kanjivg, ingest  # noqa: E402
 
 log = logging.getLogger(__name__)
@@ -56,7 +59,8 @@ def wait_for_qdrant(retries: int = 30, delay_s: float = 2.0) -> None:
 
 
 def check_state() -> str:
-    """'full' (no processed data), 'ingest' (chunks but empty collection), or 'ready'.
+    """'full' (no processed data), 'ingest' (current chunks, empty collection),
+    'build' (populated but a runtime artifact is missing), or 'ready'.
 
     Qdrant is checked first: on hosts with ephemeral disks (e.g. Render) the
     container filesystem is wiped on each deploy, but a populated collection in
@@ -65,23 +69,52 @@ def check_state() -> str:
     """
     try:
         client = qdrant_client()
-        populated = client.collection_exists(COLLECTION) and client.count(COLLECTION).count > 0
+        count = client.count(COLLECTION).count if client.collection_exists(COLLECTION) else 0
     except Exception as exc:
         log.warning("check-state: Qdrant check failed, treating as needs-ingest (%s)", exc)
-        populated = False
-    if populated and (PROC_DIR / "kanji_table.json").exists():
-        return "ready"
-    if (PROC_DIR / "chunks.json").exists():
-        return "ingest"
-    return "full"
+        count = 0
+    if count:
+        # Prefer ingest.meta.json's stamped post-run count — an intentional
+        # --common/--limit subset is legitimately smaller than the corpus, so
+        # comparing against chunks.meta.json's full entries would misfire on
+        # every boot. The chunks sidecar is the fallback for collections that
+        # predate the stamp.
+        expected = (_meta_json("ingest.meta.json") or {}).get("points") \
+            or (_meta_json("chunks.meta.json") or {}).get("entries")
+        if expected and count < expected:
+            # A mid-upload crash leaves a partial collection that would serve
+            # silently truncated results. Warn-only rather than self-heal:
+            # we can't distinguish a crash from a deliberately small scope.
+            log.warning("Collection looks partial — %s points < %s entries; "
+                        "a full --ingest rebuilds it.", f"{count:,}", f"{expected:,}")
+        return "ready" if (PROC_DIR / "kanji_table.json").exists() else "build"
+    return "ingest" if _chunks_current() else "full"
 
 
-def _retry(call, *, retries: int, delay_s: float, name: str) -> None:
+def _meta_json(name: str) -> dict | None:
+    """A data/processed/*.meta.json sidecar — absent on pre-stamping builds,
+    unparseable on a truncated write."""
+    try:
+        return json.loads((PROC_DIR / name).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+
+
+def _chunks_current() -> bool:
+    """chunks.json exists AND its sidecar says the current schema wrote it.
+
+    Existence alone is not enough — a pre-v2 file crash-looped ingest on
+    KeyError ('gloss_keys'), restarting until restart: on-failure gave up
+    (Issues.md D5). Missing/unparseable sidecar → rebuild instead."""
+    meta = _meta_json("chunks.meta.json")
+    return ingest.CHUNKS_PATH.exists() and meta is not None and meta.get("schema") == CHUNKS_SCHEMA
+
+
+def _retry(call, *, retries: int, delay_s: float, name: str):
     """Run `call()` with retries — used for the network-bound stages."""
     for attempt in range(1, retries + 1):
         try:
-            call()
-            return
+            return call()
         except Exception:
             if attempt == retries:
                 raise
@@ -89,11 +122,80 @@ def _retry(call, *, retries: int, delay_s: float, name: str) -> None:
             time.sleep(delay_s)
 
 
+# Persisted so a run of soft-failed refreshes is inspectable (and could feed a
+# dashboard tile) — WARNING logs alone get missed over time.
+REFRESH_STATUS = PROC_DIR / "refresh_status.json"
+
+
+def _refresh_status(outcome: str, detail: str = "") -> None:
+    try:
+        REFRESH_STATUS.write_text(json.dumps({
+            "at": datetime.now(UTC).isoformat(timespec="seconds"),
+            "outcome": outcome, "detail": detail,
+        }, indent=2) + "\n", encoding="utf-8")
+    except OSError:
+        pass
+
+
+def _refresh_in_place() -> None:
+    """Top-up path for a populated collection: rsync refreshes the EDRDG XML
+    (delta — near-instant when unchanged), and only an upstream change
+    rebuilds chunks and upserts the new entry ids. Soft-fails throughout:
+    the lean runtime image has no rsync/dev deps, so it just logs and keeps
+    serving what it already has."""
+    try:
+        download_edrdg.check_rsync_available()
+    except RuntimeError as exc:
+        log.info("Refresh skipped — %s", exc)
+        _refresh_status("skipped", str(exc))
+        return
+    try:
+        changed = _retry(download_edrdg.main, retries=2, delay_s=30, name="download-edrdg")
+    except Exception as exc:
+        log.warning("EDRDG refresh failed (%s) — serving existing data.", exc)
+        _refresh_status("failed", str(exc))
+        return
+    if not changed:
+        log.info("Upstream unchanged — collection already current.")
+        _refresh_status("unchanged")
+        return
+    try:
+        from scripts import build_chunks  # wordfreq is a dev dep — absent in lean images
+        if not build_chunks.outputs_current():
+            build_chunks.main()
+        _retry(partial(ingest.run, update=True), retries=2, delay_s=60, name="ingest-update")
+    except Exception as exc:
+        log.warning("Refresh update failed (%s) — serving existing data.", exc)
+        _refresh_status("failed", str(exc))
+        return
+    _refresh_status("updated")
+
+
 def ingest_pipeline() -> None:
     wait_for_qdrant()
     state = check_state()
     if state == "ready":
-        log.info("Data already ingested — nothing to do.")
+        _refresh_in_place()
+        return
+    if state == "build":
+        # Populated collection but a runtime artifact (kanji_table.json) is
+        # missing — rebuild just the outputs; the collection is healthy, so
+        # never run an ingest against it. A wiped ephemeral disk takes
+        # data/raw/ too — re-fetch it first so this path self-heals instead
+        # of degrading until the next full ingest.
+        try:
+            from scripts import build_chunks
+            missing = [x for x in (build_chunks.JMDICT_XML, build_chunks.KANJIDIC_XML)
+                       if not (build_chunks.RAW_DIR / x).exists()]
+            if missing:
+                log.info("Raw XML missing (%s) — re-fetching from EDRDG …", ", ".join(missing))
+                try:
+                    download_edrdg.main()
+                except Exception as exc:
+                    log.warning("EDRDG re-fetch failed (%s)", exc)
+            build_chunks.main()
+        except Exception as exc:
+            log.warning("Couldn't rebuild runtime artifacts (%s) — serving anyway; kanji lookups will fail.", exc)
         return
     if state == "full":
         # build_chunks needs wordfreq — a dev-group dep absent from the

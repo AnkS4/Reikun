@@ -29,13 +29,14 @@ import re
 import sys
 import xml.etree.ElementTree as ET
 from collections import defaultdict
+from datetime import UTC, datetime
 from functools import lru_cache
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from wordfreq import zipf_frequency  # noqa: E402
 
-from app.config import PROC_DIR, RAW_DIR  # noqa: E402
+from app.config import CHUNKS_SCHEMA, PROC_DIR, RAW_DIR  # noqa: E402
 from app.headword_index import add_entry, build_trie  # noqa: E402
 from app.kanji_lookup import is_kanji  # noqa: E402
 from app.query_rewrite import gloss_keys  # noqa: E402
@@ -156,11 +157,12 @@ def _ja_tokenizer():
     return tok
 
 
-@lru_cache(maxsize=4096)
+@lru_cache(maxsize=65_536)
 def _ja_tokens(text: str) -> list[str]:
-    """Sudachi surfaces for `text`. Shared by the wordfreq shim and _wf_score,
-    which look up the same form back to back — Sudachi is the dominant cost
-    of the build, so this halves the tokenizer work."""
+    """Sudachi surfaces for `text`. The main win is deduping the back-to-back
+    pair of lookups per entry (wordfreq shim + the len() call in _wf_score),
+    which any size covers; the bigger bound adds cross-entry reuse — headword
+    forms repeat across senses — without risking the 512 MB-class build hosts."""
     return [m.surface() for m in _ja_tokenizer().tokenize(text)]
 
 
@@ -389,35 +391,18 @@ def build_kanji_table(
                         meanings.append(meaning.text)
 
         # ── Common words using this kanji ─────────────────────────────────────
-        word_ids = kanji_to_ids.get(literal, [])
-        common_words: list[dict] = []
-
-        # Prefer common-flagged words
-        for wid in word_ids[:30]:
-            chunk = id_to_chunk.get(wid)
-            if chunk and chunk.get("is_common"):
-                common_words.append(
-                    {
-                        "kanji_form": chunk["kanji_form"],
-                        "reading": chunk["reading"],
-                        "meanings": chunk["meanings"],
-                    }
-                )
-            if len(common_words) >= 10:
-                break
-
-        # Fall back to any word if no common ones
-        if not common_words:
-            for wid in word_ids[:5]:
-                chunk = id_to_chunk.get(wid)
-                if chunk:
-                    common_words.append(
-                        {
-                            "kanji_form": chunk["kanji_form"],
-                            "reading": chunk["reading"],
-                            "meanings": chunk["meanings"],
-                        }
-                    )
+        # Ranked, not file order: JMdict emits entries in document order, so a
+        # raw word_ids[:30] slice could skip the kanji's actual top words when
+        # they happen to sit deeper in the file.
+        ranked = sorted(
+            (id_to_chunk[w] for w in kanji_to_ids.get(literal, []) if w in id_to_chunk),
+            key=lambda c: (bool(c.get("is_common")), c.get("commonness", 0.0), c.get("wf_score", 0.0)),
+            reverse=True,
+        )
+        common_words = [
+            {"kanji_form": c["kanji_form"], "reading": c["reading"], "meanings": c["meanings"]}
+            for c in ranked[:10]
+        ]
 
         table[literal] = {
             "literal": literal,
@@ -437,6 +422,36 @@ def build_kanji_table(
 
 
 # ── Entry point ───────────────────────────────────────────────────────────────
+
+CHUNKS_META = PROC_DIR / "chunks.meta.json"
+
+
+def _raw_generation(xml_name: str) -> str | None:
+    """Upstream generation date recorded by download_edrdg's .meta.json sidecar."""
+    try:
+        return json.loads((RAW_DIR / f"{xml_name}.meta.json").read_text(encoding="utf-8")).get(
+            "generation_date_from_header"
+        )
+    except (OSError, ValueError):
+        return None
+
+
+def outputs_current() -> bool:
+    """True when the processed outputs match the on-disk raw XML — same schema
+    stamp and same upstream generation dates, so a rebuild would change nothing."""
+    try:
+        meta = json.loads(CHUNKS_META.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return False
+    if meta.get("schema") != CHUNKS_SCHEMA:
+        return False
+    for xml_name, key in ((JMDICT_XML, "jmdict_generation"), (KANJIDIC_XML, "kanjidic2_generation")):
+        gen = _raw_generation(xml_name)
+        if gen is None or gen != meta.get(key):
+            return False
+    return all((PROC_DIR / name).exists()
+               for name in ("chunks.json", "kanji_table.json", "headword_index.marisa"))
+
 
 def main() -> None:
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
@@ -473,6 +488,18 @@ def main() -> None:
     index_path = PROC_DIR / "headword_index.marisa"
     log.info("  Writing %s …", index_path.name)
     build_trie(index, index_path)
+
+    # Sidecar stamps the schema + upstream generation dates: check_state()
+    # trusts chunks.json only when this says the current build wrote it, and
+    # outputs_current() uses it to skip a rebuild when upstream hasn't moved.
+    meta = {
+        "schema": CHUNKS_SCHEMA,
+        "built_at": datetime.now(UTC).isoformat(timespec="seconds"),
+        "entries": len(chunks),
+        "jmdict_generation": _raw_generation(JMDICT_XML),
+        "kanjidic2_generation": _raw_generation(KANJIDIC_XML),
+    }
+    CHUNKS_META.write_text(json.dumps(meta, indent=2) + "\n", encoding="utf-8")
 
     total_examples = sum(len(c["example_sentences"]) for c in chunks)
     log.info(

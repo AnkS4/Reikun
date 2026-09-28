@@ -12,6 +12,7 @@ SQLite in WAL mode is plenty for a single-instance Streamlit app.
 """
 
 import sqlite3
+import threading
 from collections.abc import Iterator
 from contextlib import contextmanager
 from datetime import UTC, datetime
@@ -64,6 +65,7 @@ def _now() -> str:
     return datetime.now(UTC).isoformat(timespec="seconds")
 
 
+_init_lock = threading.Lock()
 _initialised = False
 
 
@@ -72,16 +74,20 @@ def _conn() -> Iterator[sqlite3.Connection]:
     global _initialised
     # mkdir + WAL + CREATE TABLE IF NOT EXISTS are idempotent, so they run
     # once per process rather than in every request's write path. The
-    # journal mode is persistent in the database file.
-    if not _initialised:
-        MONITORING_DB.parent.mkdir(parents=True, exist_ok=True)
+    # journal mode is persistent in the database file. The lock is the real
+    # fix: Streamlit runs each session on its own thread, so two first-load
+    # sessions could otherwise race _migrate() — both ALTER TABLE, one dies
+    # on 'duplicate column name'.
     conn = sqlite3.connect(MONITORING_DB, timeout=5)
     try:
         if not _initialised:
-            conn.execute("PRAGMA journal_mode=WAL")
-            conn.executescript(_SCHEMA)
-            _migrate(conn)
-            _initialised = True
+            with _init_lock:
+                if not _initialised:
+                    MONITORING_DB.parent.mkdir(parents=True, exist_ok=True)
+                    conn.execute("PRAGMA journal_mode=WAL")
+                    conn.executescript(_SCHEMA)
+                    _migrate(conn)
+                    _initialised = True
         yield conn
         conn.commit()
     finally:
