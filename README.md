@@ -137,7 +137,7 @@ For local development without Docker:
    ```bash
    uv run uvicorn app.api:app --reload          # Swagger UI at http://localhost:8000/docs
    ```
-   Endpoints: `GET /health` (liveness), `GET /ready` (readiness — real Qdrant query), `GET /search?q=…&n=10&mode=auto`, `GET /kanji?chars=例訓` (batch hover cards), `GET /kanji/{char}?strokes=true`, `POST /explain`, `POST /explain/stream` (SSE), `POST /feedback`. OpenAPI is at `/openapi.json`; regenerate the committed schema + frontend types with `uv run python scripts/dump_openapi.py` then `npx openapi-typescript docs/api/openapi.json -o web/src/lib/openapi.d.ts`.
+   Endpoints: `GET /health` (liveness), `GET /ready` (readiness — real Qdrant query), `GET /search?q=…&n=10&mode=auto`, `GET /kanji?chars=例訓` (batch hover cards), `GET /kanji/{char}?strokes=true` (stroke order from the committed `data/processed/strokes.json`), `GET /kanji/random`, `POST /explain`, `POST /explain/stream` (SSE), `POST /feedback`. OpenAPI is at `/openapi.json`; regenerate the committed schema + frontend types with `uv run python scripts/dump_openapi.py` then `cd web && npm run gen:api` (CI fails if either drifts).
 
 6. **Run the SvelteKit web frontend** (`web/` — needs the API running from step 5):
 
@@ -150,10 +150,10 @@ For local development without Docker:
 
    The API base URL is baked in at build time via `PUBLIC_API_BASE` (schema: `web/src/env.ts`, default `http://localhost:8000`; see `web/.env.example`). Static output deploys to Cloudflare Pages/Workers as-is (`200.html` SPA fallback).
 
-8. **(Optional) Lint**:
+7. **(Optional) Lint + tests** (CI runs the same — `.github/workflows/ci.yml`):
    ```bash
-   uvx ruff check app scripts eval     # config in pyproject.toml [tool.ruff]
-   uvx ruff check --fix app scripts eval
+   uv run ruff check .                 # config in pyproject.toml [tool.ruff]
+   uv run pytest -q                    # API + telemetry tests; no Qdrant needed
    ```
    Rules target Python 3.13. RUF001–003 (“ambiguous” Unicode) are disabled on purpose — full-width and CJK characters are the subject matter here, not typos.
 
@@ -205,8 +205,8 @@ Reikun/
 ├── .env.example             # Environment variable template
 ├── data/
 │   ├── raw/                 # Downloaded dictionary files
-│   ├── processed/           # Parsed chunks and kanji table
-│   ├── kanjivg/             # Stroke-order SVGs
+│   ├── processed/           # Parsed chunks, kanji table, packed stroke data (strokes.json)
+│   ├── kanjivg/             # Stroke-order SVGs (build input only; not shipped)
 │   └── monitoring/          # SQLite telemetry database
 ├── models/                  # Cached embedding models (local runs; Docker uses a named volume)
 ├── Dockerfile

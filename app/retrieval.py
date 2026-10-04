@@ -565,9 +565,9 @@ def warm_headword_index() -> None:
 
 @lru_cache(maxsize=1)
 def _tokenizer():
-    """Lazy Sudachi tokenizer (~1-2 s load once). Runtime pins sudachidict-core;
-    small accepted as a fallback for environments that install that instead."""
-    for name in ("core", "small"):
+    """Lazy Sudachi tokenizer (~1-2 s load once). Runtime pins sudachidict-small
+    (pyproject); core is accepted for environments that install that instead."""
+    for name in ("small", "core"):
         try:
             return _SudachiDictionary(dict=name).tokenizer()
         except Exception:

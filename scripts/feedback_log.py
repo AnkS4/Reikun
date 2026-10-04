@@ -14,7 +14,6 @@ storing raw free-text input. Rows older than TELEMETRY_RETENTION_DAYS
 is plenty for a single-instance deployment.
 """
 
-import hashlib
 import sqlite3
 import threading
 from collections.abc import Iterator
@@ -22,6 +21,7 @@ from contextlib import contextmanager
 from datetime import UTC, datetime, timedelta
 
 from app.config import MONITORING_DB, TELEMETRY_RETENTION_DAYS
+from app.telemetry import _h  # one hash for both sinks, so stdout and SQLite rows agree
 
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS searches (
@@ -61,11 +61,6 @@ CREATE TABLE IF NOT EXISTS explanations (
     ok INTEGER
 );
 """
-
-
-def _h(text: str | None) -> str | None:
-    """SHA-256 prefix — groups identical inputs for counts without storing them."""
-    return None if text is None else hashlib.sha256(text.encode()).hexdigest()[:12]
 
 
 def _now() -> str:

@@ -1,0 +1,19 @@
+# Optional local-only overrides. Copy to docker-compose.override.yml (which is
+# gitignored) and edit; compose merges it into docker-compose.yml automatically.
+#
+# The DNS block below is a workaround for hosts whose resolver cannot resolve
+# external names from inside a container (HF Hub, ftp.edrdg.org, Cohere). It is
+# *not* in the committed compose file because forcing public resolvers breaks
+# split-horizon / corporate DNS for everyone else. Only enable it if external
+# lookups fail from inside the container:
+#
+#     docker compose run --rm app python -c \
+#       "import socket; print(socket.gethostbyname('huggingface.co'))"
+#
+# Service names (qdrant) always resolve via Docker's embedded DNS regardless.
+
+services:
+  app:
+    dns:
+      - 1.1.1.1
+      - 1.0.0.1

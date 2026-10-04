@@ -8,7 +8,7 @@
 		isTransient,
 		LEVELS,
 		sleep,
-		type LevelStr,
+		type Level,
 		type SearchResponse
 	} from '#lib/api.ts';
 	import { isKanji } from '#lib/kanji.ts';
@@ -50,17 +50,12 @@
 	let committed = $state('');
 	let wantResults = $state(DEFAULT_RESULTS);
 
-	const level = $derived.by((): LevelStr => {
+	const level = $derived.by((): Level => {
 		const l = page.url.searchParams.get('level') ?? '';
-		return (LEVELS as readonly string[]).includes(l) ? (l as LevelStr) : 'N5';
+		return (LEVELS as readonly string[]).includes(l) ? (l as Level) : 'N5';
 	});
 	const kanjiChar = $derived(committed.length === 1 && isKanji(committed) ? committed : null);
-	const meta = $derived((resp?.meta ?? {}) as Record<string, unknown>);
-	const route = $derived((meta.route as string | undefined) ?? '');
-	const cached = $derived(Boolean(meta.cached));
-	const embedMs = $derived(meta.embed_ms as number | undefined);
-	const retrieveMs = $derived(meta.retrieve_ms as number | undefined);
-	const tooLong = $derived(meta.too_long as number | undefined);
+	const meta = $derived(resp?.meta);
 	const hasResults = $derived(resp !== null);
 
 	// URL → search: ?q= drives everything (deep links, back/forward, pills).
@@ -156,7 +151,7 @@
 		commit(qInput.trim());
 	}
 
-	function setLevel(l: LevelStr) {
+	function setLevel(l: Level) {
 		const u = new URL(page.url.href);
 		u.searchParams.set('level', l);
 		goto(u.pathname + u.search, { replace: true, reset: false });
@@ -175,10 +170,6 @@
 		wantResults = Math.min(wantResults + PAGE_RESULTS, MAX_RESULTS);
 	}
 </script>
-
-<svelte:head>
-	<title>Reikun (例訓) — Japanese dictionary</title>
-</svelte:head>
 
 <Header hero={!hasResults} tagline={TAGLINE} />
 
@@ -231,11 +222,11 @@
 	<div class="stats-line">
 		<b>{resp.results.length} entries</b>
 		<Feedback kind="search" refId={resp.search_id ?? null} query={committed} />
-		<span class="stats-meta">· {resp.mode}{route ? ` · ${route}` : ''} · {resp.latency_ms} ms</span>
-		{#if cached}
+		<span class="stats-meta">· {resp.mode}{meta?.route ? ` · ${meta.route}` : ''} · {resp.latency_ms} ms</span>
+		{#if meta?.cached}
 			<span class="caption">served from the per-process result cache</span>
-		{:else if embedMs != null}
-			<span class="caption">embed {embedMs} ms · retrieve {retrieveMs} ms</span>
+		{:else if meta?.embed_ms != null}
+			<span class="caption">embed {meta.embed_ms} ms · retrieve {meta.retrieve_ms} ms</span>
 		{/if}
 	</div>
 
@@ -251,11 +242,11 @@
 	{/if}
 
 	{#if !resp.results.length}
-		{#if tooLong}
+		{#if meta?.too_long}
 			{@const shown = committed.length > 24 ? committed.slice(0, 24) + '…' : committed}
 			<div class="warning">
 				<Icon name="warning" size={16} />
-				{#if tooLong === MAX_JA_QUERY_CHARS}
+				{#if meta.too_long === MAX_JA_QUERY_CHARS}
 					“{shown}” is too long — Japanese input is parsed up to {MAX_JA_QUERY_CHARS} characters;
 					enter a word or a shorter sentence.
 				{:else}

@@ -4,8 +4,8 @@
  * microtask (a whole sentence of tips costs a single round-trip).
  */
 import { SvelteMap } from 'svelte/reactivity';
-import { apiKanjiBatch, type KanjiHover } from './api';
-import { isKanji } from './kanji';
+import { apiKanjiBatch, type KanjiHover } from '#lib/api.ts';
+import { isKanji } from '#lib/kanji.ts';
 
 export const hovers = new SvelteMap<string, KanjiHover | null>();
 const queued = new Set<string>();

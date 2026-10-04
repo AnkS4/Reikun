@@ -11,6 +11,7 @@ import type { components, paths } from './openapi';
 
 export type SearchResponse = components['schemas']['SearchResponseModel'];
 export type SearchResult = components['schemas']['SearchResult'];
+export type ExampleSentence = components['schemas']['ExampleSentence'];
 export type Segment = components['schemas']['Segment'];
 export type RubyPart = components['schemas']['RubyPart'];
 export type KanjiCard = components['schemas']['KanjiCard'];
@@ -19,15 +20,11 @@ export type CommonWord = components['schemas']['CommonWord'];
 export type ReadingChip = components['schemas']['ReadingChip'];
 export type MetaBadge = components['schemas']['MetaBadge'];
 export type StrokeData = components['schemas']['StrokeData'];
+export type ReadyInfo = components['schemas']['ReadyResponse'];
 export type ExplainRequest = components['schemas']['ExplainRequest'];
 export type Level = ExplainRequest['level'];
 
-export interface ExampleSentence {
-	japanese: string;
-	english: string;
-}
-export type LevelStr = 'N5' | 'N4' | 'N3' | 'N2' | 'N1';
-export const LEVELS: readonly LevelStr[] = ['N5', 'N4', 'N3', 'N2', 'N1'];
+export const LEVELS: readonly Level[] = ['N5', 'N4', 'N3', 'N2', 'N1'];
 
 export const API_BASE = PUBLIC_API_BASE.replace(/\/+$/, '');
 
@@ -61,21 +58,10 @@ function asError(err: unknown, status: number): ApiError {
 	return new ApiError(status, msg);
 }
 
-export interface ReadyInfo {
-	status: string;
-	collection: string;
-	entries: number;
-	llm: string;
-}
-
-// /ready returns a bare dict (no response_model) — raw fetch keeps the error detail.
 export async function apiReady(): Promise<ReadyInfo> {
-	const res = await fetch(`${API_BASE}/ready`);
-	if (!res.ok) {
-		const body = (await res.json().catch(() => null)) as { detail?: string } | null;
-		throw new ApiError(res.status, body?.detail ?? `API not ready (${res.status})`);
-	}
-	return res.json() as Promise<ReadyInfo>;
+	const { data, error, response } = await client.GET('/ready');
+	if (error) throw asError(error, response.status);
+	return data;
 }
 
 export async function apiSearch(q: string, n: number): Promise<SearchResponse> {
@@ -98,14 +84,10 @@ export async function apiKanjiCard(char: string): Promise<KanjiCard> {
 	return data;
 }
 
-export async function apiRandomKanji(level: string): Promise<string> {
-	// /kanji/random returns a bare dict — the failure detail needs the raw response.
-	const res = await fetch(`${API_BASE}/kanji/random?level=${level}`);
-	if (!res.ok) {
-		const body = (await res.json().catch(() => null)) as { detail?: string } | null;
-		throw new ApiError(res.status, body?.detail ?? `Request failed (${res.status})`);
-	}
-	return ((await res.json()) as { kanji: string }).kanji;
+export async function apiRandomKanji(level: Level): Promise<string> {
+	const { data, error, response } = await client.GET('/kanji/random', { params: { query: { level } } });
+	if (error) throw asError(error, response.status);
+	return data.kanji;
 }
 
 export async function apiFeedback(

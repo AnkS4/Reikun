@@ -36,7 +36,7 @@ for _dir in (RAW_DIR, PROC_DIR, KANJIVG_DIR, MODELS_DIR, MONITORING_DB.parent):
 # Schema stamp for data/processed/chunks.json — build_chunks writes it into
 # chunks.meta.json and startup's check_state() refuses to ingest files that
 # lack it, so a stale pre-v2 chunks.json can't crash-loop ingest on missing
-# keys (Issues.md D5). Bump when the chunk payload shape changes.
+# keys. Bump when the chunk payload shape changes.
 CHUNKS_SCHEMA = 2
 
 # ── Qdrant ───────────────────────────────────────────────────────────────────

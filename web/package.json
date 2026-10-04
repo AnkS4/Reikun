@@ -11,7 +11,8 @@
     "build": "vite build",
     "preview": "vite preview",
     "sync": "svelte-kit sync",
-    "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json"
+    "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+    "gen:api": "npx --yes openapi-typescript@7.13.0 ../docs/api/openapi.json -o src/lib/openapi.d.ts"
   },
   "devDependencies": {
     "@sveltejs/adapter-static": "^4.0.0",

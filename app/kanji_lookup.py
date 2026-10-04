@@ -1,16 +1,20 @@
-"""Deterministic kanji lookups (KANJIDIC2 table + KanjiVG stroke order) — no LLM involved."""
+"""Deterministic kanji lookups (KANJIDIC2 table + KanjiVG stroke order) — no LLM involved.
+
+Both are served from committed JSON under data/processed/ (kanji_table.json,
+strokes.json) and shipped in the image — no network access at request time.
+"""
 
 import json
+import logging
 import random
+import re
 from collections.abc import Collection
-from functools import cache, lru_cache
-from pathlib import Path
+from functools import lru_cache
 
-import httpx
+from app.config import PROC_DIR
 
-from app.config import KANJIVG_DIR, PROC_DIR
+log = logging.getLogger(__name__)
 
-KANJIVG_RAW_URL = "https://raw.githubusercontent.com/KanjiVG/kanjivg/master/kanji"
 _CJK_RANGES = ((0x4E00, 0x9FFF), (0x3400, 0x4DBF), (0xF900, 0xFAFF), (0x20000, 0x2A6DF))
 
 
@@ -69,38 +73,45 @@ def lookup_kanji(char: str) -> dict | None:
     return _load_kanji_table().get(char)
 
 
-@cache
-def get_stroke_diagram(char: str) -> Path | None:
+# ── Stroke order ─────────────────────────────────────────────────────────────
+# KanjiVG ships one SVG per kanji (~27 MB for the 6.4k KANJIDIC2 overlap), of
+# which the frontend only draws the stroke paths and number labels. Those are
+# extracted once by scripts/download_kanjivg.py into strokes.json (~9 MB,
+# committed) — the radical/element metadata that makes up most of each SVG is
+# never served, and ~half the kanji in kanji_table have no diagram at all, so
+# a per-request fetch would mostly be paying for 404s.
+
+STROKES_PATH = PROC_DIR / "strokes.json"
+
+_STROKE_PATH = re.compile(r'<path id="kvg:[0-9a-f]+-s(\d+)"[^>]*\bd="([^"]+)"')
+_STROKE_NUMBER = re.compile(r'<text transform="matrix\(1 0 0 1 ([\d.]+) ([\d.]+)\)">([^<]+)</text>')
+_VIEWBOX = re.compile(r'<svg[^>]*\bviewBox="([^"]+)"')
+
+
+def parse_stroke_svg(svg: str) -> dict:
     """
-    Local path to the kanji's KanjiVG stroke-order SVG, or None.
+    One KanjiVG SVG → {view_box, strokes: [d…] in draw order, numbers: [{x, y, value}]}.
 
-    SVGs live offline under data/kanjivg/ (populated by scripts/download_kanjivg.py).
-    A missing file is fetched once and cached on disk.
+    Extracted by attribute rather than served as markup — the JSON is
+    sanitized by construction (no raw SVG ever crosses the wire), so the
+    frontend builds its own SVG nodes instead of injecting innerHTML.
     """
-    svg_path = KANJIVG_DIR / f"{ord(char):05x}.svg"
-    if svg_path.exists():
-        return svg_path
-    try:
-        resp = httpx.get(f"{KANJIVG_RAW_URL}/{svg_path.name}", timeout=10)
-        resp.raise_for_status()  # Raises HTTPStatusError for 4xx/5xx
-        if resp.content.lstrip().startswith(b"<"):
-            KANJIVG_DIR.mkdir(parents=True, exist_ok=True)
-            svg_path.write_bytes(resp.content)
-            return svg_path
-    except (httpx.HTTPStatusError, httpx.TimeoutException, httpx.NetworkError):
-        # Expected cases: 404 (kanji not in KanjiVG), network issues, timeouts
-        pass
-    except httpx.HTTPError:
-        # Catch any other httpx errors as a safety net
-        pass
-    return None
+    strokes = sorted(((int(n), d) for n, d in _STROKE_PATH.findall(svg)), key=lambda t: t[0])
+    return {
+        "view_box": m.group(1) if (m := _VIEWBOX.search(svg)) else "0 0 109 109",
+        "strokes": [d for _, d in strokes],
+        "numbers": [{"x": float(x), "y": float(y), "value": int(v)} for x, y, v in _STROKE_NUMBER.findall(svg)],
+    }
 
 
-@cache
-def stroke_svg(char: str) -> str | None:
-    """Inline-able SVG markup (XML prolog stripped, whitespace collapsed)."""
-    path = get_stroke_diagram(char)
-    if not path:
-        return None
-    svg = path.read_text(encoding="utf-8")
-    return " ".join(svg[svg.find("<svg"):].split())
+@lru_cache(maxsize=1)
+def _load_strokes() -> dict[str, dict]:
+    if not STROKES_PATH.exists():
+        log.warning("%s missing — stroke order disabled; run scripts/download_kanjivg.py", STROKES_PATH.name)
+        return {}
+    return json.loads(STROKES_PATH.read_text(encoding="utf-8"))
+
+
+def stroke_data(char: str) -> dict | None:
+    """Pre-extracted KanjiVG stroke data for `char`, or None when it has no diagram."""
+    return _load_strokes().get(char)

@@ -20,9 +20,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
-                  "type": "object",
-                  "title": "Response Health Health Get"
+                  "$ref": "#/components/schemas/HealthResponse"
                 }
               }
             }
@@ -44,9 +42,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
-                  "type": "object",
-                  "title": "Response Ready Ready Get"
+                  "$ref": "#/components/schemas/ReadyResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Qdrant unreachable, or the collection is missing/empty",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -70,6 +76,7 @@
             "schema": {
               "type": "string",
               "minLength": 1,
+              "pattern": "\\S",
               "description": "English or Japanese word, or a natural-language question",
               "title": "Q"
             },
@@ -197,9 +204,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "additionalProperties": true,
-                  "title": "Response Kanji Random Endpoint Kanji Random Get"
+                  "$ref": "#/components/schemas/RandomKanji"
                 }
               }
             }
@@ -304,18 +309,6 @@
               "title": "Strokes"
             },
             "description": "Include KanjiVG stroke order as structured data (viewBox, path d's, number labels)"
-          },
-          {
-            "name": "svg",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "boolean",
-              "description": "Include the raw KanjiVG stroke-order SVG markup",
-              "default": false,
-              "title": "Svg"
-            },
-            "description": "Include the raw KanjiVG stroke-order SVG markup"
           },
           {
             "name": "log",
@@ -522,6 +515,38 @@
         "type": "object",
         "title": "CommonWord"
       },
+      "ErrorResponse": {
+        "properties": {
+          "detail": {
+            "type": "string",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "required": [
+          "detail"
+        ],
+        "title": "ErrorResponse",
+        "description": "FastAPI's HTTPException body — declared so non-422 errors show up in the schema."
+      },
+      "ExampleSentence": {
+        "properties": {
+          "japanese": {
+            "type": "string",
+            "title": "Japanese"
+          },
+          "english": {
+            "type": "string",
+            "title": "English",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "japanese"
+        ],
+        "title": "ExampleSentence"
+      },
       "ExplainRequest": {
         "properties": {
           "sentence": {
@@ -673,6 +698,18 @@
         "type": "object",
         "title": "HTTPValidationError"
       },
+      "HealthResponse": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "const": "ok",
+            "title": "Status",
+            "default": "ok"
+          }
+        },
+        "type": "object",
+        "title": "HealthResponse"
+      },
       "KanjiCard": {
         "properties": {
           "literal": {
@@ -801,17 +838,6 @@
                 "type": "null"
               }
             ]
-          },
-          "stroke_svg": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Stroke Svg"
           }
         },
         "type": "object",
@@ -881,6 +907,19 @@
         ],
         "title": "MetaBadge"
       },
+      "RandomKanji": {
+        "properties": {
+          "kanji": {
+            "type": "string",
+            "title": "Kanji"
+          }
+        },
+        "type": "object",
+        "required": [
+          "kanji"
+        ],
+        "title": "RandomKanji"
+      },
       "ReadingChip": {
         "properties": {
           "stem": {
@@ -905,6 +944,35 @@
         ],
         "title": "ReadingChip",
         "description": "One on/kun reading; `okurigana` is the part after KANJIDIC2's dot (た.べる)."
+      },
+      "ReadyResponse": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "const": "ready",
+            "title": "Status",
+            "default": "ready"
+          },
+          "collection": {
+            "type": "string",
+            "title": "Collection"
+          },
+          "entries": {
+            "type": "integer",
+            "title": "Entries"
+          },
+          "llm": {
+            "type": "string",
+            "title": "Llm"
+          }
+        },
+        "type": "object",
+        "required": [
+          "collection",
+          "entries",
+          "llm"
+        ],
+        "title": "ReadyResponse"
       },
       "RewriteInfo": {
         "properties": {
@@ -959,6 +1027,79 @@
         "title": "RubyPart",
         "description": "One display segment of a headword: `rt` carries the furigana when set."
       },
+      "SearchMeta": {
+        "properties": {
+          "route": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "ja",
+                  "en_word",
+                  "en_sentence"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Route"
+          },
+          "rewrite_ms": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rewrite Ms"
+          },
+          "embed_ms": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Embed Ms"
+          },
+          "retrieve_ms": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Retrieve Ms"
+          },
+          "cached": {
+            "type": "boolean",
+            "title": "Cached",
+            "default": false
+          },
+          "too_long": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Too Long",
+            "description": "The character cap the query exceeded"
+          }
+        },
+        "type": "object",
+        "title": "SearchMeta",
+        "description": "Per-request diagnostics. `route` is set in auto mode. On a cache hit\nthe timing fields describe the original computation; on a `too_long`\nrejection they are absent — the pipeline never ran."
+      },
       "SearchResponseModel": {
         "properties": {
           "search_id": {
@@ -1005,10 +1146,10 @@
             "title": "Segments"
           },
           "meta": {
-            "additionalProperties": true,
-            "type": "object",
-            "title": "Meta",
-            "default": {}
+            "$ref": "#/components/schemas/SearchMeta",
+            "default": {
+              "cached": false
+            }
           }
         },
         "type": "object",
@@ -1075,8 +1216,7 @@
           },
           "example_sentences": {
             "items": {
-              "additionalProperties": true,
-              "type": "object"
+              "$ref": "#/components/schemas/ExampleSentence"
             },
             "type": "array",
             "title": "Example Sentences",

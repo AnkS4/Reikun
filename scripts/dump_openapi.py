@@ -5,9 +5,12 @@ Committed so the frontend's TypeScript types can be regenerated without
 booting the app:
 
     uv run python scripts/dump_openapi.py
-    npx openapi-typescript docs/api/openapi.json -o web/src/lib/openapi.d.ts
+    cd web && npm run gen:api
 
-(npx fetches openapi-typescript on first run — needs Node, not Python deps.)
+Both outputs are committed, and CI fails if either drifts from the live app
+(.github/workflows/ci.yml). The generator version is pinned inside
+web/package.json's `gen:api` script — npx rather than a devDependency because
+openapi-typescript@7 peer-depends on typescript@^5 and this project is on TS 6.
 """
 
 import json

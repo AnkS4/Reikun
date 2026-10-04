@@ -108,7 +108,7 @@ def _chunks_current() -> bool:
 
     Existence alone is not enough — a pre-v2 file crash-looped ingest on
     KeyError ('gloss_keys'), restarting until restart: on-failure gave up
-    (Issues.md D5). Missing/unparseable sidecar → rebuild instead."""
+    Missing/unparseable sidecar → rebuild instead."""
     meta = _meta_json("chunks.meta.json")
     return ingest.CHUNKS_PATH.exists() and meta is not None and meta.get("schema") == CHUNKS_SCHEMA
 
@@ -252,7 +252,7 @@ def main() -> None:
     # One worker: embedding/Sudachi are per-process — N workers would load N
     # copies of the models. FastAPI runs the plain-def endpoints on its
     # threadpool, so a single process still serves concurrent requests; the
-    # platform scales by adding instances (Plan.md Phase-1 note).
+    # platform scales by adding instances.
     os.execvp("uvicorn", [
         "uvicorn", "app.api:app",
         "--host", "0.0.0.0",

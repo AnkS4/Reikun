@@ -11,6 +11,10 @@ exists. Writes kanjivg.meta.json with release tag, publish time, sha256,
 filter scope and SVG count — the same provenance-sidecar convention as
 download_edrdg.py.
 
+Then packs the stroke paths + number labels of every SVG into
+data/processed/strokes.json — the runtime artifact (committed, shipped in the
+image; see app.kanji_lookup). The SVGs themselves stay local.
+
 Usage:
     python scripts/download_kanjivg.py
 """
@@ -33,6 +37,7 @@ from dotenv import dotenv_values, find_dotenv
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from app.config import KANJIVG_DIR, RAW_DIR  # noqa: E402
+from app.kanji_lookup import STROKES_PATH, parse_stroke_svg  # noqa: E402
 
 _ENV = dotenv_values(find_dotenv(usecwd=True))  # project-root .env as a dict
 
@@ -173,6 +178,23 @@ def extract_svgs(blob: bytes, wanted: set[str] | None) -> int:
     return saved
 
 
+def pack_strokes() -> int:
+    """data/kanjivg/*.svg → strokes.json ({kanji: {view_box, strokes, numbers}}).
+    Sorted keys + compact separators so re-runs on the same release produce a
+    byte-identical file (no spurious git churn)."""
+    packed = {}
+    for svg in KANJIVG_DIR.glob("*.svg"):
+        text = svg.read_text(encoding="utf-8")
+        packed[chr(int(svg.stem, 16))] = parse_stroke_svg(text[text.find("<svg"):])
+    tmp = STROKES_PATH.with_suffix(".json.tmp")
+    tmp.write_text(json.dumps(packed, ensure_ascii=False, sort_keys=True, separators=(",", ":")) + "\n",
+                   encoding="utf-8")
+    tmp.replace(STROKES_PATH)
+    log.info("  Packed %s stroke diagrams → %s (%.1f MB)",
+             f"{len(packed):,}", STROKES_PATH.name, STROKES_PATH.stat().st_size / 2**20)
+    return len(packed)
+
+
 def main() -> None:
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
     logging.getLogger("httpx").setLevel(logging.WARNING)
@@ -183,6 +205,8 @@ def main() -> None:
     rel = latest_release()
     wanted = load_wanted_codepoints()
     if already_current(rel.tag, wanted):
+        if not STROKES_PATH.exists():  # SVGs predate the packed artifact — backfill it
+            pack_strokes()
         return
 
     blob = download_zip(rel.url)
@@ -203,6 +227,7 @@ def main() -> None:
     }, indent=2) + "\n", encoding="utf-8")
     tmp.replace(META_PATH)
     log.info("  Saved %s SVGs → %s", f"{saved:,}", KANJIVG_DIR)
+    pack_strokes()
 
 
 if __name__ == "__main__":

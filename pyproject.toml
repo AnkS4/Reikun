@@ -1,5 +1,7 @@
 [build-system]
-requires = ["setuptools>=61.0"]
+# >=77: first release that understands the PEP 639 `license` SPDX string and
+# `license-files` below; older setuptools rejects the metadata.
+requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -49,17 +51,24 @@ reikun = "scripts.startup:main"
 dev = [
     "wordfreq==3.1.1",
     "uvicorn[standard]==0.53.0",
+    "pytest==9.1.1",
+    "ruff==0.16.10",
 ]
 
 # Local workflows install the dev group; the Docker build passes
 # --no-default-groups (--group dev for ingest builds) to get a lean
 # API-only environment. (The old `ui` group — Streamlit, pandas, altair —
-# went with the Streamlit frontend in Phase 4.)
+# went with the Streamlit frontend.)
 [tool.uv]
 default-groups = ["dev"]
 
 [tool.setuptools.packages.find]
 include = ["app*", "scripts*"]
+
+[tool.pytest.ini_options]
+# Repo root on sys.path so `app`/`scripts` import from the working copy.
+pythonpath = ["."]
+testpaths = ["tests"]
 
 [tool.ruff]
 line-length = 120

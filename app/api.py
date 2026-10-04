@@ -1,6 +1,6 @@
 """
 Standalone HTTP API over the retrieval, kanji-lookup and grammar-explanation
-modules — the serving half of the SvelteKit migration (Plan.md Phase 1).
+modules — the serving half of the app (the frontend is a separate static site).
 
     uvicorn app.api:app --host 0.0.0.0 --port 8000          # what Docker runs
     uvicorn app.api:app --reload                            # dev
@@ -15,12 +15,10 @@ Docs: /docs (Swagger) · /redoc · /openapi.json.
 
 import json
 import logging
-import sys
 import time
 from contextlib import asynccontextmanager
 from dataclasses import asdict
-from pathlib import Path
-from typing import Any, Literal
+from typing import Literal
 
 from fastapi import BackgroundTasks, FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
@@ -28,14 +26,12 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 from qdrant_client.http.exceptions import UnexpectedResponse
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-
-from app.config import COHERE_MODEL, COLLECTION, CORS_ORIGINS, qdrant_client  # noqa: E402
-from app.grammar_explain import JLPT_LEVELS, explain_grammar, explain_grammar_stream  # noqa: E402
-from app.kanji_lookup import is_kanji, jlpt_kanji, random_kanji, stroke_svg  # noqa: E402
-from app.render import furigana_parts, kanji_card, kanji_hover, segment_chip  # noqa: E402
-from app.retrieval import MODES, is_headword, search, warm_headword_index  # noqa: E402
-from app.telemetry import telemetry  # noqa: E402
+from app.config import COHERE_MODEL, COLLECTION, CORS_ORIGINS, qdrant_client
+from app.grammar_explain import JLPT_LEVELS, explain_grammar, explain_grammar_stream
+from app.kanji_lookup import is_kanji, jlpt_kanji, random_kanji
+from app.render import furigana_parts, kanji_card, kanji_hover, segment_chip
+from app.retrieval import MODES, is_headword, search, warm_headword_index
+from app.telemetry import telemetry
 
 # Standalone `uvicorn app.api:app` doesn't configure the root logger, so do it
 # here unless something else already did (the Streamlit entrypoint, pytest…).
@@ -74,10 +70,31 @@ app.add_middleware(
 
 # ── Schemas ──────────────────────────────────────────────────────────────────
 
+class ErrorResponse(BaseModel):
+    """FastAPI's HTTPException body — declared so non-422 errors show up in the schema."""
+    detail: str
+
+
+class HealthResponse(BaseModel):
+    status: Literal["ok"] = "ok"
+
+
+class ReadyResponse(BaseModel):
+    status: Literal["ready"] = "ready"
+    collection: str
+    entries: int
+    llm: str
+
+
 class RubyPart(BaseModel):
     """One display segment of a headword: `rt` carries the furigana when set."""
     text: str
     rt: str | None = None
+
+
+class ExampleSentence(BaseModel):
+    japanese: str
+    english: str = ""
 
 
 class SearchResult(BaseModel):
@@ -87,7 +104,7 @@ class SearchResult(BaseModel):
     kanji_forms: list[str] = []
     readings: list[str] = []
     meanings: list[str] = []
-    example_sentences: list[dict] = []
+    example_sentences: list[ExampleSentence] = []
     is_common: bool = False
     text: str = ""
     score: float = 0.0
@@ -113,6 +130,18 @@ class Segment(BaseModel):
     approx: bool = False
 
 
+class SearchMeta(BaseModel):
+    """Per-request diagnostics. `route` is set in auto mode. On a cache hit
+    the timing fields describe the original computation; on a `too_long`
+    rejection they are absent — the pipeline never ran."""
+    route: Literal["ja", "en_word", "en_sentence"] | None = None
+    rewrite_ms: int | None = None
+    embed_ms: int | None = None
+    retrieve_ms: int | None = None
+    cached: bool = False
+    too_long: int | None = Field(None, description="The character cap the query exceeded")
+
+
 class SearchResponseModel(BaseModel):
     search_id: int | None = None
     results: list[SearchResult]
@@ -120,7 +149,7 @@ class SearchResponseModel(BaseModel):
     mode: str
     latency_ms: int
     segments: list[Segment] | None = None
-    meta: dict[str, Any] = {}
+    meta: SearchMeta = SearchMeta()
 
 
 class ReadingChip(BaseModel):
@@ -169,7 +198,6 @@ class KanjiCard(BaseModel):
     readings: dict[str, list[ReadingChip]] = {}
     common_words: list[CommonWord] = []
     stroke: StrokeData | None = None
-    stroke_svg: str | None = None
 
 
 class KanjiHover(BaseModel):
@@ -208,13 +236,14 @@ class FeedbackResponse(BaseModel):
 
 # ── Meta ─────────────────────────────────────────────────────────────────────
 
-@app.get("/health", tags=["meta"])
+@app.get("/health", tags=["meta"], response_model=HealthResponse)
 def health() -> dict:
     """Liveness only — the process is up. Dependencies are checked by /ready."""
     return {"status": "ok"}
 
 
-@app.get("/ready", tags=["meta"])
+@app.get("/ready", tags=["meta"], response_model=ReadyResponse,
+         responses={503: {"model": ErrorResponse, "description": "Qdrant unreachable, or the collection is missing/empty"}})
 def ready() -> dict:
     """Readiness: a real query against the Qdrant collection.
     503 when Qdrant is unreachable or the collection is missing/empty."""
@@ -241,7 +270,8 @@ def ready() -> dict:
 @app.get("/search", tags=["search"], response_model=SearchResponseModel)
 def search_endpoint(
     background: BackgroundTasks,
-    q: str = Query(..., min_length=1, description="English or Japanese word, or a natural-language question"),
+    # pattern=\S: whitespace-only input is a 422, not an embed of "".
+    q: str = Query(..., min_length=1, pattern=r"\S", description="English or Japanese word, or a natural-language question"),
     n: int = Query(10, ge=1, le=50, description="Number of results"),
     mode: Mode = Query("auto", description="auto routes the query to the best plan; the rest are fixed pipelines"),
     rewrite: bool = Query(True, description="Normalise natural-language queries to a dictionary gloss first"),
@@ -287,8 +317,12 @@ def search_endpoint(
 
 # ── Kanji ────────────────────────────────────────────────────────────────────
 
+class RandomKanji(BaseModel):
+    kanji: str
+
+
 # Declared before /kanji/{char} so "random" isn't parsed as a kanji path param.
-@app.get("/kanji/random", tags=["kanji"])
+@app.get("/kanji/random", tags=["kanji"], response_model=RandomKanji)
 def kanji_random_endpoint(
     level: Level | None = Query(None, description="Prefer kanji tagged at this JLPT level (falls back to the common pool)"),
 ) -> dict:
@@ -323,7 +357,6 @@ def kanji_endpoint(
     char: str,
     background: BackgroundTasks,
     strokes: bool = Query(False, description="Include KanjiVG stroke order as structured data (viewBox, path d's, number labels)"),
-    svg: bool = Query(False, description="Include the raw KanjiVG stroke-order SVG markup"),
     log: bool = Query(True),
 ) -> dict:
     """KANJIDIC2 details (meta badges, readings with okurigana parts, common
@@ -333,8 +366,6 @@ def kanji_endpoint(
     card = kanji_card(char, strokes=strokes)
     if not card:
         raise HTTPException(404, f"No KANJIDIC2 entry for {char!r}")
-    if svg:
-        card["stroke_svg"] = stroke_svg(char)
     if log:
         background.add_task(telemetry().kanji_lookup, char, source="api")
     return card

@@ -7,9 +7,7 @@ Deliberately dependency-light (kanji_lookup + config only) so it is importable
 in the lean API image — no Streamlit, no pandas.
 """
 
-import re
-
-from app.kanji_lookup import is_kanji, lookup_kanji, stroke_svg
+from app.kanji_lookup import is_kanji, lookup_kanji, stroke_data
 
 
 def furigana_parts(word: str, reading: str | None) -> list[dict]:
@@ -124,7 +122,7 @@ def kanji_card(char: str, *, strokes: bool = False) -> dict | None:
         "common_words": [_word_json(w) for w in words],
     }
     if strokes:
-        card["stroke"] = stroke_parts(char)
+        card["stroke"] = stroke_data(char)
     return card
 
 
@@ -167,33 +165,4 @@ def segment_chip(seg: dict) -> dict:
         "ruby": chip_ruby(seg["text"], seg.get("reading") or ""),
         "options": seg.get("options") or [],
         "approx": bool(seg.get("approx")),
-    }
-
-
-_STROKE_PATH = re.compile(r'<path id="kvg:[0-9a-f]+-s(\d+)"[^>]*\bd="([^"]+)"')
-_STROKE_NUMBER = re.compile(r'<text transform="matrix\(1 0 0 1 ([\d.]+) ([\d.]+)\)">([^<]+)</text>')
-_VIEWBOX = re.compile(r'<svg[^>]*\bviewBox="([^"]+)"')
-
-
-def stroke_parts(char: str) -> dict | None:
-    """
-    KanjiVG stroke order as structured JSON: viewBox, the stroke path `d`
-    attributes in draw order, and the stroke-number labels.
-
-    Extracted by attribute rather than served as markup — the JSON is
-    sanitized by construction (no raw SVG ever crosses the wire), so the
-    frontend can build its own SVG nodes instead of injecting innerHTML.
-    None when KanjiVG has no diagram for `char`.
-    """
-    svg = stroke_svg(char)
-    if not svg:
-        return None
-    strokes = sorted(
-        ((int(n), d) for n, d in _STROKE_PATH.findall(svg)), key=lambda t: t[0]
-    )
-    return {
-        "view_box": m.group(1) if (m := _VIEWBOX.search(svg)) else "0 0 109 109",
-        "strokes": [d for _, d in strokes],
-        "numbers": [{"x": float(x), "y": float(y), "value": int(v)}
-                    for x, y, v in _STROKE_NUMBER.findall(svg)],
     }

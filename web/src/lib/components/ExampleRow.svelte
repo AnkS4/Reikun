@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { explainStream, type ExampleSentence, type LevelStr } from '#lib/api.ts';
+	import { explainStream, type ExampleSentence, type Level } from '#lib/api.ts';
 	import KanjiText from './KanjiText.svelte';
 	import Feedback from './Feedback.svelte';
 	import Icon from './Icon.svelte';
@@ -8,7 +8,7 @@
 		ex,
 		level,
 		onpick
-	}: { ex: ExampleSentence; level: LevelStr; onpick?: (char: string) => void } = $props();
+	}: { ex: ExampleSentence; level: Level; onpick?: (char: string) => void } = $props();
 
 	let expl = $state<{ level: string; text: string; id: number | null; model: string } | null>(null);
 	let streaming = $state(false);

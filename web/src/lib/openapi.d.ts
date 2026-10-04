@@ -221,6 +221,24 @@ export interface components {
              */
             ruby: components["schemas"]["RubyPart"][];
         };
+        /**
+         * ErrorResponse
+         * @description FastAPI's HTTPException body — declared so non-422 errors show up in the schema.
+         */
+        ErrorResponse: {
+            /** Detail */
+            detail: string;
+        };
+        /** ExampleSentence */
+        ExampleSentence: {
+            /** Japanese */
+            japanese: string;
+            /**
+             * English
+             * @default
+             */
+            english: string;
+        };
         /** ExplainRequest */
         ExplainRequest: {
             /**
@@ -284,6 +302,15 @@ export interface components {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
         };
+        /** HealthResponse */
+        HealthResponse: {
+            /**
+             * Status
+             * @default ok
+             * @constant
+             */
+            status: "ok";
+        };
         /** KanjiCard */
         KanjiCard: {
             /** Literal */
@@ -331,8 +358,6 @@ export interface components {
              */
             common_words: components["schemas"]["CommonWord"][];
             stroke?: components["schemas"]["StrokeData"] | null;
-            /** Stroke Svg */
-            stroke_svg?: string | null;
         };
         /**
          * KanjiHover
@@ -369,6 +394,11 @@ export interface components {
             /** Tip */
             tip: string;
         };
+        /** RandomKanji */
+        RandomKanji: {
+            /** Kanji */
+            kanji: string;
+        };
         /**
          * ReadingChip
          * @description One on/kun reading; `okurigana` is the part after KANJIDIC2's dot (た.べる).
@@ -378,6 +408,21 @@ export interface components {
             stem: string;
             /** Okurigana */
             okurigana?: string | null;
+        };
+        /** ReadyResponse */
+        ReadyResponse: {
+            /**
+             * Status
+             * @default ready
+             * @constant
+             */
+            status: "ready";
+            /** Collection */
+            collection: string;
+            /** Entries */
+            entries: number;
+            /** Llm */
+            llm: string;
         };
         /** RewriteInfo */
         RewriteInfo: {
@@ -400,6 +445,32 @@ export interface components {
             /** Rt */
             rt?: string | null;
         };
+        /**
+         * SearchMeta
+         * @description Per-request diagnostics. `route` is set in auto mode. On a cache hit
+         *     the timing fields describe the original computation; on a `too_long`
+         *     rejection they are absent — the pipeline never ran.
+         */
+        SearchMeta: {
+            /** Route */
+            route?: ("ja" | "en_word" | "en_sentence") | null;
+            /** Rewrite Ms */
+            rewrite_ms?: number | null;
+            /** Embed Ms */
+            embed_ms?: number | null;
+            /** Retrieve Ms */
+            retrieve_ms?: number | null;
+            /**
+             * Cached
+             * @default false
+             */
+            cached: boolean;
+            /**
+             * Too Long
+             * @description The character cap the query exceeded
+             */
+            too_long?: number | null;
+        };
         /** SearchResponseModel */
         SearchResponseModel: {
             /** Search Id */
@@ -414,12 +485,11 @@ export interface components {
             /** Segments */
             segments?: components["schemas"]["Segment"][] | null;
             /**
-             * Meta
-             * @default {}
+             * @default {
+             *       "cached": false
+             *     }
              */
-            meta: {
-                [key: string]: unknown;
-            };
+            meta: components["schemas"]["SearchMeta"];
         };
         /** SearchResult */
         SearchResult: {
@@ -451,9 +521,7 @@ export interface components {
              * Example Sentences
              * @default []
              */
-            example_sentences: {
-                [key: string]: unknown;
-            }[];
+            example_sentences: components["schemas"]["ExampleSentence"][];
             /**
              * Is Common
              * @default false
@@ -573,9 +641,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    };
+                    "application/json": components["schemas"]["HealthResponse"];
                 };
             };
         };
@@ -595,9 +661,16 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    };
+                    "application/json": components["schemas"]["ReadyResponse"];
+                };
+            };
+            /** @description Qdrant unreachable, or the collection is missing/empty */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };
@@ -660,9 +733,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    };
+                    "application/json": components["schemas"]["RandomKanji"];
                 };
             };
             /** @description Validation Error */
@@ -715,8 +786,6 @@ export interface operations {
             query?: {
                 /** @description Include KanjiVG stroke order as structured data (viewBox, path d's, number labels) */
                 strokes?: boolean;
-                /** @description Include the raw KanjiVG stroke-order SVG markup */
-                svg?: boolean;
                 log?: boolean;
             };
             header?: never;

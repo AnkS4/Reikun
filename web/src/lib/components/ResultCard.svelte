@@ -1,14 +1,14 @@
 <script lang="ts">
-	import type { ExampleSentence, LevelStr, SearchResult } from '#lib/api.ts';
+	import type { Level, SearchResult } from '#lib/api.ts';
 	import Ruby from './Ruby.svelte';
 	import ExampleRow from './ExampleRow.svelte';
 	let {
 		result,
 		level,
 		onPickKanji
-	}: { result: SearchResult; level: LevelStr; onPickKanji: (c: string) => void } = $props();
+	}: { result: SearchResult; level: Level; onPickKanji: (c: string) => void } = $props();
 
-	const examples = $derived((result.example_sentences as unknown as ExampleSentence[]).slice(0, 3));
+	const examples = $derived(result.example_sentences.slice(0, 3));
 </script>
 
 <div class="result-card">
