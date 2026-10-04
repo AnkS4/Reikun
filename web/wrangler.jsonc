@@ -1,0 +1,14 @@
+{
+	// Static-assets-only Worker deployment: serve web/build/ as-is — no SSR
+	// worker script (this app is fully client-side; the API lives elsewhere).
+	// Committed config also stops `wrangler deploy`'s SvelteKit auto-config
+	// from trying to convert the project to adapter-cloudflare.
+	"name": "reikun",
+	"compatibility_date": "2026-10-01",
+	"assets": {
+		"directory": "./build",
+		// Unmatched paths get the SPA shell (index.html), same role the
+		// 200.html fallback plays on classic Pages.
+		"not_found_handling": "single-page-application"
+	}
+}

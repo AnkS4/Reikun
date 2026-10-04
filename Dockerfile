@@ -57,32 +57,31 @@ WORKDIR /app
 # --no-install-project skips building the app package itself so this layer is
 # cached until the lockfile changes, not on every code edit.
 #
-# uv is *mounted*, not copied: it is a build-only tool, and COPYing the binary
-# would add ~56 MB to the runtime image for no benefit.
-# The cache mount keeps downloaded wheels on the build host across rebuilds
-# without ever committing them to a layer (which is what --no-cache used to
-# prevent, at the cost of re-downloading everything each time).
+# uv is a build-only tool: pip-install it into a scratch dir and remove it in
+# the same RUN layer so it never lands in the image (a COPY --from would add
+# ~56 MB). Each RUN re-fetches it — a shared install layer would keep it.
+# Plain RUN (no BuildKit mounts) so Cloud Build's stock docker builder works.
 COPY --chown=app:app pyproject.toml uv.lock ./
-RUN --mount=from=ghcr.io/astral-sh/uv:0.12.17,source=/uv,target=/usr/local/bin/uv \
-    --mount=type=cache,target=/home/app/.cache/uv,uid=1000,gid=1000 \
-    if [ "$INGEST_VIA_DOCKER" = "1" ]; then \
-      uv sync --frozen --no-default-groups --group dev --no-install-project; \
+RUN /usr/local/bin/python -m pip install --no-cache-dir --target=/tmp/uvpkg uv==0.12.17 \
+    && if [ "$INGEST_VIA_DOCKER" = "1" ]; then \
+      /tmp/uvpkg/bin/uv sync --frozen --no-default-groups --group dev --no-install-project; \
     else \
-      uv sync --frozen --no-default-groups --no-install-project; \
-    fi
+      /tmp/uvpkg/bin/uv sync --frozen --no-default-groups --no-install-project; \
+    fi \
+    && rm -rf /tmp/uvpkg /home/app/.cache/uv
 ENV PATH="/app/.venv/bin:$PATH"
 
 # Copy application source code, then install the project itself (editable) —
 # puts `app`/`scripts` on sys.path and generates the `reikun` console script.
 COPY --chown=app:app app/ app/
 COPY --chown=app:app scripts/ scripts/
-RUN --mount=from=ghcr.io/astral-sh/uv:0.12.17,source=/uv,target=/usr/local/bin/uv \
-    --mount=type=cache,target=/home/app/.cache/uv,uid=1000,gid=1000 \
-    if [ "$INGEST_VIA_DOCKER" = "1" ]; then \
-      uv sync --frozen --no-default-groups --group dev; \
+RUN /usr/local/bin/python -m pip install --no-cache-dir --target=/tmp/uvpkg uv==0.12.17 \
+    && if [ "$INGEST_VIA_DOCKER" = "1" ]; then \
+      /tmp/uvpkg/bin/uv sync --frozen --no-default-groups --group dev; \
     else \
-      uv sync --frozen --no-default-groups; \
-    fi
+      /tmp/uvpkg/bin/uv sync --frozen --no-default-groups; \
+    fi \
+    && rm -rf /tmp/uvpkg /home/app/.cache/uv
 
 # kanji_table.json (~5 MB) and headword_index.marisa (~26 MB, the packed
 # form→entries trie behind sentence parsing) are needed by the app at runtime
