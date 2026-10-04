@@ -73,6 +73,16 @@ if QUERY_REWRITE == "auto" and not COHERE_API_KEY:
 DENSE_VECTOR = "dense"
 SPARSE_VECTOR = "bm25"
 
+# ── Serving ──────────────────────────────────────────────────────────────────
+# Usage/event telemetry sink: "stdout" (one JSON line per event — the
+# stateless-instance default) or "sqlite" (the feedback_log monitoring DB).
+TELEMETRY = _env("TELEMETRY", "stdout").lower()
+
+# Comma-separated allowed origins for CORS (the standalone API serves a
+# different-origin frontend). "*" is the permissive dev default; deployment
+# pins it to the site origin.
+CORS_ORIGINS = _env("CORS_ORIGINS", "*")
+
 
 QDRANT_TIMEOUT = int(_env("QDRANT_TIMEOUT", "30"))
 

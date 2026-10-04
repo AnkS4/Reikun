@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
 """Docker entrypoint + ingestion pipeline.
 
+The serving container only serves: uvicorn runs app.api:app. Ingestion is a
+separate job/command (the flags below), not part of every boot.
+
 Pipeline: wait for Qdrant → decide what work is needed → (download → build →)
-ingest → launch Streamlit. Each data stage wraps an existing script's entry
+ingest → launch the API. Each data stage wraps an existing script's entry
 point, so every step stays independently runnable for debugging:
     uv run python scripts/download_edrdg.py      # JMdict NG + KANJIDIC2 XML
     uv run python scripts/download_kanjivg.py    # KanjiVG stroke-order SVGs
@@ -15,10 +18,10 @@ MB overhead plus a cloud dependency is the difference between fitting and
 timing out.
 
 Usage:
-    reikun                                 # console script (container CMD)
-    python scripts/startup.py              # boot the app (ingestion is opt-in)
-    python scripts/startup.py --ingest     # run the pipeline, then Streamlit (env: INGEST_VIA_DOCKER=1)
-    python scripts/startup.py --ingest-only  # run the pipeline, don't launch Streamlit
+    reikun                                 # console script (container CMD): serve the API
+    python scripts/startup.py              # boot the API (ingestion is opt-in)
+    python scripts/startup.py --ingest     # run the pipeline, then serve (env: INGEST_VIA_DOCKER=1)
+    python scripts/startup.py --ingest-only  # run the pipeline, don't launch the API
 """
 
 import argparse
@@ -224,7 +227,7 @@ def main() -> None:
         "--ingest", action="store_true",
         help="check/populate Qdrant before launching (env: INGEST_VIA_DOCKER=1)",
     )
-    parser.add_argument("--ingest-only", action="store_true", help="run the pipeline, don't launch Streamlit")
+    parser.add_argument("--ingest-only", action="store_true", help="run the pipeline, don't launch the API")
     args = parser.parse_args()
 
     log.info("Starting Reikun …")
@@ -241,17 +244,19 @@ def main() -> None:
     if args.ingest_only:
         return
 
-    port = os.getenv("PORT", "8501")
-    log.info("Launching Streamlit + API (mounted at /api) on 0.0.0.0:%s …", port)
-    # exec, don't spawn: Streamlit replaces this process (PID 1 in Docker), so
+    port = os.getenv("PORT", "8000")
+    log.info("Launching the API (uvicorn app.api:app) on 0.0.0.0:%s …", port)
+    # exec, don't spawn: uvicorn replaces this process (PID 1 in Docker), so
     # `docker stop`'s SIGTERM reaches it directly and it shuts down cleanly
     # instead of being orphaned until the SIGKILL timeout.
-    os.execvp("streamlit", [
-        "streamlit", "run", str(Path(__file__).resolve().parents[1] / "app" / "asgi_app.py"),
-        "--server.address", "0.0.0.0",
-        "--server.port", port,
-        "--server.headless", "true",
-        "--browser.gatherUsageStats", "false",
+    # One worker: embedding/Sudachi are per-process — N workers would load N
+    # copies of the models. FastAPI runs the plain-def endpoints on its
+    # threadpool, so a single process still serves concurrent requests; the
+    # platform scales by adding instances (Plan.md Phase-1 note).
+    os.execvp("uvicorn", [
+        "uvicorn", "app.api:app",
+        "--host", "0.0.0.0",
+        "--port", port,
     ])
 
 

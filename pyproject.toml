@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "reikun"
-version = "0.2.0"
+version = "0.3.0"
 description = "例訓 (れいくん) - Semantic Japanese Dictionary"
 authors = [{ name = "Aniket Satbhai" }]
 license = "Apache-2.0"
@@ -17,14 +17,11 @@ dependencies = [
     "python-dotenv==1.2.3",
     "httpx==0.28.1",
     "pydantic==2.13.5",
-    "streamlit==1.64.0",
-    "pandas==3.0.6",
-    "altair==6.3.0",
     "fastapi==0.141.1",
-    # Plain uvicorn, not [standard]: the container runs Streamlit (which mounts
-    # the API in-process), never uvicorn, so the extra's uvloop/httptools/
-    # watchfiles/websockets were ~25 MB of unused image. The extra is in the
-    # dev group for the standalone `uvicorn app.api:app --reload` path.
+    # Plain uvicorn, not [standard]: the container serves the API with one
+    # worker, so the extra's uvloop/httptools/watchfiles/websockets would be
+    # ~25 MB of unused image. The extra is in the dev group for
+    # `uvicorn app.api:app --reload`.
     "uvicorn==0.53.0",
     # Japanese morphological analyzer for runtime sentence segmentation
     # (SplitMode.B word units) and build_chunks' wf_score token counts.
@@ -43,16 +40,30 @@ reikun = "scripts.startup:main"
 
 # Ingest/build-time and local-dev only, never imported by the app at runtime.
 # Kept out of the runtime dependencies so the Docker image stays leaner.
-# uv sync/uv run install the dev group by default.
+# uv sync/uv run install the default groups (dev + ui) — see [tool.uv].
 #   wordfreq — scripts/build_chunks.py (the wf_score canonical-ranking prior);
 #     its ja lookups are shimmed onto sudachipy (wordfreq.mecab shim).
-#   uvicorn[standard] — only for running the API standalone with --reload
-#     (needs watchfiles); the container serves it through Streamlit instead.
+#   uvicorn[standard] — only for running the API with --reload (needs
+#     watchfiles); the container runs plain `uvicorn app.api:app`.
+#   ui — the Streamlit app + dashboard (local dev only; the API image and the
+#     SvelteKit frontend don't use them). pandas is dashboard-only too: the
+#     telemetry sqlite sink needs nothing beyond stdlib sqlite3.
 [dependency-groups]
 dev = [
     "wordfreq==3.1.1",
     "uvicorn[standard]==0.53.0",
 ]
+ui = [
+    "streamlit==1.64.0",
+    "pandas==3.0.6",
+    "altair==6.3.0",
+]
+
+# Local workflows install everything (dev tooling + the Streamlit UI); the
+# Docker build passes --no-default-groups (--group dev for ingest builds) to
+# get a lean API-only environment.
+[tool.uv]
+default-groups = ["dev", "ui"]
 
 [tool.setuptools.packages.find]
 include = ["app*", "scripts*"]

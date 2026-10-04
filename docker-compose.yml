@@ -34,7 +34,7 @@ services:
         INGEST_VIA_DOCKER: ${INGEST_VIA_DOCKER:-0}
     image: reikun:latest
     ports:
-      - "127.0.0.1:${APP_PORT:-8000}:8501"
+      - "127.0.0.1:${APP_PORT:-8000}:8000"
     # Only QDRANT_HOST differs from the defaults in app/config.py, so it is the
     # only value hardcoded here; everything else (COHERE_API_KEY, EMBED_MODEL,
     # QUERY_REWRITE, QDRANT_*) is read from .env when present, and otherwise
@@ -53,8 +53,10 @@ services:
       # first creation, so the ONNX models pre-warmed in the Dockerfile are
       # actually used. A bind mount would mask them and force a re-download.
       - models:/app/models
-    # The app serves the Streamlit UI and the HTTP API in one process:
-    # UI at /, API + Swagger docs under /api (see app/asgi_app.py).
+    # The container serves the standalone API only: Swagger docs at /docs,
+    # liveness /health, readiness /ready. The Streamlit UI is local-dev only
+    # (`uv run streamlit run app/streamlit_app.py`); the SvelteKit frontend
+    # replaces it in production.
     depends_on:
       qdrant:
         condition: service_healthy

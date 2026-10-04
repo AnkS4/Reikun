@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 5
 requires-python = ">=3.13"
 resolution-markers = [
     "python_full_version >= '3.14' and sys_platform == 'win32'",
@@ -1454,20 +1454,18 @@ wheels = [
 
 [[package]]
 name = "reikun"
-version = "0.2.0"
+version = "0.3.0"
 source = { editable = "." }
+default-groups = ["dev", "ui"]
 dependencies = [
-    { name = "altair" },
     { name = "cohere" },
     { name = "fastapi" },
     { name = "fastembed" },
     { name = "httpx" },
     { name = "marisa-trie" },
-    { name = "pandas" },
     { name = "pydantic" },
     { name = "python-dotenv" },
     { name = "qdrant-client" },
-    { name = "streamlit" },
     { name = "sudachidict-small" },
     { name = "sudachipy" },
     { name = "uvicorn" },
@@ -1478,20 +1476,22 @@ dev = [
     { name = "uvicorn", extra = ["standard"] },
     { name = "wordfreq" },
 ]
+ui = [
+    { name = "altair" },
+    { name = "pandas" },
+    { name = "streamlit" },
+]
 
 [package.metadata]
 requires-dist = [
-    { name = "altair", specifier = "==6.3.0" },
     { name = "cohere", specifier = "==7.1.1" },
     { name = "fastapi", specifier = "==0.141.1" },
     { name = "fastembed", specifier = "==0.8.0" },
     { name = "httpx", specifier = "==0.28.1" },
     { name = "marisa-trie", specifier = "==1.4.1" },
-    { name = "pandas", specifier = "==3.0.6" },
     { name = "pydantic", specifier = "==2.13.5" },
     { name = "python-dotenv", specifier = "==1.2.3" },
     { name = "qdrant-client", specifier = "==1.19.1" },
-    { name = "streamlit", specifier = "==1.64.0" },
     { name = "sudachidict-small", specifier = "==20260723.1" },
     { name = "sudachipy", specifier = "==0.7.0" },
     { name = "uvicorn", specifier = "==0.53.0" },
@@ -1501,6 +1501,11 @@ requires-dist = [
 dev = [
     { name = "uvicorn", extras = ["standard"], specifier = "==0.53.0" },
     { name = "wordfreq", specifier = "==3.1.1" },
+]
+ui = [
+    { name = "altair", specifier = "==6.3.0" },
+    { name = "pandas", specifier = "==3.0.6" },
+    { name = "streamlit", specifier = "==1.64.0" },
 ]
 
 [[package]]

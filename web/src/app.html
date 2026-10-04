@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<meta name="description" content="Reikun (例訓) — semantic Japanese dictionary with JLPT-aware grammar explanations" />
+		<meta name="theme-color" content="#3d5a80" />
+		<link rel="icon" href="%sveltekit.assets%/logo.png" />
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link
+			href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;600;700&display=swap"
+			rel="stylesheet"
+		/>
+		<script>
+			// Apply persisted theme before first paint to avoid a flash.
+			(function () {
+				var t = localStorage.getItem('reikun-theme') || 'system';
+				var dark = t === 'dark' || (t === 'system' && matchMedia('(prefers-color-scheme: dark)').matches);
+				document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+				document.documentElement.dataset.themeChoice = t;
+			})();
+		</script>
+		%sveltekit.head%
+	</head>
+	<body data-sveltekit-preload-data="hover">
+		<div style="display: contents">%sveltekit.body%</div>
+	</body>
+</html>

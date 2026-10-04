@@ -51,10 +51,11 @@ USER app
 WORKDIR /app
 
 # Install python dependencies into /app/.venv, frozen from uv.lock.
-# --no-dev keeps the ingest-only dev group (wordfreq) out of the
-# default image; INGEST_VIA_DOCKER=1 syncs them in. --no-install-project
-# skips building the app package itself so this layer is cached until the
-# lockfile changes, not on every code edit.
+# --no-default-groups keeps the dependency-groups out of the runtime image
+# (dev = ingest-only tooling like wordfreq, ui = Streamlit/pandas/altair);
+# INGEST_VIA_DOCKER=1 syncs the dev group back in for in-container ingest.
+# --no-install-project skips building the app package itself so this layer is
+# cached until the lockfile changes, not on every code edit.
 #
 # uv is *mounted*, not copied: it is a build-only tool, and COPYing the binary
 # would add ~56 MB to the runtime image for no benefit.
@@ -65,9 +66,9 @@ COPY --chown=app:app pyproject.toml uv.lock ./
 RUN --mount=from=ghcr.io/astral-sh/uv:0.12.17,source=/uv,target=/usr/local/bin/uv \
     --mount=type=cache,target=/home/app/.cache/uv,uid=1000,gid=1000 \
     if [ "$INGEST_VIA_DOCKER" = "1" ]; then \
-      uv sync --frozen --no-install-project; \
+      uv sync --frozen --no-default-groups --group dev --no-install-project; \
     else \
-      uv sync --frozen --no-dev --no-install-project; \
+      uv sync --frozen --no-default-groups --no-install-project; \
     fi
 ENV PATH="/app/.venv/bin:$PATH"
 
@@ -78,9 +79,9 @@ COPY --chown=app:app scripts/ scripts/
 RUN --mount=from=ghcr.io/astral-sh/uv:0.12.17,source=/uv,target=/usr/local/bin/uv \
     --mount=type=cache,target=/home/app/.cache/uv,uid=1000,gid=1000 \
     if [ "$INGEST_VIA_DOCKER" = "1" ]; then \
-      uv sync --frozen; \
+      uv sync --frozen --no-default-groups --group dev; \
     else \
-      uv sync --frozen --no-dev; \
+      uv sync --frozen --no-default-groups; \
     fi
 
 # kanji_table.json (~5 MB) and headword_index.marisa (~26 MB, the packed
@@ -101,15 +102,14 @@ COPY --chown=app:app data/processed/headword_index.marisa data/processed/headwor
 RUN python -c "from app.embedder import warm_models; warm_models()" \
     && python -m compileall -q app scripts
 
-EXPOSE 8501
+EXPOSE 8000
 
-# /_stcore/health is Streamlit's health endpoint and returns a literal "ok".
-# Do not be tempted by a friendlier-looking path: Streamlit's SPA catch-all
-# serves index.html with HTTP 200 for *any* unmatched route, so a probe against
-# e.g. /healthz passes unconditionally and tests nothing.
+# /health is plain liveness (no dependencies touched) — the container stays
+# "healthy" while Qdrant is down, which is what orchestrators want: restarting
+# the API wouldn't fix Qdrant. Readiness (a real query) is /ready's job.
 # start-period is generous because scripts/startup.py may run the whole
-# download -> build -> ingest pipeline before Streamlit ever binds the port.
+# download -> build -> ingest pipeline before uvicorn ever binds the port.
 HEALTHCHECK --interval=60s --timeout=5s --start-period=10m --retries=3 \
-    CMD python -c "import httpx,sys,os; r=httpx.get(f\"http://localhost:{os.getenv('PORT','8501')}/_stcore/health\", timeout=3); sys.exit(0 if r.status_code==200 and r.text.strip()=='ok' else 1)"
+    CMD python -c "import httpx,sys,os; r=httpx.get(f\"http://localhost:{os.getenv('PORT','8000')}/health\", timeout=3); sys.exit(0 if r.status_code==200 else 1)"
 
 CMD ["reikun"]

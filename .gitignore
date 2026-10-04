@@ -33,6 +33,7 @@ data/processed/*
 !data/processed/headword_index.marisa
 data/kanjivg/
 data/monitoring/
+data/snapshots/
 
 # Local model weights (cached at runtime)
 models/
@@ -52,7 +53,7 @@ Thumbs.db
 .Trashes
 
 # Project planning notes (kept for context but not committed)
-docs/notes/
+# docs/notes/
 
 # Logs
 *.log

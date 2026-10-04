@@ -17,8 +17,6 @@ from collections.abc import Iterator
 from contextlib import contextmanager
 from datetime import UTC, datetime
 
-import pandas as pd
-
 from app.config import MONITORING_DB
 
 _SCHEMA = """
@@ -146,8 +144,12 @@ def log_explanation(sentence: str, jlpt_level: str, *, model: str, latency_ms: i
 
 # ── Readers (dashboard) ──────────────────────────────────────────────────────
 
-def load_table(table: str) -> pd.DataFrame:
+def load_table(table: str):
     """Whole table as a DataFrame with `ts` parsed to UTC datetimes."""
+    # pandas is only needed by this reader (the dashboard). The writers must
+    # stay importable in the lean API image, which doesn't ship pandas.
+    import pandas as pd
+
     if table not in {"searches", "feedback", "kanji_lookups", "explanations"}:
         raise ValueError(table)
     with _conn() as conn:

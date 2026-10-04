@@ -42,6 +42,9 @@ eval/results/
 README.md
 docs/
 
+# Frontend (SvelteKit — separate build, not part of the API image)
+web/
+
 # IDE & editor files
 .vscode/
 .idea/

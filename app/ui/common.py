@@ -13,6 +13,7 @@ from qdrant_client.http.exceptions import UnexpectedResponse
 
 from app.config import COLLECTION, qdrant_client
 from app.kanji_lookup import is_kanji, lookup_kanji, stroke_svg
+from app.render import furigana_parts, meta_parts
 from scripts.feedback_log import log_kanji_lookup
 
 APP_TITLE = "Reikun (例訓)"
@@ -210,37 +211,10 @@ def data_status() -> tuple[bool, str]:
 
 # ── Kanji rendering ──────────────────────────────────────────────────────────
 
-def _grade(grade: int) -> tuple[str, str]:
-    """(label, tooltip) for a KANJIDIC2 grade code — the label is always "Grade N";
-    the tooltip carries what the code means: 1–6 kyōiku (primary school year),
-    8 jōyō (secondary school, general use), 9–10 jinmeiyō (name kanji)."""
-    if grade <= 6:
-        tip = f"Kyōiku kanji — general-use characters taught in year {grade} of primary school"
-    elif grade == 8:
-        tip = "Jōyō kanji — one of the 2,136 general-use characters, taught in secondary school"
-    else:
-        tip = ("Jinmeiyō kanji — characters approved for use in personal names"
-               + ("; variant form of a jōyō kanji" if grade == 10 else ""))
-    return f"Grade {grade}", tip
-
-
 def _meta_parts(d: dict) -> list[tuple[str, str]]:
-    """(label, tooltip) pairs for the kanji's strokes / grade / JLPT / frequency, skipping missing ones."""
-    parts = []
-    if d.get("stroke_count"):
-        parts.append((f"{d['stroke_count']} strokes", "Number of strokes in the standard stroke order"))
-    if d.get("grade"):
-        parts.append(_grade(d["grade"]))
-    if d.get("jlpt_level"):
-        # kanji_table stores KANJIDIC2's former 4-level scale (4 elementary →
-        # 1 advanced); old level 2 spans N2–N3 so it can't be shown as one level.
-        label = {4: "N5", 3: "N4", 2: "N2–N3", 1: "N1"}.get(d["jlpt_level"], f"N{d['jlpt_level']}")
-        parts.append((f"JLPT {label}",
-                      "Japanese Language Proficiency Test level this kanji is expected at (N5 easiest, N1 hardest)"))
-    if d.get("freq"):
-        parts.append((f"Freq #{d['freq']}",
-                      "Frequency rank among the 2,500 most-used kanji in newspapers (1 = most common)"))
-    return parts
+    """(label, tooltip) pairs for the kanji's strokes / grade / JLPT / frequency —
+    the same data app/render.py's meta_parts() ships to the API as JSON."""
+    return [(p["label"], p["tip"]) for p in meta_parts(d)]
 
 
 def _meta_line(d: dict) -> str:
@@ -338,20 +312,11 @@ def furigana(word: str, reading: str | None, *, tips: bool = True) -> str:
     format_kanji_text).
     """
     fmt = format_kanji_text if tips else html.escape
-    if not reading or reading == word or not any(map(is_kanji, word)):
-        return fmt(word)
-    i = 0
-    while i < min(len(word), len(reading)) and word[i] == reading[i] and not is_kanji(word[i]):
-        i += 1
-    j = 0
-    while j < min(len(word), len(reading)) - i and word[-1 - j] == reading[-1 - j] and not is_kanji(word[-1 - j]):
-        j += 1
-    core_w, core_r = word[i:len(word) - j], reading[i:len(reading) - j]
-    if not core_w or not core_r:
-        return f"<ruby>{fmt(word)}<rt>{html.escape(reading)}</rt></ruby>"
-    return (fmt(word[:i])
-            + f"<ruby>{fmt(core_w)}<rt>{html.escape(core_r)}</rt></ruby>"
-            + fmt(word[len(word) - j:]))
+    return "".join(
+        f"<ruby>{fmt(p['text'])}<rt>{html.escape(p['rt'])}</rt></ruby>" if p["rt"]
+        else fmt(p["text"])
+        for p in furigana_parts(word, reading)
+    )
 
 
 @cache

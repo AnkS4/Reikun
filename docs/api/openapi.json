@@ -1,0 +1,1274 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Reikun API",
+    "description": "Japanese dictionary search (hybrid dense + BM25), kanji details and JLPT-calibrated grammar explanations.",
+    "version": "0.3.0"
+  },
+  "paths": {
+    "/health": {
+      "get": {
+        "tags": [
+          "meta"
+        ],
+        "summary": "Health",
+        "description": "Liveness only — the process is up. Dependencies are checked by /ready.",
+        "operationId": "health_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Health Health Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ready": {
+      "get": {
+        "tags": [
+          "meta"
+        ],
+        "summary": "Ready",
+        "description": "Readiness: a real query against the Qdrant collection.\n503 when Qdrant is unreachable or the collection is missing/empty.",
+        "operationId": "ready_ready_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Ready Ready Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/search": {
+      "get": {
+        "tags": [
+          "search"
+        ],
+        "summary": "Search Endpoint",
+        "description": "Same pipeline as the dictionary UI: rewrite → route → retrieve.\nResults carry `ruby` parts for furigana rendering; Japanese sentences that\ndecompose into word units come back in `segments` (the \"parsed as\" chips).",
+        "operationId": "search_endpoint_search_get",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "English or Japanese word, or a natural-language question",
+              "title": "Q"
+            },
+            "description": "English or Japanese word, or a natural-language question"
+          },
+          {
+            "name": "n",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 50,
+              "minimum": 1,
+              "description": "Number of results",
+              "default": 10,
+              "title": "N"
+            },
+            "description": "Number of results"
+          },
+          {
+            "name": "mode",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "auto",
+                "hybrid",
+                "vector",
+                "text"
+              ],
+              "type": "string",
+              "description": "auto routes the query to the best plan; the rest are fixed pipelines",
+              "default": "auto",
+              "title": "Mode"
+            },
+            "description": "auto routes the query to the best plan; the rest are fixed pipelines"
+          },
+          {
+            "name": "rewrite",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Normalise natural-language queries to a dictionary gloss first",
+              "default": true,
+              "title": "Rewrite"
+            },
+            "description": "Normalise natural-language queries to a dictionary gloss first"
+          },
+          {
+            "name": "log",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Record the search in the telemetry sink",
+              "default": true,
+              "title": "Log"
+            },
+            "description": "Record the search in the telemetry sink"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchResponseModel"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/kanji/random": {
+      "get": {
+        "tags": [
+          "kanji"
+        ],
+        "summary": "Kanji Random Endpoint",
+        "description": "A random kanji that is itself a JMdict headword — the shuffle button's\npick. Same rules as the UI: frequency-ranked pool, optionally restricted\nto a JLPT level, up to 8 headword-verified tries then an unchecked pick.",
+        "operationId": "kanji_random_endpoint_kanji_random_get",
+        "parameters": [
+          {
+            "name": "level",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "N5",
+                    "N4",
+                    "N3",
+                    "N2",
+                    "N1"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Prefer kanji tagged at this JLPT level (falls back to the common pool)",
+              "title": "Level"
+            },
+            "description": "Prefer kanji tagged at this JLPT level (falls back to the common pool)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Kanji Random Endpoint Kanji Random Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/kanji": {
+      "get": {
+        "tags": [
+          "kanji"
+        ],
+        "summary": "Kanji Batch Endpoint",
+        "description": "Compact hover-card data for several kanji at once — one round-trip per\nsentence of tooltips. Unknown kanji map to null.",
+        "operationId": "kanji_batch_endpoint_kanji_get",
+        "parameters": [
+          {
+            "name": "chars",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 100,
+              "description": "Kanji characters to look up (deduped; every char is treated as one kanji)",
+              "title": "Chars"
+            },
+            "description": "Kanji characters to look up (deduped; every char is treated as one kanji)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/components/schemas/KanjiHover"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "title": "Response Kanji Batch Endpoint Kanji Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/kanji/{char}": {
+      "get": {
+        "tags": [
+          "kanji"
+        ],
+        "summary": "Kanji Endpoint",
+        "description": "KANJIDIC2 details (meta badges, readings with okurigana parts, common\nwords with ruby parts) for one kanji — the frontend renders the card.",
+        "operationId": "kanji_endpoint_kanji__char__get",
+        "parameters": [
+          {
+            "name": "char",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Char"
+            }
+          },
+          {
+            "name": "strokes",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Include KanjiVG stroke order as structured data (viewBox, path d's, number labels)",
+              "default": false,
+              "title": "Strokes"
+            },
+            "description": "Include KanjiVG stroke order as structured data (viewBox, path d's, number labels)"
+          },
+          {
+            "name": "svg",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Include the raw KanjiVG stroke-order SVG markup",
+              "default": false,
+              "title": "Svg"
+            },
+            "description": "Include the raw KanjiVG stroke-order SVG markup"
+          },
+          {
+            "name": "log",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": true,
+              "title": "Log"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KanjiCard"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/explain": {
+      "post": {
+        "tags": [
+          "grammar"
+        ],
+        "summary": "Explain Endpoint",
+        "description": "JLPT-level-calibrated grammar explanation (Cohere). Markdown bullets.",
+        "operationId": "explain_endpoint_explain_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExplainRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExplainResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/explain/stream": {
+      "post": {
+        "tags": [
+          "grammar"
+        ],
+        "summary": "Explain Stream Endpoint",
+        "description": "Server-sent events: `data: {\"text\": \"…\"}` chunks as Cohere streams them,\nthen `data: {\"done\": true, \"explanation_id\": …, \"latency_ms\": …}`.",
+        "operationId": "explain_stream_endpoint_explain_stream_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExplainRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/feedback": {
+      "post": {
+        "tags": [
+          "meta"
+        ],
+        "summary": "Feedback Endpoint",
+        "description": "Thumbs up (+1) / down (-1) on a search or an explanation.",
+        "operationId": "feedback_endpoint_feedback_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FeedbackRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeedbackResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "CommonWord": {
+        "properties": {
+          "kanji_form": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Kanji Form"
+          },
+          "reading": {
+            "type": "string",
+            "title": "Reading",
+            "default": ""
+          },
+          "meanings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Meanings",
+            "default": []
+          },
+          "gloss": {
+            "type": "string",
+            "title": "Gloss",
+            "default": ""
+          },
+          "ruby": {
+            "items": {
+              "$ref": "#/components/schemas/RubyPart"
+            },
+            "type": "array",
+            "title": "Ruby",
+            "default": []
+          }
+        },
+        "type": "object",
+        "title": "CommonWord"
+      },
+      "ExplainRequest": {
+        "properties": {
+          "sentence": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Sentence",
+            "description": "Japanese example sentence"
+          },
+          "english": {
+            "type": "string",
+            "title": "English",
+            "description": "English translation (improves the explanation)",
+            "default": ""
+          },
+          "level": {
+            "type": "string",
+            "enum": [
+              "N5",
+              "N4",
+              "N3",
+              "N2",
+              "N1"
+            ],
+            "title": "Level",
+            "default": "N5"
+          }
+        },
+        "type": "object",
+        "required": [
+          "sentence"
+        ],
+        "title": "ExplainRequest"
+      },
+      "ExplainResponse": {
+        "properties": {
+          "explanation_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Explanation Id"
+          },
+          "level": {
+            "type": "string",
+            "title": "Level"
+          },
+          "model": {
+            "type": "string",
+            "title": "Model"
+          },
+          "latency_ms": {
+            "type": "integer",
+            "title": "Latency Ms"
+          },
+          "text": {
+            "type": "string",
+            "title": "Text"
+          }
+        },
+        "type": "object",
+        "required": [
+          "level",
+          "model",
+          "latency_ms",
+          "text"
+        ],
+        "title": "ExplainResponse"
+      },
+      "FeedbackRequest": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "search",
+              "explanation"
+            ],
+            "title": "Kind"
+          },
+          "ref_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ref Id",
+            "description": "`search_id` from /search or `explanation_id` from /explain"
+          },
+          "rating": {
+            "type": "integer",
+            "enum": [
+              1,
+              -1
+            ],
+            "title": "Rating"
+          },
+          "query": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Query"
+          }
+        },
+        "type": "object",
+        "required": [
+          "kind",
+          "rating"
+        ],
+        "title": "FeedbackRequest"
+      },
+      "FeedbackResponse": {
+        "properties": {
+          "feedback_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Feedback Id"
+          }
+        },
+        "type": "object",
+        "title": "FeedbackResponse"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "KanjiCard": {
+        "properties": {
+          "literal": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Literal"
+          },
+          "codepoint_hex": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Codepoint Hex"
+          },
+          "stroke_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stroke Count"
+          },
+          "grade": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Grade"
+          },
+          "freq": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Freq"
+          },
+          "jlpt_level": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Jlpt Level"
+          },
+          "meanings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Meanings",
+            "default": []
+          },
+          "meta": {
+            "items": {
+              "$ref": "#/components/schemas/MetaBadge"
+            },
+            "type": "array",
+            "title": "Meta",
+            "default": []
+          },
+          "on_yomi": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "On Yomi",
+            "default": []
+          },
+          "kun_yomi": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Kun Yomi",
+            "default": []
+          },
+          "readings": {
+            "additionalProperties": {
+              "items": {
+                "$ref": "#/components/schemas/ReadingChip"
+              },
+              "type": "array"
+            },
+            "type": "object",
+            "title": "Readings",
+            "default": {}
+          },
+          "common_words": {
+            "items": {
+              "$ref": "#/components/schemas/CommonWord"
+            },
+            "type": "array",
+            "title": "Common Words",
+            "default": []
+          },
+          "stroke": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/StrokeData"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "stroke_svg": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stroke Svg"
+          }
+        },
+        "type": "object",
+        "title": "KanjiCard"
+      },
+      "KanjiHover": {
+        "properties": {
+          "literal": {
+            "type": "string",
+            "title": "Literal"
+          },
+          "meanings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Meanings",
+            "default": []
+          },
+          "on_yomi": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "On Yomi",
+            "default": []
+          },
+          "kun_yomi": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Kun Yomi",
+            "default": []
+          },
+          "meta": {
+            "items": {
+              "$ref": "#/components/schemas/MetaBadge"
+            },
+            "type": "array",
+            "title": "Meta",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "literal"
+        ],
+        "title": "KanjiHover",
+        "description": "Compact card for kanji-in-text hover tooltips (batch endpoint)."
+      },
+      "MetaBadge": {
+        "properties": {
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "tip": {
+            "type": "string",
+            "title": "Tip"
+          }
+        },
+        "type": "object",
+        "required": [
+          "label",
+          "tip"
+        ],
+        "title": "MetaBadge"
+      },
+      "ReadingChip": {
+        "properties": {
+          "stem": {
+            "type": "string",
+            "title": "Stem"
+          },
+          "okurigana": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Okurigana"
+          }
+        },
+        "type": "object",
+        "required": [
+          "stem"
+        ],
+        "title": "ReadingChip",
+        "description": "One on/kun reading; `okurigana` is the part after KANJIDIC2's dot (た.べる)."
+      },
+      "RewriteInfo": {
+        "properties": {
+          "original": {
+            "type": "string",
+            "title": "Original"
+          },
+          "query": {
+            "type": "string",
+            "title": "Query"
+          },
+          "method": {
+            "type": "string",
+            "title": "Method"
+          },
+          "changed": {
+            "type": "boolean",
+            "title": "Changed"
+          }
+        },
+        "type": "object",
+        "required": [
+          "original",
+          "query",
+          "method",
+          "changed"
+        ],
+        "title": "RewriteInfo"
+      },
+      "RubyPart": {
+        "properties": {
+          "text": {
+            "type": "string",
+            "title": "Text"
+          },
+          "rt": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rt"
+          }
+        },
+        "type": "object",
+        "required": [
+          "text"
+        ],
+        "title": "RubyPart",
+        "description": "One display segment of a headword: `rt` carries the furigana when set."
+      },
+      "SearchResponseModel": {
+        "properties": {
+          "search_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Search Id"
+          },
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/SearchResult"
+            },
+            "type": "array",
+            "title": "Results"
+          },
+          "rewrite": {
+            "$ref": "#/components/schemas/RewriteInfo"
+          },
+          "mode": {
+            "type": "string",
+            "title": "Mode"
+          },
+          "latency_ms": {
+            "type": "integer",
+            "title": "Latency Ms"
+          },
+          "segments": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/Segment"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Segments"
+          },
+          "meta": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Meta",
+            "default": {}
+          }
+        },
+        "type": "object",
+        "required": [
+          "results",
+          "rewrite",
+          "mode",
+          "latency_ms"
+        ],
+        "title": "SearchResponseModel"
+      },
+      "SearchResult": {
+        "properties": {
+          "id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id"
+          },
+          "kanji_form": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Kanji Form"
+          },
+          "reading": {
+            "type": "string",
+            "title": "Reading",
+            "default": ""
+          },
+          "kanji_forms": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Kanji Forms",
+            "default": []
+          },
+          "readings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Readings",
+            "default": []
+          },
+          "meanings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Meanings",
+            "default": []
+          },
+          "example_sentences": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Example Sentences",
+            "default": []
+          },
+          "is_common": {
+            "type": "boolean",
+            "title": "Is Common",
+            "default": false
+          },
+          "text": {
+            "type": "string",
+            "title": "Text",
+            "default": ""
+          },
+          "score": {
+            "type": "number",
+            "title": "Score",
+            "default": 0.0
+          },
+          "ruby": {
+            "items": {
+              "$ref": "#/components/schemas/RubyPart"
+            },
+            "type": "array",
+            "title": "Ruby",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "id"
+        ],
+        "title": "SearchResult"
+      },
+      "Segment": {
+        "properties": {
+          "text": {
+            "type": "string",
+            "title": "Text"
+          },
+          "kanji_form": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Kanji Form"
+          },
+          "reading": {
+            "type": "string",
+            "title": "Reading",
+            "default": ""
+          },
+          "meanings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Meanings",
+            "default": []
+          },
+          "gloss": {
+            "type": "string",
+            "title": "Gloss",
+            "default": ""
+          },
+          "ruby": {
+            "items": {
+              "$ref": "#/components/schemas/RubyPart"
+            },
+            "type": "array",
+            "title": "Ruby",
+            "default": []
+          },
+          "options": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Options",
+            "default": []
+          },
+          "approx": {
+            "type": "boolean",
+            "title": "Approx",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "text"
+        ],
+        "title": "Segment",
+        "description": "One word unit of a parsed Japanese sentence (a chip)."
+      },
+      "StrokeData": {
+        "properties": {
+          "view_box": {
+            "type": "string",
+            "title": "View Box"
+          },
+          "strokes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Strokes"
+          },
+          "numbers": {
+            "items": {
+              "$ref": "#/components/schemas/StrokeNumber"
+            },
+            "type": "array",
+            "title": "Numbers"
+          }
+        },
+        "type": "object",
+        "required": [
+          "view_box",
+          "strokes",
+          "numbers"
+        ],
+        "title": "StrokeData",
+        "description": "KanjiVG stroke order as sanitized data — the frontend draws the SVG."
+      },
+      "StrokeNumber": {
+        "properties": {
+          "x": {
+            "type": "number",
+            "title": "X"
+          },
+          "y": {
+            "type": "number",
+            "title": "Y"
+          },
+          "value": {
+            "type": "integer",
+            "title": "Value"
+          }
+        },
+        "type": "object",
+        "required": [
+          "x",
+          "y",
+          "value"
+        ],
+        "title": "StrokeNumber"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    }
+  }
+}
