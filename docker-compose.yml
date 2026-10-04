@@ -7,7 +7,7 @@ services:
     # reachable from the LAN. The app talks to it over the internal compose
     # network (QDRANT_HOST=qdrant), not through these host mappings.
     ports:
-      - "127.0.0.1:6333:6333"   # REST / HTTP (what the app + dashboard use)
+      - "127.0.0.1:6333:6333"   # REST / HTTP (what the app uses)
       - "127.0.0.1:6334:6334"   # gRPC (unused by the app; for local ingest with prefer_grpc)
     volumes:
       - qdrant_data:/qdrant/storage
@@ -54,9 +54,8 @@ services:
       # actually used. A bind mount would mask them and force a re-download.
       - models:/app/models
     # The container serves the standalone API only: Swagger docs at /docs,
-    # liveness /health, readiness /ready. The Streamlit UI is local-dev only
-    # (`uv run streamlit run app/streamlit_app.py`); the SvelteKit frontend
-    # replaces it in production.
+    # liveness /health, readiness /ready. The frontend is the static
+    # SvelteKit site in web/ (Cloudflare Workers static assets).
     depends_on:
       qdrant:
         condition: service_healthy

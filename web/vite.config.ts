@@ -7,8 +7,7 @@ export default defineConfig({
 	plugins: [
 		sveltekit({
 			// `/` prerenders its own SPA shell as index.html; the 200.html
-			// fallback is Cloudflare Pages' convention for unmatched paths
-			// (Vercel covers the same via the rewrite in vercel.json).
+			// fallback is Cloudflare Pages' convention for unmatched paths.
 			adapter: adapter({ fallback: '200.html' }),
 			preprocess: vitePreprocess()
 		})

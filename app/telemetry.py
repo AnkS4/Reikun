@@ -8,8 +8,13 @@ pick up. `TELEMETRY=sqlite` keeps the existing SQLite sink
 
 Both sinks expose the same surface — search / feedback / kanji_lookup /
 explanation — returning the row id when the backend has one, else None.
+
+Raw user-entered text never reaches a sink: queries, rewrites and explained
+sentences are emitted as 12-hex-char SHA-256 prefixes (`*_hash` fields) —
+enough to count repeats without storing the text.
 """
 
+import hashlib
 import json
 import logging
 import sys
@@ -28,6 +33,11 @@ if not _log.handlers:
     _handler.setFormatter(logging.Formatter("%(message)s"))
     _log.addHandler(_handler)
     _log.setLevel(logging.INFO)
+
+
+def _h(text: str | None) -> str | None:
+    """SHA-256 prefix — groups identical inputs for counts without storing them."""
+    return None if text is None else hashlib.sha256(text.encode()).hexdigest()[:12]
 
 
 def _emit(event: str, **fields) -> None:
@@ -51,19 +61,19 @@ class _StdoutTelemetry:
     def search(self, query: str, *, rewritten_query: str, rewrite_method: str, mode: str,
                num_results: int, result_count: int, top_result: str | None, latency_ms: int,
                cached: bool = False) -> None:
-        _emit("search", query=query, rewritten_query=rewritten_query, rewrite_method=rewrite_method,
-              mode=mode, num_results=num_results, result_count=result_count, top_result=top_result,
-              latency_ms=latency_ms, cached=cached)
+        _emit("search", query_hash=_h(query), rewritten_query_hash=_h(rewritten_query),
+              rewrite_method=rewrite_method, mode=mode, num_results=num_results,
+              result_count=result_count, top_result=top_result, latency_ms=latency_ms, cached=cached)
 
     def feedback(self, kind: str, ref_id: int | None, rating: int, query: str | None = None) -> None:
-        _emit("feedback", kind=kind, ref_id=ref_id, rating=rating, query=query)
+        _emit("feedback", kind=kind, ref_id=ref_id, rating=rating, query_hash=_h(query))
 
     def kanji_lookup(self, kanji: str, source: str = "api") -> None:
         _emit("kanji_lookup", kanji=kanji, source=source)
 
     def explanation(self, sentence: str, jlpt_level: str, *, model: str, latency_ms: int,
                     ok: bool) -> None:
-        _emit("explanation", sentence=sentence, jlpt_level=jlpt_level, model=model,
+        _emit("explanation", sentence_hash=_h(sentence), jlpt_level=jlpt_level, model=model,
               latency_ms=latency_ms, ok=ok)
 
 

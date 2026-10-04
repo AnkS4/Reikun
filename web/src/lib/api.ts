@@ -3,7 +3,7 @@
  * generated api.d.ts (scripts/dump_openapi.py + openapi-typescript).
  *
  * The base URL is a *public* build-time value: this is a static site, so
- * PUBLIC_API_BASE is baked in at build time (Cloudflare Pages / Vercel env).
+ * PUBLIC_API_BASE is baked in at build time (set in the host's project env).
  */
 import createClient from 'openapi-fetch';
 import { PUBLIC_API_BASE } from '$app/env/public';

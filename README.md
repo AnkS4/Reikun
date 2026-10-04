@@ -20,13 +20,13 @@ Full recording: [docs/videos/demo_v3.mp4](docs/videos/demo_v3.mp4)
 - **Sentence Breakdown**: Paste Japanese text and Sudachi splits it into word units — furigana on top, gloss underneath, full breakdown on hover. Inflection tails merge into single chips and adjacent segments re-resolve into JMdict compounds
 - **Kanji Lookup**: Deterministic kanji information (no LLM) — stroke-order diagrams (KanjiVG), readings, meanings, and common compound words
 - **Grammar Explanations**: AI-generated grammar explanations calibrated to your JLPT level (N5–N1) using Cohere, on demand only
-- **Feedback & Monitoring**: Thumbs-up/down feedback and query telemetry logged to SQLite, with a built-in dashboard (query volume, top words, feedback rate, kanji lookups, JLPT-level distribution, retrieval settings, latency)
-- **Streamlit Interface**: Search-first landing page, furigana (`<ruby>`) headwords, animated stroke order, light/dark themes, shareable URLs (`?q=猫&level=N3`), one-click level-aware grammar explanations; built on `st.navigation`, `st.dialog`, `st.fragment` and URL-bound widgets
+- **Feedback & Telemetry**: Thumbs-up/down feedback and query telemetry as JSON events (stdout sink, picked up by platform logs) or a local SQLite file; user-entered text is kept only as SHA-256 prefixes and rows auto-prune after ~90 days
+- **Interface**: Search-first landing page, furigana (`<ruby>`) headwords, animated stroke order, light/dark themes, shareable URLs (`?q=猫&level=N3`), one-click level-aware grammar explanations
 - **HTTP API**: FastAPI layer (`app/api.py`) over the same pipeline — standalone uvicorn service with routes at the root (what the Docker image serves); includes SSE streaming for explanations and JSON-shaped rendering (ruby parts, kanji card, segment chips, stroke data) for the web frontend
 
 ## Tech Stack
 
-- **Frontend**: Streamlit (multipage UI: Search + Dashboard; Altair charts; Inter + Noto Sans JP web fonts)
+- **Frontend**: SvelteKit static SPA (`web/` → Cloudflare Workers static assets); Inter + Noto Sans JP web fonts
 - **API**: FastAPI + Uvicorn (the production serving process; one worker)
 - **Vector Database**: Qdrant (named dense + sparse vectors, server-side RRF hybrid)
 - **Embeddings**: FastEmbed — `all-MiniLM-L6-v2` (dense, 384-dim) + `Qdrant/bm25` (sparse), ONNX-quantized for CPU
@@ -41,7 +41,7 @@ Full recording: [docs/videos/demo_v3.mp4](docs/videos/demo_v3.mp4)
 ### Prerequisites
 
 - **Docker and Docker Compose** (recommended path — runs the app + Qdrant)
-- **Cohere API key** — powers grammar explanations, optional LLM query rewriting (`QUERY_REWRITE=auto`), and the LLM evaluation. Search, kanji lookup, and the dashboard work without it.
+- **Cohere API key** — powers grammar explanations, optional LLM query rewriting (`QUERY_REWRITE=auto`), and the LLM evaluation. Search and kanji lookup work without it.
 - **Git** (to clone) and ~3 GB free disk (dictionary data + embedding models)
 
 For local development only:
@@ -86,7 +86,7 @@ docker compose logs -f app
 docker compose down
 ```
 
-The API will be available at `http://localhost:8000` (or the port specified in your `.env` file as `APP_PORT`) — Swagger docs at `/docs`. The Streamlit UI is local-dev only (Option 2); the production frontend is the SvelteKit app (in progress — see `docs/notes/Plan.md`).
+The API will be available at `http://localhost:8000` (or the port specified in your `.env` file as `APP_PORT`) — Swagger docs at `/docs`. The frontend is the SvelteKit app in `web/` (see Option 2 to run it against the local API).
 
 Alternatively, run the pipeline on the host instead of in the container (dev deps install via `uv sync`; ingestion is off by default without `INGEST_VIA_DOCKER`):
 
@@ -131,13 +131,7 @@ For local development without Docker:
    QDRANT_HOST=localhost uv run python scripts/ingest.py
    ```
 
-5. **Run the Streamlit app**:
-   ```bash
-   uv run streamlit run app/streamlit_app.py
-   ```
-   Streamlit config (port, fonts, light/dark themes) lives in `app/.streamlit/config.toml`. Switch theme from the ⋮ menu → Settings.
-
-6. **(Optional) Run the HTTP API**:
+5. **Run the HTTP API**:
 
    The API is the same FastAPI app the Docker image serves — `app/api.py`, routes at the root:
    ```bash
@@ -145,7 +139,7 @@ For local development without Docker:
    ```
    Endpoints: `GET /health` (liveness), `GET /ready` (readiness — real Qdrant query), `GET /search?q=…&n=10&mode=auto`, `GET /kanji?chars=例訓` (batch hover cards), `GET /kanji/{char}?strokes=true`, `POST /explain`, `POST /explain/stream` (SSE), `POST /feedback`. OpenAPI is at `/openapi.json`; regenerate the committed schema + frontend types with `uv run python scripts/dump_openapi.py` then `npx openapi-typescript docs/api/openapi.json -o web/src/lib/openapi.d.ts`.
 
-7. **(Optional) Run the SvelteKit web frontend** (`web/` — the Streamlit → SvelteKit migration target; needs the API running from step 6):
+6. **Run the SvelteKit web frontend** (`web/` — needs the API running from step 5):
 
    ```bash
    cd web && npm install && npm run dev     # dev server → http://localhost:5173
@@ -154,7 +148,7 @@ For local development without Docker:
    npm run preview                          # preview the production build
    ```
 
-   The API base URL is baked in at build time via `PUBLIC_API_BASE` (schema: `web/src/env.ts`, default `http://localhost:8000`; see `web/.env.example`). Static output deploys to Cloudflare Pages as-is (`200.html` SPA fallback); `vercel.json` holds the equivalent rewrite for the Vercel backup path.
+   The API base URL is baked in at build time via `PUBLIC_API_BASE` (schema: `web/src/env.ts`, default `http://localhost:8000`; see `web/.env.example`). Static output deploys to Cloudflare Pages/Workers as-is (`200.html` SPA fallback).
 
 8. **(Optional) Lint**:
    ```bash
@@ -182,25 +176,18 @@ Reikun/
 │   ├── api.py               # FastAPI app — the serving entrypoint (/search, /kanji, /explain, /feedback, /health, /ready)
 │   ├── render.py            # UI-agnostic JSON shaping (ruby parts, kanji card, chips, stroke data)
 │   ├── telemetry.py         # Event logging interface (stdout JSON default, optional SQLite sink)
-│   ├── streamlit_app.py     # Multipage entrypoint (st.navigation, top nav — local dev)
 │   ├── retrieval.py         # Vector / BM25 / hybrid search, re-ranking pipeline
 │   ├── query_rewrite.py     # Heuristic + optional LLM query rewriting
 │   ├── kanji_lookup.py      # Deterministic KANJIDIC2 + KanjiVG lookup
 │   ├── grammar_explain.py   # Cohere client, JLPT-level-aware prompts
-│   ├── embedder.py          # FastEmbed dense/sparse model wrappers
-│   ├── ui/
-│   │   ├── common.py        # Shared styling, furigana, animated stroke SVG, kanji dialog, footer
-│   │   ├── search.py        # Search page (URL-bound query/level, Advanced popover)
-│   │   └── dashboard.py     # Monitoring dashboard (7 charts)
-├── web/                     # SvelteKit static frontend (adapter-static → Cloudflare Pages/Vercel)
-│   ├── src/routes/          # /  (search SPA shell) + /about (prerendered)
+│   └── embedder.py          # FastEmbed dense/sparse model wrappers
+├── web/                     # SvelteKit static frontend (adapter-static → Cloudflare Workers static assets)
+│   ├── src/routes/          # /  (search SPA shell)
 │   ├── src/lib/             # openapi-fetch client (typed from openapi.d.ts), kanji-hover cache, theme
 │   ├── src/env.ts           # PUBLIC_API_BASE schema — build-time public env var
-│   └── vercel.json          # SPA rewrite for the Vercel fallback host
-│   ├── .streamlit/
-│   │   └── config.toml      # Streamlit server port, web fonts, light/dark themes
+│   └── wrangler.jsonc       # Cloudflare Workers static-assets deploy (SPA fallback)
 ├── docs/
-│   ├── screenshots/         # UI captures (search, kanji dialog, dashboard)
+│   ├── screenshots/         # UI captures (search, kanji card)
 │   └── videos/              # Demo recording (gif + mp4)
 ├── eval/
 │   ├── gold_set.tsv         # gold set — en_words/en_verbs (default), en_descriptive, ja_*
@@ -250,11 +237,10 @@ Tuned for a trial key (~10 calls/min): explanations are on-demand only with boun
 | Service     | Container | Host (Docker)                | Host (Local) |
 |-------------|-----------|------------------------------|--------------|
 | HTTP API    | 8000      | `APP_PORT` (default: 8000)   | 8000 (`uvicorn app.api:app`) |
-| Streamlit   | —         | —                            | 8501 (local dev only) |
 | Qdrant      | 6333      | 6333                         | 6333         |
 | Qdrant gRPC | 6334      | 6334                         | 6334         |
 
-Docker maps `127.0.0.1:${APP_PORT:-8000}:8000` — change `APP_PORT` in `.env`, then `docker compose up -d`. All host ports are bound to loopback only (Qdrant has no auth by default), so nothing is reachable from the LAN; the app reaches Qdrant over the internal compose network. For local Streamlit runs, the port is set in `app/.streamlit/config.toml`; you can override it with `--server.port` if needed.
+Docker maps `127.0.0.1:${APP_PORT:-8000}:8000` — change `APP_PORT` in `.env`, then `docker compose up -d`. All host ports are bound to loopback only (Qdrant has no auth by default), so nothing is reachable from the LAN; the app reaches Qdrant over the internal compose network.
 
 ## Evaluation
 

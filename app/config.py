@@ -78,6 +78,10 @@ SPARSE_VECTOR = "bm25"
 # stateless-instance default) or "sqlite" (the feedback_log monitoring DB).
 TELEMETRY = _env("TELEMETRY", "stdout").lower()
 
+# How long SQLite telemetry rows are kept; pruned once per process start.
+# Default 0 = keep forever; set a day count to enable pruning.
+TELEMETRY_RETENTION_DAYS = int(_env("TELEMETRY_RETENTION_DAYS", "0"))
+
 # Comma-separated allowed origins for CORS (the standalone API serves a
 # different-origin frontend). "*" is the permissive dev default; deployment
 # pins it to the site origin.
