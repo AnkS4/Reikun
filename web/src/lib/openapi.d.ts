@@ -142,7 +142,7 @@ export interface paths {
         put?: never;
         /**
          * Explain Endpoint
-         * @description JLPT-level-calibrated grammar explanation (Cohere). Markdown bullets.
+         * @description JLPT-level-calibrated grammar explanation (Groq). Markdown bullets.
          */
         post: operations["explain_endpoint_explain_post"];
         delete?: never;
@@ -162,7 +162,7 @@ export interface paths {
         put?: never;
         /**
          * Explain Stream Endpoint
-         * @description Server-sent events: `data: {"text": "…"}` chunks as Cohere streams them,
+         * @description Server-sent events: `data: {"text": "…"}` chunks as Groq streams them,
          *     then `data: {"done": true, "explanation_id": …, "latency_ms": …}`.
          */
         post: operations["explain_stream_endpoint_explain_stream_post"];

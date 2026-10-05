@@ -25,11 +25,9 @@
 
 	const TAGLINE =
 		'Search in English or Japanese, break down sentences word-by-word with furigana and meanings, inspect kanji, and get grammar explanations.';
-	const EXAMPLES = ['sea', '会う', '家', 'How do you say library in Japanese', '昨日かっぱ巻きを食べました'];
+	const EXAMPLES = ['train', '国', '海外', 'How do you say cheese in Japanese', 'あの店のサービスは素晴らしいです。'];
 	const HINTS = [
-		'Type an English or Japanese word',
-		'or pick an example below',
-		'or hit shuffle for a random kanji'
+		'Type something or click an example below'
 	];
 	// Retrieval is ~25 ms — a page of ten costs the same as five; "Show more" refetches.
 	const DEFAULT_RESULTS = 10;
@@ -141,9 +139,13 @@
 		// Keep the caret in the box — pills, kanji picks, shuffle all land here.
 		searchInput?.focus({ preventScroll: true });
 		// Same query again (re-submit, same kanji picked twice) → search directly;
-		// a changed query goes through ?q= so history records it.
-		if (v === committed) runSearch(v);
-		else setQuery(v);
+		// a changed query goes through ?q= so history records it. A kanji repick
+		// doesn't change kanjiChar → scroll imperatively, the effect won't refire.
+		if (v === committed) {
+			if (v.length === 1 && isKanji(v))
+				kanjiAnchor?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+			runSearch(v);
+		} else setQuery(v);
 	}
 
 	function submit(e: SubmitEvent) {
@@ -169,6 +171,15 @@
 		// wantResults is part of urlKey — the effect refires with the larger n.
 		wantResults = Math.min(wantResults + PAGE_RESULTS, MAX_RESULTS);
 	}
+
+	// Kanji picks happen deep in the results list — scroll the card into view or
+	// the click looks dead. Fires when a new char renders the card (repicks of
+	// the same char are handled in commit(), where the imperative scroll lives).
+	let kanjiAnchor = $state<HTMLDivElement>();
+	$effect(() => {
+		if (kanjiChar && kanjiAnchor)
+			kanjiAnchor.scrollIntoView({ behavior: 'smooth', block: 'start' });
+	});
 </script>
 
 <Header hero={!hasResults} tagline={TAGLINE} />
@@ -191,7 +202,7 @@
 	</div>
 	<button
 		type="button"
-		class="btn tertiary icon-only"
+		class="btn tertiary"
 		title="Random {level} kanji"
 		aria-label="Random {level} kanji"
 		onclick={randomKanji}
@@ -216,24 +227,30 @@
 
 {#if resp}
 	{#if kanjiChar}
-		<KanjiCard char={kanjiChar} />
+		<div bind:this={kanjiAnchor} class="kanji-anchor">
+			<KanjiCard char={kanjiChar} />
+		</div>
 	{/if}
 
 	<div class="stats-line">
 		<b>{resp.results.length} entries</b>
 		<Feedback kind="search" refId={resp.search_id ?? null} query={committed} />
-		<span class="stats-meta">· {resp.mode}{meta?.route ? ` · ${meta.route}` : ''} · {resp.latency_ms} ms</span>
-		{#if meta?.cached}
-			<span class="caption">served from the per-process result cache</span>
-		{:else if meta?.embed_ms != null}
-			<span class="caption">embed {meta.embed_ms} ms · retrieve {meta.retrieve_ms} ms</span>
-		{/if}
+		<span class="stats-details" title="Route, timing and cache info for this query">
+			<Icon name="info" size={14} />
+			<span class="stats-meta">
+				{resp.mode}{meta?.route ? ` · ${meta.route}` : ''} · {resp.latency_ms} ms
+			</span>
+			{#if meta?.cached}
+				<span class="stats-meta">· cached</span>
+			{:else if meta?.embed_ms != null}
+				<span class="stats-meta">· embed {meta.embed_ms} ms · retrieve {meta.retrieve_ms} ms</span>
+			{/if}
+		</span>
 	</div>
 
 	{#if resp.rewrite.changed}
 		<p class="caption">
-			Searched for <b>{resp.rewrite.query}</b> (rewritten from “{resp.rewrite.original}”,
-			{resp.rewrite.method})
+			Searched for <b>{resp.rewrite.query}</b>
 		</p>
 	{/if}
 

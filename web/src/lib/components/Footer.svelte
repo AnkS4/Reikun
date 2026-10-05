@@ -15,8 +15,7 @@
 		(<a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>).
 	</p>
 	<p class="footer-data">
-		Example sentences come from the
-		<a href="https://tatoeba.org">Tatoeba</a> project
+		Example sentences come from the Tatoeba project
 		(<a href="https://www.edrdg.org/wiki/index.php/Tanaka_Corpus">Tanaka Corpus</a>)
 		and are licensed under
 		<a href="https://creativecommons.org/licenses/by/2.0/fr/">Creative Commons CC-BY</a>.
@@ -27,5 +26,8 @@
 		<a href="https://creativecommons.org/licenses/by-sa/3.0/"
 			>Creative Commons Attribution-ShareAlike 3.0</a
 		> licence.
+	</p>
+	<p class="footer-data">
+		Search queries are logged to improve the dictionary — no cookies or trackers.
 	</p>
 </footer>

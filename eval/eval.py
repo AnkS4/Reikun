@@ -12,7 +12,7 @@ Default (no suite flag): headword benchmark against *current settings* — no
 mode/rewrite overrides, so it uses whatever the env configures (auto route,
 QUERY_REWRITE). The ranking knobs can be swept in-process;
 each is patched per variant and the search cache cleared between them (query
-rewrites stay cached, so Cohere calls only happen on the first variant).
+rewrites stay cached, so Groq calls only happen on the first variant).
 Omitting a flag keeps the value committed in app/retrieval.py:
 
     --canon   CANONICAL_BOOST — weight of wf_score × first-sense-gloss match
@@ -21,10 +21,10 @@ Omitting a flag keeps the value committed in app/retrieval.py:
 
 Other suites (combine freely):
 
-    --modes   fixed text / hybrid / auto comparison, rewrite off (no Cohere)
+    --modes   fixed text / hybrid / auto comparison, rewrite off (no Groq)
     --ir      retrieval-config suite — Hit@k / MRR / NDCG / MAP / recall over
               relevant entry IDs, overall and per gold subset
-    --llm     level-aware vs generic grammar-explanation eval (Cohere judge)
+    --llm     level-aware vs generic grammar-explanation eval (Groq judge)
 
 Usage:
     python eval/eval.py                                   # production benchmark
@@ -32,8 +32,8 @@ Usage:
     python eval/eval.py --subsets descriptive
     python eval/eval.py --modes                           # mode comparison
     python eval/eval.py --ir --configs vector hybrid      # IR suite subset
-    python eval/eval.py --ir --k 5 --no-llm               # skip Cohere configs
-    python eval/eval.py --llm --sentences 2               # conserve Cohere quota
+    python eval/eval.py --ir --k 5 --no-llm               # skip LLM configs
+    python eval/eval.py --llm --sentences 2               # conserve Groq quota
 
 Outputs under eval/results/ (headword/mode runs are timestamped so runs never
 overwrite each other; the IR and LLM reports keep canonical names):
@@ -236,7 +236,7 @@ def headword_suite(args) -> None:
 
 
 # ---------------------------------------------------------------------------
-# Mode comparison — text / hybrid / auto, rewrite off (no Cohere calls).
+# Mode comparison — text / hybrid / auto, rewrite off (no Groq calls).
 # ---------------------------------------------------------------------------
 
 def modes_suite(args) -> None:
@@ -360,7 +360,7 @@ def ir_markdown(results: list[dict], gold_n: int, k: int) -> str:
 def ir_suite(args) -> None:
     gold = load_gold_qrels(tuple(args.subsets or GOLD))  # IR suite covers all subsets by default
     if args.no_llm:
-        configs = [c for c in args.configs if "auto/llm" not in c and "cohere" not in c]
+        configs = [c for c in args.configs if "auto/llm" not in c]
     else:
         configs = list(args.configs)
     print(f"{len(gold)} gold queries · {len(configs)} configurations\n")
@@ -381,18 +381,17 @@ def ir_suite(args) -> None:
 
 
 # ---------------------------------------------------------------------------
-# LLM suite — level-aware vs generic grammar prompt, Cohere judge (opt-in).
+# LLM suite — level-aware vs generic grammar prompt, Groq judge (opt-in).
 # ---------------------------------------------------------------------------
 
 LEVELS = ("N5", "N1")
 PROMPTS = {"level-aware": True, "generic": False}
 
-# Cohere trial keys are capped at ~10 calls/min (see app/grammar_explain.py).
-# Each eval row makes two Cohere calls (generation + judge), so we sleep just
-# long enough between calls to stay under the rate limit.
-_COHERE_MAX_CALLS_PER_MIN = 10
-_COHERE_MIN_INTERVAL = 60.0 / _COHERE_MAX_CALLS_PER_MIN
-_last_cohere_call = 0.0
+# Groq free tier caps at 30 RPM per model. Each eval row makes two calls on
+# the primary pool (generation + judge), so we pace under that.
+_LLM_MAX_CALLS_PER_MIN = 25
+_LLM_MIN_INTERVAL = 60.0 / _LLM_MAX_CALLS_PER_MIN
+_last_llm_call = 0.0
 
 FALLBACK_SENTENCES = [
     {"japanese": "私は毎日日本語を勉強します。", "english": "I study Japanese every day."},
@@ -446,19 +445,19 @@ accuracy: 5 = grammatically accurate and complete for the sentence, 1 = wrong.\
 """
 
 
-def _cohere_wait() -> None:
-    """Sleep just enough to stay within the Cohere trial rate limit."""
-    global _last_cohere_call
-    if _last_cohere_call:
-        elapsed = time.perf_counter() - _last_cohere_call
-        if elapsed < _COHERE_MIN_INTERVAL:
-            time.sleep(_COHERE_MIN_INTERVAL - elapsed)
+def _llm_wait() -> None:
+    """Sleep just enough to stay within the per-model rate limit."""
+    global _last_llm_call
+    if _last_llm_call:
+        elapsed = time.perf_counter() - _last_llm_call
+        if elapsed < _LLM_MIN_INTERVAL:
+            time.sleep(_LLM_MIN_INTERVAL - elapsed)
 
 
 def judge(sentence: str, level: str, explanation: str) -> dict:
     from app.grammar_explain import chat
     user = f"Learner level: {level}\nSentence: {sentence}\n\nExplanation:\n{explanation}"
-    raw = chat(JUDGE_SYSTEM, user, thinking_budget=100, max_tokens=400)
+    raw = chat(JUDGE_SYSTEM, user, max_tokens=400)
     try:
         return json.loads(raw[raw.find("{"): raw.rfind("}") + 1])
     except (ValueError, json.JSONDecodeError):
@@ -471,15 +470,15 @@ def llm_evaluate(sentences: list[dict]) -> list[dict]:
     for s in sentences:
         for level in LEVELS:
             for prompt, level_aware in PROMPTS.items():
-                global _last_cohere_call
-                _cohere_wait()
+                global _last_llm_call
+                _llm_wait()
                 t0 = time.perf_counter()
                 text = explain_grammar(s["japanese"], s["english"], level, level_aware=level_aware)
-                _last_cohere_call = time.perf_counter()
+                _last_llm_call = time.perf_counter()
                 gen_ms = int((time.perf_counter() - t0) * 1000)
-                _cohere_wait()
+                _llm_wait()
                 verdict = judge(s["japanese"], level, text)
-                _last_cohere_call = time.perf_counter()
+                _last_llm_call = time.perf_counter()
                 rows.append({
                     "sentence": s["japanese"], "level": level, "prompt": prompt, "explanation": text,
                     "words": len(text.split()), "jargon_terms": len(JARGON.findall(text)),
@@ -513,7 +512,7 @@ def llm_markdown(rows: list[dict], summary: list[dict]) -> str:
         "# LLM evaluation — level-aware vs generic grammar prompt",
         "",
         f"{len(rows) // (len(LEVELS) * len(PROMPTS))} sentences × levels {', '.join(LEVELS)} × 2 prompts. "
-        "Judge = Cohere (blind to prompt variant), scores 1–5.",
+        "Judge = Groq (blind to prompt variant), scores 1–5.",
         "",
         "| Level | Prompt | avg words | avg jargon terms | analogy rate | judge: level fit | judge: accuracy |",
         "|---|---|---|---|---|---|---|",
@@ -572,7 +571,7 @@ def main() -> None:
                         help="--ir configurations to run (default: all)")
     parser.add_argument("--k", type=int, default=5, help="--ir top-k (default: %(default)s)")
     parser.add_argument("--no-llm", action="store_true",
-                        help="--ir: skip configurations that call the Cohere API")
+                        help="--ir: skip configurations that call the Groq API")
     parser.add_argument("--llm", action="store_true",
                         help="run the grammar-explanation LLM-judge eval")
     parser.add_argument("--sentences", type=int, default=5,

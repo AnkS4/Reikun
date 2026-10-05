@@ -20,6 +20,6 @@
 	{#each examples as ex}
 		<ExampleRow {ex} {level} onpick={onPickKanji} />
 	{:else}
-		<p class="no-example">No example sentences for this entry.</p>
+		<p class="no-example">No example sentences.</p>
 	{/each}
 </div>

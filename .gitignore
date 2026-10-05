@@ -54,7 +54,10 @@ Thumbs.db
 .Trashes
 
 # Project planning notes (kept for context but not committed)
-docs/notes/
+#docs/notes/
+
+# Local-only benchmarking scratch (multi-provider comparison; not shipped)
+local/
 
 # Logs
 *.log

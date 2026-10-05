@@ -26,8 +26,8 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 from qdrant_client.http.exceptions import UnexpectedResponse
 
-from app.config import COHERE_MODEL, COLLECTION, CORS_ORIGINS, qdrant_client
-from app.grammar_explain import JLPT_LEVELS, explain_grammar, explain_grammar_stream
+from app.config import COLLECTION, CORS_ORIGINS, LLM_MODEL, qdrant_client
+from app.grammar_explain import JLPT_LEVELS, explain_grammar, explain_grammar_stream, last_model, validate_input
 from app.kanji_lookup import is_kanji, jlpt_kanji, random_kanji
 from app.render import furigana_parts, kanji_card, kanji_hover, segment_chip
 from app.retrieval import MODES, is_headword, search, warm_headword_index
@@ -53,7 +53,7 @@ async def lifespan(_: FastAPI):
 
 app = FastAPI(
     title="Reikun API",
-    version="0.3.0",
+    version="0.4.0",
     description="Japanese dictionary search (hybrid dense + BM25), kanji details and JLPT-calibrated grammar explanations.",
     lifespan=lifespan,
 )
@@ -262,7 +262,7 @@ def ready() -> dict:
         raise HTTPException(503, f"Qdrant unreachable: {type(exc).__name__}") from exc
     if not count:
         raise HTTPException(503, f"Collection {COLLECTION!r} missing or empty — run scripts/ingest.py")
-    return {"status": "ready", "collection": COLLECTION, "entries": count, "llm": COHERE_MODEL}
+    return {"status": "ready", "collection": COLLECTION, "entries": count, "llm": LLM_MODEL}
 
 
 # ── Search ───────────────────────────────────────────────────────────────────
@@ -294,7 +294,8 @@ def search_endpoint(
             q, rewritten_query=resp.rewrite.query, rewrite_method=resp.rewrite.method, mode=resp.mode,
             num_results=n, result_count=len(resp.results),
             top_result=top.get("kanji_form") or top.get("reading"), latency_ms=resp.latency_ms,
-            cached=bool(resp.meta.get("cached")),
+            cached=bool(resp.meta.get("cached")), route=resp.meta.get("route"),
+            embed_ms=resp.meta.get("embed_ms"), retrieve_ms=resp.meta.get("retrieve_ms"),
         )
         if is_kanji(q):
             background.add_task(telemetry().kanji_lookup, q, source="search")
@@ -375,40 +376,48 @@ def kanji_endpoint(
 
 @app.post("/explain", tags=["grammar"], response_model=ExplainResponse)
 def explain_endpoint(req: ExplainRequest) -> dict:
-    """JLPT-level-calibrated grammar explanation (Cohere). Markdown bullets."""
+    """JLPT-level-calibrated grammar explanation (Groq). Markdown bullets."""
+    try:
+        sentence, english, _ = validate_input(req.sentence, req.english)
+    except ValueError as exc:
+        raise HTTPException(422, str(exc)) from exc
     t0 = time.perf_counter()
     try:
-        text, ok = explain_grammar(req.sentence, req.english, req.level), True
+        text, ok = explain_grammar(sentence, english, req.level), True
     except Exception as exc:
         text, ok = str(exc), False
     latency_ms = int((time.perf_counter() - t0) * 1000)
-    expl_id = telemetry().explanation(req.sentence, req.level, model=COHERE_MODEL, latency_ms=latency_ms, ok=ok)
+    expl_id = telemetry().explanation(sentence, req.level, model=last_model(), latency_ms=latency_ms, ok=ok)
     if not ok:
         raise HTTPException(502, f"Explanation unavailable: {text}")
-    return {"explanation_id": expl_id, "level": req.level, "model": COHERE_MODEL, "latency_ms": latency_ms, "text": text}
+    return {"explanation_id": expl_id, "level": req.level, "model": last_model(), "latency_ms": latency_ms, "text": text}
 
 
 @app.post("/explain/stream", tags=["grammar"])
 def explain_stream_endpoint(req: ExplainRequest) -> StreamingResponse:
     """
-    Server-sent events: `data: {"text": "…"}` chunks as Cohere streams them,
+    Server-sent events: `data: {"text": "…"}` chunks as Groq streams them,
     then `data: {"done": true, "explanation_id": …, "latency_ms": …}`.
     """
+    try:
+        sentence, english, _ = validate_input(req.sentence, req.english)
+    except ValueError as exc:
+        raise HTTPException(422, str(exc)) from exc
     t0 = time.perf_counter()
 
     def events():
         chunks: list[str] = []
         ok = True
         try:
-            for c in explain_grammar_stream(req.sentence, req.english, req.level):
+            for c in explain_grammar_stream(sentence, english, req.level):
                 chunks.append(c)
                 yield f"data: {json.dumps({'text': c})}\n\n"
         except Exception as exc:
             ok = False
             yield f"data: {json.dumps({'error': str(exc)})}\n\n"
         latency_ms = int((time.perf_counter() - t0) * 1000)
-        expl_id = telemetry().explanation(req.sentence, req.level, model=COHERE_MODEL, latency_ms=latency_ms, ok=ok)
-        yield f"data: {json.dumps({'done': True, 'explanation_id': expl_id, 'latency_ms': latency_ms, 'model': COHERE_MODEL})}\n\n"
+        expl_id = telemetry().explanation(sentence, req.level, model=last_model(), latency_ms=latency_ms, ok=ok)
+        yield f"data: {json.dumps({'done': True, 'explanation_id': expl_id, 'latency_ms': latency_ms, 'model': last_model()})}\n\n"
 
     return StreamingResponse(events(), media_type="text/event-stream")
 

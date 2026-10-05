@@ -9,9 +9,9 @@ pick up. `TELEMETRY=sqlite` keeps the existing SQLite sink
 Both sinks expose the same surface — search / feedback / kanji_lookup /
 explanation — returning the row id when the backend has one, else None.
 
-Raw user-entered text never reaches a sink: queries, rewrites and explained
-sentences are emitted as 12-hex-char SHA-256 prefixes (`*_hash` fields) —
-enough to count repeats without storing the text.
+Search events carry the raw query and rewritten query text plus a `rewritten`
+flag — with `TELEMETRY=stdout` that text lands in the platform's log store.
+Feedback and explanation text stays hash-only (12-hex-char SHA-256 prefixes).
 """
 
 import hashlib
@@ -48,7 +48,8 @@ def _emit(event: str, **fields) -> None:
 class Telemetry(Protocol):
     def search(self, query: str, *, rewritten_query: str, rewrite_method: str, mode: str,
                num_results: int, result_count: int, top_result: str | None, latency_ms: int,
-               cached: bool = False) -> int | None: ...
+               cached: bool = False, route: str | None = None,
+               embed_ms: int | None = None, retrieve_ms: int | None = None) -> int | None: ...
     def feedback(self, kind: str, ref_id: int | None, rating: int, query: str | None = None) -> int | None: ...
     def kanji_lookup(self, kanji: str, source: str = "api") -> int | None: ...
     def explanation(self, sentence: str, jlpt_level: str, *, model: str, latency_ms: int,
@@ -60,10 +61,14 @@ class _StdoutTelemetry:
 
     def search(self, query: str, *, rewritten_query: str, rewrite_method: str, mode: str,
                num_results: int, result_count: int, top_result: str | None, latency_ms: int,
-               cached: bool = False) -> None:
-        _emit("search", query_hash=_h(query), rewritten_query_hash=_h(rewritten_query),
+               cached: bool = False, route: str | None = None,
+               embed_ms: int | None = None, retrieve_ms: int | None = None) -> None:
+        _emit("search", query=query, rewritten_query=rewritten_query,
+              rewritten=query != rewritten_query, query_hash=_h(query),
+              rewritten_query_hash=_h(rewritten_query),
               rewrite_method=rewrite_method, mode=mode, num_results=num_results,
-              result_count=result_count, top_result=top_result, latency_ms=latency_ms, cached=cached)
+              result_count=result_count, top_result=top_result, latency_ms=latency_ms,
+              cached=cached, route=route, embed_ms=embed_ms, retrieve_ms=retrieve_ms)
 
     def feedback(self, kind: str, ref_id: int | None, rating: int, query: str | None = None) -> None:
         _emit("feedback", kind=kind, ref_id=ref_id, rating=rating, query_hash=_h(query))
@@ -82,11 +87,13 @@ class _SqliteTelemetry:
 
     def search(self, query: str, *, rewritten_query: str, rewrite_method: str, mode: str,
                num_results: int, result_count: int, top_result: str | None, latency_ms: int,
-               cached: bool = False) -> int:
+               cached: bool = False, route: str | None = None,
+               embed_ms: int | None = None, retrieve_ms: int | None = None) -> int:
         from scripts.feedback_log import log_search
         return log_search(query, rewritten_query=rewritten_query, rewrite_method=rewrite_method,
                           mode=mode, num_results=num_results, result_count=result_count,
-                          top_result=top_result, latency_ms=latency_ms, cached=cached)
+                          top_result=top_result, latency_ms=latency_ms, cached=cached,
+                          route=route, embed_ms=embed_ms, retrieve_ms=retrieve_ms)
 
     def feedback(self, kind: str, ref_id: int | None, rating: int, query: str | None = None) -> int:
         from scripts.feedback_log import log_feedback

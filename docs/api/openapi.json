@@ -3,7 +3,7 @@
   "info": {
     "title": "Reikun API",
     "description": "Japanese dictionary search (hybrid dense + BM25), kanji details and JLPT-calibrated grammar explanations.",
-    "version": "0.3.0"
+    "version": "0.4.0"
   },
   "paths": {
     "/health": {
@@ -351,7 +351,7 @@
           "grammar"
         ],
         "summary": "Explain Endpoint",
-        "description": "JLPT-level-calibrated grammar explanation (Cohere). Markdown bullets.",
+        "description": "JLPT-level-calibrated grammar explanation (Groq). Markdown bullets.",
         "operationId": "explain_endpoint_explain_post",
         "requestBody": {
           "content": {
@@ -393,7 +393,7 @@
           "grammar"
         ],
         "summary": "Explain Stream Endpoint",
-        "description": "Server-sent events: `data: {\"text\": \"…\"}` chunks as Cohere streams them,\nthen `data: {\"done\": true, \"explanation_id\": …, \"latency_ms\": …}`.",
+        "description": "Server-sent events: `data: {\"text\": \"…\"}` chunks as Groq streams them,\nthen `data: {\"done\": true, \"explanation_id\": …, \"latency_ms\": …}`.",
         "operationId": "explain_stream_endpoint_explain_stream_post",
         "requestBody": {
           "content": {

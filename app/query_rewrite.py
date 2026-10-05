@@ -5,7 +5,7 @@ The knowledge base is indexed by short dictionary glosses ("to eat", "sky"),
 so natural-language questions retrieve poorly as-is. Two layers:
 
     1. heuristic  – cheap regex normalisation ("how do you say X in japanese" → "X")
-    2. llm        – Cohere rewrites longer descriptive queries into a 1–3 word
+    2. llm        – Groq rewrites longer descriptive queries into a 1–3 word
                     gloss; only used when the heuristic layer did not simplify
                     the query and the query still looks like a sentence.
 
@@ -98,9 +98,9 @@ def heuristic_rewrite(query: str) -> str | None:
 
 @lru_cache(maxsize=512)
 def llm_rewrite(query: str) -> str:
-    from app.grammar_explain import chat  # lazy: keeps cohere optional for retrieval-only use
+    from app.grammar_explain import chat  # lazy: keeps groq optional for retrieval-only use
 
-    out = chat(_LLM_SYSTEM, query, thinking_budget=40, max_tokens=150).strip().strip('"').lower()
+    out = chat(_LLM_SYSTEM, query, max_tokens=150).strip().strip('"').lower()
     out = _TRAILING.sub("", out)
     return out if 0 < len(out.split()) <= 4 else query
 

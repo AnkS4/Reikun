@@ -2,7 +2,7 @@
 # gitignored) and edit; compose merges it into docker-compose.yml automatically.
 #
 # The DNS block below is a workaround for hosts whose resolver cannot resolve
-# external names from inside a container (HF Hub, ftp.edrdg.org, Cohere). It is
+# external names from inside a container (HF Hub, ftp.edrdg.org, Groq). It is
 # *not* in the committed compose file because forcing public resolvers breaks
 # split-horizon / corporate DNS for everyone else. Only enable it if external
 # lookups fail from inside the container:

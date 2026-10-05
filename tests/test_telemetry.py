@@ -1,4 +1,4 @@
-"""Telemetry privacy + retention: user text is hashed, old rows pruned."""
+"""Telemetry: searches keep raw text, feedback/explanations stay hashed."""
 
 import hashlib
 import sqlite3
@@ -30,12 +30,20 @@ def _rows(db: Path, table: str = "searches") -> list[tuple]:
     return sqlite3.connect(db).execute(f"SELECT * FROM {table}").fetchall()
 
 
-def test_search_stores_hash_not_raw_text(db: Path) -> None:
-    fl.log_search("raw secret query", rewritten_query="secret gloss", rewrite_method="none",
+def test_search_stores_query_and_hash(db: Path) -> None:
+    fl.log_search("raw query", rewritten_query="rewritten gloss", rewrite_method="heuristic",
                   mode="auto", num_results=1, result_count=1, top_result=None, latency_ms=1)
     row = sqlite3.connect(db).execute(
-        "SELECT query_hash, rewritten_query_hash FROM searches").fetchone()
-    assert row == (_h("raw secret query"), _h("secret gloss"))
+        "SELECT query, query_hash, rewritten_query, rewritten_query_hash, rewrite_method,"
+        " rewritten FROM searches").fetchone()
+    assert row == ("raw query", _h("raw query"), "rewritten gloss", _h("rewritten gloss"),
+                   "heuristic", 1)
+
+
+def test_search_unchanged_query_not_rewritten(db: Path) -> None:
+    fl.log_search("same", rewritten_query="same", rewrite_method="none",
+                  mode="auto", num_results=1, result_count=1, top_result=None, latency_ms=1)
+    assert sqlite3.connect(db).execute("SELECT rewritten FROM searches").fetchone() == (0,)
 
 
 def test_feedback_and_explanation_hash_too(db: Path) -> None:
@@ -46,31 +54,13 @@ def test_feedback_and_explanation_hash_too(db: Path) -> None:
         "SELECT sentence_hash FROM explanations").fetchone() == (_h("猫が好きです"),)
 
 
-def test_retention_prunes_old_rows(db: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_rows_kept_forever(db: Path) -> None:
     fl.log_search("old", rewritten_query="o", rewrite_method="none", mode="auto",
                   num_results=1, result_count=1, top_result=None, latency_ms=1)
     con = sqlite3.connect(db)
     con.execute("UPDATE searches SET ts = '2000-01-01T00:00:00+00:00'")
     con.commit()
     con.close()
-    # Force the once-per-process init (which prunes) to run again.
-    monkeypatch.setattr(fl, "_initialised", False)
-    monkeypatch.setattr(fl, "TELEMETRY_RETENTION_DAYS", 30)
-    fl.log_search("new", rewritten_query="n", rewrite_method="none", mode="auto",
-                  num_results=1, result_count=1, top_result=None, latency_ms=1)
-    rows = _rows(db)
-    assert len(rows) == 1 and rows[0][2] == _h("new")  # ts, id, query_hash cols
-
-
-def test_retention_zero_keeps_everything(db: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(fl, "TELEMETRY_RETENTION_DAYS", 0)
-    fl.log_search("old", rewritten_query="o", rewrite_method="none", mode="auto",
-                  num_results=1, result_count=1, top_result=None, latency_ms=1)
-    con = sqlite3.connect(db)
-    con.execute("UPDATE searches SET ts = '2000-01-01T00:00:00+00:00'")
-    con.commit()
-    con.close()
-    monkeypatch.setattr(fl, "_initialised", False)
     fl.log_search("new", rewritten_query="n", rewrite_method="none", mode="auto",
                   num_results=1, result_count=1, top_result=None, latency_ms=1)
     assert len(_rows(db)) == 2

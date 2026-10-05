@@ -16,11 +16,11 @@ Full recording: [docs/videos/demo_v3.mp4](docs/videos/demo_v3.mp4)
 ## Features
 
 - **Hybrid Search with query routing**: Dense vector embeddings (FastEmbed) + BM25 sparse vectors fused server-side in Qdrant (RRF). `mode=auto` routes the query: Japanese → BM25 + exact match, English word → hybrid + commonness prior, English sentence → dense-weighted fusion. Explicit `vector`/`text`/`hybrid` modes remain for evaluation
-- **Query Rewriting**: Natural-language questions ("how do you say hospital") are normalised to dictionary glosses before retrieval — free regex heuristics by default, optional Cohere LLM rewriting for descriptive queries
+- **Query Rewriting**: Natural-language questions ("how do you say hospital") are normalised to dictionary glosses before retrieval — free regex heuristics by default, optional Groq LLM rewriting for descriptive queries
 - **Sentence Breakdown**: Paste Japanese text and Sudachi splits it into word units — furigana on top, gloss underneath, full breakdown on hover. Inflection tails merge into single chips and adjacent segments re-resolve into JMdict compounds
 - **Kanji Lookup**: Deterministic kanji information (no LLM) — stroke-order diagrams (KanjiVG), readings, meanings, and common compound words
-- **Grammar Explanations**: AI-generated grammar explanations calibrated to your JLPT level (N5–N1) using Cohere, on demand only
-- **Feedback & Telemetry**: Thumbs-up/down feedback and query telemetry as JSON events (stdout sink, picked up by platform logs) or a local SQLite file; user-entered text is kept only as SHA-256 prefixes and rows auto-prune after ~90 days
+- **Grammar Explanations**: AI-generated grammar explanations calibrated to your JLPT level (N5–N1) via Groq, on demand only, with a smaller fallback model if the primary is exhausted
+- **Feedback & Telemetry**: Thumbs-up/down feedback and query telemetry as JSON events (stdout sink, picked up by platform logs) or a local SQLite file; search queries are logged verbatim (feedback/explanation text stays SHA-256-only) and rows are kept indefinitely
 - **Interface**: Search-first landing page, furigana (`<ruby>`) headwords, animated stroke order, light/dark themes, shareable URLs (`?q=猫&level=N3`), one-click level-aware grammar explanations
 - **HTTP API**: FastAPI layer (`app/api.py`) over the same pipeline — standalone uvicorn service with routes at the root (what the Docker image serves); includes SSE streaming for explanations and JSON-shaped rendering (ruby parts, kanji card, segment chips, stroke data) for the web frontend
 
@@ -30,8 +30,8 @@ Full recording: [docs/videos/demo_v3.mp4](docs/videos/demo_v3.mp4)
 - **API**: FastAPI + Uvicorn (the production serving process; one worker)
 - **Vector Database**: Qdrant (named dense + sparse vectors, server-side RRF hybrid)
 - **Embeddings**: FastEmbed — `all-MiniLM-L6-v2` (dense, 384-dim) + `Qdrant/bm25` (sparse), ONNX-quantized for CPU
-- **LLM**: Cohere `command-a-plus-05-2026` — grammar explanations, optional query rewriting and re-ranking, LLM-judged evals (all token-budgeted)
-- **Ingestion pipeline**: `scripts/startup.py` can run wait-for-Qdrant → check-state → download → build → ingest with retries, then launch the app — opt-in via `INGEST_VIA_DOCKER=1` or `--ingest` (off by default; `--ingest-only` runs it without the UI). Populated collections get an incremental top-up instead — rsync delta + upsert of new/edited entries only
+- **LLM**: Groq `openai/gpt-oss-120b` (→ `gpt-oss-20b` fallback) — grammar explanations, optional query rewriting, LLM-judged evals (all token-budgeted)
+- **Ingestion pipeline**: `scripts/startup.py` can run wait-for-Qdrant → check-state → download → build → ingest with retries, then launch the app — opt-in via `INGEST_VIA_DOCKER=1` or `--ingest` (off by default; `--ingest-only` runs it without launching the API server). Populated collections get an incremental top-up instead — rsync delta + upsert of new/edited entries only
 - **Monitoring**: JSON event telemetry (`app/telemetry.py`; optional SQLite sink in `scripts/feedback_log.py`)
 - **Data Sources**: JMdict, KANJIDIC2, Tatoeba Corpus, KanjiVG
 - **Containerization**: Docker & Docker Compose
@@ -41,7 +41,7 @@ Full recording: [docs/videos/demo_v3.mp4](docs/videos/demo_v3.mp4)
 ### Prerequisites
 
 - **Docker and Docker Compose** (recommended path — runs the app + Qdrant)
-- **Cohere API key** — powers grammar explanations, optional LLM query rewriting (`QUERY_REWRITE=auto`), and the LLM evaluation. Search and kanji lookup work without it.
+- **Groq API key** — powers grammar explanations, optional LLM query rewriting (`QUERY_REWRITE=auto`), and the LLM evaluation. Search and kanji lookup work without it.
 - **Git** (to clone) and ~3 GB free disk (dictionary data + embedding models)
 
 For local development only:
@@ -59,7 +59,7 @@ For local development only:
 2. **Set up environment variables**:
    ```bash
    cp .env.example .env
-   # Edit .env and add your COHERE_API_KEY
+   # Edit .env and add your GROQ_API_KEY
    ```
 
 ### Running the Application
@@ -99,7 +99,7 @@ uv run python scripts/ingest.py            # embed + load all ~219k entries
 
 **Note:** a full ingest embeds ~219k entries (~1 hr); `--common` loads only the ~37k common-entries subset for a quick test. Data is cached in the `data/` directory for subsequent runs.
 
-The embedding models are pre-downloaded into the image and live in a named volume (`models`), so `docker compose down -v` discards them and the next start re-copies them from the image. If external hostnames (HF Hub, ftp.edrdg.org, Cohere) fail to resolve from inside the container, copy `docker-compose.override.yml.example` to `docker-compose.override.yml` to pin public DNS resolvers.
+The embedding models are pre-downloaded into the image and live in a named volume (`models`), so `docker compose down -v` discards them and the next start re-copies them from the image. If external hostnames (HF Hub, ftp.edrdg.org, Groq) fail to resolve from inside the container, copy `docker-compose.override.yml.example` to `docker-compose.override.yml` to pin public DNS resolvers.
 
 #### Option 2: Local Development
 
@@ -137,7 +137,7 @@ For local development without Docker:
    ```bash
    uv run uvicorn app.api:app --reload          # Swagger UI at http://localhost:8000/docs
    ```
-   Endpoints: `GET /health` (liveness), `GET /ready` (readiness — real Qdrant query), `GET /search?q=…&n=10&mode=auto`, `GET /kanji?chars=例訓` (batch hover cards), `GET /kanji/{char}?strokes=true` (stroke order from the committed `data/processed/strokes.json`), `GET /kanji/random`, `POST /explain`, `POST /explain/stream` (SSE), `POST /feedback`. OpenAPI is at `/openapi.json`; regenerate the committed schema + frontend types with `uv run python scripts/dump_openapi.py` then `cd web && npm run gen:api` (CI fails if either drifts).
+   Endpoints: `GET /health` (liveness), `GET /ready` (readiness — real Qdrant query), `GET /search?q=…&n=10&mode=auto`, `GET /kanji?chars=例訓` (batch hover cards), `GET /kanji/{char}?strokes=true` (stroke order from the committed `data/processed/strokes.json`), `GET /kanji/random`, `POST /explain`, `POST /explain/stream` (SSE), `POST /feedback`. OpenAPI is at `/openapi.json`; regenerate the committed schema + frontend types with `uv run python scripts/export_openapi.py` then `cd web && npm run gen:api` (CI fails if either drifts).
 
 6. **Run the SvelteKit web frontend** (`web/` — needs the API running from step 5):
 
@@ -165,7 +165,7 @@ The Search page keeps its state in the URL, so results are shareable and the bro
 |---|---|---|
 | `q` | `?q=食べる` | Runs the search on load |
 | `level` | `?level=N3` | JLPT level used for grammar explanations (remembered until changed) |
-| `kanji` | `?kanji=猫` | Opens the kanji detail dialog once |
+| `kanji` | `?kanji=猫` | Legacy deep link — redirects to a single-kanji `?q=` search |
 
 ## Project Structure
 
@@ -176,10 +176,11 @@ Reikun/
 │   ├── api.py               # FastAPI app — the serving entrypoint (/search, /kanji, /explain, /feedback, /health, /ready)
 │   ├── render.py            # UI-agnostic JSON shaping (ruby parts, kanji card, chips, stroke data)
 │   ├── telemetry.py         # Event logging interface (stdout JSON default, optional SQLite sink)
-│   ├── retrieval.py         # Vector / BM25 / hybrid search, re-ranking pipeline
+│   ├── retrieval.py         # Vector / BM25 / hybrid search, routing, ja sentence segmentation
+│   ├── headword_index.py    # marisa-trie headword index (form → entries) for segmentation
 │   ├── query_rewrite.py     # Heuristic + optional LLM query rewriting
 │   ├── kanji_lookup.py      # Deterministic KANJIDIC2 + KanjiVG lookup
-│   ├── grammar_explain.py   # Cohere client, JLPT-level-aware prompts
+│   ├── grammar_explain.py   # Groq client (primary→fallback chain), JLPT-level-aware prompts
 │   └── embedder.py          # FastEmbed dense/sparse model wrappers
 ├── web/                     # SvelteKit static frontend (adapter-static → Cloudflare Workers static assets)
 │   ├── src/routes/          # /  (search SPA shell)
@@ -187,6 +188,8 @@ Reikun/
 │   ├── src/env.ts           # PUBLIC_API_BASE schema — build-time public env var
 │   └── wrangler.jsonc       # Cloudflare Workers static-assets deploy (SPA fallback)
 ├── docs/
+│   ├── api/                 # Committed openapi.json (frontend type generation; CI drift check)
+│   ├── logos/               # Reikun logo assets (png/svg)
 │   ├── screenshots/         # UI captures (search, kanji card)
 │   └── videos/              # Demo recording (gif + mp4)
 ├── eval/
@@ -196,11 +199,12 @@ Reikun/
 │   └── results/             # generated reports
 ├── scripts/
 │   ├── download_edrdg.py    # Sync JMdict NG + KANJIDIC2 XML from EDRDG (rsync)
-│   ├── download_kanjivg.py  # Download KanjiVG stroke-order SVGs
+│   ├── download_kanjivg.py  # Download KanjiVG stroke-order SVGs (packs strokes.json)
 │   ├── feedback_log.py      # SQLite telemetry sink (searches, feedback, kanji lookups, explanations)
 │   ├── build_chunks.py      # Parse and chunk dictionary data
 │   ├── ingest.py            # Embed (dense + sparse) and load into Qdrant
-│   ├── dump_openapi.py      # Write docs/api/openapi.json for frontend type generation
+│   ├── cloud_ingest.py      # Snapshot-transfer a local collection to Qdrant Cloud
+│   ├── export_openapi.py    # Write docs/api/openapi.json for frontend type generation
 │   └── startup.py           # Container entrypoint (execs uvicorn) + opt-in ingestion pipeline
 ├── .env.example             # Environment variable template
 ├── data/
@@ -221,16 +225,16 @@ Reikun/
 Create a `.env` file (see `.env.example`):
 
 - `APP_PORT`: Port the API container is published on (default: 8000)
-- `COHERE_API_KEY`: Required for grammar explanations (get at https://dashboard.cohere.com/api-keys)
-- `COHERE_MODEL`: Cohere chat model (default: `command-a-plus-05-2026`)
+- `GROQ_API_KEY`: Required for grammar explanations (get at https://console.groq.com/keys)
+- `LLM_MODEL` / `LLM_MODEL_FALLBACK`: Groq chat models — primary and failover (defaults: `openai/gpt-oss-120b` / `openai/gpt-oss-20b`)
 - `QDRANT_HOST` / `QDRANT_PORT`: Qdrant connection (defaults: localhost / 6333); `QDRANT_URL` + `QDRANT_API_KEY` override for Qdrant Cloud
 - `QDRANT_COLLECTION`: Qdrant collection name (default: jmdict_chunks)
 - `EMBED_MODEL`: Dense embedding model (default: `sentence-transformers/all-MiniLM-L6-v2`)
-- `QUERY_REWRITE`: `heuristic` (default, free), `auto` (adds one Cohere call for long English queries — best MRR but uses trial-tier quota), or `off`
+- `QUERY_REWRITE`: `heuristic` (default, free), `auto` (adds one Groq call for long English queries — best MRR but uses free-tier quota), or `off`
 
-### Cohere free-tier notes
+### Groq free-tier notes
 
-Tuned for a trial key (~10 calls/min): explanations are on-demand only with bounded token budgets and 429 retry/backoff. `QUERY_REWRITE=auto` adds one call per search — keep it off on the free tier.
+Tuned for the free tier (30 RPM / ~1,000 requests/day *per model*): explanations are on-demand only with bounded token budgets, and 429s honor the API's `retry-after` within a small retry budget. Rate limits are per-model, so when the primary's daily cap is exhausted requests automatically fail over to `LLM_MODEL_FALLBACK`; if both are down the API returns 502 rather than a fabricated answer. `QUERY_REWRITE=auto` adds one call per long English query — heuristic rewriting is the free default.
 
 ## Port Configuration
 
@@ -248,10 +252,10 @@ Reproducible evaluation scripts live in `eval/`; reports are written to `eval/re
 
 | Script | What it measures | Required setup | Outputs | API calls | Typical runtime |
 |---|---|---|---|---|---|
-| `eval/eval.py` | Headword Hit@1/2/5 vs gold (default); `--canon/--pool/--common` sweep; `--modes` text/hybrid/auto; `--ir` Hit@k/MRR/NDCG/MAP grid; `--llm` judge eval | Qdrant running with `jmdict_chunks` indexed (`COHERE_API_KEY` for `--llm` and LLM `--ir` configs) | `eval_headword_*`, `eval_grid_*.csv`, `eval_modes_*`, `retrieval_eval.*`, `llm_eval.*` in `eval/results/` | None for headword/modes/`--ir --no-llm`; Cohere otherwise | headword ~30s; `--ir` full grid ~10–15min; `--llm` ~4–5min (10 calls/min cap) |
+| `eval/eval.py` | Headword Hit@1/2/5 vs gold (default); `--canon/--pool/--common` sweep; `--modes` text/hybrid/auto; `--ir` Hit@k/MRR/NDCG/MAP grid; `--llm` judge eval | Qdrant running with `jmdict_chunks` indexed (`GROQ_API_KEY` for `--llm` and LLM `--ir` configs) | `eval_headword_*`, `eval_grid_*.csv`, `eval_modes_*`, `retrieval_eval.*`, `llm_eval.*` in `eval/results/` | None for headword/modes/`--ir --no-llm`; Groq otherwise | headword ~30s; `--ir` full grid ~10–15min; `--llm` ~4–5min (30 calls/min cap) |
 | `eval/embed_model_bench.py` | Dense embedding model throughput and retrieval accuracy (vector-only, in-memory) | `data/processed/chunks.json` and `eval/gold_set.tsv` | `eval/results/embed_model_bench.json` | None | ~20min (first run may download models) |
 
-Runtimes are approximate on a modest CPU with local Qdrant; embedding-model and Cohere cold starts can add time on the first run.
+Runtimes are approximate on a modest CPU with local Qdrant; embedding-model and LLM cold starts can add time on the first run.
 
 **Gold subsets.** `eval/gold_set.tsv` holds 300 queries in 6 categories; `--subsets` selects them — default is `en_words` + `en_verbs` (the 100-query English-word benchmark):
 
@@ -262,7 +266,7 @@ uv run python eval/eval.py
 # Japanese exact-lookup route (kanji / hiragana / katakana)
 uv run python eval/eval.py --subsets ja_words ja_hiragana ja_katakana
 
-# long descriptive queries (exercises the Cohere rewrite path)
+# long descriptive queries (exercises the LLM rewrite path when QUERY_REWRITE=auto)
 uv run python eval/eval.py --subsets en_descriptive
 ```
 
@@ -271,11 +275,11 @@ Expected on the Japanese subsets (ja_words + ja_hiragana + ja_katakana, 150 quer
 Run the retrieval benchmark without any paid API calls:
 
 ```bash
-# vector vs BM25 vs hybrid vs +heuristic rewrite (no Cohere)
+# vector vs BM25 vs hybrid vs +heuristic rewrite (no LLM calls)
 uv run python eval/eval.py --ir --no-llm
 ```
 
-Run the full grid, including `auto` LLM rewriting (uses Cohere quota):
+Run the full grid, including `auto` LLM rewriting (uses Groq quota):
 
 ```bash
 uv run python eval/eval.py --ir

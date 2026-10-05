@@ -20,8 +20,7 @@
 </script>
 
 <p class="caption">
-	Parsed — {approx ? 'approximate split (fallback segmenter);' : 'reading above, meaning below;'}
-	hover for detail
+	Parsed — {approx ? 'approximate split (fallback segmenter); ' : ''}hover for detail
 </p>
 <div class="seg-row">
 	{#each segments as s}

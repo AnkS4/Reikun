@@ -36,7 +36,7 @@ services:
     ports:
       - "127.0.0.1:${APP_PORT:-8000}:8000"
     # Only QDRANT_HOST differs from the defaults in app/config.py, so it is the
-    # only value hardcoded here; everything else (COHERE_API_KEY, EMBED_MODEL,
+    # only value hardcoded here; everything else (GROQ_API_KEY, EMBED_MODEL,
     # QUERY_REWRITE, QDRANT_*) is read from .env when present, and otherwise
     # falls back to those same defaults.
     env_file:

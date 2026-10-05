@@ -1,0 +1,62 @@
+# Upload context for `gcloud run deploy --source .` (Cloud Build builds the
+# Dockerfile from whatever is uploaded, so this mirrors .dockerignore).
+# Anything not COPY'd in the Dockerfile is dead weight on the wire.
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+*.so
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+build/
+dist/
+
+# Environment & secrets — never uploaded
+.env
+.env.*
+!.env.example
+
+# Data (populated at runtime or build-time inputs; the three runtime
+# artifacts are explicitly kept)
+data/raw/
+data/kanjivg/
+data/processed/*
+!data/processed/kanji_table.json
+!data/processed/headword_index.marisa
+!data/processed/strokes.json
+data/monitoring/
+
+# Models (pre-warmed in Dockerfile)
+models/
+
+# Evaluation outputs
+eval/
+
+# Git & metadata
+.git/
+.gitignore
+.gitattributes
+.dockerignore
+.gcloudignore
+
+# Docs, frontend, CI config — not needed to build the API image
+README.md
+docs/
+web/
+.github/
+docker-compose*.yml
+tests/
+
+# IDE & misc
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+*.log

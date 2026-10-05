@@ -55,11 +55,14 @@ COLLECTION = os.getenv("QDRANT_COLLECTION", "jmdict_chunks")
 EMBED_MODEL = os.getenv("EMBED_MODEL", "sentence-transformers/all-MiniLM-L6-v2")
 SPARSE_MODEL = os.getenv("SPARSE_MODEL", "Qdrant/bm25")
 
-COHERE_MODEL = os.getenv("COHERE_MODEL", "command-a-plus-05-2026")
-COHERE_API_KEY = os.getenv("COHERE_API_KEY") or None
+# Groq — OpenAI-compatible chat. LLM_MODEL serves explanations/rewrites;
+# LLM_MODEL_FALLBACK takes over when the primary hits its daily cap.
+GROQ_API_KEY = os.getenv("GROQ_API_KEY") or None
+LLM_MODEL = _env("LLM_MODEL", "openai/gpt-oss-120b")
+LLM_MODEL_FALLBACK = _env("LLM_MODEL_FALLBACK", "openai/gpt-oss-20b")
 
 # Default "heuristic": free regex normalisation only. "auto" additionally
-# spends one Cohere call on long English sentence-like queries (best MRR in
+# spends one Groq call on long English sentence-like queries (best MRR in
 # eval/results/retrieval_eval.md, but costs trial-tier tokens per query).
 _VALID_QUERY_REWRITE = {"auto", "heuristic", "off"}
 QUERY_REWRITE = _env("QUERY_REWRITE", "heuristic").lower()
@@ -67,8 +70,8 @@ if QUERY_REWRITE not in _VALID_QUERY_REWRITE:
     raise ValueError(
         f"QUERY_REWRITE={QUERY_REWRITE!r} invalid; expected one of {sorted(_VALID_QUERY_REWRITE)}"
     )
-if QUERY_REWRITE == "auto" and not COHERE_API_KEY:
-    raise ValueError("QUERY_REWRITE=auto requires COHERE_API_KEY to be set")
+if QUERY_REWRITE == "auto" and not GROQ_API_KEY:
+    raise ValueError("QUERY_REWRITE=auto requires GROQ_API_KEY to be set")
 
 DENSE_VECTOR = "dense"
 SPARSE_VECTOR = "bm25"
@@ -77,10 +80,6 @@ SPARSE_VECTOR = "bm25"
 # Usage/event telemetry sink: "stdout" (one JSON line per event — the
 # stateless-instance default) or "sqlite" (the feedback_log monitoring DB).
 TELEMETRY = _env("TELEMETRY", "stdout").lower()
-
-# How long SQLite telemetry rows are kept; pruned once per process start.
-# Default 0 = keep forever; set a day count to enable pruning.
-TELEMETRY_RETENTION_DAYS = int(_env("TELEMETRY_RETENTION_DAYS", "0"))
 
 # Comma-separated allowed origins for CORS (the standalone API serves a
 # different-origin frontend). "*" is the permissive dev default; deployment

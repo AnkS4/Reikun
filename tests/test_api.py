@@ -1,4 +1,4 @@
-"""API smoke tests runnable without Qdrant/Cohere.
+"""API smoke tests runnable without Qdrant/Groq.
 
 Everything exercised here is backed by committed data
 (data/processed/kanji_table.json + headword_index.marisa) or by request

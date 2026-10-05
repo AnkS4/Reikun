@@ -420,6 +420,34 @@ _GRAMMAR = {
 }
 
 
+# Multi-morpheme conjunctive expressions Sudachi decomposes into
+# particle + stem + particle — とともに → と("and") + とも("companion") + に,
+# について → に + つい("to take a seat") + て — each piece glossed literally,
+# which is wrong as a unit. Keyed by the joined surface; kanji spellings
+# (と共に, に就いて) are separate keys because the match is on surfaces.
+_COLLOCATIONS = {
+    "とともに": "together with ~; along with ~",
+    "と共に": "together with ~; along with ~",
+    "ともに": "together; jointly",
+    "共に": "together; jointly",
+    "という": "called ~; that ~ (quotative)",
+    "と言う": "called ~; that ~ (quotative)",
+    "について": "regarding ~; about ~",
+    "に就いて": "regarding ~; about ~",
+    "によって": "by ~; by means of ~; depending on ~",
+    "に依って": "by ~; by means of ~; depending on ~",
+    "に因って": "by ~; by means of ~; depending on ~",
+    "により": "by ~; due to ~",
+    "によれば": "according to ~",
+    "にとって": "for ~; from ~'s standpoint",
+    "に対して": "toward ~; in contrast to ~",
+    "に関して": "concerning ~; regarding ~",
+    "に比べて": "compared to ~",
+    "に応じて": "in accordance with ~; depending on ~",
+    "として": "as ~; in the capacity of ~",
+}
+
+
 _KATA_TO_HIRA = str.maketrans({chr(c): chr(c - 0x60) for c in range(0x30A1, 0x30F7)})
 
 
@@ -496,7 +524,10 @@ def _pick(cands: list[dict], reading: str = "") -> dict | None:
     Returns None when nothing disambiguates — better to show all candidates
     (_ambiguous) than a silently wrong first pick."""
     if reading:
-        matches = [e for e in cands if e["reading"] == reading]
+        # Morpheme readings are hiragana but katakana entries store katakana
+        # readings (烏→カラス) — compare script-normalised or a katakana
+        # surface can never be disambiguated.
+        matches = [e for e in cands if _hira(e["reading"]) == reading]
         if len(matches) == 1:
             return matches[0]
         # Several entries share this exact reading (居る/射る both いる) —
@@ -662,6 +693,13 @@ def _segment_sudachi(query: str, index: TrieIndex) -> list[dict] | None:
         # "cesspool". Kanji surfaces keep the dictionary path.
         if (g := _GRAMMAR.get(surf)) and not any(map(is_kanji, surf)):
             return {"text": surf, "kanji_form": surf, "reading": reading, "meanings": [g]}
+        # Person names aren't JMdict headwords (names live in JMnedict, which
+        # isn't indexed), so any hit is a coincidental homophone — ジョン
+        # resolved to 煎 "jeon", ジョー to "jaw", the surname 林 to "woods".
+        # Bare chip, no guessed label: the POS tag isn't proof enough to
+        # gloss it as a name either.
+        if m.pos_sub == "固有名詞" and m.pos_sub2 == "人名":
+            return {"text": surf, "kanji_form": surf, "reading": reading, "meanings": []}
         # Nouns/verbs/adjectives: the lemma (食べ→食べる, 位置し→位置する) is
         # what a dictionary indexes; the token's reading picks the pair
         # (東→ヒガシ → the ひがし "east" entry, not あずま). When the lemma's
@@ -722,7 +760,11 @@ def _segment_sudachi(query: str, index: TrieIndex) -> list[dict] | None:
             seg = _gloss(toks[i], i > 0 and _is_te(i - 1), conj=ending[i])
             if seg is None:
                 continue
-            if seg["meanings"] and seg["meanings"][0] not in meanings:  # one summary gloss per part
+            # One summary gloss per part — except the conjunctive て/で's
+            # "particle", a filler line that only evicts a real gloss (the
+            # leading chip still needs it when it's all the group has).
+            if (seg["meanings"] and seg["meanings"][0] not in meanings
+                    and (seg["meanings"][0] != "particle" or not meanings)):
                 meanings.append(seg["meanings"][0])
             head = f"→{seg['kanji_form']}" if seg.get("kanji_form") != seg["text"] else ""
             opts = seg.get("options", [])
@@ -732,7 +774,10 @@ def _segment_sudachi(query: str, index: TrieIndex) -> list[dict] | None:
                 lines.append(f"{seg['text']}{head} — {opts[0]}")
                 lines.extend(f"   {o}" for o in opts[1:])
             elif seg["meanings"]:
-                lines.append(f"{seg['text']}{head} — {'; '.join(seg['meanings'][:2])}")
+                # 4 senses, not 2: context picks a minor sense often enough
+                # (エンジンを吹かす → "to rev", sense #4) that truncation
+                # hides the right one from the tooltip.
+                lines.append(f"{seg['text']}{head} — {'; '.join(seg['meanings'][:4])}")
             else:
                 lines.append(f"{seg['text']}{head}")
         text = "".join(toks[i].surf for i in g)
@@ -770,6 +815,42 @@ def _segment_sudachi(query: str, index: TrieIndex) -> list[dict] | None:
             continue
         fused.append(p)
     parts = fused
+
+    # Conjunctive collocations: fuse consecutive single-morpheme chips whose
+    # joined surface is a fixed expression (と+とも+に → とともに "together
+    # with"). Each piece must be its own group — that constraint is the
+    # guard: in a real verb chain like ついてくる the て merges into the
+    # inflection group, so no collocation ever fires mid-word.
+    out2: list[dict] = []
+    i = 0
+    while i < len(parts):
+        hit = None
+        for size in (3, 2):
+            window = parts[i:i + size]
+            if (len(window) == size
+                    and all(p["_start"] == p["_end"] for p in window)
+                    and all(window[j]["_start"] == window[j - 1]["_end"] + 1
+                            for j in range(1, size))):
+                joined = "".join(p["text"] for p in window)
+                # 行こうとして is "trying to go" — a volitional verb right
+                # before と vets the conjunctive reading of として.
+                if joined in _COLLOCATIONS and not (
+                        joined == "として" and window[0]["_start"]
+                        and toks[window[0]["_start"] - 1].pos == "動詞"
+                        and toks[window[0]["_start"] - 1].surf.endswith(("おう", "よう"))):
+                    hit = (joined, window)
+                    break
+        if hit is None:
+            out2.append(parts[i])
+            i += 1
+            continue
+        joined, window = hit
+        out2.append({"text": joined, "kanji_form": joined,
+                     "reading": "".join(toks[p["_start"]].reading for p in window),
+                     "meanings": [_COLLOCATIONS[joined]],
+                     "_start": window[0]["_start"], "_end": window[-1]["_end"]})
+        i += len(window)
+    parts = out2
 
     # Compound rescue: two adjacent index-resolved segments whose joined
     # surface is itself a headword merge into the compound's entry

@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "reikun"
-version = "0.3.0"
+version = "0.4.0"
 description = "例訓 (れいくん) - Semantic Japanese Dictionary"
 authors = [{ name = "Aniket Satbhai" }]
 license = "Apache-2.0"
@@ -15,7 +15,7 @@ requires-python = ">=3.13"
 dependencies = [
     "qdrant-client==1.19.1",
     "fastembed==0.8.0",
-    "cohere==7.1.1",
+    "groq==1.7.0",
     "python-dotenv==1.2.3",
     "httpx==0.28.1",
     "pydantic==2.13.5",

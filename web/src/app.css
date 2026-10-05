@@ -4,7 +4,6 @@
 	--bg: #ffffff;
 	--bg2: #f6f4ef;
 	--text: #1f2328;
-	--link: #3d5a80;
 	--ok: #2e7d32;
 	--err: #c62828;
 	--border: rgba(128, 128, 128, 0.4);
@@ -37,11 +36,11 @@ body {
 	text-rendering: optimizeLegibility;
 	transition: background 0.15s, color 0.15s;
 }
-::selection { background: color-mix(in srgb, var(--primary) 25%, transparent); }
-:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+::selection { background: color-mix(in srgb, var(--text) 15%, transparent); }
+:focus-visible { outline: 2px solid color-mix(in srgb, var(--text) 45%, transparent); outline-offset: 2px; }
 a { color: inherit; }
 main {
-	max-width: 44rem;
+	max-width: 56rem;
 	margin: 0 auto;
 	padding: 0 1rem 3rem;
 }
@@ -49,7 +48,7 @@ main {
 /* ---------- ruby / furigana ---------- */
 ruby { ruby-align: center; }
 ruby rt {
-	font-size: 0.55em;
+	font-size: 0.62em;
 	color: var(--text);
 	opacity: 0.7;
 }
@@ -100,11 +99,15 @@ ruby rt {
 .search-row {
 	display: flex;
 	gap: 0.5rem;
-	align-items: center;
+	align-items: stretch;
 	position: sticky;
 	top: 0;
 	padding: 0.6rem 0;
-	background: var(--bg);
+	/* Frosted bar: translucent + backdrop blur — indistinguishable from solid
+	   at scroll-top, only reads as transparent once content slides under. */
+	background: color-mix(in srgb, var(--bg) 35%, transparent);
+	-webkit-backdrop-filter: blur(14px);
+	backdrop-filter: blur(14px);
 	z-index: 10;
 }
 /* Input + submit as one attached control (Streamlit's gapless pair). */
@@ -115,9 +118,11 @@ ruby rt {
 	border-radius: var(--radius);
 }
 .search-pair:focus-within {
-	box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 30%, transparent);
+	box-shadow: 0 0 0 3px color-mix(in srgb, var(--text) 12%, transparent);
 }
-.search-pair:focus-within input[type='search'] { border-color: var(--primary); }
+.search-pair:focus-within input[type='search'] {
+	border-color: color-mix(in srgb, var(--text) 50%, transparent);
+}
 .search-pair input[type='search'] {
 	flex: 1;
 	min-width: 0;
@@ -127,7 +132,7 @@ ruby rt {
 	border: 1px solid var(--border);
 	border-right: none;
 	border-radius: var(--radius) 0 0 var(--radius);
-	background: var(--bg);
+	background: color-mix(in srgb, var(--bg) 35%, transparent);
 	color: var(--text);
 	transition: border-color 0.15s;
 }
@@ -146,6 +151,24 @@ ruby rt {
 }
 .search-go:hover { filter: brightness(1.12); }
 .search-go:disabled { opacity: 0.5; cursor: default; }
+
+/* Random + level selector: separate bordered boxes, same bar height via the
+   row's stretch, same inner padding as .search-go — one button family.
+   (.btn.tertiary lives later in this file — needs the extra class to win.) */
+.search-row > .btn.tertiary,
+.search-row > .popover-wrap {
+	flex-shrink: 0;
+	border: 1px solid var(--border-soft);
+	border-radius: var(--radius);
+}
+.search-row > .btn.tertiary,
+.search-row .popover-wrap > .btn { padding: 0 0.9rem; }
+.search-row > .popover-wrap { display: flex; }
+.search-row .popover-wrap > .btn { height: 100%; border-radius: var(--radius); }
+.search-row > .btn.tertiary:focus-visible,
+.search-row > .popover-wrap:focus-within {
+	border-color: color-mix(in srgb, var(--text) 50%, transparent);
+}
 
 /* ---------- buttons ---------- */
 .btn {
@@ -181,7 +204,6 @@ ruby rt {
 	padding: 0.4rem 0.5rem;
 }
 .btn.tertiary:hover { opacity: 1; background: var(--hover-bg); }
-.btn.icon-only { padding: 0.45rem 0.55rem; }
 .btn svg, .status-dot svg, .stroke-replay svg { display: block; }
 
 /* ---------- popover ---------- */
@@ -256,33 +278,52 @@ ruby rt {
 .pill:hover { background: var(--hover-bg); color: var(--text); }
 
 /* ---------- parsed-sentence chips ---------- */
-.seg-row { margin: 0.4rem 0 1rem; }
+.seg-row {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.4rem;
+	align-items: stretch;
+	margin: 0.4rem 0 1rem;
+}
 .seg {
-	display: inline-block;
+	display: flex;
+	flex-direction: column;
 	padding: 0.2em 0.45em;
-	margin: 0.15em 0.15em 0.15em 0;
 	border: 1px solid var(--border);
 	border-radius: var(--radius);
 	cursor: help;
-	vertical-align: top;
 	text-align: center;
 }
 .seg.approx { border-style: dashed; }
-.seg-word { display: block; }
-.seg-word rt { font-size: 0.5em; opacity: 0.55; }
+/* min-height reserves the furigana lane on kana-only words so the base
+   glyphs line up across chips; flex-end keeps the glyph on the baseline. */
+.seg-word {
+	display: flex;
+	align-items: flex-end;
+	justify-content: center;
+	font-size: 1.2rem;
+	min-height: 2.15rem;
+}
+.seg-word rt { font-size: 0.62em; }
 .seg-mean {
 	display: block;
-	font-size: 0.55rem;
-	opacity: 0.6;
-	margin-top: 0.1em;
+	font-size: 0.65rem;
+	margin-top: auto;
+	padding-top: 0.1em;
 	line-height: 1.25;
 	max-width: 9em;
 }
 
 /* ---------- kanji hover tip ---------- */
-.kanji-tip { position: relative; cursor: default; }
+/* Dotted underline = has a hover popup (KanjiTip adds the class only once
+   tip data arrived). Neutral on purpose — --primary stays on .search-go. */
+.kanji-tip {
+	position: relative;
+	cursor: default;
+	border-bottom: 1px dotted color-mix(in srgb, var(--text) 45%, transparent);
+}
 a.kanji-tip { cursor: pointer; text-decoration: none; }
-.kanji-tip:hover, .kanji-tip:focus { color: var(--link); }
+.kanji-tip:hover, .kanji-tip:focus { border-bottom-color: var(--text); }
 .kanji-tip-body {
 	display: none;
 	position: absolute;
@@ -356,7 +397,7 @@ a.kanji-tip { cursor: pointer; text-decoration: none; }
 .no-example { font-size: 0.85rem; opacity: 0.6; margin: 0.4rem 0 0; }
 
 .explain-out {
-	border-left: 3px solid var(--primary);
+	border-left: 3px solid var(--border);
 	padding: 0.4rem 0.9rem;
 	margin: 0.55rem 0 0.55rem 0.25rem;
 	background: var(--surface);
@@ -383,7 +424,7 @@ a.kanji-tip { cursor: pointer; text-decoration: none; }
 	display: inline-flex;
 }
 .feedback-row button:hover { opacity: 0.9; }
-.feedback-row button.sel { opacity: 1; color: var(--primary); }
+.feedback-row button.sel { opacity: 1; }
 .feedback-row button.sel.down { color: var(--err); }
 
 .stats-line {
@@ -391,19 +432,31 @@ a.kanji-tip { cursor: pointer; text-decoration: none; }
 	margin: 1.4rem 0 1rem;
 	padding-bottom: 0.75rem;
 	border-bottom: 1px solid var(--border-soft);
+	display: flex;
+	align-items: baseline;
+	flex-wrap: wrap;
 }
+.stats-details {
+	margin-left: auto;
+	display: inline-flex;
+	align-items: center;
+	gap: 0.35rem;
+}
+.stats-details > svg { flex-shrink: 0; opacity: 0.5; }
 .stats-meta { font-size: 0.82rem; opacity: 0.5; }
 
 /* ---------- kanji card ---------- */
+/* scrollIntoView target — clears the sticky search bar (~3.9rem tall). */
+.kanji-anchor { scroll-margin-top: 4.5rem; }
 .kanji-card {
 	display: flex;
-	gap: 1.75rem;
+	gap: 1.4rem;
 	border: 1px solid var(--border-soft);
 	border-radius: var(--radius);
 	background: var(--bg2);
-	padding: 1.25rem 1.5rem;
-	margin: 1.25rem 0;
-	min-height: 15rem;
+	padding: 1rem 1.25rem;
+	margin: 1rem 0;
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
 	animation: fade-in 0.18s ease-out;
 }
 .kanji-loading { display: flex; align-items: center; }
@@ -413,13 +466,13 @@ a.kanji-tip { cursor: pointer; text-decoration: none; }
 .kanji-card-left { width: var(--stroke-w); flex-shrink: 0; }
 .kanji-card-right { flex: 1; min-width: 0; }
 .kanji-big {
-	font-size: 3.4rem;
+	font-size: 3.75rem;
 	font-weight: 600;
-	line-height: 1.1;
-	margin: 0 0 0.5rem;
+	line-height: 1;
+	margin: 0 0 0.6rem;
 	text-align: center;
 }
-.meta-badges { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.6rem; }
+.meta-badges { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.7rem; }
 .meta-badge {
 	font-size: 0.75rem;
 	padding: 0.15em 0.6em;
@@ -436,18 +489,18 @@ a.kanji-tip { cursor: pointer; text-decoration: none; }
 	opacity: 0.55;
 	margin: 0 0 0.3rem;
 }
-.meanings { margin: 0.1rem 0 0.6rem; font-size: 1.05rem; }
+.meanings { margin: 0.1rem 0 0.6rem; font-size: 1.15rem; }
 .meanings .first { font-weight: 700; }
 .meanings .rest { font-weight: 400; opacity: 0.85; }
 .reading-row { display: flex; align-items: baseline; gap: 0.6rem; margin: 0.35rem 0; flex-wrap: wrap; }
 .reading-row .rlabel {
-	font-size: 0.85rem;
+	font-size: 0.95rem;
 	min-width: 4.5rem;
 	flex-shrink: 0;
 }
 .reading-list { display: inline; }
 .reading-chip {
-	font-size: 0.85rem;
+	font-size: 0.95rem;
 	padding: 0.1rem 0.55rem;
 	border-radius: var(--radius);
 	border: 1px solid var(--border-soft);
@@ -465,9 +518,9 @@ a.kanji-tip { cursor: pointer; text-decoration: none; }
 	border-radius: var(--radius);
 }
 .kanji-word-row:hover { background: var(--hover-bg); }
-.kanji-word-head { font-size: 1.15rem; }
-.kanji-word-head rt { font-size: 0.45em; }
-.kanji-word-gloss { font-size: 0.85rem; opacity: 0.65; }
+.kanji-word-head { font-size: 1.2rem; }
+.kanji-word-head rt { font-size: 0.55em; }
+.kanji-word-gloss { font-size: 0.9rem; opacity: 0.65; }
 
 /* ---------- stroke SVG (KanjiVG) ---------- */
 .stroke-svg {
@@ -477,6 +530,18 @@ a.kanji-tip { cursor: pointer; text-decoration: none; }
 	padding: 0.4rem;
 	width: 100%;
 }
+/* Practice-sheet grid: dashed midlines behind the strokes. z-index: -1 keeps
+   them under the static svg (its fill is transparent) without promoting the
+   svg above the absolutely-positioned replay button. */
+.stroke-svg::before,
+.stroke-svg::after {
+	content: '';
+	position: absolute;
+	z-index: -1;
+	pointer-events: none;
+}
+.stroke-svg::before { left: 0.4rem; right: 0.4rem; top: 50%; border-top: 1px dashed var(--border-soft); }
+.stroke-svg::after { top: 0.4rem; bottom: 0.4rem; left: 50%; border-left: 1px dashed var(--border-soft); }
 .stroke-svg svg { display: block; width: 100%; height: auto; }
 .stroke-svg path {
 	fill: none;
@@ -547,7 +612,7 @@ a.kanji-tip { cursor: pointer; text-decoration: none; }
 	width: 1em;
 	height: 1em;
 	border: 2px solid var(--border-soft);
-	border-top-color: var(--primary);
+	border-top-color: var(--text);
 	border-radius: 50%;
 	animation: spin 0.7s linear infinite;
 	vertical-align: -0.15em;

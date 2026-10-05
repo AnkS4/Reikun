@@ -7,27 +7,29 @@ Tables
     kanji_lookups one row per kanji detail view
     explanations  one row per grammar-explanation request (JLPT level, latency)
 
-User-entered text (queries, rewritten queries, explained sentences) is kept
-only as a 12-hex-char SHA-256 prefix — enough for frequency analysis without
-storing raw free-text input. Rows older than TELEMETRY_RETENTION_DAYS
-(default 0 = keep forever) are deleted once per process. SQLite in WAL mode
-is plenty for a single-instance deployment.
+Search queries are stored raw (query / rewritten_query) alongside their
+12-hex-char SHA-256 prefixes; feedback and explanation text stays hash-only.
+Rows are kept forever. SQLite in WAL mode is plenty for a single-instance
+deployment.
 """
 
 import sqlite3
 import threading
 from collections.abc import Iterator
 from contextlib import contextmanager
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime
 
-from app.config import MONITORING_DB, TELEMETRY_RETENTION_DAYS
+from app.config import MONITORING_DB
 from app.telemetry import _h  # one hash for both sinks, so stdout and SQLite rows agree
 
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS searches (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     ts TEXT NOT NULL,
-    query_hash TEXT NOT NULL,      -- _h() of the raw query
+    query TEXT,                  -- raw user-entered query text
+    rewritten_query TEXT,        -- raw post-rewrite query text
+    rewritten INTEGER,           -- 1 when the rewrite changed the query
+    query_hash TEXT NOT NULL,    -- _h() of the raw query
     rewritten_query_hash TEXT,
     rewrite_method TEXT,
     mode TEXT,
@@ -35,7 +37,10 @@ CREATE TABLE IF NOT EXISTS searches (
     result_count INTEGER,
     top_result TEXT,
     latency_ms INTEGER,
-    cached INTEGER               -- 1 when served from the in-process result cache
+    cached INTEGER,              -- 1 when served from the in-process result cache
+    route TEXT,                  -- resolved plan in auto mode: ja | en_word | en_sentence
+    embed_ms INTEGER,            -- dense+sparse embedding time
+    retrieve_ms INTEGER          -- Qdrant query time
 );
 CREATE TABLE IF NOT EXISTS feedback (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -89,7 +94,6 @@ def _conn() -> Iterator[sqlite3.Connection]:
                     conn.execute("PRAGMA journal_mode=WAL")
                     conn.executescript(_SCHEMA)
                     _migrate(conn)
-                    _prune(conn)
                     _initialised = True
         yield conn
         conn.commit()
@@ -99,7 +103,11 @@ def _conn() -> Iterator[sqlite3.Connection]:
 
 # Columns added after a table's first release: CREATE TABLE IF NOT EXISTS
 # leaves an existing database untouched, so they're bolted on here.
-_ADDED_COLUMNS = {"searches": {"cached": "INTEGER"}}
+_ADDED_COLUMNS = {
+    "searches": {"cached": "INTEGER", "route": "TEXT",
+                 "embed_ms": "INTEGER", "retrieve_ms": "INTEGER",
+                 "query": "TEXT", "rewritten_query": "TEXT", "rewritten": "INTEGER"},
+}
 
 # Columns renamed when raw text gave way to hashes. Old rows keep their data
 # — the raw values are re-hashed in place by _migrate().
@@ -125,14 +133,6 @@ def _migrate(conn: sqlite3.Connection) -> None:
                     conn.execute(f"UPDATE {table} SET {new} = ? WHERE id = ?", (_h(raw), rid))
 
 
-def _prune(conn: sqlite3.Connection) -> None:
-    if TELEMETRY_RETENTION_DAYS <= 0:
-        return
-    cutoff = (datetime.now(UTC) - timedelta(days=TELEMETRY_RETENTION_DAYS)).isoformat(timespec="seconds")
-    for table in ("searches", "feedback", "kanji_lookups", "explanations"):
-        conn.execute(f"DELETE FROM {table} WHERE ts < ?", (cutoff,))
-
-
 def _insert(table: str, **values) -> int:
     cols = ", ".join(values)
     marks = ", ".join("?" * len(values))
@@ -146,12 +146,16 @@ def _insert(table: str, **values) -> int:
 def log_search(
     query: str, *, rewritten_query: str, rewrite_method: str, mode: str,
     num_results: int, result_count: int, top_result: str | None, latency_ms: int,
-    cached: bool = False,
+    cached: bool = False, route: str | None = None,
+    embed_ms: int | None = None, retrieve_ms: int | None = None,
 ) -> int:
     return _insert(
-        "searches", ts=_now(), query_hash=_h(query), rewritten_query_hash=_h(rewritten_query),
+        "searches", ts=_now(), query=query, rewritten_query=rewritten_query,
+        rewritten=int(query != rewritten_query),
+        query_hash=_h(query), rewritten_query_hash=_h(rewritten_query),
         rewrite_method=rewrite_method, mode=mode, num_results=num_results, result_count=result_count,
-        top_result=top_result, latency_ms=latency_ms, cached=int(cached),
+        top_result=top_result, latency_ms=latency_ms, cached=int(cached), route=route,
+        embed_ms=embed_ms, retrieve_ms=retrieve_ms,
     )
 
 

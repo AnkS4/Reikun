@@ -55,7 +55,10 @@ def add_entry(index: dict[str, list[dict]], pay: dict) -> None:
     entry = {
         "kanji_form": pay.get("kanji_form"),
         "reading": pay.get("reading", ""),
-        "meanings": (pay.get("meanings") or [])[:3],
+        # 5 senses, not 3: minor senses get picked contextually often enough
+        # (吹かす "to rev an engine" is sense #4) that a 3-cap cut them out of
+        # the segment tooltip entirely.
+        "meanings": (pay.get("meanings") or [])[:5],
         "is_common": bool(pay.get("is_common")),
     }
     pair = (entry["kanji_form"], entry["reading"])

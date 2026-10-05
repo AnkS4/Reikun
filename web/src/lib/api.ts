@@ -1,6 +1,6 @@
 /**
  * Typed client for the Reikun API (app/api.py) — schema types come from the
- * generated api.d.ts (scripts/dump_openapi.py + openapi-typescript).
+ * generated api.d.ts (scripts/export_openapi.py + openapi-typescript).
  *
  * The base URL is a *public* build-time value: this is a static site, so
  * PUBLIC_API_BASE is baked in at build time (set in the host's project env).
