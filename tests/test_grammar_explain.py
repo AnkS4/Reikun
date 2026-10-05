@@ -179,8 +179,10 @@ def test_prompt_is_data_only_and_system_carries_level():
     assert ge.level_aware_system("N1") is ge.level_aware_system("N1")  # cached
 
 
-def test_groq_client_owns_retries():
+def test_groq_client_owns_retries(monkeypatch):
     """SDK-level retries must be off (our ladder owns them) and a timeout set."""
+    monkeypatch.setattr(ge, "GROQ_API_KEY", "test-key")
+    monkeypatch.setenv("GROQ_API_KEY", "test-key")
     ge._groq.cache_clear()
     client = ge._groq()
     assert client.max_retries == 0 and client.timeout == 30
