@@ -1,4 +1,4 @@
-// Static SPA: the API does all data work, so no SSR. prerender emits a
-// shell + 200.html fallback for Pages.
-export const ssr = false;
+// Everything prerenders at build: ssr emits real HTML per route (title,
+// canonical, landing content) so non-JS crawlers see content, not a shell.
+export const ssr = true;
 export const prerender = true;

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { browser } from '$app/env';
 	import { page } from '$app/state';
 	import { goto } from '$app/navigation';
 	import {
@@ -67,7 +68,9 @@
 	}
 
 	const level = $derived.by((): Level => {
-		const l = page.url.searchParams.get('level') ?? '';
+		// searchParams is unavailable during prerender — default to N5 there;
+		// hydration re-evaluates with the real URL.
+		const l = browser ? page.url.searchParams.get('level') ?? '' : '';
 		return (LEVELS as readonly string[]).includes(l) ? (l as Level) : 'N5';
 	});
 	const kanjiChar = $derived(isKanji(committed) ? committed : null);
