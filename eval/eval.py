@@ -15,7 +15,7 @@ each is patched per variant and the search cache cleared between them (query
 rewrites stay cached, so Groq calls only happen on the first variant).
 Omitting a flag keeps the value committed in app/retrieval.py:
 
-    --canon   CANONICAL_BOOST — weight of wf_score × first-sense-gloss match
+    --canon   CANONICAL_BOOST — weight of wf_score x first-sense-gloss match
     --pool    PREFETCH_MIN    — candidates per retrieval arm (recall ceiling)
     --common  COMMON_BOOST    — flat prior on JMdict's is_common/commonness
 
@@ -38,7 +38,7 @@ Usage:
 Outputs under eval/results/ (headword/mode runs are timestamped so runs never
 overwrite each other; the IR and LLM reports keep canonical names):
     eval_headword_<ts>_<variant>.md   per-variant top-5 detail + Hit@1/2/5
-    eval_grid_<ts>.csv                query × variant rank of expected
+    eval_grid_<ts>.csv                query x variant rank of expected
     eval_modes_<mode>_<ts>.md         per-mode top-5 detail + Hit@1/2/5
     retrieval_eval.{md,json}          IR suite report
     llm_eval.{md,json}                LLM judge report
@@ -54,13 +54,13 @@ import sys
 import time
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+import app.retrieval as retrieval
+from app.config import COLLECTION, PROC_DIR, QDRANT_URL, QUERY_REWRITE, qdrant_client
+from app.retrieval import search
+
 ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(ROOT))
-
-import app.retrieval as retrieval  # noqa: E402
-from app.config import COLLECTION, PROC_DIR, QDRANT_URL, QUERY_REWRITE, qdrant_client  # noqa: E402
-from app.retrieval import search  # noqa: E402
-
 RESULTS_DIR = ROOT / "eval" / "results"
 
 # ---------------------------------------------------------------------------
@@ -190,7 +190,7 @@ def headword_suite(args) -> None:
     stamp = time.strftime("%Y%m%dT%H%M%SZ", time.gmtime())
     points = qdrant_client().count(COLLECTION).count
     print(f"endpoint={QDRANT_URL[:50]} rewrite={QUERY_REWRITE} points={points}")
-    print(f"{len(queries)} queries ({' '.join(subsets)}) × {len(combos)} variants …", flush=True)
+    print(f"{len(queries)} queries ({' '.join(subsets)}) x {len(combos)} variants …", flush=True)
 
     RESULTS_DIR.mkdir(parents=True, exist_ok=True)
     grid: dict[str, dict[tuple, int]] = {q: {} for q in queries}
@@ -275,12 +275,12 @@ def modes_suite(args) -> None:
 K_VALUES = (1, 3, 5)
 
 IR_CONFIGS: dict[str, dict] = {
-    "vector": dict(mode="vector", rewrite_mode="off"),
-    "text (bm25)": dict(mode="text", rewrite_mode="off"),
-    "hybrid": dict(mode="hybrid", rewrite_mode="off"),
-    "hybrid + rewrite(heuristic)": dict(mode="hybrid", rewrite_mode="heuristic"),
-    "auto + rewrite(heuristic)": dict(mode="auto", rewrite_mode="heuristic"),
-    "hybrid + rewrite(auto/llm)": dict(mode="hybrid", rewrite_mode="auto"),
+    "vector": {"mode": "vector", "rewrite_mode": "off"},
+    "text (bm25)": {"mode": "text", "rewrite_mode": "off"},
+    "hybrid": {"mode": "hybrid", "rewrite_mode": "off"},
+    "hybrid + rewrite(heuristic)": {"mode": "hybrid", "rewrite_mode": "heuristic"},
+    "auto + rewrite(heuristic)": {"mode": "auto", "rewrite_mode": "heuristic"},
+    "hybrid + rewrite(auto/llm)": {"mode": "hybrid", "rewrite_mode": "auto"},
 }
 
 
@@ -331,8 +331,16 @@ def run_ir_config(name: str, kwargs: dict, gold: list[dict], k: int) -> dict:
     }
 
 
-def ir_markdown(results: list[dict], gold_n: int, k: int) -> str:
+def default_config_name(configs: list[str]) -> str | None:
+    """Config matching production defaults — mode=auto (search() default) and
+    rewrite_mode=QUERY_REWRITE (env). None when it isn't among `configs`."""
+    want = {"mode": "auto", "rewrite_mode": QUERY_REWRITE}
+    return next((n for n in configs if IR_CONFIGS[n] == want), None)
+
+
+def ir_markdown(results: list[dict], gold_n: int, k: int, default: str | None) -> str:
     cats = sorted({c for r in results for c in r["mrr_by_category"]})
+    cat_headers = " | ".join(f"MRR {c}" for c in cats)
     lines = [
         "# Retrieval evaluation",
         "",
@@ -340,15 +348,33 @@ def ir_markdown(results: list[dict], gold_n: int, k: int) -> str:
         "Hit@k = share of queries with a relevant entry in the top k; MRR = mean reciprocal rank; "
         "NDCG = normalized discounted cumulative gain; MAP = mean average precision over all relevant IDs.",
         "",
-        "| Configuration | Hit@1 | Hit@3 | Hit@5 | MRR | NDCG@5 | MAP | R@5 | avg ms | " + " | ".join(f"MRR {c}" for c in cats) + " |",
+        f"| Configuration | Hit@1 | Hit@3 | Hit@5 | MRR | NDCG@5 | MAP | R@5 | avg ms | {cat_headers} |",
         "|---|" + "---|" * (8 + len(cats)),
     ]
-    best = max(results, key=lambda r: (r["mrr"], r["hit@1"]))
-    for r in results:
-        name = f"**{r['config']}**" if r is best else r["config"]
+    # Production default pinned to the top row; the rest keep run order.
+    ordered = sorted(results, key=lambda r: r["config"] != default)
+    # Best = top (mrr, hit@1); ties go to the default config, else lowest latency.
+    top = max((r["mrr"], r["hit@1"]) for r in results)
+    tied = [r for r in results if (r["mrr"], r["hit@1"]) == top]
+    best = next((r for r in tied if r["config"] == default),
+                min(tied, key=lambda r: r["avg_latency_ms"]))
+
+    def label(r: dict) -> str:
+        if r["config"] == default:
+            return f"**{r['config']}** (default)"
+        return f"**{r['config']}**" if r is best else r["config"]
+
+    for r in ordered:
         cat_cells = " | ".join(f"{r['mrr_by_category'].get(c, 0):.2f}" for c in cats)
-        lines.append(f"| {name} | {r['hit@1']:.2f} | {r['hit@3']:.2f} | {r['hit@5']:.2f} | {r['mrr']:.3f} | {r['ndcg@5']:.3f} | {r['map']:.3f} | {r['recall@5']:.2f} | {r['avg_latency_ms']} | {cat_cells} |")
-    lines += ["", f"Best configuration: **{best['config']}** (MRR {best['mrr']:.3f}).", ""]
+        lines.append(
+            f"| {label(r)} | {r['hit@1']:.2f} | {r['hit@3']:.2f} | {r['hit@5']:.2f} | {r['mrr']:.3f} | "
+            f"{r['ndcg@5']:.3f} | {r['map']:.3f} | {r['recall@5']:.2f} | {r['avg_latency_ms']} | {cat_cells} |"
+        )
+    tie = ""
+    if len(tied) > 1:
+        why = "default config" if best["config"] == default else "lowest avg ms"
+        tie = f" — {len(tied)}-way tie, {why} wins"
+    lines += ["", f"Best configuration: **{best['config']}** (MRR {best['mrr']:.3f}){tie}.", ""]
     for r in results:
         if r["misses"]:
             lines.append(f"<details><summary>Misses — {r['config']} ({len(r['misses'])})</summary>\n")
@@ -375,8 +401,11 @@ def ir_suite(args) -> None:
               f"({res['avg_latency_ms']} ms/query, {time.perf_counter() - t0:.0f}s)")
 
     RESULTS_DIR.mkdir(parents=True, exist_ok=True)
-    (RESULTS_DIR / "retrieval_eval.json").write_text(json.dumps(results, indent=2, ensure_ascii=False), encoding="utf-8")
-    (RESULTS_DIR / "retrieval_eval.md").write_text(ir_markdown(results, len(gold), args.k), encoding="utf-8")
+    (RESULTS_DIR / "retrieval_eval.json").write_text(
+        json.dumps(results, indent=2, ensure_ascii=False), encoding="utf-8"
+    )
+    (RESULTS_DIR / "retrieval_eval.md").write_text(
+        ir_markdown(results, len(gold), args.k, default_config_name(configs)), encoding="utf-8")
     print(f"\nSaved → {RESULTS_DIR / 'retrieval_eval.md'}")
 
 
@@ -398,7 +427,10 @@ FALLBACK_SENTENCES = [
     {"japanese": "昨日、友達と映画を見に行きました。", "english": "Yesterday I went to watch a movie with a friend."},
     {"japanese": "日本語を勉強するのは楽しいです。", "english": "Studying Japanese is fun."},
     {"japanese": "彼の意見には賛成できない。", "english": "I cannot agree with his opinion."},
-    {"japanese": "いかに困難であろうとも、最後までやり遂げなければならない。", "english": "No matter how difficult it may be, we must carry it through to the end."},
+    {
+        "japanese": "いかに困難であろうとも、最後までやり遂げなければならない。",
+        "english": "No matter how difficult it may be, we must carry it through to the end.",
+    },
 ]
 
 
@@ -457,7 +489,7 @@ def _llm_wait() -> None:
 def judge(sentence: str, level: str, explanation: str) -> dict:
     from app.grammar_explain import chat
     user = f"Learner level: {level}\nSentence: {sentence}\n\nExplanation:\n{explanation}"
-    raw = chat(JUDGE_SYSTEM, user, max_tokens=400)
+    raw = chat(JUDGE_SYSTEM, user, max_tokens=900)  # cap must cover gpt-oss reasoning + the JSON verdict
     try:
         return json.loads(raw[raw.find("{"): raw.rfind("}") + 1])
     except (ValueError, json.JSONDecodeError):
@@ -511,29 +543,34 @@ def llm_markdown(rows: list[dict], summary: list[dict]) -> str:
     lines = [
         "# LLM evaluation — level-aware vs generic grammar prompt",
         "",
-        f"{len(rows) // (len(LEVELS) * len(PROMPTS))} sentences × levels {', '.join(LEVELS)} × 2 prompts. "
-        "Judge = Groq (blind to prompt variant), scores 1–5.",
+        f"{len(rows) // (len(LEVELS) * len(PROMPTS))} sentences x levels {', '.join(LEVELS)} x 2 prompts. "
+        "Judge = Groq (blind to prompt variant), scores 1-5.",
         "",
         "| Level | Prompt | avg words | avg jargon terms | analogy rate | judge: level fit | judge: accuracy |",
         "|---|---|---|---|---|---|---|",
     ]
-    for s in summary:
-        lines.append(f"| {s['level']} | {s['prompt']} | {s['avg_words']} | {s['avg_jargon']} | {s['analogy_rate']:.0%} | "
-                     f"{s['judge_level_fit']} | {s['judge_accuracy']} |")
+    lines.extend(
+        f"| {s['level']} | {s['prompt']} | {s['avg_words']} | {s['avg_jargon']} | {s['analogy_rate']:.0%} | "
+        f"{s['judge_level_fit']} | {s['judge_accuracy']} |"
+        for s in summary
+    )
     lines += ["", "## Side-by-side outputs", ""]
     for sent in dict.fromkeys(r["sentence"] for r in rows):
         lines.append(f"### {sent}\n")
         for level in LEVELS:
             for prompt in PROMPTS:
                 r = next(x for x in rows if x["sentence"] == sent and x["level"] == level and x["prompt"] == prompt)
-                lines += [f"**{level} · {prompt}** — fit {r['level_fit']}/5, accuracy {r['accuracy']}/5, {r['words']} words, "
-                          f"{r['jargon_terms']} jargon terms · *{r.get('comment', '')}*", "", r["explanation"], ""]
+                summary_line = (
+                    f"**{level} · {prompt}** — fit {r['level_fit']}/5, accuracy {r['accuracy']}/5, "
+                    f"{r['words']} words, {r['jargon_terms']} jargon terms · *{r.get('comment', '')}*"
+                )
+                lines += [summary_line, "", r["explanation"], ""]
     return "\n".join(lines)
 
 
 def llm_suite(args) -> None:
     sentences = load_sentences(args.sentences)
-    print(f"{len(sentences)} sentences × {LEVELS} × {list(PROMPTS)}\n")
+    print(f"{len(sentences)} sentences x {LEVELS} x {list(PROMPTS)}\n")
     for s in sentences:
         print(f"  [{s.get('query', '?')}] {s['japanese']}")
     print()
@@ -546,7 +583,9 @@ def llm_suite(args) -> None:
               f"analogy={s['analogy_rate']:.0%} fit={s['judge_level_fit']} acc={s['judge_accuracy']}")
 
     RESULTS_DIR.mkdir(parents=True, exist_ok=True)
-    (RESULTS_DIR / "llm_eval.json").write_text(json.dumps({"rows": rows, "summary": summary}, indent=2, ensure_ascii=False), encoding="utf-8")
+    (RESULTS_DIR / "llm_eval.json").write_text(
+        json.dumps({"rows": rows, "summary": summary}, indent=2, ensure_ascii=False), encoding="utf-8"
+    )
     (RESULTS_DIR / "llm_eval.md").write_text(llm_markdown(rows, summary), encoding="utf-8")
     print(f"\nSaved → {RESULTS_DIR / 'llm_eval.md'}")
 

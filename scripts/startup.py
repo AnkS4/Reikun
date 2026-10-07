@@ -13,7 +13,7 @@ point, so every step stays independently runnable for debugging:
     uv run python scripts/ingest.py
 
 Plain Python, no orchestrator: a four-step linear pipeline doesn't need one,
-and on memory-tight hosts (Render's free tier) a workflow engine's ~150–350
+and on memory-tight hosts (Render's free tier) a workflow engine's ~150-350
 MB overhead plus a cloud dependency is the difference between fitting and
 timing out.
 
@@ -36,10 +36,10 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from qdrant_client import QdrantClient  # noqa: E402
+from qdrant_client import QdrantClient
 
-from app.config import CHUNKS_SCHEMA, COLLECTION, PROC_DIR, QDRANT_API_KEY, QDRANT_URL, qdrant_client  # noqa: E402
-from scripts import download_edrdg, download_kanjivg, ingest  # noqa: E402
+from app.config import CHUNKS_SCHEMA, COLLECTION, PROC_DIR, QDRANT_API_KEY, QDRANT_URL, qdrant_client
+from scripts import download_edrdg, download_kanjivg, ingest
 
 log = logging.getLogger(__name__)
 
@@ -144,7 +144,7 @@ def _refresh_in_place() -> None:
     """Top-up path for a populated collection: rsync refreshes the EDRDG XML
     (delta — near-instant when unchanged), and only an upstream change
     rebuilds chunks and upserts the new entry ids. Soft-fails throughout:
-    the lean runtime image has no rsync/dev deps, so it just logs and keeps
+    the lean runtime image has no rsync/ingest deps, so it just logs and keeps
     serving what it already has."""
     try:
         download_edrdg.check_rsync_available()
@@ -163,7 +163,7 @@ def _refresh_in_place() -> None:
         _refresh_status("unchanged")
         return
     try:
-        from scripts import build_chunks  # wordfreq is a dev dep — absent in lean images
+        from scripts import build_chunks  # wordfreq is an ingest-group dep — absent in lean images
         if not build_chunks.outputs_current():
             build_chunks.main()
         _retry(partial(ingest.run, update=True), retries=2, delay_s=60, name="ingest-update")
@@ -201,8 +201,8 @@ def ingest_pipeline() -> None:
             log.warning("Couldn't rebuild runtime artifacts (%s) — serving anyway; kanji lookups will fail.", exc)
         return
     if state == "full":
-        # build_chunks needs wordfreq — a dev-group dep absent from the
-        # runtime image, so in-container rebuilds only work where dev deps
+        # build_chunks needs wordfreq — an ingest-group dep absent from the
+        # runtime image, so in-container rebuilds only work where ingest deps
         # are installed (otherwise run the pipeline off-host and restart).
         from scripts import build_chunks
 

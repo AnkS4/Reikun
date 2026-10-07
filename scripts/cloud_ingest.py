@@ -28,7 +28,7 @@ import httpx
 from qdrant_client import QdrantClient
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from app.config import COLLECTION, QDRANT_API_KEY, QDRANT_URL  # noqa: E402
+from app.config import COLLECTION, QDRANT_API_KEY, QDRANT_URL
 
 log = logging.getLogger(__name__)
 
@@ -39,7 +39,7 @@ SOURCE_URL = os.getenv("SOURCE_QDRANT_URL", "http://localhost:6333")
 SOURCE_API_KEY = os.getenv("SOURCE_QDRANT_API_KEY") or None
 
 # 10-min stall ceiling per socket read/write — unlimited would hang forever
-# on a connection that stalls without closing; a progressing 1–2 GB transfer
+# on a connection that stalls without closing; a progressing 1-2 GB transfer
 # never trips a per-op timeout.
 _TIMEOUT = httpx.Timeout(connect=30, read=600, write=600, pool=None)
 MAX_ATTEMPTS = 3
@@ -69,7 +69,7 @@ def download_snapshot(url: str, api_key: str | None, collection: str, name: str,
                       *, expected_size: int | None = None,
                       expected_sha256: str | None = None) -> Path:
     """Stream the snapshot file off the source server to a temp file, retrying
-    the whole transfer — for a 1–2 GB snapshot a mid-download blip is the
+    the whole transfer — for a 1-2 GB snapshot a mid-download blip is the
     costliest place in the pipeline to restart."""
     tmp = Path(tempfile.mkstemp(suffix=".snapshot")[1])
     try:

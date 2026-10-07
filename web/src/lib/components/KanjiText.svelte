@@ -6,9 +6,8 @@
 		tips = true,
 		onpick
 	}: { text: string; tips?: boolean; onpick?: (char: string) => void } = $props();
-	const chars = $derived([...text]);
 </script>
 
-{#each chars as ch}
+{#each [...text] as ch}
 	{#if tips && isKanji(ch)}<KanjiTip char={ch} {onpick} />{:else}{ch}{/if}
 {/each}

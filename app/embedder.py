@@ -1,19 +1,19 @@
 """
 Embedding models (fastembed / ONNX, CPU-only).
 
-    dense   – all-MiniLM-L6-v2 (384-d). Chosen over bge-small-en-v1.5 and
+    dense   - all-MiniLM-L6-v2 (384-d). Chosen over bge-small-en-v1.5 and
               snowflake-arctic-embed-xs after benchmarking on the gold set
-              (see eval/embed_model_bench.py, eval/results/embed_model_bench.json):
+              (see eval/embed_model_bench.py, eval/reports/embed_model_bench.json):
               both alternatives are English-only tuned and score ~0 MRR on
               Japanese-typed queries in this bilingual corpus.
-    sparse  – Qdrant/bm25 for the text-search arm of hybrid retrieval.
+    sparse  - Qdrant/bm25 for the text-search arm of hybrid retrieval.
 
-Everything is lazily instantiated once per process via `lru_cache`, so the
+Everything is lazily instantiated once per process via `functools.cache`, so the
 first call pays the model load cost and later calls are free.
 """
 
 from collections.abc import Iterable, Iterator
-from functools import lru_cache
+from functools import cache
 
 import numpy as np
 from fastembed import SparseTextEmbedding, TextEmbedding
@@ -25,12 +25,12 @@ VECTOR_DIM = 384
 CACHE_DIR = str(MODELS_DIR)
 
 
-@lru_cache(maxsize=1)
+@cache
 def dense_model() -> TextEmbedding:
     return TextEmbedding(EMBED_MODEL, cache_dir=CACHE_DIR)
 
 
-@lru_cache(maxsize=1)
+@cache
 def sparse_model() -> SparseTextEmbedding:
     return SparseTextEmbedding(SPARSE_MODEL, cache_dir=CACHE_DIR)
 

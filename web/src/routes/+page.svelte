@@ -27,7 +27,7 @@
 		'Search in English or Japanese, break down sentences word-by-word with furigana and meanings, inspect kanji, and get grammar explanations.';
 	const EXAMPLES = ['train', '国', '海外', 'How do you say cheese in Japanese', 'あの店のサービスは素晴らしいです。'];
 	const HINTS = [
-		'Type something or click an example below'
+		'Type or tap an example below'
 	];
 	// Retrieval is ~25 ms — a page of ten costs the same as five; "Show more" refetches.
 	const DEFAULT_RESULTS = 10;
@@ -38,23 +38,59 @@
 	const MAX_JA_QUERY_CHARS = 100;
 
 	let qInput = $state('');
-	let searchInput: HTMLInputElement;
-	onMount(() => searchInput?.focus({ preventScroll: true }));
-	const hint = typewriter(HINTS);
-	let resp = $state<SearchResponse | null>(null);
+	let searchInput = $state<HTMLInputElement>();
+	// Auto-focus drops the caret on desktop; on touch it would open the
+	// on-screen keyboard over the hero before the user asks for it.
+	onMount(() => {
+		if (!matchMedia('(pointer: coarse)').matches) searchInput?.focus({ preventScroll: true });
+	});
+	let resp = $state.raw<SearchResponse | null>(null);
 	let searching = $state(false);
 	let waking = $state(false);
 	let error = $state('');
 	let committed = $state('');
 	let wantResults = $state(DEFAULT_RESULTS);
 
+	function handleWindowKeydown(e: KeyboardEvent) {
+		if (
+			e.key === '/' &&
+			document.activeElement !== searchInput &&
+			!(document.activeElement instanceof HTMLInputElement || document.activeElement instanceof HTMLTextAreaElement)
+		) {
+			e.preventDefault();
+			searchInput?.focus();
+		} else if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+			e.preventDefault();
+			searchInput?.focus();
+			searchInput?.select();
+		}
+	}
+
 	const level = $derived.by((): Level => {
 		const l = page.url.searchParams.get('level') ?? '';
 		return (LEVELS as readonly string[]).includes(l) ? (l as Level) : 'N5';
 	});
-	const kanjiChar = $derived(committed.length === 1 && isKanji(committed) ? committed : null);
+	const kanjiChar = $derived(isKanji(committed) ? committed : null);
 	const meta = $derived(resp?.meta);
+	// latency_ms spans rewrite → route → embed → retrieve → segment; the label
+	// lists every measured phase so the parts visibly sum to the total (parse
+	// is only measured on the ja route, rewrite only shown when it cost >0ms).
+	const phases = $derived(
+		meta?.embed_ms == null
+			? ''
+			: [
+					meta.rewrite_ms ? `rewrite ${meta.rewrite_ms} ms` : '',
+					`embed ${meta.embed_ms} ms`,
+					`retrieve ${meta.retrieve_ms} ms`,
+					meta.segment_ms != null ? `parse ${meta.segment_ms} ms` : '',
+				]
+					.filter(Boolean)
+					.join(' · '),
+	);
 	const hasResults = $derived(resp !== null);
+	// The getter lets the typewriter stop entirely once results take over the
+	// placeholder — no timer churning behind a finished search.
+	const hint = typewriter(() => (hasResults ? [] : HINTS));
 
 	// URL → search: ?q= drives everything (deep links, back/forward, pills).
 	// ?kanji= is a legacy deep link → becomes a single-kanji search. urlKey
@@ -67,7 +103,7 @@
 			const u = new URL(page.url.href);
 			u.searchParams.delete('kanji');
 			if (isKanji(legacy)) u.searchParams.set('q', legacy);
-			goto(u.pathname + u.search, { replace: true });
+			goto(u, { replace: true });
 			return;
 		}
 		const q = (sp.get('q') ?? '').trim();
@@ -132,18 +168,19 @@
 		const u = new URL(page.url.href);
 		if (v) u.searchParams.set('q', v);
 		else u.searchParams.delete('q');
-		goto(u.pathname + u.search, { reset: false });
+		goto(u, { reset: false });
 	}
 
 	function commit(v: string) {
-		// Keep the caret in the box — pills, kanji picks, shuffle all land here.
-		searchInput?.focus({ preventScroll: true });
+		// Desktop keeps the caret — pills, kanji picks, shuffle all land here.
+		// Touch drops it so the on-screen keyboard collapses off the results.
+		if (matchMedia('(pointer: coarse)').matches) searchInput?.blur();
+		else searchInput?.focus({ preventScroll: true });
 		// Same query again (re-submit, same kanji picked twice) → search directly;
 		// a changed query goes through ?q= so history records it. A kanji repick
 		// doesn't change kanjiChar → scroll imperatively, the effect won't refire.
 		if (v === committed) {
-			if (v.length === 1 && isKanji(v))
-				kanjiAnchor?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+			if (isKanji(v)) scrollToKanji();
 			runSearch(v);
 		} else setQuery(v);
 	}
@@ -156,7 +193,7 @@
 	function setLevel(l: Level) {
 		const u = new URL(page.url.href);
 		u.searchParams.set('level', l);
-		goto(u.pathname + u.search, { replace: true, reset: false });
+		goto(u, { replace: true, reset: false });
 	}
 
 	async function randomKanji() {
@@ -176,19 +213,46 @@
 	// the click looks dead. Fires when a new char renders the card (repicks of
 	// the same char are handled in commit(), where the imperative scroll lives).
 	let kanjiAnchor = $state<HTMLDivElement>();
+	function scrollToKanji() {
+		const el = kanjiAnchor;
+		if (!el) return;
+		const reveal = () => {
+			// Only scroll when the card is actually hidden — behind the
+			// sticky bar or below the fold. A card already in view never
+			// gets nudged, so no up-then-down correction.
+			const bar = document.querySelector('.search-row')?.getBoundingClientRect().bottom ?? 0;
+			const top = el.getBoundingClientRect().top;
+			if (top >= bar && top < window.innerHeight) return;
+			el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+		};
+		reveal();
+		// Late shifts push the card under the sticky header — keyboard
+		// collapsing on mobile, JP font swap reflowing the layout.
+		setTimeout(reveal, 450);
+	}
 	$effect(() => {
-		if (kanjiChar && kanjiAnchor)
-			kanjiAnchor.scrollIntoView({ behavior: 'smooth', block: 'start' });
+		if (kanjiChar && kanjiAnchor) scrollToKanji();
 	});
 </script>
+
+<svelte:head>
+	{#if committed}
+		<title>{committed} — Reikun</title>
+	{/if}
+</svelte:head>
+
+<svelte:window onkeydown={handleWindowKeydown} />
 
 <Header hero={!hasResults} tagline={TAGLINE} />
 
 <form class="search-row" onsubmit={submit}>
 	<div class="search-pair">
+		<span class="search-icon-prefix">
+			<Icon name="search" size={18} />
+		</span>
 		<input
 			type="search"
-			placeholder={hasResults ? 'Search' : hint.text}
+			placeholder={hasResults ? 'Search English or Japanese…' : hint.text}
 			aria-label="Search"
 			bind:value={qInput}
 			bind:this={searchInput}
@@ -197,7 +261,7 @@
 			spellcheck="false"
 		/>
 		<button type="submit" class="search-go" title="Search" aria-label="Search">
-			<Icon name="search" />
+			Search
 		</button>
 	</div>
 	<button
@@ -207,19 +271,19 @@
 		aria-label="Random {level} kanji"
 		onclick={randomKanji}
 	>
-		<Icon name="shuffle" />
+		<Icon name="shuffle" size={17} />
 	</button>
 	<Popover icon="school" label={level} title="JLPT level for grammar explanations">
-		<p class="popover-title">JLPT level</p>
+		<p class="popover-title">JLPT Level</p>
 		<Segmented options={LEVELS} value={level} onchange={setLevel} label="JLPT level" />
 	</Popover>
 </form>
 
 {#if searching}
-	<p class="searching-line"><span class="spinner"></span> Searching…</p>
+	<p class="searching-line"><span class="spinner"></span> Searching dictionary…</p>
 {/if}
 {#if waking && searching}
-	<p class="wake">The API is taking a while — it may be waking up after a cold start…</p>
+	<p class="wake">The API is taking a moment — it may be waking up from cold standby…</p>
 {/if}
 {#if error}
 	<div class="error-banner"><Icon name="warning" size={16} /> {error}</div>
@@ -233,18 +297,26 @@
 	{/if}
 
 	<div class="stats-line">
-		<b>{resp.results.length} entries</b>
+		<span class="stats-count">{resp.results.length} entries</span>
 		<Feedback kind="search" refId={resp.search_id ?? null} query={committed} />
-		<span class="stats-details" title="Route, timing and cache info for this query">
-			<Icon name="info" size={14} />
-			<span class="stats-meta">
-				{resp.mode}{meta?.route ? ` · ${meta.route}` : ''} · {resp.latency_ms} ms
+		<span class="stats-details">
+			<span class="stats-info" aria-label="Query route, timing and cache details">
+				<Icon name="info" size={14} />
 			</span>
-			{#if meta?.cached}
-				<span class="stats-meta">· cached</span>
-			{:else if meta?.embed_ms != null}
-				<span class="stats-meta">· embed {meta.embed_ms} ms · retrieve {meta.retrieve_ms} ms</span>
-			{/if}
+			<span class="stats-pop" role="tooltip">
+				<span class="popover-title">Technical info</span>
+				<span class="stats-meta"
+					><span class="stats-label">route</span>{resp.mode}{meta?.route
+						? ` · ${meta.route}`
+						: ''}</span
+				>
+				<span class="stats-meta"><span class="stats-label">total</span>{resp.latency_ms} ms</span>
+				{#if meta?.cached}
+					<span class="stats-meta"><span class="stats-label">cache</span>hit</span>
+				{:else if phases}
+					<span class="stats-meta"><span class="stats-label">stages</span>{phases}</span>
+				{/if}
+			</span>
 		</span>
 	</div>
 
@@ -283,12 +355,13 @@
 		{/if}
 	{/if}
 
-	{#each resp.results as r, i (r.id ?? i)}
+	{#each resp.results as r, i (`${r.id ?? r.text}-${i}`)}
 		<ResultCard result={r} {level} onPickKanji={commit} />
 	{/each}
 
 	{#if resp.results.length >= wantResults && wantResults < MAX_RESULTS}
 		<button
+			type="button"
 			class="btn secondary"
 			onclick={showMore}
 			title="Refetches the search with up to {MAX_RESULTS} results"
@@ -298,8 +371,11 @@
 	{/if}
 {:else if !searching && !error}
 	<div class="pills" aria-label="Example searches">
-		{#each EXAMPLES as ex}
-			<button class="pill" onclick={() => commit(ex)}>{ex}</button>
+		{#each EXAMPLES as ex (ex)}
+			<button type="button" class="pill" onclick={() => commit(ex)}>
+				<Icon name="search" size={14} />
+				<span>{ex}</span>
+			</button>
 		{/each}
 	</div>
 {/if}

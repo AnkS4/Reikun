@@ -129,8 +129,8 @@
 
    5. Submission of Contributions. Unless You explicitly state otherwise,
       any Contribution intentionally submitted for inclusion in the Work
-      by You to the Licensor shall be under the terms and conditions of this
-      License, without any additional terms or conditions.
+      by You to the Licensor shall be under the terms and conditions of
+      this License, without any additional terms or conditions.
       Notwithstanding the above, nothing herein shall supersede or modify
       the terms of any separate license agreement you may have executed
       with Licensor regarding such Contributions.
@@ -165,17 +165,13 @@
    9. Accepting Warranty or Additional Liability. While redistributing
       the Work or Derivative Works thereof, You may choose to offer,
       and charge a fee for, acceptance of support, warranty, indemnity,
-      or other liability obligations and/or rights. Consistent with this
-      License, and only while You are exercising the rights granted by
-      this License, You may offer to accept warranty, indemnity, or other
-      liability obligations and/or rights in return for a fee. However, in
-      accepting such obligations, You may act only on Your own behalf and on
-      Your sole responsibility, not on behalf of any other Contributor,
-      and only in Your own individual capacity, and on behalf of any other
-      Contributor solely if You agree to indemnify, defend, and hold each
-      Contributor harmless for any liability incurred by, or claims asserted
-      against, such Contributor by reason of your accepting any such
-      warranty or additional liability.
+      or other liability obligations and/or rights consistent with this
+      License. However, in accepting such obligations, You may act only
+      on Your own behalf and on Your sole responsibility, not on behalf
+      of any other Contributor, and only if You agree to indemnify,
+      defend, and hold each Contributor harmless for any liability
+      incurred by, or claims asserted against, such Contributor by reason
+      of your accepting any such warranty or additional liability.
 
    END OF TERMS AND CONDITIONS
 

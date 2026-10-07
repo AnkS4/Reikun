@@ -17,8 +17,7 @@ import json
 import logging
 import time
 from contextlib import asynccontextmanager
-from dataclasses import asdict
-from typing import Literal
+from typing import Annotated, Literal, get_args
 
 from fastapi import BackgroundTasks, FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
@@ -26,11 +25,18 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 from qdrant_client.http.exceptions import UnexpectedResponse
 
-from app.config import COLLECTION, CORS_ORIGINS, LLM_MODEL, qdrant_client
-from app.grammar_explain import JLPT_LEVELS, explain_grammar, explain_grammar_stream, last_model, validate_input
+from app.config import APP_VERSION, COLLECTION, CORS_ORIGINS, LLM_MODEL, qdrant_client
+from app.grammar_explain import (
+    JLPT_LEVELS,
+    MAX_HINT_CHARS,
+    explain_grammar,
+    explain_grammar_stream,
+    last_model,
+    validate_input,
+)
 from app.kanji_lookup import is_kanji, jlpt_kanji, random_kanji
 from app.render import furigana_parts, kanji_card, kanji_hover, segment_chip
-from app.retrieval import MODES, is_headword, search, warm_headword_index
+from app.retrieval import MODES, is_headword, morph_hint, search, warm_headword_index
 from app.telemetry import telemetry
 
 # Standalone `uvicorn app.api:app` doesn't configure the root logger, so do it
@@ -40,21 +46,23 @@ if not logging.root.handlers:
 
 Mode = Literal["auto", "hybrid", "vector", "text"]
 Level = Literal["N5", "N4", "N3", "N2", "N1"]
-assert set(Mode.__args__) == set(MODES) and set(Level.__args__) == set(JLPT_LEVELS)
+assert set(get_args(Mode)) == set(MODES) and set(get_args(Level)) == set(JLPT_LEVELS)
 
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     # Warm the headword trie, Sudachi dictionary and ONNX sessions on daemon
-    # threads — returns immediately so /health is live during the ~2–5 s load.
+    # threads - returns immediately so /health is live during the ~2-5 s load.
     warm_headword_index()
     yield
 
 
 app = FastAPI(
     title="Reikun API",
-    version="0.4.0",
-    description="Japanese dictionary search (hybrid dense + BM25), kanji details and JLPT-calibrated grammar explanations.",
+    version=APP_VERSION,
+    description=(
+        "Japanese dictionary search (hybrid dense + BM25), kanji details and JLPT-calibrated grammar explanations."
+    ),
     lifespan=lifespan,
 )
 
@@ -138,6 +146,7 @@ class SearchMeta(BaseModel):
     rewrite_ms: int | None = None
     embed_ms: int | None = None
     retrieve_ms: int | None = None
+    segment_ms: int | None = None
     cached: bool = False
     too_long: int | None = Field(None, description="The character cap the query exceeded")
 
@@ -210,7 +219,7 @@ class KanjiHover(BaseModel):
 
 
 class ExplainRequest(BaseModel):
-    sentence: str = Field(..., min_length=1, description="Japanese example sentence")
+    sentence: str = Field(min_length=1, description="Japanese example sentence")
     english: str = Field("", description="English translation (improves the explanation)")
     level: Level = "N5"
 
@@ -242,8 +251,14 @@ def health() -> dict:
     return {"status": "ok"}
 
 
-@app.get("/ready", tags=["meta"], response_model=ReadyResponse,
-         responses={503: {"model": ErrorResponse, "description": "Qdrant unreachable, or the collection is missing/empty"}})
+@app.get(
+    "/ready",
+    tags=["meta"],
+    response_model=ReadyResponse,
+    responses={
+        503: {"model": ErrorResponse, "description": "Qdrant unreachable, or the collection is missing/empty"}
+    },
+)
 def ready() -> dict:
     """Readiness: a real query against the Qdrant collection.
     503 when Qdrant is unreachable or the collection is missing/empty."""
@@ -271,11 +286,20 @@ def ready() -> dict:
 def search_endpoint(
     background: BackgroundTasks,
     # pattern=\S: whitespace-only input is a 422, not an embed of "".
-    q: str = Query(..., min_length=1, pattern=r"\S", description="English or Japanese word, or a natural-language question"),
-    n: int = Query(10, ge=1, le=50, description="Number of results"),
-    mode: Mode = Query("auto", description="auto routes the query to the best plan; the rest are fixed pipelines"),
-    rewrite: bool = Query(True, description="Normalise natural-language queries to a dictionary gloss first"),
-    log: bool = Query(True, description="Record the search in the telemetry sink"),
+    q: Annotated[
+        str,
+        Query(min_length=1, pattern=r"\S", description="English or Japanese word, or a natural-language question"),
+    ],
+    n: Annotated[int, Query(ge=1, le=50, description="Number of results")] = 10,
+    mode: Annotated[
+        Mode,
+        Query(description="auto routes the query to the best plan; the rest are fixed pipelines"),
+    ] = "auto",
+    rewrite: Annotated[
+        bool,
+        Query(description="Normalise natural-language queries to a dictionary gloss first"),
+    ] = True,
+    log: Annotated[bool, Query(description="Record the search in the telemetry sink")] = True,
 ) -> dict:
     """Same pipeline as the dictionary UI: rewrite → route → retrieve.
     Results carry `ruby` parts for furigana rendering; Japanese sentences that
@@ -301,14 +325,25 @@ def search_endpoint(
             background.add_task(telemetry().kanji_lookup, q, source="search")
     meta = dict(resp.meta)
     raw_segments = meta.pop("segments", None)
-    results = []
-    for r in resp.results:
-        head = r.get("kanji_form") or r.get("reading") or r.get("text") or ""
-        results.append({**r, "ruby": furigana_parts(head, r.get("reading"))})
+    results = [
+        {
+            **r,
+            "ruby": furigana_parts(
+                r.get("kanji_form") or r.get("reading") or r.get("text") or "",
+                r.get("reading"),
+            ),
+        }
+        for r in resp.results
+    ]
     return {
         "search_id": search_id,
         "results": results,
-        "rewrite": {**asdict(resp.rewrite), "changed": resp.rewrite.changed},
+        "rewrite": {
+            "original": resp.rewrite.original,
+            "query": resp.rewrite.query,
+            "method": resp.rewrite.method,
+            "changed": resp.rewrite.changed,
+        },
         "mode": resp.mode,
         "latency_ms": resp.latency_ms,
         "segments": [segment_chip(s) for s in raw_segments] if raw_segments else None,
@@ -325,7 +360,10 @@ class RandomKanji(BaseModel):
 # Declared before /kanji/{char} so "random" isn't parsed as a kanji path param.
 @app.get("/kanji/random", tags=["kanji"], response_model=RandomKanji)
 def kanji_random_endpoint(
-    level: Level | None = Query(None, description="Prefer kanji tagged at this JLPT level (falls back to the common pool)"),
+    level: Annotated[
+        Level | None,
+        Query(description="Prefer kanji tagged at this JLPT level (falls back to the common pool)"),
+    ] = None,
 ) -> dict:
     """A random kanji that is itself a JMdict headword — the shuffle button's
     pick. Same rules as the UI: frequency-ranked pool, optionally restricted
@@ -342,23 +380,32 @@ def kanji_random_endpoint(
 
 @app.get("/kanji", tags=["kanji"], response_model=dict[str, KanjiHover | None])
 def kanji_batch_endpoint(
-    chars: str = Query(..., min_length=1, max_length=100,
-                       description="Kanji characters to look up (deduped; every char is treated as one kanji)"),
+    chars: Annotated[
+        str,
+        Query(
+            min_length=1,
+            max_length=100,
+            description="Kanji characters to look up (deduped; every char is treated as one kanji)",
+        ),
+    ],
 ) -> dict:
     """Compact hover-card data for several kanji at once — one round-trip per
     sentence of tooltips. Unknown kanji map to null."""
-    seen = dict.fromkeys(c for c in chars if is_kanji(c))
+    seen = {c: kanji_hover(c) for c in dict.fromkeys(chars) if is_kanji(c)}
     if not seen:
         raise HTTPException(400, "Provide at least one kanji character")
-    return {c: kanji_hover(c) for c in seen}
+    return seen
 
 
 @app.get("/kanji/{char}", tags=["kanji"], response_model=KanjiCard)
 def kanji_endpoint(
     char: str,
     background: BackgroundTasks,
-    strokes: bool = Query(False, description="Include KanjiVG stroke order as structured data (viewBox, path d's, number labels)"),
-    log: bool = Query(True),
+    strokes: Annotated[
+        bool,
+        Query(description="Include KanjiVG stroke order as structured data (viewBox, path d's, number labels)"),
+    ] = False,
+    log: Annotated[bool, Query()] = True,
 ) -> dict:
     """KANJIDIC2 details (meta badges, readings with okurigana parts, common
     words with ruby parts) for one kanji — the frontend renders the card."""
@@ -381,16 +428,23 @@ def explain_endpoint(req: ExplainRequest) -> dict:
         sentence, english, _ = validate_input(req.sentence, req.english)
     except ValueError as exc:
         raise HTTPException(422, str(exc)) from exc
+    hint = morph_hint(sentence)[:MAX_HINT_CHARS]
     t0 = time.perf_counter()
     try:
-        text, ok = explain_grammar(sentence, english, req.level), True
+        text, ok = explain_grammar(sentence, english, req.level, hint=hint), True
     except Exception as exc:
         text, ok = str(exc), False
     latency_ms = int((time.perf_counter() - t0) * 1000)
     expl_id = telemetry().explanation(sentence, req.level, model=last_model(), latency_ms=latency_ms, ok=ok)
     if not ok:
         raise HTTPException(502, f"Explanation unavailable: {text}")
-    return {"explanation_id": expl_id, "level": req.level, "model": last_model(), "latency_ms": latency_ms, "text": text}
+    return {
+        "explanation_id": expl_id,
+        "level": req.level,
+        "model": last_model(),
+        "latency_ms": latency_ms,
+        "text": text,
+    }
 
 
 @app.post("/explain/stream", tags=["grammar"])
@@ -403,13 +457,14 @@ def explain_stream_endpoint(req: ExplainRequest) -> StreamingResponse:
         sentence, english, _ = validate_input(req.sentence, req.english)
     except ValueError as exc:
         raise HTTPException(422, str(exc)) from exc
+    hint = morph_hint(sentence)[:MAX_HINT_CHARS]
     t0 = time.perf_counter()
 
     def events():
         chunks: list[str] = []
         ok = True
         try:
-            for c in explain_grammar_stream(sentence, english, req.level):
+            for c in explain_grammar_stream(sentence, english, req.level, hint=hint):
                 chunks.append(c)
                 yield f"data: {json.dumps({'text': c})}\n\n"
         except Exception as exc:
@@ -417,7 +472,13 @@ def explain_stream_endpoint(req: ExplainRequest) -> StreamingResponse:
             yield f"data: {json.dumps({'error': str(exc)})}\n\n"
         latency_ms = int((time.perf_counter() - t0) * 1000)
         expl_id = telemetry().explanation(sentence, req.level, model=last_model(), latency_ms=latency_ms, ok=ok)
-        yield f"data: {json.dumps({'done': True, 'explanation_id': expl_id, 'latency_ms': latency_ms, 'model': last_model()})}\n\n"
+        payload = {
+            "done": True,
+            "explanation_id": expl_id,
+            "latency_ms": latency_ms,
+            "model": last_model(),
+        }
+        yield f"data: {json.dumps(payload)}\n\n"
 
     return StreamingResponse(events(), media_type="text/event-stream")
 

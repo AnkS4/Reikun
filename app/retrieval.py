@@ -2,19 +2,19 @@
 Retrieval over the Qdrant `jmdict_chunks` collection.
 
 Modes (all evaluated in eval/eval.py --ir):
-    auto    – query routing (default): the rewritten query is classified and
+    auto    - query routing (default): the rewritten query is classified and
               sent down the matching plan —
                 ja          Japanese input → BM25 arm + exact-match arm
                               (kanji_form / reading), RRF with the exact arm
                               weighted higher so exact entries pin to the top
-                en_word     1–2 word English query → dense + BM25 +
+                en_word     1-2 word English query → dense + BM25 +
                               exact-match (gloss_keys) arms fused with RRF,
                               then a formula query adds a commonness prior
                 en_sentence longer English input → dense-heavy RRF (dense arm
-                              weighted 2×) — gloss exact-match can't fire
-    vector  – dense cosine search only (baseline)
-    text    – sparse BM25 search only
-    hybrid  – server-side Reciprocal Rank Fusion of three prefetch arms:
+                              weighted 2x) - gloss exact-match can't fire
+    vector  - dense cosine search only (baseline)
+    text    - sparse BM25 search only
+    hybrid  - server-side Reciprocal Rank Fusion of three prefetch arms:
                 • dense semantic match
                 • BM25 lexical match
                 • dense match restricted to exact kanji_form / reading /
@@ -34,10 +34,11 @@ both hurt MRR on this bilingual corpus — and was removed entirely.
 import logging
 import threading
 import time
-from dataclasses import dataclass, field, replace
-from functools import lru_cache
+from dataclasses import dataclass, replace
+from functools import cache, lru_cache
 from types import MappingProxyType
 
+from fastembed.sparse.sparse_embedding_base import SparseEmbedding
 from qdrant_client.models import (
     FieldCondition,
     Filter,
@@ -58,7 +59,7 @@ from sudachipy.tokenizer import Tokenizer as _SudachiTokenizer
 from app.config import COLLECTION, DENSE_VECTOR, PROC_DIR, QUERY_REWRITE, SPARSE_VECTOR, qdrant_client
 from app.embedder import embed_query, warm_models
 from app.headword_index import PAYLOAD_FIELDS, TrieIndex, add_entry, build_trie
-from app.kanji_lookup import is_kanji
+from app.kanji_lookup import has_kanji, is_kanji
 from app.query_rewrite import Rewrite, gloss_key, is_japanese, normalise, rewrite_query
 
 # SplitMode.B — middle word units (図書館 one token, 位置+し+て+い+ます still
@@ -83,17 +84,17 @@ COMMON_BOOST = 1.0      # flat prior on JMdict's own commonness (1.0 tier-1 pri
                         # CANONICAL_BOOST it applies to every candidate, not
                         # just first-sense gloss matches, so it still nudges
                         # results for queries that match no gloss exactly.
-CANONICAL_BOOST = 3.0   # K × wf_score × (query is a *first-sense* gloss).
+CANONICAL_BOOST = 3.0   # K x wf_score x (query is a *first-sense* gloss).
                         # The one canonicality prior, replacing the earlier
                         # commonness / nf-band boosts. Two signals multiplied,
                         # and both are needed:
-                        #   wf_score  – corpus Zipf frequency (~0–7), the only
+                        #   wf_score  - corpus Zipf frequency (~0-7), the only
                         #               signal fine-grained enough to order
                         #               near-synonyms that share JMdict's pri
                         #               markers and nf band (仕事 5.7/作業 4.9)
                         #               and to rank katakana either way
                         #               (ゲーム 5.6 vs キャット 3.1).
-                        #   primary   – is the query what the entry *mainly*
+                        #   primary   - is the query what the entry *mainly*
                         #               means? Frequency alone is harmful
                         #               without it: 足 ("leg") lists "money" as
                         #               a minor sense and outranks お金;
@@ -101,7 +102,7 @@ CANONICAL_BOOST = 3.0   # K × wf_score × (query is a *first-sense* gloss).
 MAX_QUERY_CHARS = 150   # input cap, any language — longer text is pasted prose,
                         # never a headword or gloss. Rejected before rewrite /
                         # embed / retrieval, so a long paste costs no model or
-                        # DB call. ~3.5× the longest real question in the gold
+                        # DB call. ~3.5x the longest real question in the gold
                         # set (42 chars).
 MAX_JA_QUERY_CHARS = 100  # post-rewrite ceiling for Japanese input, shared with
                           # segment_japanese: up to it a ja string gets the
@@ -115,7 +116,10 @@ MAX_JA_QUERY_CHARS = 100  # post-rewrite ceiling for Japanese input, shared with
                           # queries got a bare "Nothing found".
 
 
-@dataclass(frozen=True)
+_EMPTY_META: MappingProxyType[str, object] = MappingProxyType({})
+
+
+@dataclass(frozen=True, slots=True)
 class SearchResponse:
     """Immutable: instances are shared across callers through the per-process
     search cache, so `results` is a tuple and `meta` a read-only mapping — a
@@ -124,7 +128,7 @@ class SearchResponse:
     rewrite: Rewrite
     mode: str
     latency_ms: int
-    meta: MappingProxyType = field(default_factory=lambda: MappingProxyType({}))
+    meta: MappingProxyType[str, object] = _EMPTY_META
 
 
 def _hit_to_dict(hit, score: float | None = None) -> dict:
@@ -143,13 +147,13 @@ def _hit_to_dict(hit, score: float | None = None) -> dict:
     }
 
 
-def entry_forms(r: dict) -> tuple:
+def entry_forms(r: dict) -> tuple[str | None, ...]:
     """Every written form of a result — primary kanji_form/reading plus the
     variant lists — the same fields _exact_filter matches a Japanese query
     against (a kana query like しごと hits via `reading`, an alternate like
     しまうま via `readings`)."""
     return (r.get("kanji_form"), r.get("reading"),
-            *(r.get("kanji_forms") or []), *(r.get("readings") or []))
+            *(r.get("kanji_forms") or ()), *(r.get("readings") or ()))
 
 
 def _exact_filter(query: str) -> Filter:
@@ -196,7 +200,7 @@ def is_headword(term: str) -> bool:
     return qdrant_client().count(COLLECTION, count_filter=flt, exact=True).count > 0
 
 
-def _sparse(vec) -> SparseVector:
+def _sparse(vec: SparseEmbedding) -> SparseVector:
     return SparseVector(indices=vec.indices.tolist(), values=vec.values.tolist())
 
 
@@ -216,7 +220,9 @@ def vector_search(query: str, num_results: int = 5, *, vectors=None) -> list[dic
 def text_search(query: str, num_results: int = 5, *, vectors=None) -> list[dict]:
     """Sparse BM25 search only."""
     _, sparse = vectors or embed_query(query)
-    hits = qdrant_client().query_points(COLLECTION, query=_sparse(sparse), using=SPARSE_VECTOR, limit=num_results).points
+    hits = qdrant_client().query_points(
+        COLLECTION, query=_sparse(sparse), using=SPARSE_VECTOR, limit=num_results
+    ).points
     return [_hit_to_dict(h) for h in hits]
 
 
@@ -248,8 +254,8 @@ def route_query(query: str) -> str:
     return "en_word" if len(query.split()) <= 3 else "en_sentence"
 
 
-def _rrf(prefetches: list[Prefetch], weights: list[float], limit: int):
-    return dict(prefetch=prefetches, query=RrfQuery(rrf=Rrf(weights=weights)), limit=limit)
+def _rrf(prefetches: list[Prefetch], weights: list[float], limit: int) -> dict:
+    return {"prefetch": prefetches, "query": RrfQuery(rrf=Rrf(weights=weights)), "limit": limit}
 
 
 def _auto_search(query: str, num_results: int, *, vectors, route: str) -> list[dict]:
@@ -284,15 +290,15 @@ def _auto_search(query: str, num_results: int, *, vectors, route: str) -> list[d
     else:  # en_word
         # Full hybrid fused with RRF, then a formula query layers two priors on
         # the fused score: +EXACT_BONUS when the query equals a headword,
-        # reading or normalised gloss, and +CANONICAL_BOOST × wf_score when the
+        # reading or normalised gloss, and +CANONICAL_BOOST x wf_score when the
         # query is the entry's *first-sense* gloss. Ranking exact matches by
         # bonus (not by dense order inside a filtered arm) is what puts 犬 above
         # 猟犬 for "dog"; the canonical prior is what puts it above ワン子.
         # (Nested prefetch → RRF → formula is the documented pattern; a main
         # query can't be both fusion+formula.)
         exact = _exact_filter(query)
-        params = dict(
-            prefetch=Prefetch(
+        params = {
+            "prefetch": Prefetch(
                 prefetch=[
                     Prefetch(query=dense, using=DENSE_VECTOR, limit=pool),
                     Prefetch(query=sparse_vec, using=SPARSE_VECTOR, limit=pool),
@@ -301,7 +307,7 @@ def _auto_search(query: str, num_results: int, *, vectors, route: str) -> list[d
                 query=RrfQuery(rrf=Rrf()),
                 limit=pool,
             ),
-            query=FormulaQuery(
+            "query": FormulaQuery(
                 defaults={"wf_score": 0.0},
                 formula=SumExpression(sum=[
                     "$score",
@@ -310,8 +316,8 @@ def _auto_search(query: str, num_results: int, *, vectors, route: str) -> list[d
                     MultExpression(mult=[CANONICAL_BOOST, "wf_score", _primary_filter(query)]),
                 ])
             ),
-            limit=num_results,
-        )
+            "limit": num_results,
+        }
 
     hits = qdrant_client().query_points(COLLECTION, **params).points
     return [_hit_to_dict(h) for h in hits]
@@ -594,7 +600,7 @@ def warm_headword_index() -> None:
         threading.Thread(target=target, daemon=True).start()
 
 
-@lru_cache(maxsize=1)
+@cache
 def _tokenizer():
     """Lazy Sudachi tokenizer (~1-2 s load once). Runtime pins sudachidict-small
     (pyproject); core is accepted for environments that install that instead."""
@@ -613,12 +619,13 @@ class _Morph:
     """Plain-Python snapshot of one Sudachi morpheme (reading already in
     hiragana) so the segmentation passes never re-enter the FFI."""
 
-    __slots__ = ("lemma", "norm", "pos", "pos_sub", "pos_sub2", "reading", "surf")
+    __slots__ = ("cform", "ctype", "lemma", "norm", "pos", "pos_sub", "pos_sub2", "reading", "surf")
 
     def __init__(self, m) -> None:
         pos = m.part_of_speech()
         self.surf = m.surface()
         self.pos, self.pos_sub, self.pos_sub2 = pos[0], pos[1], pos[2]
+        self.ctype, self.cform = pos[4], pos[5]
         self.lemma = m.dictionary_form()
         self.norm = m.normalized_form()
         self.reading = _hira(m.reading_form())
@@ -665,7 +672,7 @@ def _segment_sudachi(query: str, index: TrieIndex) -> list[dict] | None:
         else:
             groups.append([i])
 
-    def _gloss(m: "_Morph", prev_te: bool, conj: bool = False) -> dict | None:
+    def _gloss(m: _Morph, prev_te: bool, conj: bool = False) -> dict | None:
         """One morpheme → segment fields; None = unresolvable token (skipped).
         conj marks a て/で used as a conjunctive inside an inflection tail —
         glossed as plain "particle", not its case-particle meaning."""
@@ -691,7 +698,7 @@ def _segment_sudachi(query: str, index: TrieIndex) -> list[dict] | None:
         # Kana-spelled function words are grammar glosses, not whichever
         # homograph shares the reading — ため is "for the sake of", not 溜め
         # "cesspool". Kanji surfaces keep the dictionary path.
-        if (g := _GRAMMAR.get(surf)) and not any(map(is_kanji, surf)):
+        if (g := _GRAMMAR.get(surf)) and not has_kanji(surf):
             return {"text": surf, "kanji_form": surf, "reading": reading, "meanings": [g]}
         # Person names aren't JMdict headwords (names live in JMnedict, which
         # isn't indexed), so any hit is a coincidental homophone — ジョン
@@ -711,7 +718,7 @@ def _segment_sudachi(query: str, index: TrieIndex) -> list[dict] | None:
         # き "to come"), so they stay honest-ambiguous unless the lemma found
         # nothing at all.
         cands = entry = None
-        kana_surf = not any(map(is_kanji, surf))
+        kana_surf = not has_kanji(surf)
         for form in dict.fromkeys((m.lemma, m.norm, surf)):
             found = index.get(form)
             if not found:
@@ -964,6 +971,22 @@ def segment_japanese(query: str, max_len: int = MAX_JA_QUERY_CHARS) -> list[dict
     return None
 
 
+def morph_hint(sentence: str) -> str:
+    """Sudachi analysis for grammar_explain's `hint`: one `surface → lemma
+    (POS, conjugation)` line per morpheme — grounds conjugation
+    identification so the LLM doesn't guess forms. "" on tokenizer failure;
+    explanations simply go ungrounded."""
+    try:
+        toks = [_Morph(m) for m in _tokenizer().tokenize(sentence, _SPLIT_MODE)]
+    except Exception:
+        return ""
+    lines = []
+    for t in toks:
+        desc = ", ".join(x for x in (t.pos, t.ctype, t.cform) if x != "*")
+        lines.append(f"{t.surf} → {t.lemma} ({desc})" if t.lemma != t.surf else f"{t.surf} ({desc})")
+    return "\n".join(lines)
+
+
 # ── Public entry point ───────────────────────────────────────────────────────
 
 def search(
@@ -1057,6 +1080,7 @@ def _search_cached(
         # A Japanese query with no exact headword hit may be a compound
         # expression — decompose it so the UI can show the parts.
         if route == "ja" and not any(rw.query in entry_forms(r) for r in results):
+            t4 = time.perf_counter()
             try:
                 if segments := segment_japanese(rw.query):
                     meta["segments"] = tuple(segments)
@@ -1079,12 +1103,17 @@ def _search_cached(
                         ]
             except Exception as exc:
                 log.warning("segmentation failed for %r: %s", rw.query, exc)
+            # Segmentation runs after t3 — without its own timer its whole cost
+            # (Sudachi dict load on the cold path) hides inside latency_ms.
+            meta["segment_ms"] = int((time.perf_counter() - t4) * 1000)
 
     latency_ms = _ms_since(t0)
     log.info(
-        "search %s%s: embed=%dms retrieve=%dms total=%dms",
+        "search %s%s: rewrite=%dms embed=%dms retrieve=%dms%s total=%dms",
         mode, f"/{route}" if route else "",
-        meta["embed_ms"], meta["retrieve_ms"], latency_ms,
+        meta["rewrite_ms"], meta["embed_ms"], meta["retrieve_ms"],
+        f" segment={meta['segment_ms']}ms" if "segment_ms" in meta else "",
+        latency_ms,
     )
     resp = SearchResponse(results=tuple(results), rewrite=rw, mode=mode,
                           latency_ms=latency_ms, meta=MappingProxyType(meta))

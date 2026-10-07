@@ -1,11 +1,30 @@
+<script module lang="ts">
+	// Reading categories — label, furigana, hover explanation
+	const READING_TYPES = [
+		{
+			key: 'on' as const,
+			text: '音読み',
+			reading: 'おんよみ',
+			tip: "On'yomi — the Sino-Japanese reading, borrowed with the character from Chinese. Used mostly in multi-kanji compounds (電話, 学校)."
+		},
+		{
+			key: 'kun' as const,
+			text: '訓読み',
+			reading: 'くんよみ',
+			tip: "Kun'yomi — the native Japanese reading attached to the character's meaning. Used for standalone words and with okurigana (食べる, 山)."
+		}
+	];
+</script>
+
 <script lang="ts">
 	import { ApiError, apiKanjiCard, type KanjiCard as Card } from '#lib/api.ts';
+	import { clampTip } from '#lib/tooltip.ts';
 	import Ruby from './Ruby.svelte';
 	import StrokeSvg from './StrokeSvg.svelte';
 	import Icon from './Icon.svelte';
 	let { char }: { char: string } = $props();
 
-	let card = $state<Card | null>(null);
+	let card = $state.raw<Card | null>(null);
 	let missing = $state(false);
 	let loadError = $state('');
 	$effect(() => {
@@ -23,22 +42,6 @@
 				else loadError = e instanceof Error ? e.message : 'Failed to load kanji details';
 			});
 	});
-
-	// ui/common.py _READING_TYPES — label, furigana, hover explanation
-	const READING_TYPES = [
-		{
-			key: 'on' as const,
-			text: '音読み',
-			reading: 'おんよみ',
-			tip: "On'yomi — the Sino-Japanese reading, borrowed with the character from Chinese. Used mostly in multi-kanji compounds (電話, 学校)."
-		},
-		{
-			key: 'kun' as const,
-			text: '訓読み',
-			reading: 'くんよみ',
-			tip: "Kun'yomi — the native Japanese reading attached to the character's meaning. Used for standalone words and with okurigana (食べる, 山)."
-		}
-	];
 </script>
 
 {#if card}
@@ -50,7 +53,7 @@
 			{/if}
 			{#if card.meta.length}
 				<div class="meta-badges">
-					{#each card.meta as m}
+					{#each card.meta as m (m.label)}
 						<span class="meta-badge" title={m.tip}>{m.label}</span>
 					{/each}
 				</div>
@@ -70,19 +73,19 @@
 				{/if}
 			</div>
 
-			{#each READING_TYPES as rt}
+			{#each READING_TYPES as rt (rt.key)}
 				{@const chips = card.readings[rt.key] ?? []}
 				{#if chips.length}
 					<div class="kanji-section">
 						<div class="reading-row">
-							<!-- svelte-ignore a11y_no_noninteractive_tabindex — focusable tooltip label -->
-							<span class="rlabel kanji-tip" tabindex="0"
+							<!-- svelte-ignore a11y_no_noninteractive_tabindex -->
+							<span class="rlabel kanji-tip" tabindex="0" use:clampTip
 								><ruby>{rt.text}<rt>{rt.reading}</rt></ruby><span class="kanji-tip-body"
 									>{rt.tip}</span
 								></span
 							>
 							<span class="reading-list">
-								{#each chips as chip}
+								{#each chips as chip, i (chip.stem + (chip.okurigana ?? '') + i)}
 									<span class="reading-chip"
 										>{chip.stem}{#if chip.okurigana}<span class="oku">{chip.okurigana}</span
 											>{/if}</span
@@ -98,7 +101,7 @@
 				<div class="kanji-section">
 					<p class="kanji-section-title">Common words</p>
 					<div class="common-words">
-						{#each card.common_words as w}
+						{#each card.common_words as w, i ((w.kanji_form || w.reading) + i)}
 							{@const head = w.kanji_form || w.reading}
 							<a class="kanji-word-row" href="/?q={encodeURIComponent(head)}" title="Search {head}">
 								<span class="kanji-word-head"><Ruby parts={w.ruby} tips={false} /></span>

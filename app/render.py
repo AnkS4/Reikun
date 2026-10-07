@@ -7,7 +7,7 @@ Deliberately dependency-light (kanji_lookup + config only) so it is importable
 in the lean API image — no Streamlit, no pandas.
 """
 
-from app.kanji_lookup import is_kanji, lookup_kanji, stroke_data
+from app.kanji_lookup import has_kanji, is_kanji, lookup_kanji, stroke_data
 
 
 def furigana_parts(word: str, reading: str | None) -> list[dict]:
@@ -20,7 +20,7 @@ def furigana_parts(word: str, reading: str | None) -> list[dict]:
     食[た]べる — same trim as ui/common.py's furigana(), which wraps these
     parts in HTML.
     """
-    if not reading or reading == word or not any(map(is_kanji, word)):
+    if not reading or reading == word or not has_kanji(word):
         return [{"text": word, "rt": None}]
     i = 0
     while i < min(len(word), len(reading)) and word[i] == reading[i] and not is_kanji(word[i]):
@@ -40,8 +40,8 @@ def furigana_parts(word: str, reading: str | None) -> list[dict]:
 
 
 def _grade_badge(grade: int) -> dict:
-    """{label, tip} for a KANJIDIC2 grade code — 1–6 kyōiku (primary school
-    year), 8 jōyō (secondary school, general use), 9–10 jinmeiyō (names)."""
+    """{label, tip} for a KANJIDIC2 grade code — 1-6 kyōiku (primary school
+    year), 8 jōyō (secondary school, general use), 9-10 jinmeiyō (names)."""
     if grade <= 6:
         tip = f"Kyōiku kanji — general-use characters taught in year {grade} of primary school"
     elif grade == 8:
@@ -63,8 +63,8 @@ def meta_parts(d: dict) -> list[dict]:
         parts.append(_grade_badge(d["grade"]))
     if d.get("jlpt_level"):
         # kanji_table stores KANJIDIC2's former 4-level scale (4 elementary →
-        # 1 advanced); old level 2 spans N2–N3 so it can't be shown as one level.
-        label = {4: "N5", 3: "N4", 2: "N2–N3", 1: "N1"}.get(d["jlpt_level"], f"N{d['jlpt_level']}")
+        # 1 advanced); old level 2 spans N2-N3 so it can't be shown as one level.
+        label = {4: "N5", 3: "N4", 2: "N2-N3", 1: "N1"}.get(d["jlpt_level"], f"N{d['jlpt_level']}")
         parts.append({"label": f"JLPT {label}",
                       "tip": "Japanese Language Proficiency Test level this kanji is expected at "
                              "(N5 easiest, N1 hardest)"})
@@ -108,16 +108,23 @@ def kanji_card(char: str, *, strokes: bool = False) -> dict | None:
         return None
     # JMdict order is roughly by reading, so the word that *is* this kanji can
     # land anywhere — pull it to the top; the rest keep their order.
-    words = sorted((d.get("common_words") or [])[:8], key=lambda w: w.get("kanji_form") != char)
+    words = sorted((d.get("common_words") or ())[:8], key=lambda w: w.get("kanji_form") != char)
+    on_yomi = d.get("on_yomi") or []
+    kun_yomi = d.get("kun_yomi") or []
     card = {
-        **{k: d.get(k) for k in ("literal", "codepoint_hex", "stroke_count", "grade", "freq", "jlpt_level")},
+        "literal": d.get("literal"),
+        "codepoint_hex": d.get("codepoint_hex"),
+        "stroke_count": d.get("stroke_count"),
+        "grade": d.get("grade"),
+        "freq": d.get("freq"),
+        "jlpt_level": d.get("jlpt_level"),
         "meanings": d.get("meanings") or [],
         "meta": meta_parts(d),
-        "on_yomi": d.get("on_yomi") or [],
-        "kun_yomi": d.get("kun_yomi") or [],
+        "on_yomi": on_yomi,
+        "kun_yomi": kun_yomi,
         "readings": {
-            "on": [reading_chip(r) for r in d.get("on_yomi") or []],
-            "kun": [reading_chip(r) for r in d.get("kun_yomi") or []],
+            "on": [reading_chip(r) for r in on_yomi],
+            "kun": [reading_chip(r) for r in kun_yomi],
         },
         "common_words": [_word_json(w) for w in words],
     }
@@ -147,7 +154,7 @@ def chip_ruby(text: str, reading: str) -> list[dict]:
     An all-kana segment whose reading differs from its surface (は→わ, へ→え)
     still gets whole-word furigana — furigana_parts() alone would skip it
     (it only rubies kanji)."""
-    if reading and reading != text and not any(map(is_kanji, text)):
+    if reading and reading != text and not has_kanji(text):
         return [{"text": text, "rt": reading}]
     return furigana_parts(text, reading)
 

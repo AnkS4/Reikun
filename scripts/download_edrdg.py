@@ -34,7 +34,7 @@ from pathlib import Path
 from typing import NamedTuple
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from app.config import RAW_DIR  # noqa: E402
+from app.config import RAW_DIR
 
 log = logging.getLogger(__name__)
 

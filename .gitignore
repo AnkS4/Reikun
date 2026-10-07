@@ -39,6 +39,9 @@ data/snapshots/
 # Local model weights (cached at runtime)
 models/
 
+# Eval run outputs (curated headline reports stay committed in eval/reports/)
+eval/results/
+
 # IDE & editor files
 .vscode/
 .idea/
@@ -53,10 +56,7 @@ Thumbs.db
 .Spotlight-V100
 .Trashes
 
-# Project planning notes (kept for context but not committed)
-#docs/notes/
-
-# Local-only benchmarking scratch (multi-provider comparison; not shipped)
+# Local-only benchmarking, notes, etc. (kept for context but not committed)
 local/
 
 # Logs

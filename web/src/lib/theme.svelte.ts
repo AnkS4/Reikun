@@ -5,21 +5,26 @@
  */
 import { browser } from '$app/env';
 
-export type ThemeChoice = 'system' | 'light' | 'dark';
+export type ThemeChoice = 'system' | 'light' | 'dark' | 'oled';
 const KEY = 'reikun-theme';
-const CHOICES: readonly ThemeChoice[] = ['system', 'light', 'dark'];
+const CHOICES: readonly ThemeChoice[] = ['system', 'light', 'dark', 'oled'];
+
+// Cached once at module load — avoids repeated matchMedia() calls in apply().
+const darkQuery = browser ? matchMedia('(prefers-color-scheme: dark)') : null;
 
 function stored(): ThemeChoice {
 	if (!browser) return 'system';
-	const v = localStorage.getItem(KEY) as ThemeChoice | null;
-	return v && CHOICES.includes(v) ? v : 'system';
+	const v = localStorage.getItem(KEY);
+	if (v === 'amoled') return 'oled'; // legacy value — renamed to the generic term
+	return v && CHOICES.includes(v as ThemeChoice) ? (v as ThemeChoice) : 'system';
 }
 
 let choice = $state<ThemeChoice>(stored());
 
-function resolved(): 'light' | 'dark' {
+function resolved(): 'light' | 'dark' | 'oled' {
 	if (choice !== 'system') return choice;
-	return matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+	// NOTE: 'oled' is intentionally the default dark resolution for system preference (not 'dark').
+	return darkQuery?.matches ? 'oled' : 'light';
 }
 
 function apply(): void {
@@ -29,7 +34,7 @@ function apply(): void {
 
 if (browser) {
 	apply();
-	matchMedia('(prefers-color-scheme: dark)').addEventListener('change', apply);
+	darkQuery?.addEventListener('change', apply);
 }
 
 export const theme = {

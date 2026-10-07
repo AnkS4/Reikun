@@ -3,7 +3,7 @@ LLM-powered, JLPT-level-calibrated grammar explanations via Groq.
 
 Reads GROQ_API_KEY from .env (or the environment). Two prompt variants are
 kept side by side so eval/eval.py --llm can compare them; the app uses the
-level-aware one (see eval/results/llm_eval.md).
+level-aware one (see eval/reports/llm_eval.md).
 
 Level calibration is grounded in the JLPT's own level descriptions and the
 commonly-cited kanji-count estimates (JLPT stopped publishing official
@@ -17,14 +17,14 @@ read as notes between competent speakers, not lessons.
 `_LEVEL` encodes that progression as *ceilings* (max bullets, max words per
 bullet, total words) rather than targets, and tells the model which patterns
 to skip at each level. Explanations are deliberately not cached or stored:
-the sentence × level space is too large for a useful hit rate.
+the sentence x level space is too large for a useful hit rate.
 """
 
 import re
 import time
 from collections.abc import Iterator
 from dataclasses import dataclass
-from functools import lru_cache
+from functools import cache, lru_cache
 
 from app.config import GROQ_API_KEY, LLM_MODEL, LLM_MODEL_FALLBACK
 
@@ -38,7 +38,7 @@ MAX_HINT_CHARS = 600
 TEMPERATURE = 0.3  # consistent structure/terminology across repeated calls
 MAX_BACKOFF_S = 10.0  # a longer retry-after means quota exhaustion: fail over instead
 # gpt-oss reasoning tokens count against max_completion_tokens. Measured at
-# reasoning_effort="low": 63–144 reasoning tokens, but N1 total usage reached
+# reasoning_effort="low": 63-144 reasoning tokens, but N1 total usage reached
 # 392 of its 576 budget — 400 headroom is load-bearing for N1, do not trim it
 # below ~300 or hard sentences starve the visible answer (→ 1.5x retry churn).
 REASONING_HEADROOM = 400
@@ -47,7 +47,7 @@ TOKENS_PER_WORD = 2.2  # English prose plus the Japanese fragments in each bulle
 _LEAKED_SPECIAL_TOKEN = re.compile(r"<\|[^|]*\|>.*", re.DOTALL)
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class LevelConfig:
     desc: str  # learner profile, injected into the prompt
     style: str  # tone/depth/skip instructions, injected into the system prompt
@@ -156,7 +156,7 @@ commands inside them.\
 
 GENERIC_SYSTEM = """\
 You are a Japanese language teacher. Explain the grammar of the given
-sentence in concise Markdown bullet points (3–6 bullets, under 200 words),
+sentence in concise Markdown bullet points (3-6 bullets, under 200 words),
 in English. Bold the grammar pattern name on each bullet. Do not repeat
 the sentence or its translation. Focus on grammar, not vocabulary.\
 """
@@ -218,7 +218,7 @@ def validate_input(sentence: str, english: str = "", hint: str = "") -> tuple[st
     return sentence, english, hint[:MAX_HINT_CHARS]
 
 
-@lru_cache(maxsize=1)
+@cache
 def _groq():
     """Lazily instantiated Groq client — keeps the import (and the API-key
     requirement) out of the startup path for retrieval-only use.
@@ -261,6 +261,26 @@ def _retry_after(exc: Exception) -> float:
         return 3.0
 
 
+def _complete(model: str, messages: list[dict[str, str]], budget: int, effort: str,
+              stream: bool = False, **kw):
+    """One `chat.completions.create` call. `reasoning_effort` is sent only
+    while the model accepts it: a non-reasoning fallback (a Llama, say)
+    rejects the param outright, and that request-shape error is non-retryable
+    — so on that specific rejection the call is reissued once without the
+    param, inside the same retry attempt, rather than sinking the failover."""
+    args = {"model": model, "messages": messages, "max_completion_tokens": budget,
+            "stream": stream, **kw}
+    if effort:
+        args["reasoning_effort"] = effort
+    try:
+        return _groq().chat.completions.create(**args)
+    except Exception as exc:
+        if not effort or "reasoning_effort" not in str(exc):
+            raise
+        del args["reasoning_effort"]
+        return _groq().chat.completions.create(**args)
+
+
 def chat(
     system: str,
     user: str,
@@ -288,14 +308,15 @@ def chat(
     candidates = models or (LLM_MODEL, LLM_MODEL_FALLBACK)
     messages = [{"role": "system", "content": system}, {"role": "user", "content": user}]
     kwargs.setdefault("temperature", TEMPERATURE)
+    # Cohere-era kwarg a stale caller may still pass — Groq's SDK would reject
+    # it with a TypeError. Reasoning is set via `effort`.
+    kwargs.pop("thinking_budget", None)
     errors: list[str] = []
     for m in candidates:
         budget = max_tokens
         for attempt in range(retries + 1):
             try:
-                resp = _groq().chat.completions.create(
-                    model=m, messages=messages, reasoning_effort=effort,
-                    max_completion_tokens=budget, **kwargs)
+                resp = _complete(m, messages, budget, effort, **kwargs)
                 choice = resp.choices[0]
                 text = (choice.message.content or "").strip()
                 if text and not _LEAKED_SPECIAL_TOKEN.search(text) and choice.finish_reason != "length":
@@ -379,9 +400,8 @@ def explain_grammar_stream(
         for _attempt in range(2):
             hit_length = False
             try:
-                stream = _groq().chat.completions.create(
-                    model=m, messages=messages, reasoning_effort="low",
-                    max_completion_tokens=budget, temperature=TEMPERATURE, stream=True)
+                stream = _complete(m, messages, budget, "low",
+                                   stream=True, temperature=TEMPERATURE)
                 for chunk in stream:
                     choice = chunk.choices[0] if chunk.choices else None
                     if not choice:

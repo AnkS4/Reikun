@@ -24,10 +24,15 @@ export function wantKanji(chars: Iterable<string>): void {
 
 async function flush(): Promise<void> {
 	scheduled = false;
-	const chars = [...queued].slice(0, 100); // endpoint's max_length
-	queued.clear();
+	const chars = Array.from(queued).slice(0, 100); // endpoint's max_length
+	for (const c of chars) queued.delete(c);
 	if (!chars.length) return;
-	chars.forEach((c) => inflight.add(c));
+	// >100 unique kanji queued: send this batch, then flush the remainder.
+	if (queued.size) {
+		scheduled = true;
+		queueMicrotask(flush);
+	}
+	for (const c of chars) inflight.add(c);
 	try {
 		const data = await apiKanjiBatch(chars.join(''));
 		for (const c of chars) hovers.set(c, data[c] ?? null);
@@ -35,6 +40,6 @@ async function flush(): Promise<void> {
 		// Tips are best-effort — an unreachable API leaves plain text.
 		for (const c of chars) hovers.set(c, null);
 	} finally {
-		chars.forEach((c) => inflight.delete(c));
+		for (const c of chars) inflight.delete(c);
 	}
 }

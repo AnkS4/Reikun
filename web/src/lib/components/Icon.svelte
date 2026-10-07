@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { icons } from '#lib/icons.ts';
-	let { name, size = 18 }: { name: string; size?: number } = $props();
+	import { icons, type IconName } from '#lib/icons.ts';
+	let { name, size = 18 }: { name: IconName; size?: number } = $props();
 </script>
 
 <svg
@@ -14,5 +14,5 @@
 	stroke-linejoin="round"
 	aria-hidden="true"
 >
-	{@html icons[name] ?? ''}
+	{@html icons[name]}
 </svg>

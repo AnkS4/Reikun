@@ -86,7 +86,8 @@ def test_search_too_long_short_circuits() -> None:
     body = r.json()
     assert body["results"] == [] and body["segments"] is None
     assert body["meta"] == {"route": None, "rewrite_ms": None, "embed_ms": None,
-                            "retrieve_ms": None, "cached": False, "too_long": 150}
+                            "retrieve_ms": None, "segment_ms": None,
+                            "cached": False, "too_long": 150}
 
 
 def test_explain_validates() -> None:

@@ -36,8 +36,8 @@ import httpx
 from dotenv import dotenv_values, find_dotenv
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from app.config import KANJIVG_DIR, RAW_DIR  # noqa: E402
-from app.kanji_lookup import STROKES_PATH, parse_stroke_svg  # noqa: E402
+from app.config import KANJIVG_DIR, RAW_DIR
+from app.kanji_lookup import STROKES_PATH, parse_stroke_svg
 
 _ENV = dotenv_values(find_dotenv(usecwd=True))  # project-root .env as a dict
 
@@ -45,7 +45,7 @@ log = logging.getLogger(__name__)
 
 RELEASES_API = "https://api.github.com/repos/KanjiVG/kanjivg/releases"
 ASSET_SUFFIX = "-all.zip"  # -main is a subset, -stripped drops stroke metadata
-MAX_ATTEMPTS, RETRY_DELAY = 3, 5  # seconds × attempt
+MAX_ATTEMPTS, RETRY_DELAY = 3, 5  # seconds x attempt
 META_PATH = KANJIVG_DIR / "kanjivg.meta.json"
 _HEX_SVG_RE = re.compile(r"^kanji/([0-9a-f]{5,6})\.svg$")
 

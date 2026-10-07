@@ -19,7 +19,7 @@ import json
 import logging
 import sys
 from datetime import UTC, datetime
-from functools import lru_cache
+from functools import cache
 from typing import Protocol
 
 from app.config import TELEMETRY
@@ -112,7 +112,7 @@ class _SqliteTelemetry:
 _SINKS = {"stdout": _StdoutTelemetry, "sqlite": _SqliteTelemetry}
 
 
-@lru_cache(maxsize=1)
+@cache
 def telemetry() -> Telemetry:
     """Process-wide sink selected by the TELEMETRY env var (default stdout)."""
     try:

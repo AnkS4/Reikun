@@ -3,7 +3,7 @@
   "info": {
     "title": "Reikun API",
     "description": "Japanese dictionary search (hybrid dense + BM25), kanji details and JLPT-calibrated grammar explanations.",
-    "version": "0.4.0"
+    "version": "0.5.0"
   },
   "paths": {
     "/health": {
@@ -1077,6 +1077,17 @@
               }
             ],
             "title": "Retrieve Ms"
+          },
+          "segment_ms": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Segment Ms"
           },
           "cached": {
             "type": "boolean",

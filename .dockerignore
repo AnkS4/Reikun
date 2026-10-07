@@ -16,7 +16,6 @@ dist/
 .env
 .env.*
 !.env.example
-app/.streamlit/secrets.toml
 
 # Data (populated at runtime or via volumes)
 data/raw/
@@ -56,3 +55,4 @@ web/
 
 # Misc
 *.log
+local/

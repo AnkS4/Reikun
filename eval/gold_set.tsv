@@ -125,54 +125,54 @@ en_verbs	to ask	尋ねる / 問う	尋ねる = ask (a question, someone); 問う
 en_verbs	to answer	答える
 
 # --- en_descriptive (50 queries) ---
-en_descriptive	how do you say thank you in japanese	ありがとう
+en_descriptive	how do you say thank you in japanese	ありがとう / ありがとうございます / 有難う	ありがとうございます is the polite/formal everyday form
 en_descriptive	what is the word for weather	天気
-en_descriptive	the vehicle that flies in the sky	飛行機
+en_descriptive	the vehicle that flies in the sky	飛行機 / 航空機
 en_descriptive	a place where you borrow books	図書館
-en_descriptive	something that is hard to do	難しい
-en_descriptive	a person who teaches students	先生
-en_descriptive	a quiet and peaceful place	静か	静かな場所 is compositional, not a dictionary entry — 静か is the actual headword
+en_descriptive	something that is hard to do	難しい / 大変
+en_descriptive	a person who teaches students	先生 / 教師
+en_descriptive	a word describing somewhere quiet and peaceful	静か / 閑静	静かな場所 is compositional, not a dictionary entry — 静か is the headword
 en_descriptive	the season after winter	春
-en_descriptive	a small animal that says meow	猫
-en_descriptive	the opposite of hot	寒い
-en_descriptive	a place where you buy food	スーパー
-en_descriptive	when you arrive somewhere late	遅刻
-en_descriptive	a document that proves your identity	身分証明書
-en_descriptive	the meal you eat in the morning	朝食
-en_descriptive	a place where you watch movies	映画館
+en_descriptive	a small pet that meows	猫
+en_descriptive	the opposite of hot	寒い / 冷たい	寒い is weather-cold, 冷たい touch-cold — both valid antonyms of "hot"
+en_descriptive	a place where you buy food	スーパー / スーパーマーケット / コンビニ	all borrowed; スーパー/コンビニ are the everyday forms
+en_descriptive	when you arrive late to work or school	遅刻 / 遅れる
+en_descriptive	a document that proves your identity	身分証明書 / 身分証 / ＩＤ	ＩＤ is the borrowed everyday form (full-width in JMdict)
+en_descriptive	the meal you eat in the morning	朝食 / 朝ご飯 / 朝飯	朝食 is formal, 朝ご飯 the everyday form
+en_descriptive	a place where you watch movies	映画館 / シネマ / シアター	シネマ and シアター are standard borrowed words
 en_descriptive	how do you say hospital in japanese	病院
 en_descriptive	a promise you make to someone	約束
-en_descriptive	a word for feeling very sleepy	眠い
-en_descriptive	a word for feeling very tired	疲れた
+en_descriptive	a word for feeling very sleepy	眠い / 眠たい
+en_descriptive	a word for feeling very tired	疲れる / 疲れた	疲れる is the headword; 疲れた the form people actually say
 en_descriptive	the place where trains stop	駅
-en_descriptive	a word meaning very delicious	美味しい
-en_descriptive	someone who studies at a school	学生
-en_descriptive	a large animal that barks	犬
+en_descriptive	a word meaning very delicious	美味しい / 旨い
+en_descriptive	someone who studies at a school	学生 / 生徒
+en_descriptive	a pet animal that barks	犬
 en_descriptive	the opposite of big	小さい
-en_descriptive	a word for a feeling of loneliness	寂しい
-en_descriptive	the season when it snows the most	冬
-en_descriptive	a vehicle with four wheels you drive	車
-en_descriptive	a place where sick people go for treatment	病院
-en_descriptive	a word for someone you love romantically	恋人
-en_descriptive	the meal eaten in the evening	夕食
-en_descriptive	a word for being extremely happy	嬉しい
-en_descriptive	a word for something very expensive	高い
-en_descriptive	a word for something cheap	安い
-en_descriptive	a person who cooks food professionally	料理人 / シェフ
+en_descriptive	a word for a feeling of loneliness	寂しい / 孤独
+en_descriptive	the coldest season of the year	冬
+en_descriptive	a vehicle with four wheels you drive	車 / 自動車
+en_descriptive	a place where sick people go for treatment	病院 / クリニック	クリニック is the borrowed form for small private clinics
+en_descriptive	a word for someone you love romantically	恋人 / パートナー	パートナー is a common borrowed term
+en_descriptive	the meal eaten in the evening	夕食 / 晩ご飯 / 夕飯	夕食 is formal; 晩ご飯 the everyday form
+en_descriptive	a word for being extremely happy	嬉しい / ハッピー
+en_descriptive	a word for something very expensive	高い / 高価
+en_descriptive	a word for something cheap	安い / 安価 / 格安
+en_descriptive	a person who cooks food professionally	料理人 / シェフ / コック	シェフ and コック are common borrowed words (French chef, Dutch kok)
 en_descriptive	a small yellow fruit that is sour	レモン
 en_descriptive	the day before today	昨日
 en_descriptive	the day after today	明日
-en_descriptive	a place where you can swim	プール
-en_descriptive	a word for feeling nervous or anxious	不安
-en_descriptive	a casual way to say goodbye	じゃあね
-en_descriptive	a polite way to say goodbye	さようなら
-en_descriptive	people who are close to you but not family	友達
-en_descriptive	the tool you use to open a locked door	鍵
+en_descriptive	a place built for people to swim	プール
+en_descriptive	a word for feeling nervous or anxious	不安 / 心配 / 緊張
+en_descriptive	a casual way to say goodbye	じゃあね / バイバイ / またね	バイバイ is the borrowed word and the most common casual goodbye
+en_descriptive	a polite way to say goodbye	さようなら / さよなら
+en_descriptive	people who are close to you but not family	友達 / 友人
+en_descriptive	the small metal object that unlocks a door	鍵 / キー	キー is the standard borrowed word
 en_descriptive	a feeling of wanting to eat something	空腹 / 空腹感 / お腹が空く / お腹が空いた	お腹が空く is the dictionary headword; お腹が空いた is the conjugated everyday form people actually say
-en_descriptive	a word for something that is boring	つまらない
-en_descriptive	a word for something that is interesting	面白い
-en_descriptive	the place where airplanes take off	空港
-en_descriptive	a word for a sudden strong urge to sleep	眠気
+en_descriptive	a word for something that is boring	つまらない / 退屈
+en_descriptive	a word for something that is interesting	面白い / 興味深い
+en_descriptive	the place where airplanes take off	空港 / 飛行場
+en_descriptive	the feeling or sensation of sleepiness	眠気 / 眠い / 眠たい
 en_descriptive	a formal word for a workplace	職場
 en_descriptive	a word for congratulations	おめでとう / おめでとうございます	おめでとうございます is the polite/formal form
 

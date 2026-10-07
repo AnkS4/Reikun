@@ -1,6 +1,6 @@
 /**
  * Typed client for the Reikun API (app/api.py) — schema types come from the
- * generated api.d.ts (scripts/export_openapi.py + openapi-typescript).
+ * generated openapi.d.ts (scripts/export_openapi.py + openapi-typescript).
  *
  * The base URL is a *public* build-time value: this is a static site, so
  * PUBLIC_API_BASE is baked in at build time (set in the host's project env).
@@ -16,9 +16,6 @@ export type Segment = components['schemas']['Segment'];
 export type RubyPart = components['schemas']['RubyPart'];
 export type KanjiCard = components['schemas']['KanjiCard'];
 export type KanjiHover = components['schemas']['KanjiHover'];
-export type CommonWord = components['schemas']['CommonWord'];
-export type ReadingChip = components['schemas']['ReadingChip'];
-export type MetaBadge = components['schemas']['MetaBadge'];
 export type StrokeData = components['schemas']['StrokeData'];
 export type ReadyInfo = components['schemas']['ReadyResponse'];
 export type ExplainRequest = components['schemas']['ExplainRequest'];
@@ -36,6 +33,7 @@ export class ApiError extends Error {
 		message: string
 	) {
 		super(message);
+		this.name = 'ApiError';
 	}
 }
 
@@ -49,12 +47,14 @@ export const sleep = (ms: number): Promise<void> => new Promise((r) => setTimeou
 /** Turn an openapi-fetch error body into a useful message (FastAPI uses `detail`). */
 function asError(err: unknown, status: number): ApiError {
 	const body = err as { detail?: unknown } | undefined;
-	const msg =
-		typeof body?.detail === 'string'
-			? body.detail
-			: Array.isArray(body?.detail)
-				? body.detail.map((d: { msg?: string }) => d.msg ?? d).join('; ')
-				: `Request failed (${status})`;
+	let msg: string;
+	if (typeof body?.detail === 'string') {
+		msg = body.detail;
+	} else if (Array.isArray(body?.detail)) {
+		msg = (body.detail as { msg?: string }[]).map((d) => d.msg ?? d).join('; ');
+	} else {
+		msg = `Request failed (${status})`;
+	}
 	return new ApiError(status, msg);
 }
 
@@ -106,6 +106,15 @@ export interface ExplainDone {
 	model?: string;
 }
 
+type SsePayload = {
+	text?: string;
+	error?: string;
+	done?: boolean;
+	explanation_id?: number | null;
+	latency_ms?: number;
+	model?: string;
+};
+
 /**
  * POST /explain/stream — SSE: `data: {"text": …}` chunks, then a `done` event
  * (or `error`). fetch+reader rather than EventSource because it's a POST.
@@ -131,27 +140,24 @@ export async function explainStream(
 		const { done: eof, value } = await reader.read();
 		if (eof) break;
 		buf += dec.decode(value, { stream: true });
-		let idx: number;
-		while ((idx = buf.indexOf('\n\n')) >= 0) {
-			const frame = buf.slice(0, idx);
-			buf = buf.slice(idx + 2);
+		let match: RegExpMatchArray | null;
+		while ((match = buf.match(/\r?\n\r?\n/))) {
+			const idx = match.index!;
+			const frame = buf.slice(0, idx).replace(/\r/g, '');
+			buf = buf.slice(idx + match[0].length);
 			if (!frame.startsWith('data: ')) continue;
-			const payload = JSON.parse(frame.slice(6)) as {
-				text?: string;
-				error?: string;
-				done?: boolean;
-				explanation_id?: number | null;
-				latency_ms?: number;
-				model?: string;
-			};
-			if (payload.text) onText(payload.text);
-			else if (payload.error) throw new ApiError(502, payload.error);
-			else if (payload.done)
+			const payload = JSON.parse(frame.slice(6)) as SsePayload;
+			if (payload.text) {
+				onText(payload.text);
+			} else if (payload.error) {
+				throw new ApiError(502, payload.error);
+			} else if (payload.done) {
 				done = {
 					explanation_id: payload.explanation_id ?? null,
 					latency_ms: payload.latency_ms ?? 0,
 					model: payload.model
 				};
+			}
 		}
 	}
 	return done ?? { explanation_id: null, latency_ms: 0 };

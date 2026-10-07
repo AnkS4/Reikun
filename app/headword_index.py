@@ -62,11 +62,11 @@ def add_entry(index: dict[str, list[dict]], pay: dict) -> None:
         "is_common": bool(pay.get("is_common")),
     }
     pair = (entry["kanji_form"], entry["reading"])
-    for key in (pay.get("kanji_form"), pay.get("reading"), *(pay.get("kanji_forms") or []), *(pay.get("readings") or [])):
-        if key:
-            cands = index.setdefault(key, [])
-            if all((c["kanji_form"], c["reading"]) != pair for c in cands):
-                cands.append(entry)
+    keys = (pay.get("kanji_form"), pay.get("reading"), *(pay.get("kanji_forms") or ()), *(pay.get("readings") or ()))
+    for key in dict.fromkeys(filter(None, keys)):
+        cands = index.setdefault(key, [])
+        if all((c["kanji_form"], c["reading"]) != pair for c in cands):
+            cands.append(entry)
 
 
 def build_trie(index: dict[str, list[dict]], path: Path | str) -> None:

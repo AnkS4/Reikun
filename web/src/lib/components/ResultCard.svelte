@@ -17,9 +17,13 @@
 		{#if result.is_common}<span class="badge">common</span>{/if}
 	</div>
 	<p class="meanings-line">{result.meanings.slice(0, 6).join('; ')}</p>
-	{#each examples as ex}
-		<ExampleRow {ex} {level} onpick={onPickKanji} />
+	{#if examples.length}
+		<div class="example-section">
+			{#each examples as ex, i (ex.japanese + i)}
+				<ExampleRow {ex} {level} onpick={onPickKanji} />
+			{/each}
+		</div>
 	{:else}
 		<p class="no-example">No example sentences.</p>
-	{/each}
+	{/if}
 </div>

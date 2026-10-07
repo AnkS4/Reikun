@@ -161,6 +161,24 @@ def test_chat_long_retry_after_fails_over(monkeypatch):
     assert calls == [LLM_MODEL, LLM_MODEL_FALLBACK]
 
 
+def test_chat_drops_reasoning_effort_when_model_rejects_it(monkeypatch):
+    """A non-reasoning fallback (a Llama, say) 400s on reasoning_effort —
+    the param is dropped and the same model retried inside that attempt."""
+    calls = []
+
+    def create(**kw):
+        calls.append(dict(kw))
+        if "reasoning_effort" in kw:
+            raise RuntimeError("400: reasoning_effort is not supported")
+        return _resp("plain ok")
+
+    monkeypatch.setattr(ge, "_groq", lambda: _client(create))
+    _no_sleep(monkeypatch)
+    assert ge.chat("sys", "user", retries=0) == "plain ok"
+    assert "reasoning_effort" in calls[0] and "reasoning_effort" not in calls[1]
+    assert calls[0]["model"] == calls[1]["model"] == LLM_MODEL
+
+
 def test_validate_input_caps_and_normalises():
     s, e, _h = ge.validate_input("  日本語　を  話す  ", "  speak Japanese  ")
     assert s == "日本語 を 話す" and e == "speak Japanese"

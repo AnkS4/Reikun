@@ -4,14 +4,14 @@ Parse the EDRDG originals (JMdict_e_NG + KANJIDIC2 XML) into embeddable
 chunks and a kanji lookup table.
 
 Inputs  (data/raw/):
-    JMdict_e_NG_examp.xml  – JMdict "Next Generation" XML, Tatoeba examples
+    JMdict_e_NG_examp.xml  - JMdict "Next Generation" XML, Tatoeba examples
                             embedded (synced daily by scripts/download_edrdg.py)
-    kanjidic2.xml          – KANJIDIC2 XML (same source kanjidic2.json was
+    kanjidic2.xml          - KANJIDIC2 XML (same source kanjidic2.json was
                             converted from)
 
 Outputs (data/processed/):
-    chunks.json      – list of word+example chunks ready for embedding
-    kanji_table.json – dict keyed by kanji literal with meanings/readings/strokes
+    chunks.json      - list of word+example chunks ready for embedding
+    kanji_table.json - dict keyed by kanji literal with meanings/readings/strokes
 
 Both XML files carry their DOCTYPE internal subset — all ~270 <!ENTITY>
 definitions (POS tags like &n; → "noun (common) (futsuumeishi)", dialect
@@ -34,12 +34,12 @@ from functools import lru_cache
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from wordfreq import zipf_frequency  # noqa: E402
+from wordfreq import zipf_frequency
 
-from app.config import CHUNKS_SCHEMA, PROC_DIR, RAW_DIR  # noqa: E402
-from app.headword_index import add_entry, build_trie  # noqa: E402
-from app.kanji_lookup import is_kanji  # noqa: E402
-from app.query_rewrite import gloss_keys  # noqa: E402
+from app.config import CHUNKS_SCHEMA, PROC_DIR, RAW_DIR
+from app.headword_index import add_entry, build_trie
+from app.kanji_lookup import is_kanji
+from app.query_rewrite import gloss_keys
 
 log = logging.getLogger(__name__)
 
@@ -98,7 +98,7 @@ def _commonness(pris: set[str], freq_band: int | None) -> float:
 
 
 def _wf_score(kanji: str | None, kana: str | None, kana_pref: bool) -> float:
-    """Corpus word frequency as a Zipf value (~0–7: 7 = "the"-tier, 3 = rare).
+    """Corpus word frequency as a Zipf value (~0-7: 7 = "the"-tier, 3 = rare).
 
     The canonical-ranking prior. Unlike JMdict's own signals it is continuous
     and covers every surface form, which is what separates near-synonyms that
@@ -118,7 +118,7 @@ def _wf_score(kanji: str | None, kana: str | None, kana_pref: bool) -> float:
         return 0.0
     # wordfreq has no phrase frequencies: for multi-token input it returns
     # roughly the average of the tokens — a phrase is strictly rarer than
-    # its rarest token, so charge one Zipf decade (10×) per extra token — still
+    # its rarest token, so charge one Zipf decade (10x) per extra token — still
     # far more conservative than the ~9 decades independence would imply.
     # Tokenized by Sudachi (the runtime segmenter) — wordfreq's own `tokenize`
     # needs mecab-python3/ipadic, which are no longer dependencies; the shim
@@ -335,7 +335,7 @@ def build_word_chunks() -> tuple[list[dict], dict[str, list[str]]]:
                     kanji_to_ids[ch].append(chunk["id"])
 
     log.info(
-        "  → %s chunks built from %s entries  (%s skipped – no meaning)",
+        "  → %s chunks built from %s entries  (%s skipped - no meaning)",
         f"{len(chunks):,}", f"{total:,}", f"{skipped:,}",
     )
     return chunks, dict(kanji_to_ids)
@@ -386,9 +386,11 @@ def build_kanji_table(
                         on_yomi.append(v)
                     elif t == "ja_kun":
                         kun_yomi.append(v)
-                for meaning in group.findall("meaning"):
-                    if meaning.get("m_lang", "en") == "en" and meaning.text:
-                        meanings.append(meaning.text)
+                meanings.extend(
+                    meaning.text
+                    for meaning in group.findall("meaning")
+                    if meaning.get("m_lang", "en") == "en" and meaning.text
+                )
 
         # ── Common words using this kanji ─────────────────────────────────────
         # Ranked, not file order: JMdict emits entries in document order, so a

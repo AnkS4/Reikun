@@ -21,13 +21,14 @@ from pathlib import Path
 import numpy as np
 from fastembed import TextEmbedding
 
-ROOT = Path(__file__).parent.parent
-sys.path.insert(0, str(ROOT))
-sys.path.insert(0, str(Path(__file__).parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from app.embedder import CACHE_DIR  # noqa: E402
-from eval import GOLD, load_gold_qrels  # noqa: E402
-from scripts.ingest import load_chunks  # noqa: E402
+from app.embedder import CACHE_DIR
+from eval import GOLD, load_gold_qrels
+from scripts.ingest import load_chunks
+
+ROOT = Path(__file__).resolve().parent.parent
 
 DEFAULT_MODELS = [
     "sentence-transformers/all-MiniLM-L6-v2",

@@ -3,8 +3,8 @@
 Embed word+example chunks and load them into Qdrant.
 
 Each point carries two named vectors so hybrid search can run server-side:
-    dense  – 384-d cosine vector (semantic meaning)
-    bm25   – sparse BM25 vector (exact/lexical text match, IDF-weighted by Qdrant)
+    dense  - 384-d cosine vector (semantic meaning)
+    bm25   - sparse BM25 vector (exact/lexical text match, IDF-weighted by Qdrant)
 plus keyword payload indexes on kanji_form / reading / meanings for the
 exact-match arm.
 
@@ -44,8 +44,8 @@ from qdrant_client.models import (
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from app.config import COLLECTION, DENSE_VECTOR, PROC_DIR, QDRANT_URL, SPARSE_VECTOR, qdrant_client  # noqa: E402
-from app.embedder import VECTOR_DIM, embed_documents  # noqa: E402
+from app.config import COLLECTION, DENSE_VECTOR, PROC_DIR, QDRANT_URL, SPARSE_VECTOR, qdrant_client
+from app.embedder import VECTOR_DIM, embed_documents
 
 log = logging.getLogger(__name__)
 
@@ -230,7 +230,7 @@ def run(
                 return p[1]
 
             with ThreadPoolExecutor(max_workers=1) as pool:
-                for batch in batched(todo, BATCH_SIZE):
+                for batch in batched(todo, BATCH_SIZE, strict=False):
                     vectors = embed_documents(
                         # Dense: glosses only — the dense model only ever sees English
                         # queries (the `ja` route skips it), so headword/reading add
@@ -271,7 +271,9 @@ def run(
         # Bulk-load only: indexing was disabled for the upload. Update mode
         # touches a small delta — the live index handles it fine.
         log.info("  Re-enabling HNSW indexing (threshold %d KB) …", INDEXING_THRESHOLD_KB)
-        client.update_collection(COLLECTION, optimizers_config=OptimizersConfigDiff(indexing_threshold=INDEXING_THRESHOLD_KB))
+        client.update_collection(
+            COLLECTION, optimizers_config=OptimizersConfigDiff(indexing_threshold=INDEXING_THRESHOLD_KB)
+        )
 
     count = client.count(COLLECTION).count
     log.info("Ingest complete. Collection '%s' → %s points (HNSW builds in the background).", COLLECTION, f"{count:,}")

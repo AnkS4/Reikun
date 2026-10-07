@@ -9,17 +9,27 @@ import logging
 import random
 import re
 from collections.abc import Collection
-from functools import lru_cache
+from functools import cache, lru_cache
 
 from app.config import PROC_DIR
 
 log = logging.getLogger(__name__)
 
-_CJK_RANGES = ((0x4E00, 0x9FFF), (0x3400, 0x4DBF), (0xF900, 0xFAFF), (0x20000, 0x2A6DF))
-
-
 def is_kanji(char: str) -> bool:
-    return len(char) == 1 and any(lo <= ord(char) <= hi for lo, hi in _CJK_RANGES)
+    if len(char) != 1:
+        return False
+    cp = ord(char)
+    return (
+        0x4E00 <= cp <= 0x9FFF
+        or 0x3400 <= cp <= 0x4DBF
+        or 0xF900 <= cp <= 0xFAFF
+        or 0x20000 <= cp <= 0x2A6DF
+    )
+
+
+def has_kanji(text: str) -> bool:
+    """True if text contains at least one kanji character."""
+    return any(map(is_kanji, text))
 
 
 def kanji_in(text: str) -> list[str]:
@@ -27,7 +37,7 @@ def kanji_in(text: str) -> list[str]:
     return list(dict.fromkeys(ch for ch in text if is_kanji(ch)))
 
 
-@lru_cache(maxsize=1)
+@cache
 def _load_kanji_table() -> dict[str, dict]:
     path = PROC_DIR / "kanji_table.json"
     if not path.exists():
@@ -35,7 +45,7 @@ def _load_kanji_table() -> dict[str, dict]:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
-@lru_cache(maxsize=1)
+@cache
 def _common_kanji() -> tuple[str, ...]:
     """Kanji with a KANJIDIC2 frequency rank — the ~2500 most common."""
     return tuple(c for c, d in _load_kanji_table().items() if d.get("freq"))
@@ -51,7 +61,7 @@ def random_kanji(within: Collection[str] | None = None) -> str:
 
 
 # KANJIDIC2's jlpt field is the *former* 4-level test scale (4 most elementary
-# → 1 most advanced); the file's own DTD notes old level 2 now straddles N2–N3,
+# → 1 most advanced); the file's own DTD notes old level 2 now straddles N2-N3,
 # so both modern levels map to it.
 _JLPT_TO_OLD: dict[str, tuple[int, ...]] = {"N5": (4,), "N4": (3,), "N3": (2,), "N2": (2,), "N1": (1,)}
 
@@ -96,15 +106,14 @@ def parse_stroke_svg(svg: str) -> dict:
     sanitized by construction (no raw SVG ever crosses the wire), so the
     frontend builds its own SVG nodes instead of injecting innerHTML.
     """
-    strokes = sorted(((int(n), d) for n, d in _STROKE_PATH.findall(svg)), key=lambda t: t[0])
     return {
         "view_box": m.group(1) if (m := _VIEWBOX.search(svg)) else "0 0 109 109",
-        "strokes": [d for _, d in strokes],
+        "strokes": [d for _, d in sorted(_STROKE_PATH.findall(svg), key=lambda p: int(p[0]))],
         "numbers": [{"x": float(x), "y": float(y), "value": int(v)} for x, y, v in _STROKE_NUMBER.findall(svg)],
     }
 
 
-@lru_cache(maxsize=1)
+@cache
 def _load_strokes() -> dict[str, dict]:
     if not STROKES_PATH.exists():
         log.warning("%s missing — stroke order disabled; run scripts/download_kanjivg.py", STROKES_PATH.name)

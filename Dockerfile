@@ -3,31 +3,15 @@
 FROM python:3.13-slim-trixie
 
 LABEL org.opencontainers.image.title="Reikun" \
-      org.opencontainers.image.description="例訓 (れいくん) - Semantic Japanese Dictionary" \
+      org.opencontainers.image.description="Reikun (例訓) — Semantic Japanese Dictionary" \
       org.opencontainers.image.source="https://github.com/AnkS4/Reikun" \
       org.opencontainers.image.authors="Aniket Satbhai" \
       org.opencontainers.image.licenses="Apache-2.0"
 
-# PYTHONDONTWRITEBYTECODE: nothing should write .pyc at *runtime* — everything
-# importable is precompiled at build time (UV_COMPILE_BYTECODE for deps,
-# compileall for our own source).
-# UV_PYTHON_DOWNLOADS=never: use the base image's interpreter. Without this uv
-# would silently download a standalone CPython (~30 MB into the image) if
-# discovery ever fails, e.g. after a base bump or a requires-python change —
-# this turns that regression into a build error instead.
-# INGEST_VIA_DOCKER — one flag for both halves of the pipeline. As a build
-# arg, =1 installs rsync (download_edrdg.py) and the dev dep group
-# (wordfreq for build_chunks.py); the ENV line below bakes
-# the same value into the image so the container *also runs* the pipeline
-# at boot (scripts/startup.py reads it). Default 0: lean runtime-only image
-# that just serves — `docker build --build-arg INGEST_VIA_DOCKER=1 .` for
-# self-provisioning.
+# INGEST_VIA_DOCKER=1 → self-provisioning image (rsync + ingest group; pipeline runs at boot)
 ARG INGEST_VIA_DOCKER=0
-ENV INGEST_VIA_DOCKER=$INGEST_VIA_DOCKER
-
-# UV_LINK_MODE=copy: the uv cache mount and /app/.venv are different
-# filesystems, so hardlinking can't work; say so rather than warn every build.
-ENV PYTHONDONTWRITEBYTECODE=1 \
+ENV INGEST_VIA_DOCKER=$INGEST_VIA_DOCKER \
+    PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     MODELS_DIR=/app/models/fastembed \
     UV_COMPILE_BYTECODE=1 \
@@ -35,11 +19,6 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     UV_PYTHON_DOWNLOADS=never \
     UV_CACHE_DIR=/home/app/.cache/uv
 
-# Run as an unprivileged user. UID 1000 matches the default first user on most
-# Linux hosts, so the docker-compose bind mounts (./data) stay writable without
-# chown. Switching USER *before* the install steps means everything under /app
-# is created with the right owner — no `chown -R` layer duplicating the ~600 MB
-# venv.
 RUN useradd --create-home --uid 1000 app \
     && mkdir /app && chown app:app /app \
     && if [ "$INGEST_VIA_DOCKER" = "1" ]; then \
@@ -50,65 +29,43 @@ RUN useradd --create-home --uid 1000 app \
 USER app
 WORKDIR /app
 
-# Install python dependencies into /app/.venv, frozen from uv.lock.
-# --no-default-groups keeps the dependency-groups out of the runtime image
-# (dev = ingest-only tooling like wordfreq, ui = Streamlit/pandas/altair);
-# INGEST_VIA_DOCKER=1 syncs the dev group back in for in-container ingest.
-# --no-install-project skips building the app package itself so this layer is
-# cached until the lockfile changes, not on every code edit.
-#
-# uv is a build-only tool: pip-install it into a scratch dir and remove it in
-# the same RUN layer so it never lands in the image (a COPY --from would add
-# ~56 MB). Each RUN re-fetches it — a shared install layer would keep it.
-# Plain RUN (no BuildKit mounts) so Cloud Build's stock docker builder works.
+# deps layer — cached until uv.lock changes
 COPY --chown=app:app pyproject.toml uv.lock ./
 RUN /usr/local/bin/python -m pip install --no-cache-dir --target=/tmp/uvpkg uv==0.12.17 \
     && if [ "$INGEST_VIA_DOCKER" = "1" ]; then \
-      /tmp/uvpkg/bin/uv sync --frozen --no-default-groups --group dev --no-install-project; \
+      /tmp/uvpkg/bin/uv sync --frozen --no-default-groups --group ingest --no-install-project; \
     else \
       /tmp/uvpkg/bin/uv sync --frozen --no-default-groups --no-install-project; \
     fi \
     && rm -rf /tmp/uvpkg /home/app/.cache/uv
 ENV PATH="/app/.venv/bin:$PATH"
 
-# Copy application source code, then install the project itself (editable) —
-# puts `app`/`scripts` on sys.path and generates the `reikun` console script.
+# model warm layer — ~90 MB of downloads; depends only on the three modules
+# embedder imports, so code edits don't invalidate it
+COPY --chown=app:app app/__init__.py app/config.py app/embedder.py app/
+RUN python -c "from app.embedder import warm_models; warm_models()"
+
+# project layer — editable install provides the `reikun` script
 COPY --chown=app:app app/ app/
 COPY --chown=app:app scripts/ scripts/
 RUN /usr/local/bin/python -m pip install --no-cache-dir --target=/tmp/uvpkg uv==0.12.17 \
     && if [ "$INGEST_VIA_DOCKER" = "1" ]; then \
-      /tmp/uvpkg/bin/uv sync --frozen --no-default-groups --group dev; \
+      /tmp/uvpkg/bin/uv sync --frozen --no-default-groups --group ingest; \
     else \
       /tmp/uvpkg/bin/uv sync --frozen --no-default-groups; \
     fi \
     && rm -rf /tmp/uvpkg /home/app/.cache/uv
 
-# kanji_table.json (~5 MB), headword_index.marisa (~26 MB, the packed
-# form→entries trie behind sentence parsing) and strokes.json (~9 MB, KanjiVG
-# stroke paths pre-extracted by scripts/download_kanjivg.py) are needed by the
-# app at runtime and small enough to ship in the image; all three are
-# committed to the repo. chunks.json is not shipped — it is only needed for
-# the one-time ingest, which runs outside the container host on free tiers.
-COPY --chown=app:app data/processed/kanji_table.json data/processed/kanji_table.json
-COPY --chown=app:app data/processed/headword_index.marisa data/processed/headword_index.marisa
-COPY --chown=app:app data/processed/strokes.json data/processed/strokes.json
+COPY --chown=app:app \
+    data/processed/kanji_table.json \
+    data/processed/headword_index.marisa \
+    data/processed/strokes.json \
+    data/processed/
 
-# Pre-download the embedding/sparse ONNX models into the image so the first
-# request doesn't pay the download cost. Importing app.embedder pulls in
-# app.config, which creates models/ and the data/ subdirectories as a side
-# effect — hence no explicit mkdir here.
-# compileall: uv only precompiles dependencies, not the editable project, so
-# without this our own modules are re-parsed on every container start.
-RUN python -c "from app.embedder import warm_models; warm_models()" \
-    && python -m compileall -q app scripts
+RUN python -m compileall -q app scripts
 
 EXPOSE 8000
 
-# /health is plain liveness (no dependencies touched) — the container stays
-# "healthy" while Qdrant is down, which is what orchestrators want: restarting
-# the API wouldn't fix Qdrant. Readiness (a real query) is /ready's job.
-# start-period is generous because scripts/startup.py may run the whole
-# download -> build -> ingest pipeline before uvicorn ever binds the port.
 HEALTHCHECK --interval=60s --timeout=5s --start-period=10m --retries=3 \
     CMD python -c "import httpx,sys,os; r=httpx.get(f\"http://localhost:{os.getenv('PORT','8000')}/health\", timeout=3); sys.exit(0 if r.status_code==200 else 1)"
 

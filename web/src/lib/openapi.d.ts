@@ -460,6 +460,8 @@ export interface components {
             embed_ms?: number | null;
             /** Retrieve Ms */
             retrieve_ms?: number | null;
+            /** Segment Ms */
+            segment_ms?: number | null;
             /**
              * Cached
              * @default false

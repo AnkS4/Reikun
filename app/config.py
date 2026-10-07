@@ -6,7 +6,8 @@ at the project root). Defaults match docker-compose.yml.
 """
 
 import os
-from functools import lru_cache
+import tomllib
+from functools import cache
 from pathlib import Path
 
 from dotenv import find_dotenv, load_dotenv
@@ -29,6 +30,10 @@ KANJIVG_DIR = DATA_DIR / "kanjivg"
 MODELS_DIR = Path(_env("MODELS_DIR", str(ROOT / "models" / "fastembed")))
 MONITORING_DB = Path(_env("MONITORING_DB", str(DATA_DIR / "monitoring" / "reikun.db")))
 
+# Release version, read from pyproject.toml so the FastAPI schema (and the
+# generated docs/api/openapi.json) can't drift from the package metadata.
+APP_VERSION = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))["project"]["version"]
+
 # Ensure directories we write to actually exist (first-run safety).
 for _dir in (RAW_DIR, PROC_DIR, KANJIVG_DIR, MODELS_DIR, MONITORING_DB.parent):
     _dir.mkdir(parents=True, exist_ok=True)
@@ -49,7 +54,7 @@ COLLECTION = os.getenv("QDRANT_COLLECTION", "jmdict_chunks")
 
 # ── Models ───────────────────────────────────────────────────────────────────
 # all-MiniLM-L6-v2 beat bge-small-en-v1.5 and snowflake-arctic-embed-xs on the
-# gold set (eval/embed_model_bench.py → eval/results/embed_model_bench.json):
+# gold set (eval/embed_model_bench.py → eval/reports/embed_model_bench.json):
 # both alternatives are English-only tuned and score ~0 on Japanese-typed
 # queries, while this corpus mixes English glosses with Japanese kanji/kana.
 EMBED_MODEL = os.getenv("EMBED_MODEL", "sentence-transformers/all-MiniLM-L6-v2")
@@ -63,7 +68,7 @@ LLM_MODEL_FALLBACK = _env("LLM_MODEL_FALLBACK", "openai/gpt-oss-20b")
 
 # Default "heuristic": free regex normalisation only. "auto" additionally
 # spends one Groq call on long English sentence-like queries (best MRR in
-# eval/results/retrieval_eval.md, but costs trial-tier tokens per query).
+# eval/reports/retrieval_eval.md, but costs trial-tier tokens per query).
 _VALID_QUERY_REWRITE = {"auto", "heuristic", "off"}
 QUERY_REWRITE = _env("QUERY_REWRITE", "heuristic").lower()
 if QUERY_REWRITE not in _VALID_QUERY_REWRITE:
@@ -90,7 +95,7 @@ CORS_ORIGINS = _env("CORS_ORIGINS", "*")
 QDRANT_TIMEOUT = int(_env("QDRANT_TIMEOUT", "30"))
 
 
-@lru_cache(maxsize=1)
+@cache
 def qdrant_client() -> QdrantClient:
     """Process-wide Qdrant client (cheap to share; thread-safe for REST).
 

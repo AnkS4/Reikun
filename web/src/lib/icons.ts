@@ -1,10 +1,12 @@
 /**
- * Inline SVG icon bodies (24×24, stroke-based, Lucide-style) — replaces the
- * Material icons Streamlit rendered. Static data rendered via {@html} in
- * Icon.svelte; safe because the strings are compile-time constants.
+ * Inline SVG icon bodies (24×24, stroke-based, Lucide-style). Static data
+ * rendered via {@html} in Icon.svelte; safe because the strings are
+ * compile-time constants.
  */
-export const icons: Record<string, string> = {
+export const icons = {
 	search: '<circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/>',
+	languages:
+		'<path d="m5 8 6 6"/><path d="m4 14 6-6 2-3"/><path d="M2 5h12"/><path d="M7 2h1"/><path d="m22 22-5-10-5 10"/><path d="M14 18h6"/>',
 	shuffle:
 		'<path d="M16 3h5v5"/><path d="M4 20 21 3"/><path d="M21 16v5h-5"/><path d="m15 15 6 6"/><path d="m4 4 5 5"/>',
 	school:
@@ -21,6 +23,12 @@ export const icons: Record<string, string> = {
 		'<path d="M17 14V2"/><path d="M9 18.12 10 14H4.17a2 2 0 0 1-1.92-2.56l2.33-8A2 2 0 0 1 6.5 2H20a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2.76a2 2 0 0 0-1.79 1.11L12 22a3.13 3.13 0 0 1-3-3.88Z"/>',
 	'expand-more': '<path d="m6 9 6 6 6-6"/>',
 	info: '<circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>',
+	sparkles:
+		'<path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3z"/><path d="M5 3v4"/><path d="M19 17v4"/><path d="M3 5h4"/><path d="M17 19h4"/>',
+	copy: '<rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>',
+	check: '<path d="M20 6 9 17l-5-5"/>',
 	warning:
 		'<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/>'
 };
+
+export type IconName = keyof typeof icons;

@@ -4,8 +4,8 @@ Query rewriting before retrieval.
 The knowledge base is indexed by short dictionary glosses ("to eat", "sky"),
 so natural-language questions retrieve poorly as-is. Two layers:
 
-    1. heuristic  – cheap regex normalisation ("how do you say X in japanese" → "X")
-    2. llm        – Groq rewrites longer descriptive queries into a 1–3 word
+    1. heuristic  - cheap regex normalisation ("how do you say X in japanese" → "X")
+    2. llm        - Groq rewrites longer descriptive queries into a 1-3 word
                     gloss; only used when the heuristic layer did not simplify
                     the query and the query still looks like a sentence.
 
@@ -37,7 +37,7 @@ Write verbs as "to" plus the verb, e.g. "when you arrive late" becomes
 """
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class Rewrite:
     original: str
     query: str
@@ -100,7 +100,9 @@ def heuristic_rewrite(query: str) -> str | None:
 def llm_rewrite(query: str) -> str:
     from app.grammar_explain import chat  # lazy: keeps groq optional for retrieval-only use
 
-    out = chat(_LLM_SYSTEM, query, max_tokens=150).strip().strip('"').lower()
+    # gpt-oss burns ~63-144 tokens on reasoning even at effort="low" - a 150
+    # cap starves the 1-3-word gloss into a guaranteed truncated retry.
+    out = chat(_LLM_SYSTEM, query, max_tokens=500).strip().strip('"').lower()
     out = _TRAILING.sub("", out)
     return out if 0 < len(out.split()) <= 4 else query
 

@@ -28,10 +28,23 @@
 </script>
 
 <span class="feedback-row" role="group" aria-label="Rate this {kind}">
-	<button class:sel={rating === 1} title="Helpful" onclick={() => pick(1)}>
+	<button
+		type="button"
+		class:sel={rating === 1}
+		title="Helpful"
+		aria-label="Helpful"
+		onclick={() => pick(1)}
+	>
 		<Icon name="thumbs-up" size={14} />
 	</button>
-	<button class:sel={rating === -1} class:down={rating === -1} title="Not helpful" onclick={() => pick(-1)}>
+	<button
+		type="button"
+		class:sel={rating === -1}
+		class:down={rating === -1}
+		title="Not helpful"
+		aria-label="Not helpful"
+		onclick={() => pick(-1)}
+	>
 		<Icon name="thumbs-down" size={14} />
 	</button>
 </span>
