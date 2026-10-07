@@ -101,10 +101,7 @@
 		onclick={toggle}
 		onkeydown={keyToggle}
 	>
-		{char}
-		{#if visible}
-			{@render body()}
-		{/if}
+		{char}{#if visible}{@render body()}{/if}
 	</span>
 {:else if onpick}
 	<!-- hover data still loading/failed — keep plain-link navigation -->

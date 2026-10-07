@@ -181,7 +181,7 @@
 		// doesn't change kanjiChar → scroll imperatively, the effect won't refire.
 		if (v === committed) {
 			if (isKanji(v)) scrollToKanji();
-			runSearch(v);
+			if (v) runSearch(v);
 		} else setQuery(v);
 	}
 
@@ -236,9 +236,7 @@
 </script>
 
 <svelte:head>
-	{#if committed}
-		<title>{committed} — Reikun</title>
-	{/if}
+	<title>{committed ? `${committed} — Reikun` : 'Reikun (例訓) — Semantic Japanese Dictionary'}</title>
 </svelte:head>
 
 <svelte:window onkeydown={handleWindowKeydown} />
@@ -297,7 +295,7 @@
 	{/if}
 
 	<div class="stats-line">
-		<span class="stats-count">{resp.results.length} entries</span>
+		<span class="stats-count">{resp.results.length} {resp.results.length === 1 ? 'entry' : 'entries'}</span>
 		<Feedback kind="search" refId={resp.search_id ?? null} query={committed} />
 		<span class="stats-details">
 			<span class="stats-info" aria-label="Query route, timing and cache details">

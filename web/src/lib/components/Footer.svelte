@@ -2,6 +2,7 @@
 	<div class="footer-content">
 		<p class="footer-license">
 			Reikun © 2026 Aniket Satbhai ·
+			<a href="/about">About</a> ·
 			<a href="https://github.com/AnkS4/Reikun" target="_blank" rel="noopener noreferrer">GitHub</a> ·
 			<a href="https://github.com/AnkS4/Reikun/blob/main/LICENSE" target="_blank" rel="noopener noreferrer">Apache-2.0</a>
 		</p>
