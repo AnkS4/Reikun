@@ -9,6 +9,6 @@
 
 <div class="segmented" role="group" aria-label={label}>
 	{#each options as o}
-		<button type="button" class:sel={o === value} onclick={() => onchange(o)}>{o}</button>
+		<button type="button" class:sel={o === value} aria-pressed={o === value} onclick={() => onchange(o)}>{o}</button>
 	{/each}
 </div>

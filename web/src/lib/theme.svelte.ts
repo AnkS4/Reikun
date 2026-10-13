@@ -27,14 +27,26 @@ function resolved(): 'light' | 'dark' | 'oled' {
 	return darkQuery?.matches ? 'oled' : 'light';
 }
 
+// Browser-UI colour per resolved theme — keep in sync with --bg in app.css and
+// the inline script in app.html.
+const CHROME_COLOR = { light: '#fcfaf6', dark: '#0f1620', oled: '#000000' } as const;
+
 function apply(): void {
 	if (!browser) return;
-	document.documentElement.dataset.theme = resolved();
+	const r = resolved();
+	document.documentElement.dataset.theme = r;
+	document.getElementById('theme-color')?.setAttribute('content', CHROME_COLOR[r]);
 }
 
 if (browser) {
 	apply();
 	darkQuery?.addEventListener('change', apply);
+	// Another tab changed the theme — follow it.
+	addEventListener('storage', (e) => {
+		if (e.key !== KEY) return;
+		choice = stored();
+		apply();
+	});
 }
 
 export const theme = {

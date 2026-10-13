@@ -31,6 +31,7 @@
 	<button
 		type="button"
 		class:sel={rating === 1}
+		aria-pressed={rating === 1}
 		title="Helpful"
 		aria-label="Helpful"
 		onclick={() => pick(1)}
@@ -41,6 +42,7 @@
 		type="button"
 		class:sel={rating === -1}
 		class:down={rating === -1}
+		aria-pressed={rating === -1}
 		title="Not helpful"
 		aria-label="Not helpful"
 		onclick={() => pick(-1)}

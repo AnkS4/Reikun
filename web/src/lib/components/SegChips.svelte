@@ -2,7 +2,13 @@
 	import type { Segment } from '#lib/api.ts';
 	import Ruby from './Ruby.svelte';
 	import { clampTip } from '#lib/tooltip.ts';
-	let { segments }: { segments: Segment[] } = $props();
+	let {
+		segments,
+		onjump
+	}: {
+		segments: Segment[];
+		onjump?: (segment: Segment, index: number) => void;
+	} = $props();
 	const approx = $derived(segments.some((s) => s.approx));
 
 	function tip(s: Segment): string {
@@ -19,8 +25,6 @@
 	}
 
 	let hovered = $state(-1);
-	let pinned = $state(-1);
-	const active = $derived(pinned >= 0 ? pinned : hovered);
 
 	function onenter(i: number) {
 		hovered = i;
@@ -28,30 +32,22 @@
 	function onleave(i: number) {
 		if (hovered === i) hovered = -1;
 	}
-	function toggle(i: number, e: Event) {
-		if ((e.target as HTMLElement).closest('.seg-tip')) {
-			e.stopPropagation();
-			return;
-		}
-		e.stopPropagation();
-		if (pinned === i) {
-			pinned = -1;
-			hovered = -1;
-		} else {
-			pinned = i;
-		}
+	function handleClick(s: Segment, i: number) {
+		hovered = -1;
+		onjump?.(s, i);
 	}
-	function keyToggle(i: number, e: KeyboardEvent) {
-		if (e.key === 'Enter' || e.key === ' ') toggle(i, e);
+	function handleKey(s: Segment, i: number, e: KeyboardEvent) {
+		if (e.key === 'Enter' || e.key === ' ') {
+			e.preventDefault();
+			handleClick(s, i);
+		}
 	}
 	function close() {
-		pinned = -1;
 		hovered = -1;
 	}
 </script>
 
 <svelte:window
-	onclick={close}
 	onscroll={close}
 	onkeydown={(e) => {
 		if (e.key === 'Escape') close();
@@ -66,27 +62,28 @@
 				<span class="meta-badge" title="Fallback segmenter used">Approximate</span>
 			{/if}
 		</p>
-		<span class="stats-meta">Tap or hover chips for readings & definitions</span>
+		<span class="stats-meta">Hover for definitions · Click to view entry</span>
 	</div>
 	<div class="seg-row">
 		{#each segments as s, i (s.text + i)}
 			{@const t = tip(s)}
-			<!-- svelte-ignore a11y_no_noninteractive_element_interactions — role=button + Enter/Space handled in keyToggle -->
+			<!-- svelte-ignore a11y_no_noninteractive_element_interactions — role=button + Enter/Space handled in handleKey -->
 			<span
 				class="seg"
 				class:approx={s.approx}
-				class:open={active === i}
+				class:open={hovered === i}
 				role="button"
 				tabindex="0"
+				title="Jump to {s.kanji_form || s.reading || s.text}"
 				use:clampTip
 				onpointerenter={() => onenter(i)}
 				onpointerleave={() => onleave(i)}
-				onclick={(e) => toggle(i, e)}
-				onkeydown={(e) => keyToggle(i, e)}
+				onclick={() => handleClick(s, i)}
+				onkeydown={(e) => handleKey(s, i, e)}
 			>
-				<span class="seg-word"><Ruby parts={s.ruby} tips={false} /></span>
+				<span class="seg-word" lang="ja"><Ruby parts={s.ruby} tips={false} /></span>
 				<span class="seg-mean">{s.gloss}</span>
-				{#if active === i && t}<span class="seg-tip" role="tooltip">{t}</span>{/if}
+				{#if hovered === i && t}<span class="seg-tip" role="tooltip">{t}</span>{/if}
 			</span>
 		{/each}
 	</div>

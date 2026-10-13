@@ -30,10 +30,13 @@
 </script>
 
 <div class="header-controls">
+	<!-- svelte-ignore a11y_no_noninteractive_tabindex — focusable so keyboard users can open the status tooltip -->
 	<span
 		class="status-dot"
 		class:ok={status?.ok}
 		class:err={status && !status.ok}
+		role="img"
+		tabindex="0"
 		aria-label={status ? (status.ok ? `Dictionary ready — ${status.entries?.toLocaleString()} entries` : `Dictionary offline — ${status.msg}`) : 'Connecting to the dictionary…'}
 	>
 		<Icon name="database" size={15} />
@@ -55,7 +58,7 @@
 		<p class="popover-title">Appearance</p>
 		<div class="segmented" role="group" aria-label="Theme">
 			{#each THEME_OPTIONS as t (t.v)}
-				<button type="button" class:sel={theme.choice === t.v} onclick={() => theme.set(t.v)}>{t.label}</button>
+				<button type="button" class:sel={theme.choice === t.v} aria-pressed={theme.choice === t.v} onclick={() => theme.set(t.v)}>{t.label}</button>
 			{/each}
 		</div>
 	</Popover>
@@ -71,7 +74,7 @@
 		{/if}
 		<h1 class="title-heading" class:hero-heading={hero} class:compact-title={!hero}>
 			<a class="title-home" href="/" title="Back to search">Reikun</a>
-			<span class="brand-kanji">(<KanjiText text="例訓" />)</span>
+			<span class="brand-kanji" lang="ja">(<KanjiText text="例訓" />)</span>
 		</h1>
 		{#if hero && tagline}<p class="tagline">{tagline}</p>{/if}
 	</div>

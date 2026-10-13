@@ -78,7 +78,7 @@
 
 <div class="example-row">
 	<div class="example-body">
-		<p class="sentence"><KanjiText text={ex.japanese} {onpick} /></p>
+		<p class="sentence" lang="ja"><KanjiText text={ex.japanese} {onpick} /></p>
 		{#if ex.english}<p class="en">{ex.english}</p>{/if}
 	</div>
 	<div class="example-actions">

@@ -22,7 +22,12 @@
 	import ResultCard from '#lib/components/ResultCard.svelte';
 	import Feedback from '#lib/components/Feedback.svelte';
 	import Icon from '#lib/components/Icon.svelte';
+	import ShareButton from '#lib/components/ShareButton.svelte';
+	import { loadRecent, pushRecent, clearRecent } from '#lib/recent.ts';
 	import { typewriter } from '#lib/typewriter.svelte.ts';
+
+	// Floating button state
+	let showBackToTop = $state(false);
 
 	const TAGLINE =
 		'Search in English or Japanese, break down sentences word-by-word with furigana and meanings, inspect kanji, and get grammar explanations.';
@@ -38,13 +43,26 @@
 	const MAX_QUERY_CHARS = 150;
 	const MAX_JA_QUERY_CHARS = 100;
 
+	let recent = $state<string[]>([]);
+	let activeCard = $state(-1);
 	let qInput = $state('');
 	let searchInput = $state<HTMLInputElement>();
 	// Auto-focus drops the caret on desktop; on touch it would open the
 	// on-screen keyboard over the hero before the user asks for it.
 	onMount(() => {
+		recent = loadRecent();
 		if (!matchMedia('(pointer: coarse)').matches) searchInput?.focus({ preventScroll: true });
+		// Floating buttons: track scroll
+		const handleScroll = () => {
+			showBackToTop = window.scrollY > 300;
+		};
+		window.addEventListener('scroll', handleScroll, { passive: true });
+		return () => window.removeEventListener('scroll', handleScroll);
 	});
+
+	function scrollToTop() {
+		window.scrollTo({ top: 0, behavior: 'smooth' });
+	}
 	let resp = $state.raw<SearchResponse | null>(null);
 	let searching = $state(false);
 	let waking = $state(false);
@@ -52,7 +70,28 @@
 	let committed = $state('');
 	let wantResults = $state(DEFAULT_RESULTS);
 
+	function moveCard(delta: number) {
+		const n = resp?.results.length ?? 0;
+		if (!n) return;
+		activeCard = Math.max(0, Math.min(n - 1, activeCard < 0 ? (delta > 0 ? 0 : n - 1) : activeCard + delta));
+		document
+			.querySelectorAll('.result-card')
+			[activeCard]?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+	}
+
 	function handleWindowKeydown(e: KeyboardEvent) {
+		const el = document.activeElement;
+		const typing = el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement;
+		if (!e.metaKey && !e.ctrlKey && !e.altKey && resp?.results.length) {
+			const down = e.key === 'ArrowDown' || (!typing && e.key === 'j');
+			const up = e.key === 'ArrowUp' || (!typing && e.key === 'k');
+			if ((down || up) && (!typing || el === searchInput) && !el?.closest('[role="dialog"]')) {
+				e.preventDefault();
+				moveCard(down ? 1 : -1);
+				return;
+			}
+			if (e.key === 'Escape' && activeCard >= 0 && !typing) activeCard = -1;
+		}
 		if (
 			e.key === '/' &&
 			document.activeElement !== searchInput &&
@@ -91,6 +130,18 @@
 					.join(' · '),
 	);
 	const hasResults = $derived(resp !== null);
+	const infoId = $props.id();
+	// One always-mounted live region: screen readers hear search progress and the
+	// outcome without having to find the visual stats line.
+	const announce = $derived(
+		searching
+			? 'Searching…'
+			: error
+				? error
+				: resp
+					? `${resp.results.length} ${resp.results.length === 1 ? 'entry' : 'entries'} for ${committed}`
+					: ''
+	);
 	// The getter lets the typewriter stop entirely once results take over the
 	// placeholder — no timer churning behind a finished search.
 	const hint = typewriter(() => (hasResults ? [] : HINTS));
@@ -110,7 +161,11 @@
 			return;
 		}
 		const q = (sp.get('q') ?? '').trim();
-		if (q !== committed) wantResults = DEFAULT_RESULTS; // reset before urlKey below
+		if (q !== committed) {
+			wantResults = DEFAULT_RESULTS; // reset before urlKey below
+			activeCard = -1;
+			resp = null; // skeletons take over until the new results land
+		}
 		const urlKey = `${q}|${wantResults}`;
 		if (urlKey === handledUrl) return;
 		handledUrl = urlKey;
@@ -121,6 +176,7 @@
 			error = '';
 			return;
 		}
+		recent = pushRecent(q);
 		runSearch(q);
 	});
 
@@ -147,7 +203,10 @@
 				if (seq !== reqSeq) return;
 				r = await apiSearch(q, wantResults);
 			}
-			if (seq === reqSeq) resp = r;
+			if (seq === reqSeq) {
+				resp = r;
+				activeCard = -1;
+			}
 		} catch (e) {
 			if (seq === reqSeq) {
 				resp = null;
@@ -236,6 +295,27 @@
 	$effect(() => {
 		if (kanjiChar && kanjiAnchor) scrollToKanji();
 	});
+
+	function jumpToSegment(s: import('#lib/api.ts').Segment, segIdx: number) {
+		if (!resp?.results.length) return;
+		let cardIdx = resp.results.findIndex(
+			(r) =>
+				(s.kanji_form && r.kanji_form === s.kanji_form) ||
+				(s.text && (r.text === s.text || r.kanji_form === s.text)) ||
+				(s.reading && r.reading === s.reading)
+		);
+		if (cardIdx < 0 && segIdx < resp.results.length && resp.segments?.length === resp.results.length) {
+			cardIdx = segIdx;
+		}
+		if (cardIdx >= 0) {
+			activeCard = cardIdx;
+			const cards = document.querySelectorAll('.result-card');
+			cards[cardIdx]?.scrollIntoView({ block: 'start', behavior: 'smooth' });
+		} else {
+			const head = s.kanji_form || s.reading || s.text;
+			if (head) commit(head);
+		}
+	}
 </script>
 
 <svelte:head>
@@ -244,15 +324,16 @@
 
 <svelte:window onkeydown={handleWindowKeydown} />
 
-<Header hero={!hasResults} tagline={TAGLINE} />
+<Header hero={!hasResults && !searching} tagline={TAGLINE} />
 
-<form class="search-row" onsubmit={submit}>
+<form class="search-row" role="search" onsubmit={submit}>
 	<div class="search-pair">
 		<span class="search-icon-prefix">
 			<Icon name="search" size={18} />
 		</span>
 		<input
 			type="search"
+			id="search"
 			placeholder={hasResults ? 'Search English or Japanese…' : hint.text}
 			aria-label="Search"
 			bind:value={qInput}
@@ -261,33 +342,44 @@
 			autocapitalize="none"
 			spellcheck="false"
 		/>
-		<button type="submit" class="search-go" title="Search" aria-label="Search">
+		<button type="submit" class="btn-3d btn-3d-primary search-submit" title="Search" aria-label="Search">
 			Search
 		</button>
 	</div>
 	<button
 		type="button"
-		class="btn tertiary"
+		class="btn-3d"
 		title="Random {level} kanji"
 		aria-label="Random {level} kanji"
 		onclick={randomKanji}
 	>
 		<Icon name="shuffle" size={17} />
 	</button>
-	<Popover icon="school" label={level} title="JLPT level for grammar explanations">
+	<Popover icon="school" label={level} title="JLPT level for grammar explanations" buttonClass="btn-3d">
 		<p class="popover-title">JLPT Level</p>
 		<Segmented options={LEVELS} value={level} onchange={setLevel} label="JLPT level" />
 	</Popover>
 </form>
 
-{#if searching}
-	<p class="searching-line"><span class="spinner"></span> Searching dictionary…</p>
+<div class="sr-only" role="status" aria-live="polite">{announce}</div>
+
+{#if searching && !resp}
+	<div class="skeletons" aria-hidden="true">
+		{#each [0, 1, 2] as n (n)}
+			<div class="skeleton-card">
+				<span class="sk sk-head"></span>
+				<span class="sk sk-line"></span>
+				<span class="sk sk-line short"></span>
+				<span class="sk sk-line"></span>
+			</div>
+		{/each}
+	</div>
 {/if}
 {#if waking && searching}
-	<p class="wake">The API is taking a moment — it may be waking up from cold standby…</p>
+	<p class="wake">Taking a bit longer — the service may be starting up.</p>
 {/if}
 {#if error}
-	<div class="error-banner"><Icon name="warning" size={16} /> {error}</div>
+	<div class="error-banner" role="alert"><Icon name="warning" size={16} /> {error}</div>
 {/if}
 
 {#if resp}
@@ -300,11 +392,19 @@
 	<div class="stats-line">
 		<span class="stats-count">{resp.results.length} {resp.results.length === 1 ? 'entry' : 'entries'}</span>
 		<Feedback kind="search" refId={resp.search_id ?? null} query={committed} />
+		{#if committed}<ShareButton query={committed} />{/if}
 		<span class="stats-details">
-			<span class="stats-info" aria-label="Query route, timing and cache details">
+			<!-- svelte-ignore a11y_no_noninteractive_tabindex — focusable so the details tooltip opens by keyboard -->
+			<span
+				class="stats-info"
+				role="img"
+				tabindex="0"
+				aria-label="Query route, timing and cache details"
+				aria-describedby={infoId}
+			>
 				<Icon name="info" size={14} />
 			</span>
-			<span class="stats-pop" role="tooltip">
+			<span class="stats-pop" role="tooltip" id={infoId}>
 				<span class="popover-title">Technical info</span>
 				<span class="stats-meta"
 					><span class="stats-label">route</span>{resp.mode}{meta?.route
@@ -328,7 +428,7 @@
 	{/if}
 
 	{#if resp.segments?.length}
-		<SegChips segments={resp.segments} />
+		<SegChips segments={resp.segments} onjump={jumpToSegment} />
 	{/if}
 
 	{#if !resp.results.length}
@@ -357,7 +457,7 @@
 	{/if}
 
 	{#each resp.results as r, i (`${r.id ?? r.text}-${i}`)}
-		<ResultCard result={r} {level} onPickKanji={commit} />
+		<ResultCard result={r} {level} onPickKanji={commit} active={i === activeCard} />
 	{/each}
 
 	{#if resp.results.length >= wantResults && wantResults < MAX_RESULTS}
@@ -378,6 +478,44 @@
 				<span>{ex}</span>
 			</button>
 		{/each}
+	</div>
+	{#if recent.length}
+		<div class="recent">
+			<p class="popover-title">
+				Recent
+				<button
+					type="button"
+					class="recent-clear"
+					onclick={() => {
+						clearRecent();
+						recent = [];
+					}}>Clear</button
+				>
+			</p>
+			<div class="pills" aria-label="Recent searches">
+				{#each recent as q (q)}
+					<button type="button" class="pill" onclick={() => commit(q)}>
+						<Icon name="search" size={14} />
+						<span lang="ja">{q}</span>
+					</button>
+				{/each}
+			</div>
+		</div>
+	{/if}
+{/if}
+
+<!-- Floating navigation button -->
+{#if showBackToTop}
+	<div class="floating-buttons">
+		<button
+			type="button"
+			class="floating-btn visible"
+			onclick={scrollToTop}
+			title="Back to top"
+			aria-label="Back to top"
+		>
+			<Icon name="arrow-up" size={16} />
+		</button>
 	</div>
 {/if}
 

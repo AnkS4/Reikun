@@ -13,7 +13,7 @@
 	/* Text hierarchy — Rich Sumi Ink */
 	--text: #161514;
 	--text-muted: #665f56;
-	--text-faint: #999084;
+	--text-faint: #70685d;
 
 	/* Brand & Semantic Accents — Aizome Indigo & Botanicals */
 	--primary: #1f4874;
@@ -85,7 +85,7 @@
 	/* Text hierarchy — Cool moonlit off-white / slate blue */
 	--text: #eef3fa;
 	--text-muted: #9fb0c4;
-	--text-faint: #67788e;
+	--text-faint: #8294aa;
 
 	/* Brand & Semantic Accents — Sky indigo */
 	--primary: #7cb3f0;
@@ -140,7 +140,7 @@
 	/* Text hierarchy — High-contrast pure white to muted silvery gray */
 	--text: #ffffff;
 	--text-muted: #b5b5b5;
-	--text-faint: #707070;
+	--text-faint: #8a8a8a;
 
 	/* Brand & Semantic Accents — Vibrant and luminescent on pure black */
 	--primary: #85b8ea;
@@ -477,6 +477,8 @@ ruby rt {
 	min-width: 0;
 	position: relative;
 	background: color-mix(in srgb, var(--surface) 70%, transparent);
+	backdrop-filter: blur(8px);
+	-webkit-backdrop-filter: blur(8px);
 	border: 1px solid var(--border);
 	border-radius: var(--radius-md);
 	box-shadow: var(--shadow-sm);
@@ -526,6 +528,36 @@ ruby rt {
 	opacity: 0.6;
 }
 
+.search-submit {
+	flex-shrink: 0;
+	margin: 0;
+	--py: 0.7rem;
+	--px: 1.2rem;
+	padding: var(--py) var(--px);
+	font-size: 0.9rem;
+	background: linear-gradient(180deg, var(--primary-btn-base-2), var(--primary-btn-base));
+	color: #ffffff;
+	border: none;
+	border-radius: 0;
+	box-shadow: none;
+	font-weight: 600;
+	transition: background 120ms ease;
+}
+
+.search-submit:hover {
+	background: linear-gradient(180deg, var(--primary-btn-base), var(--primary-btn-shadow));
+}
+
+.search-submit:active {
+	background: linear-gradient(180deg, var(--primary-btn-shadow), var(--primary-btn-base));
+}
+
+/* Remove 3D effects from integrated search button */
+.search-submit::before,
+.search-submit::after {
+	display: none;
+}
+
 .search-kbd {
 	display: inline-flex;
 	align-items: center;
@@ -544,63 +576,18 @@ ruby rt {
 	pointer-events: none;
 }
 
-.search-go {
-	font: inherit;
-	font-size: 0.92rem;
-	font-weight: 500;
-	display: inline-flex;
-	align-items: center;
-	gap: 0.35rem;
-	padding: 0 1.15rem;
-	margin: 3px;
-	border: 1px solid var(--btn-primary-border);
-	border-radius: calc(var(--radius-md) - 3px);
-	background: var(--btn-primary-bg);
-	color: var(--btn-primary-text);
-	cursor: pointer;
-	transition: background-color 0.15s ease, filter 0.15s ease, border-color 0.15s ease;
-	flex-shrink: 0;
-}
-
-.search-go:hover {
-	background: var(--btn-primary-hover);
-}
-
-.search-go:active {
-	transform: scale(0.98);
-}
 
 /* Auxiliary controls on the search row */
-.search-row > .btn.tertiary,
+.search-row > .btn-3d,
 .search-row > .popover-wrap {
 	flex-shrink: 0;
-	background: color-mix(in srgb, var(--surface) 70%, transparent);
-	border: 1px solid var(--border-soft);
-	border-radius: var(--radius-md);
-	box-shadow: var(--shadow-sm);
-	transition: all 0.15s ease;
-}
-
-.search-row > .btn.tertiary:hover,
-.search-row > .popover-wrap:hover {
-	border-color: var(--border-hover);
-}
-
-.search-row > .btn.tertiary,
-.search-row .popover-wrap > .btn {
-	padding: 0 0.95rem;
 }
 
 .search-row > .popover-wrap {
 	display: flex;
+	position: relative;
 }
 
-.search-row .popover-wrap > .btn {
-	height: 100%;
-	border-radius: var(--radius-md);
-	border: none;
-	background: transparent;
-}
 
 /* ---------- Buttons ---------- */
 .btn {
@@ -608,7 +595,7 @@ ruby rt {
 	font-size: 0.9rem;
 	font-weight: 500;
 	padding: 0.55rem 0.95rem;
-	border-radius: var(--radius-sm);
+	border-radius: var(--radius-md);
 	border: 1px solid transparent;
 	cursor: pointer;
 	display: inline-flex;
@@ -616,40 +603,10 @@ ruby rt {
 	justify-content: center;
 	gap: 0.45rem;
 	white-space: nowrap;
-	transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease;
+	transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease, transform 150ms cubic-bezier(0, 0, 0.58, 1), box-shadow 150ms cubic-bezier(0, 0, 0.58, 1);
 	user-select: none;
 }
 
-.btn:active:not(:disabled) {
-	transform: translateY(1px);
-}
-
-.btn.primary {
-	background: var(--btn-primary-bg);
-	color: var(--btn-primary-text);
-	border: 1px solid var(--btn-primary-border);
-}
-
-.btn.primary:hover {
-	background: var(--btn-primary-hover);
-}
-
-.btn.secondary {
-	background: var(--surface-soft);
-	color: var(--text);
-	border-color: var(--border-soft);
-	box-shadow: var(--shadow-sm);
-}
-
-.btn.secondary:hover {
-	background: var(--surface-active);
-	border-color: var(--border-hover);
-}
-
-.btn.secondary:disabled {
-	opacity: 0.5;
-	cursor: not-allowed;
-}
 
 .btn.tertiary {
 	background: transparent;
@@ -854,7 +811,7 @@ ruby rt {
 	background: var(--surface-soft);
 	border: 1px solid var(--border-soft);
 	border-radius: var(--radius-sm);
-	cursor: help;
+	cursor: pointer;
 	text-align: center;
 	transition: all 0.15s ease;
 }
@@ -1078,6 +1035,7 @@ a.kanji-tip {
 	margin: 1.15rem 0;
 	background: var(--surface);
 	box-shadow: var(--shadow-sm);
+	scroll-margin-top: 6rem;
 	transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
 }
 
@@ -1816,11 +1774,13 @@ a.kanji-tip {
 	}
 
 	.search-row > .btn.tertiary,
+	.search-row > .btn-3d,
 	.search-row > .popover-wrap {
 		min-height: 2.75rem;
 	}
 
-	.search-row > .btn.tertiary {
+	.search-row > .btn.tertiary,
+	.search-row > .btn-3d {
 		margin-left: auto;
 	}
 
@@ -1839,4 +1799,556 @@ a.kanji-tip {
 		animation-duration: 0.01ms !important;
 		transition-duration: 0.01ms !important;
 	}
+}
+
+
+/* ---------- Floating Buttons ---------- */
+.floating-buttons {
+	position: fixed;
+	bottom: calc(1.5rem + env(safe-area-inset-bottom, 0px));
+	right: 1.5rem;
+	display: flex;
+	flex-direction: column;
+	gap: 0.6rem;
+	z-index: 90;
+}
+
+
+/* ---------- Helix Loader ---------- */
+.helix-loader {
+	width: 2em;
+	height: 2em;
+	position: relative;
+	display: inline-block;
+	vertical-align: middle;
+}
+
+.helix-loader::before,
+.helix-loader::after {
+	content: '';
+	position: absolute;
+	inset: 0;
+	border-radius: 50%;
+	border: 3px solid transparent;
+}
+
+.helix-loader::before {
+	border-top-color: var(--primary);
+	border-right-color: var(--primary);
+	animation: helix-spin-1 1s ease-in-out infinite;
+}
+
+.helix-loader::after {
+	border-bottom-color: var(--primary);
+	border-left-color: var(--primary);
+	animation: helix-spin-2 1s ease-in-out infinite;
+}
+
+@keyframes helix-spin-1 {
+	0% { transform: rotate(0deg); }
+	50% { transform: rotate(180deg); }
+	100% { transform: rotate(360deg); }
+}
+
+@keyframes helix-spin-2 {
+	0% { transform: rotate(0deg); }
+	50% { transform: rotate(-180deg); }
+	100% { transform: rotate(-360deg); }
+}
+
+/* ---------- Layered glass buttons ----------
+   Three stacked layers, all inside the button's own box (so a stretched button
+   is exactly as tall as the search bar):
+     1. back   = the button background — a plate in the THEME's own colour
+                 (warm beige / midnight navy / graphite), see --btn-base*
+     2. glass  = ::before, a translucent white gradient sitting --lip higher,
+                 so the plate shows through it and a lip peeks out below
+     3. sheen  = ::after, a diagonal highlight on the glass
+   Press = glass and label slide down by --press. No 3D transforms and no
+   backdrop-filter (backdrop-filter forces transform-style: flat, which is
+   what made the old back layer paint over the labels). Glass layers sit at
+   z-index:-1 inside an isolated stacking context, so labels are always on top. */
+:root {
+	--lip: 4px;
+	--btn-base: #cfc2ad;
+	--btn-base-2: #e8ddcd;
+	--btn-base-shadow: #a89880;
+	--glass-hi: rgba(255, 255, 255, 0.88);
+	--glass-lo: rgba(255, 255, 255, 0.52);
+	--glass-edge: rgba(255, 255, 255, 0.96);
+	--glass-shade: rgba(70, 52, 20, 0.14);
+	--glass-border: rgba(45, 38, 30, 0.22);
+
+	--primary-btn-base: #2a5a8a;
+	--primary-btn-base-2: #3a75a8;
+	--primary-btn-shadow: #1a3d5f;
+	--primary-glass-hi: rgba(255, 255, 255, 0.42);
+	--primary-glass-lo: rgba(255, 255, 255, 0.15);
+	--primary-glass-edge: rgba(255, 255, 255, 0.62);
+	--primary-glass-shade: rgba(0, 0, 0, 0.28);
+	--primary-glass-border: rgba(255, 255, 255, 0.28);
+}
+
+[data-theme='dark'] {
+	--lip: 4px;
+	--btn-base: #1a2b42;
+	--btn-base-2: #26405e;
+	--btn-base-shadow: #0e1b2b;
+	--glass-hi: rgba(180, 210, 255, 0.28);
+	--glass-lo: rgba(120, 165, 220, 0.10);
+	--glass-edge: rgba(210, 230, 255, 0.45);
+	--glass-shade: rgba(0, 0, 0, 0.38);
+	--glass-border: rgba(160, 195, 240, 0.28);
+
+	--primary-btn-base: #3a6a9a;
+	--primary-btn-base-2: #4a85b8;
+	--primary-btn-shadow: #1a3d5f;
+	--primary-glass-hi: rgba(255, 255, 255, 0.38);
+	--primary-glass-lo: rgba(255, 255, 255, 0.12);
+	--primary-glass-edge: rgba(255, 255, 255, 0.58);
+	--primary-glass-shade: rgba(0, 0, 0, 0.32);
+	--primary-glass-border: rgba(140, 195, 255, 0.48);
+}
+
+[data-theme='oled'] {
+	--lip: 4px;
+	--btn-base: #141414;
+	--btn-base-2: #242424;
+	--btn-base-shadow: #000000;
+	--glass-hi: rgba(255, 255, 255, 0.22);
+	--glass-lo: rgba(255, 255, 255, 0.08);
+	--glass-edge: rgba(255, 255, 255, 0.40);
+	--glass-shade: rgba(0, 0, 0, 0.58);
+	--glass-border: rgba(255, 255, 255, 0.26);
+
+	--primary-btn-base: #1a4a7a;
+	--primary-btn-base-2: #2a6a9a;
+	--primary-btn-shadow: #0a1a2a;
+	--primary-glass-hi: rgba(150, 200, 255, 0.42);
+	--primary-glass-lo: rgba(100, 165, 235, 0.12);
+	--primary-glass-edge: rgba(200, 230, 255, 0.62);
+	--primary-glass-shade: rgba(0, 0, 0, 0.45);
+	--primary-glass-border: rgba(140, 195, 255, 0.52);
+}
+
+.btn-3d,
+.btn-3d-primary,
+.btn.primary,
+.btn.secondary,
+.floating-btn,
+.search-row .btn,
+.search-row .btn-3d,
+.search-row .btn-3d-primary,
+.search-row .popover-wrap > .btn {
+	--py: 0.55rem;
+	--px: 1.15rem;
+	--fg: var(--text);
+
+	position: relative;
+	isolation: isolate;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.5em;
+	font: inherit;
+	font-size: 0.92rem;
+	font-weight: 600;
+	white-space: nowrap;
+	color: var(--fg);
+	/* Back plate — full button shape; bottom shadow is the raised lip */
+	background: linear-gradient(180deg, var(--btn-base-2), var(--btn-base));
+	border: 0;
+	border-radius: var(--radius-md);
+	box-shadow: 0 var(--lip) 0 0 var(--btn-base-shadow), var(--shadow-sm);
+	/* Extra bottom padding reserves space for the lip so content doesn't overlap it */
+	padding: var(--py) var(--px) calc(var(--py) + var(--lip));
+	cursor: pointer;
+	user-select: none;
+	-webkit-tap-highlight-color: transparent;
+	transition: transform 120ms ease, box-shadow 120ms ease, color 120ms ease;
+}
+
+/* Glass face — same width & border-radius as back plate, but its bottom
+   edge stops --lip px above the button's own bottom, leaving the plate lip
+   visible below it. */
+.btn-3d::before,
+.btn-3d-primary::before,
+.btn.primary::before,
+.btn.secondary::before,
+.floating-btn::before,
+.search-row .btn::before,
+.search-row .btn-3d::before,
+.search-row .btn-3d-primary::before,
+.search-row .popover-wrap > .btn::before {
+	content: '';
+	position: absolute;
+	z-index: -1;
+	inset: 0 0 var(--lip) 0;
+	border-radius: inherit;
+	background:
+		linear-gradient(180deg, var(--glass-hi), var(--glass-lo)),
+		url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+	background-blend-mode: overlay;
+	border: 1px solid var(--glass-border);
+	box-shadow: inset 0 1px 2px var(--glass-edge), inset 0 -1px 2px var(--glass-shade);
+	pointer-events: none;
+	transition: background 120ms ease, border-color 120ms ease, box-shadow 120ms ease, inset 120ms ease;
+}
+
+/* Sheen effect — diagonal highlight on the glass */
+.btn-3d::after,
+.btn-3d-primary::after,
+.btn.primary::after,
+.btn.secondary::after,
+.floating-btn::after,
+.search-row .btn::after,
+.search-row .btn-3d::after,
+.search-row .btn-3d-primary::after,
+.search-row .popover-wrap > .btn::after {
+	content: '';
+	position: absolute;
+	z-index: -1;
+	inset: 0 0 var(--lip) 0;
+	border-radius: inherit;
+	background: linear-gradient(135deg, rgba(255, 255, 255, 0.4) 0%, transparent 30%, transparent 100%);
+	pointer-events: none;
+	transition: opacity 120ms ease;
+	opacity: 0.6;
+}
+
+/* Search row: all buttons stretch to the bar height */
+.search-row .btn,
+.search-row .btn-3d,
+.search-row .btn-3d-primary,
+.search-row .popover-wrap > .btn {
+	align-self: stretch;
+	/* Match search bar input padding exactly */
+	--py: 0.7rem;
+	padding: var(--py) var(--px) calc(var(--py) + var(--lip));
+	min-height: calc(0.7rem * 2 + 1.05rem + var(--lip));
+}
+
+/* Ensure search button specifically stretches */
+.search-row > .btn-3d-primary {
+	align-self: stretch;
+	--py: 0.7rem;
+	padding: var(--py) var(--px) calc(var(--py) + var(--lip));
+	min-height: calc(0.7rem * 2 + 1.05rem + var(--lip));
+}
+
+/* Primary actions */
+.btn-3d-primary,
+.btn.primary {
+	--fg: #ffffff;
+	background: linear-gradient(180deg, var(--primary-btn-base-2), var(--primary-btn-base));
+	box-shadow: 0 var(--lip) 0 0 var(--primary-btn-shadow), var(--shadow-sm);
+}
+
+.btn-3d-primary::before,
+.btn.primary::before {
+	background: linear-gradient(180deg, var(--primary-glass-hi), var(--primary-glass-lo));
+	border-color: var(--primary-glass-border);
+	box-shadow: inset 0 2px 4px var(--primary-glass-edge), inset 0 -2px 4px var(--primary-glass-shade);
+}
+
+/* States — hover: glass sinks to bottom (one layer), active: glass fully seated */
+.btn-3d:hover,
+.btn-3d-primary:hover,
+.btn.primary:hover,
+.btn.secondary:hover,
+.floating-btn:hover,
+.search-row .btn:hover,
+.search-row .btn-3d:hover,
+.search-row .btn-3d-primary:hover,
+.search-row .popover-wrap > .btn:hover {
+	transform: translateY(var(--lip));
+	box-shadow: 0 0 0 0 var(--btn-base-shadow, var(--btn-base)), var(--shadow-sm);
+}
+
+.btn-3d-primary:hover,
+.btn.primary:hover {
+	box-shadow: 0 0 0 0 var(--primary-btn-shadow, var(--primary-btn-base)), var(--shadow-sm);
+}
+
+.btn-3d:hover::before,
+.btn-3d-primary:hover::before,
+.btn.primary:hover::before,
+.btn.secondary:hover::before,
+.floating-btn:hover::before,
+.search-row .btn:hover::before,
+.search-row .btn-3d:hover::before,
+.search-row .btn-3d-primary:hover::before,
+.search-row .popover-wrap > .btn:hover::before {
+	inset: var(--lip) 0 0 0;
+	border-color: var(--border-hover);
+}
+
+.btn-3d:hover::after,
+.btn-3d-primary:hover::after,
+.btn.primary:hover::after,
+.btn.secondary:hover::after,
+.floating-btn:hover::after,
+.search-row .btn:hover::after,
+.search-row .btn-3d:hover::after,
+.search-row .btn-3d-primary:hover::after,
+.search-row .popover-wrap > .btn:hover::after {
+	opacity: 0.8;
+}
+
+.btn-3d-primary:hover::before,
+.btn.primary:hover::before {
+	border-color: var(--primary-glass-edge);
+}
+
+.btn-3d-primary:hover::after,
+.btn.primary:hover::after {
+	opacity: 0.9;
+}
+
+.btn-3d:active,
+.btn-3d-primary:active,
+.btn.primary:active,
+.btn.secondary:active,
+.floating-btn:active,
+.search-row .btn:active,
+.search-row .btn-3d:active,
+.search-row .btn-3d-primary:active,
+.search-row .popover-wrap > .btn:active {
+	transform: translateY(var(--lip));
+	box-shadow: 0 0 0 0 var(--btn-base-shadow), var(--shadow-sm);
+}
+
+.btn-3d:active::before,
+.btn-3d-primary:active::before,
+.btn.primary:active::before,
+.btn.secondary:active::before,
+.floating-btn:active::before,
+.search-row .btn:active::before,
+.search-row .btn-3d:active::before,
+.search-row .btn-3d-primary:active::before,
+.search-row .popover-wrap > .btn:active::before {
+	inset: var(--lip) 0 0 0;
+}
+
+.btn-3d:active::after,
+.btn-3d-primary:active::after,
+.btn.primary:active::after,
+.btn.secondary:active::after,
+.floating-btn:active::after,
+.search-row .btn:active::after,
+.search-row .btn-3d:active::after,
+.search-row .btn-3d-primary:active::after,
+.search-row .popover-wrap > .btn:active::after {
+	opacity: 0.3;
+}
+
+.btn-3d-primary:active,
+.btn.primary:active {
+	box-shadow: 0 0 0 0 var(--primary-btn-shadow), var(--shadow-sm);
+}
+
+.btn.secondary:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+	transform: none;
+}
+
+/* Floating buttons keep their reveal behaviour */
+.floating-btn {
+	--py: 0.5em;
+	--px: 0.6em;
+	--fg: var(--text-muted);
+	font-size: 0.85rem;
+	opacity: 0;
+	pointer-events: none;
+	transition: transform 120ms ease, box-shadow 120ms ease, color 120ms ease, opacity 200ms ease;
+}
+
+.floating-btn:hover {
+	--fg: var(--text);
+}
+
+.floating-btn.visible {
+	opacity: 1;
+	pointer-events: auto;
+}
+
+/* Windows high-contrast: layers vanish, keep a visible edge */
+@media (forced-colors: active) {
+	.btn-3d, .btn-3d-primary, .btn.primary, .btn.secondary, .floating-btn, .search-row .btn, .search-row .btn-3d, .search-row .btn-3d-primary, .search-row .popover-wrap > .btn {
+		border: 1px solid ButtonText;
+	}
+	.btn-3d::before, .btn-3d-primary::before, .btn.primary::before, .btn.secondary::before, .floating-btn::before, .search-row .btn::before, .search-row .btn-3d::before, .search-row .btn-3d-primary::before, .search-row .popover-wrap > .btn::before,
+	.btn-3d::after, .btn-3d-primary::after, .btn.primary::after, .btn.secondary::after, .floating-btn::after, .search-row .btn::after, .search-row .btn-3d::after, .search-row .btn-3d-primary::after, .search-row .popover-wrap > .btn::after {
+		display: none;
+	}
+}
+
+
+/* ---------- Share button (results header) ---------- */
+.share-btn {
+	font-family: var(--font-mono);
+	font-size: 0.78rem;
+	padding: 0.25rem 0.55rem;
+	gap: 0.4rem;
+}
+
+/* ---------- Accessibility ---------- */
+.sr-only {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip-path: inset(50%);
+	white-space: nowrap;
+	border: 0;
+}
+
+.skip-link {
+	position: absolute;
+	left: 1rem;
+	top: -4rem;
+	z-index: 1000;
+	padding: 0.6rem 1rem;
+	background: var(--surface);
+	color: var(--text);
+	border: 1px solid var(--border-hover);
+	border-radius: var(--radius-md);
+	box-shadow: var(--shadow-lg);
+	font-weight: 500;
+	transition: top 0.15s ease;
+}
+
+.skip-link:focus {
+	top: 1rem;
+}
+
+main:focus {
+	outline: none;
+}
+
+/* Hover-only tooltips also open on keyboard focus */
+.status-dot:focus-visible .status-pop,
+.stats-details:focus-within .stats-pop {
+	display: block;
+}
+
+/* ---------- Performance & modern-web polish ---------- */
+html {
+	scrollbar-gutter: stable;                 /* no sideways jump when results make the page scroll */
+	scroll-padding-top: 5.5rem;               /* anchors clear the sticky search row */
+}
+
+body {
+	min-height: 100dvh;                       /* mobile browser chrome safe */
+}
+
+button, a, input, summary {
+	touch-action: manipulation;               /* removes the tap delay / double-tap zoom */
+}
+
+.hero-heading, .compact-title, .tagline {
+	text-wrap: balance;
+}
+
+/* Route-change cross-fade (SvelteKit onNavigate -> document.startViewTransition) */
+@media (prefers-reduced-motion: no-preference) {
+	::view-transition-old(root),
+	::view-transition-new(root) {
+		animation-duration: 160ms;
+	}
+}
+
+@media (prefers-contrast: more) {
+	:root, [data-theme] {
+		--border: color-mix(in srgb, var(--text) 45%, transparent);
+		--border-hover: var(--text);
+	}
+}
+
+/* ---------- Search feel & reading flow ---------- */
+.result-card.kbd-active {
+	border-color: var(--primary);
+	box-shadow: 0 0 0 3px var(--primary-light), var(--shadow-md);
+	scroll-margin-top: 6rem;
+}
+
+.copy-word {
+	margin-left: auto;
+	align-self: center;
+}
+
+.seg-full {
+	display: block;
+	margin-top: 0.4rem;
+	font-family: var(--font-mono);
+	font-size: 0.75rem;
+	color: var(--primary);
+	text-decoration: none;
+}
+
+.seg-full:hover {
+	text-decoration: underline;
+}
+
+.skeletons {
+	margin-top: 1rem;
+}
+
+.skeleton-card {
+	border: 1px solid var(--border-soft);
+	border-radius: var(--radius-lg);
+	padding: 1.35rem 1.5rem;
+	margin: 1.15rem 0;
+	display: flex;
+	flex-direction: column;
+	gap: 0.7rem;
+	min-height: 9rem;
+}
+
+.sk {
+	display: block;
+	height: 0.8rem;
+	border-radius: var(--radius-sm);
+	background: linear-gradient(90deg, var(--surface-soft), var(--surface-active), var(--surface-soft));
+	background-size: 200% 100%;
+	animation: sk-shimmer 1.4s ease-in-out infinite;
+}
+
+.sk-head { width: 28%; height: 1.6rem; }
+.sk-line { width: 90%; }
+.sk-line.short { width: 55%; }
+
+@keyframes sk-shimmer {
+	from { background-position: 100% 0; }
+	to { background-position: -100% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.sk { animation: none; }
+}
+
+.recent {
+	margin-top: 1.5rem;
+}
+
+.recent .popover-title {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+
+.recent-clear {
+	font: inherit;
+	background: none;
+	border: none;
+	color: var(--text-faint);
+	cursor: pointer;
+	text-transform: uppercase;
+}
+
+.recent-clear:hover {
+	color: var(--text);
 }

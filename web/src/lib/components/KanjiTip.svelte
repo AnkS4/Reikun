@@ -52,17 +52,28 @@
 		pinned = false;
 		hovered = false;
 	}
+
+	$effect(() => {
+		if (!visible) return;
+		const onClick = (e: MouseEvent) => {
+			if (anchorEl && !anchorEl.contains(e.target as Node)) close();
+		};
+		const onKey = (e: KeyboardEvent) => {
+			if (e.key === 'Escape') close();
+		};
+		window.addEventListener('click', onClick);
+		window.addEventListener('keydown', onKey);
+		window.addEventListener('scroll', close);
+		return () => {
+			window.removeEventListener('click', onClick);
+			window.removeEventListener('keydown', onKey);
+			window.removeEventListener('scroll', close);
+		};
+	});
 </script>
 
-<svelte:window
-	onclick={(e) => {
-		if (pinned && anchorEl && !anchorEl.contains(e.target as Node)) close();
-	}}
-	onkeydown={(e) => {
-		if (pinned && e.key === 'Escape') close();
-	}}
-	onscroll={close}
-/>
+<!-- Every kanji on the page renders one of these (hundreds on a results page), so
+     the window listeners exist only while this tip is showing — not once per kanji. -->
 
 {#snippet body()}
 	<span class="kanji-tip-body" role="tooltip">

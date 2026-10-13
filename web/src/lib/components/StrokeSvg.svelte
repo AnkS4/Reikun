@@ -23,7 +23,7 @@
 	>
 		<Icon name="replay" size={14} />
 	</button>
-	<svg viewBox={stroke.view_box} xmlns="http://www.w3.org/2000/svg">
+	<svg viewBox={stroke.view_box} xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Stroke order diagram">
 		{#each stroke.strokes as d, i (i)}
 			<path {d} pathLength="100" style="animation-delay:{strokeDelays[i]}"></path>
 		{/each}

@@ -47,7 +47,7 @@
 {#if card}
 	<div class="kanji-card">
 		<div class="kanji-card-left">
-			<p class="kanji-big">{char}</p>
+			<p class="kanji-big" lang="ja">{char}</p>
 			{#if card.stroke}
 				<StrokeSvg stroke={card.stroke} />
 			{/if}
@@ -104,7 +104,7 @@
 						{#each card.common_words as w, i ((w.kanji_form || w.reading) + i)}
 							{@const head = w.kanji_form || w.reading}
 							<a class="kanji-word-row" href="/?q={encodeURIComponent(head)}" title="Search {head}">
-								<span class="kanji-word-head"><Ruby parts={w.ruby} tips={false} /></span>
+								<span class="kanji-word-head" lang="ja"><Ruby parts={w.ruby} tips={false} /></span>
 								<span class="kanji-word-gloss">{w.gloss}</span>
 							</a>
 						{/each}
