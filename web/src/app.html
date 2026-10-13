@@ -60,7 +60,12 @@
 		<script>
 			// Apply persisted theme before first paint to avoid a flash.
 			(function () {
-				var t = localStorage.getItem('reikun-theme') || 'system';
+				var t = 'system';
+				try {
+					t = localStorage.getItem('reikun-theme') || 'system';
+				} catch (_) {
+					// Storage may be blocked; use the system theme for this visit.
+				}
 				if (t === 'amoled') t = 'oled'; // legacy value
 				var resolved = t;
 				if (t === 'system') {
@@ -70,7 +75,7 @@
 				document.documentElement.dataset.theme = resolved;
 				// Keep in sync with --bg in app.css and CHROME_COLOR in theme.svelte.ts.
 				var bg = { light: '#fcfaf6', dark: '#0f1620', oled: '#000000' }[resolved] || '#fcfaf6';
-				document.getElementById('theme-color').setAttribute('content', bg);
+				document.getElementById('theme-color')?.setAttribute('content', bg);
 			})();
 		</script>
 		%sveltekit.head%

@@ -4,6 +4,7 @@
  * keeps it in sync afterwards.
  */
 import { browser } from '$app/env';
+import { safeStorage } from './storage.ts';
 
 export type ThemeChoice = 'system' | 'light' | 'dark' | 'oled';
 const KEY = 'reikun-theme';
@@ -14,7 +15,7 @@ const darkQuery = browser ? matchMedia('(prefers-color-scheme: dark)') : null;
 
 function stored(): ThemeChoice {
 	if (!browser) return 'system';
-	const v = localStorage.getItem(KEY);
+	const v = safeStorage.get(KEY);
 	if (v === 'amoled') return 'oled'; // legacy value — renamed to the generic term
 	return v && CHOICES.includes(v as ThemeChoice) ? (v as ThemeChoice) : 'system';
 }
@@ -55,7 +56,7 @@ export const theme = {
 	},
 	set(c: ThemeChoice) {
 		choice = c;
-		localStorage.setItem(KEY, c);
+		safeStorage.set(KEY, c);
 		apply();
 	}
 };

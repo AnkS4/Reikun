@@ -176,7 +176,6 @@
 			error = '';
 			return;
 		}
-		recent = pushRecent(q);
 		runSearch(q);
 	});
 
@@ -205,6 +204,7 @@
 			}
 			if (seq === reqSeq) {
 				resp = r;
+				recent = pushRecent(q);
 				activeCard = -1;
 			}
 		} catch (e) {

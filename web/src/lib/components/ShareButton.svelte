@@ -24,7 +24,13 @@
 	async function share() {
 		const data = { title: `${query} — Reikun`, text: `“${query}” in Reikun, the Japanese dictionary`, url };
 		// Native share sheet where it exists (phones, Safari, Edge); otherwise copy.
-		if (navigator.share && (!navigator.canShare || navigator.canShare(data))) {
+		let canNativeShare = false;
+		try {
+			canNativeShare = Boolean(navigator.share) && (!navigator.canShare || navigator.canShare(data));
+		} catch {
+			canNativeShare = false;
+		}
+		if (canNativeShare) {
 			try {
 				await navigator.share(data);
 				return;
