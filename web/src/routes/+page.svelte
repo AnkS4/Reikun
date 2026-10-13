@@ -342,7 +342,7 @@
 			autocapitalize="none"
 			spellcheck="false"
 		/>
-		<button type="submit" class="btn-3d btn-3d-primary search-submit" title="Search" aria-label="Search">
+		<button type="submit" class="search-submit">
 			Search
 		</button>
 	</div>

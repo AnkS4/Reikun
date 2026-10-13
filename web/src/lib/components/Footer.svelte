@@ -18,7 +18,7 @@
 			(Ulrich Apel, CC BY-SA 3.0).
 		</p>
 		<p class="footer-data">
-			Queries are logged anonymously to improve embeddings and ranking — zero cookies or cross-site tracking.
+			Queries are logged anonymously to improve embeddings and ranking — no cross-site tracking. Recent searches are stored locally in your browser.
 		</p>
 	</div>
 </footer>
