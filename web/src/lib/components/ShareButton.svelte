@@ -22,34 +22,36 @@
 	}
 
 	async function share() {
-		const data = { title: `${query} — Reikun`, text: `“${query}” in Reikun, the Japanese dictionary`, url };
-		// Native share sheet where it exists (phones, Safari, Edge); otherwise copy.
-		let canNativeShare = false;
-		try {
-			canNativeShare = Boolean(navigator.share) && (!navigator.canShare || navigator.canShare(data));
-		} catch {
-			canNativeShare = false;
-		}
-		if (canNativeShare) {
-			try {
-				await navigator.share(data);
-				return;
-			} catch (e) {
-				if (e instanceof DOMException && e.name === 'AbortError') return; // user closed the sheet
-			}
-		}
+		// Always copy the URL to clipboard on desktop
 		try {
 			await navigator.clipboard.writeText(url);
 			flash();
 		} catch {
-			/* clipboard blocked — nothing sensible left to do */
+			// Clipboard API blocked (e.g., by uBlock), try deprecated execCommand
+			try {
+				const textArea = document.createElement('textarea');
+				textArea.value = url;
+				textArea.style.position = 'fixed';
+				textArea.style.left = '-9999px';
+				textArea.style.top = '0';
+				document.body.appendChild(textArea);
+				textArea.focus();
+				textArea.select();
+				const successful = document.execCommand('copy');
+				document.body.removeChild(textArea);
+				if (successful) {
+					flash();
+				}
+			} catch {
+				/* Both methods failed — nothing sensible left to do */
+			}
 		}
 	}
 </script>
 
 <button
 	type="button"
-	class="btn tertiary share-btn"
+	class="btn tertiary copy-link-btn"
 	title="Share this search"
 	aria-label={copied ? 'Link copied' : 'Share this search'}
 	onclick={share}

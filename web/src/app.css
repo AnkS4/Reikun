@@ -2156,7 +2156,7 @@ a.kanji-tip {
 
 
 /* ---------- Share button (results header) ---------- */
-.share-btn {
+.copy-link-btn {
 	font-family: var(--font-mono);
 	font-size: 0.78rem;
 	padding: 0.25rem 0.55rem;
@@ -2479,6 +2479,44 @@ button, a, input, summary {
 /* :active rules stay AFTER :hover so a pressed button wins */
 .search-row .btn-3d:active::before,
 .search-row .popover-wrap > .btn:active::before {
+	inset: var(--lip) 0 0 0;
+}
+
+/* ---------- Example row buttons: same behavior as search row (no translateY) ---------- */
+.example-actions .btn-3d:hover,
+.example-actions .btn-3d:active {
+	transform: none;
+	box-shadow: inset 0 calc(var(--lip) * -1) 0 0 var(--btn-base-shadow), var(--shadow-sm);
+}
+
+.example-actions .btn-3d:hover {
+	filter: brightness(1.06);
+}
+
+.example-actions .btn-3d:hover::before {
+	inset: 1px 0 calc(var(--lip) - 1px) 0;
+}
+
+.example-actions .btn-3d:active::before {
+	inset: var(--lip) 0 0 0;
+}
+
+/* ---------- Floating buttons: same behavior as search row (no translateY) ---------- */
+.floating-buttons .floating-btn:hover,
+.floating-buttons .floating-btn:active {
+	transform: none;
+	box-shadow: inset 0 calc(var(--lip) * -1) 0 0 var(--btn-base-shadow), var(--shadow-sm);
+}
+
+.floating-buttons .floating-btn:hover {
+	filter: brightness(1.06);
+}
+
+.floating-buttons .floating-btn:hover::before {
+	inset: 1px 0 calc(var(--lip) - 1px) 0;
+}
+
+.floating-buttons .floating-btn:active::before {
 	inset: var(--lip) 0 0 0;
 }
 

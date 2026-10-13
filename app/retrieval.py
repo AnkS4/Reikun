@@ -944,6 +944,9 @@ def segment_japanese(query: str, max_len: int = MAX_JA_QUERY_CHARS) -> list[dict
     the tokenizer's boundaries and readings, and only if tokenizing itself
     fails does the greedy longest-match `_segment_greedy` run.
 
+    For mixed text (Japanese + English), segments the Japanese prefix and
+    appends the English suffix as-is.
+
     Returns [{"text", "kanji_form", "reading", "meanings"}, …] when the query
     decomposes into ≥2 parts. None when the query is itself a headword, is
     too long, or doesn't decompose. Greedy-fallback chips carry
@@ -952,6 +955,48 @@ def segment_japanese(query: str, max_len: int = MAX_JA_QUERY_CHARS) -> list[dict
     """
     if not query or len(query) > max_len:
         return None
+
+    # Handle mixed text: find where Japanese ends and English begins
+    import re
+    _JA_PATTERN = re.compile(r"[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff]+")
+    match = _JA_PATTERN.match(query)
+    if match:
+        ja_part = match.group()
+        en_part = query[len(ja_part):].strip()
+        # Only segment if there's non-trivial English after Japanese
+        if en_part and len(en_part) > 0:
+            # Segment the Japanese part
+            index = headword_index()
+            if ja_part in index:
+                # If Japanese part is a headword, just return the mixed parts
+                return [
+                    {"text": ja_part, "kanji_form": ja_part, "reading": "", "meanings": []},
+                    {"text": en_part, "kanji_form": en_part, "reading": "", "meanings": []}
+                ]
+            try:
+                ja_segments = _segment_sudachi(ja_part, index)
+            except Exception as exc:
+                log.warning("sudachi segmentation failed for %r: %s", ja_part, exc)
+                try:
+                    ja_segments = _segment_bare(ja_part)
+                except Exception as exc:
+                    log.warning("sudachi tokenizer failed for %r: %s", ja_part, exc)
+                    ja_segments = None
+            if not ja_segments:
+                if parts := _segment_greedy(ja_part, index):
+                    for p in parts:
+                        p["approx"] = True
+                    ja_segments = parts
+            if ja_segments:
+                # Append English part as-is
+                ja_segments.append({"text": en_part, "kanji_form": en_part, "reading": "", "meanings": []})
+                return ja_segments
+            # Fallback: return both parts as plain segments
+            return [
+                {"text": ja_part, "kanji_form": ja_part, "reading": "", "meanings": []},
+                {"text": en_part, "kanji_form": en_part, "reading": "", "meanings": []}
+            ]
+
     index = headword_index()
     if query in index:
         return None

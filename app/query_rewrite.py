@@ -49,7 +49,12 @@ class Rewrite:
 
 
 def is_japanese(text: str) -> bool:
-    return bool(_JAPANESE.search(text))
+    """Check if text starts with Japanese (for mixed text detection)."""
+    if not text:
+        return False
+    # Strip leading whitespace and check if first character is Japanese
+    text = text.lstrip()
+    return bool(_JAPANESE.match(text))
 
 
 _PAREN_TAIL = re.compile(r"\s*\(.*")

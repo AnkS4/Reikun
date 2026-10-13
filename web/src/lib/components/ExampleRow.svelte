@@ -94,7 +94,7 @@
 		{#if !expl || expl.level !== level}
 			<button
 				type="button"
-				class="btn {expl ? 'tertiary' : 'secondary'}"
+				class="btn-3d"
 				disabled={streaming}
 				onclick={explain}
 				title="JLPT-calibrated grammar explanation for this sentence"

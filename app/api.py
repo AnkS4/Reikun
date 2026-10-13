@@ -308,8 +308,7 @@ def search_endpoint(
     try:
         resp = search(q, n, mode, rewrite_mode=None if rewrite else "off")
     except Exception as exc:
-        logging.getLogger(__name__).exception("Search failed for query %r", q)
-        raise HTTPException(502, "Search is temporarily unavailable") from exc
+        raise HTTPException(502, f"Search failed: {exc}") from exc
     search_id = None
     if log:
         # .search stays inline — its row id is part of the response; the

@@ -176,6 +176,7 @@
 			error = '';
 			return;
 		}
+		recent = pushRecent(q);
 		runSearch(q);
 	});
 
@@ -204,7 +205,6 @@
 			}
 			if (seq === reqSeq) {
 				resp = r;
-				recent = pushRecent(q);
 				activeCard = -1;
 			}
 		} catch (e) {
@@ -471,6 +471,7 @@
 		</button>
 	{/if}
 {:else if !searching && !error}
+	{#if recent.length === 0}
 	<div class="pills" aria-label="Example searches">
 		{#each EXAMPLES as ex (ex)}
 			<button type="button" class="pill" onclick={() => commit(ex)}>
@@ -479,6 +480,7 @@
 			</button>
 		{/each}
 	</div>
+	{/if}
 	{#if recent.length}
 		<div class="recent">
 			<p class="popover-title">
@@ -511,8 +513,8 @@
 			type="button"
 			class="floating-btn visible"
 			onclick={scrollToTop}
-			title="Back to top"
-			aria-label="Back to top"
+			title="Scroll to top"
+			aria-label="Scroll to top"
 		>
 			<Icon name="arrow-up" size={16} />
 		</button>
