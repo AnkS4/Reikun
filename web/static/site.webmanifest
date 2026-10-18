@@ -13,37 +13,9 @@
       "type": "image/png"
     },
     {
-      "src": "/icons/icon-light-180.png",
-      "sizes": "180x180",
-      "type": "image/png"
-    },
-    {
-      "src": "/icons/icon-dark-180.png",
-      "sizes": "180x180",
-      "type": "image/png"
-    },
-    {
-      "src": "/icons/icon-circle.svg",
+      "src": "/icons/emblem.svg",
       "sizes": "any",
       "type": "image/svg+xml",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "/icons/icon-circle-180.png",
-      "sizes": "180x180",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "/icons/icon-dark-circle.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "/icons/icon-dark-circle-180.png",
-      "sizes": "180x180",
-      "type": "image/png",
       "purpose": "any maskable"
     }
   ]

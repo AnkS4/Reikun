@@ -352,7 +352,7 @@ ruby rt {
 	opacity: 0.8;
 }
 
-/* Brand icon alongside title — responsive to light/dark themes */
+/* Brand icon alongside title */
 .brand-icon {
 	width: 1.1em;
 	height: 1.1em;
@@ -360,33 +360,6 @@ ruby rt {
 	border-radius: 22%;
 	vertical-align: middle;
 	object-fit: contain;
-}
-
-.brand-icon-light {
-	display: inline-block;
-}
-
-.brand-icon-dark {
-	display: none;
-}
-
-[data-theme='dark'] .brand-icon-light,
-[data-theme='oled'] .brand-icon-light {
-	display: none;
-}
-
-[data-theme='dark'] .brand-icon-dark,
-[data-theme='oled'] .brand-icon-dark {
-	display: inline-block;
-}
-
-@media (prefers-color-scheme: dark) {
-	:root:not([data-theme='light']) .brand-icon-light {
-		display: none;
-	}
-	:root:not([data-theme='light']) .brand-icon-dark {
-		display: inline-block;
-	}
 }
 
 /* Both floating controls share one hit area: 2rem circle, neutral hover */

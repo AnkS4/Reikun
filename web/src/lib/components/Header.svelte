@@ -75,15 +75,9 @@
 		<h1 class="title-heading" class:hero-heading={hero} class:compact-title={!hero}>
 			<a class="title-home" href="/" title="Back to search">
 				<img
-					src="/icons/icon-light.svg"
+					src="/icons/emblem.svg"
 					alt=""
-					class="brand-icon brand-icon-light"
-					aria-hidden="true"
-				/>
-				<img
-					src="/icons/icon-dark.svg"
-					alt=""
-					class="brand-icon brand-icon-dark"
+					class="brand-icon"
 					aria-hidden="true"
 				/>
 				<span>Reikun</span>

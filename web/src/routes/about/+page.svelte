@@ -15,15 +15,9 @@
 <article class="about">
 	<div class="about-title-row">
 		<img
-			src="/icons/icon-light.svg"
+			src="/icons/emblem.svg"
 			alt=""
-			class="brand-icon brand-icon-light about-brand-icon"
-			aria-hidden="true"
-		/>
-		<img
-			src="/icons/icon-dark.svg"
-			alt=""
-			class="brand-icon brand-icon-dark about-brand-icon"
+			class="brand-icon about-brand-icon"
 			aria-hidden="true"
 		/>
 		<h1>About Reikun</h1>
