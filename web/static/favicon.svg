@@ -1,0 +1,11 @@
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+<style>
+  @media (prefers-color-scheme: dark) {
+    path.lens-stroke { stroke: #F6F3E9; }
+  }
+</style>
+<path class="lens-stroke" d="M22.6667 13.3333C22.6667 18.488 18.488 22.6667 13.3333 22.6667C8.17868 22.6667 4 18.488 4 13.3333C4 8.17868 8.17868 4 13.3333 4C18.488 4 22.6667 8.17868 22.6667 13.3333Z" stroke-width="3.33333" stroke="#19262C"/>
+<path d="M13.3332 18C15.9105 18 17.9998 15.9107 17.9998 13.3334C17.9998 10.756 15.9105 8.66669 13.3332 8.66669C10.7558 8.66669 8.6665 10.756 8.6665 13.3334C8.6665 15.9107 10.7558 18 13.3332 18Z" fill="#EF3C19"/>
+<path d="M20.6665 20.6667L29.3332 29.3334Z" fill="black"/>
+<path class="lens-stroke" d="M20.6665 20.6667L29.3332 29.3334" stroke-width="4.66667" stroke-linecap="round" stroke="#19262C"/>
+</svg>

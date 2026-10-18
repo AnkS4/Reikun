@@ -3,15 +3,7 @@
 	import { browser } from '$app/env';
 	import { page } from '$app/state';
 	import { goto } from '$app/navigation';
-	import {
-		apiRandomKanji,
-		apiSearch,
-		isTransient,
-		LEVELS,
-		sleep,
-		type Level,
-		type SearchResponse
-	} from '#lib/api.ts';
+	import { apiRandomKanji, apiSearch, LEVELS, type Level, type SearchResponse } from '#lib/api.ts';
 	import { isKanji } from '#lib/kanji.ts';
 	import Header from '#lib/components/Header.svelte';
 	import Footer from '#lib/components/Footer.svelte';
@@ -29,9 +21,9 @@
 	// Floating button state
 	let showBackToTop = $state(false);
 
+	const EXAMPLES = ['train', '国', '海外', 'How do you say cheese in Japanese', 'あの店のサービスは素晴らしいです。'];
 	const TAGLINE =
 		'Search in English or Japanese, break down sentences word-by-word with furigana and meanings, inspect kanji, and get grammar explanations.';
-	const EXAMPLES = ['train', '国', '海外', 'How do you say cheese in Japanese', 'あの店のサービスは素晴らしいです。'];
 	const HINTS = [
 		'Type or tap an example below'
 	];
@@ -65,7 +57,7 @@
 	}
 	let resp = $state.raw<SearchResponse | null>(null);
 	let searching = $state(false);
-	let waking = $state(false);
+	let randomBusy = $state(false);
 	let error = $state('');
 	let committed = $state('');
 	let wantResults = $state(DEFAULT_RESULTS);
@@ -181,28 +173,15 @@
 	});
 
 	// Stale-response guard: a superseded search can't overwrite newer results.
+	// Timeouts, automatic retries and the "server is waking up" banner live in
+	// the API layer (api.ts → <WakeBanner>), so this only tracks the latest request.
 	let reqSeq = 0;
 	async function runSearch(q: string) {
 		const seq = ++reqSeq;
 		searching = true;
-		waking = false;
 		error = '';
-		// Slow API on a scale-to-zero host (or a sleeping Qdrant free cluster)
-		// → tell the user it's waking, not hung, and retry once automatically.
-		const wakeTimer = setTimeout(() => {
-			if (seq === reqSeq) waking = true;
-		}, 3000);
 		try {
-			let r: SearchResponse;
-			try {
-				r = await apiSearch(q, wantResults);
-			} catch (e) {
-				if (seq !== reqSeq || !isTransient(e)) throw e;
-				waking = true;
-				await sleep(2000);
-				if (seq !== reqSeq) return;
-				r = await apiSearch(q, wantResults);
-			}
+			const r = await apiSearch(q, wantResults);
 			if (seq === reqSeq) {
 				resp = r;
 				activeCard = -1;
@@ -210,19 +189,10 @@
 		} catch (e) {
 			if (seq === reqSeq) {
 				resp = null;
-				error =
-					e instanceof TypeError
-						? 'The API is unreachable — it may be waking up after a cold start. Try again in a few seconds.'
-						: e instanceof Error
-							? e.message
-							: 'Search failed';
+				error = e instanceof Error ? e.message : 'Search failed';
 			}
 		} finally {
-			if (seq === reqSeq) {
-				clearTimeout(wakeTimer);
-				searching = false;
-				waking = false;
-			}
+			if (seq === reqSeq) searching = false;
 		}
 	}
 
@@ -259,10 +229,15 @@
 	}
 
 	async function randomKanji() {
+		if (randomBusy) return; // already fetching — extra taps would queue duplicate requests
+		randomBusy = true;
+		error = '';
 		try {
 			commit(await apiRandomKanji(level));
-		} catch {
-			error = 'Could not reach the API for a random kanji.';
+		} catch (e) {
+			error = e instanceof Error ? e.message : 'Could not get a random kanji.';
+		} finally {
+			randomBusy = false;
 		}
 	}
 
@@ -351,9 +326,11 @@
 		class="btn-3d"
 		title="Random {level} kanji"
 		aria-label="Random {level} kanji"
+		aria-busy={randomBusy}
+		disabled={randomBusy}
 		onclick={randomKanji}
 	>
-		<Icon name="shuffle" size={17} />
+		{#if randomBusy}<span class="spinner" aria-hidden="true"></span>{:else}<Icon name="shuffle" size={17} />{/if}
 	</button>
 	<Popover icon="school" label={level} title="JLPT level for grammar explanations" buttonClass="btn-3d">
 		<p class="popover-title">JLPT Level</p>
@@ -374,9 +351,6 @@
 			</div>
 		{/each}
 	</div>
-{/if}
-{#if waking && searching}
-	<p class="wake">Taking a bit longer — the service may be starting up.</p>
 {/if}
 {#if error}
 	<div class="error-banner" role="alert"><Icon name="warning" size={16} /> {error}</div>
@@ -463,7 +437,7 @@
 	{#if resp.results.length >= wantResults && wantResults < MAX_RESULTS}
 		<button
 			type="button"
-			class="btn secondary"
+			class="btn-3d"
 			onclick={showMore}
 			title="Refetches the search with up to {MAX_RESULTS} results"
 		>

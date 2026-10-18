@@ -1,6 +1,10 @@
 <p align="center">
   <a href="https://reikun.app/">
-    <img src="docs/logos/icon-rei-lens.png" alt="Reikun logo" width="128">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="assets/icons/icon-dark.svg">
+      <source media="(prefers-color-scheme: light)" srcset="assets/icons/icon-light.svg">
+      <img src="assets/icons/icon-light.svg" alt="Reikun logo" width="128">
+    </picture>
   </a>
 </p>
 
@@ -19,6 +23,9 @@
   </a>
   <a href="https://reikun.app/">
     <img src="https://img.shields.io/badge/Try_it_live-reikun.app-3a86ff?style=flat" alt="Try it live">
+  </a>
+  <a href="https://github.com/AnkS4/Reikun/blob/main/CHANGELOG.md">
+    <img src="https://img.shields.io/badge/Changelog-Keep_a_Changelog-1abc9c?style=flat" alt="Changelog">
   </a>
 </p>
 
@@ -134,6 +141,8 @@ For local development without Docker:
    npm run build                            # static build → web/build/ (adapter-static)
    ```
 
+   Note: The build script automatically syncs brand assets from `assets/` to `web/static/`. To manually sync assets, run `bash scripts/sync-assets.sh` from the project root.
+
    The API base URL is baked in at build time via `PUBLIC_API_BASE` (default `http://localhost:8000`; schema in `web/src/env.ts`, see `web/.env.example`). The static output deploys to any static host as-is.
 
 7. **(Optional) Lint + tests** (CI runs the same — `.github/workflows/ci.yml`):
@@ -172,9 +181,12 @@ Reikun/
 │   ├── src/lib/             # openapi-fetch client (typed from openapi.d.ts), kanji-hover cache, theme
 │   ├── src/env.ts           # PUBLIC_API_BASE schema — build-time public env var
 │   └── wrangler.jsonc       # static-assets deploy config (SPA fallback)
+├── assets/                  # Brand assets (favicons, icons, images — svg/png)
+│   ├── favicons/            # Favicon files (16/32/48 px, svg/png)
+│   ├── icons/               # App icons (apple-touch, light/dark, circle variants)
+│   └── images/              # OG images (og-image.png/svg for social sharing)
 ├── docs/
 │   ├── api/                 # Committed openapi.json (frontend type generation; CI drift check)
-│   ├── logos/               # Reikun logo assets (png/svg)
 │   ├── screenshots/         # UI captures (search, kanji card)
 │   └── videos/              # Demo recording (gif + mp4)
 ├── eval/
@@ -192,7 +204,9 @@ Reikun/
 │   ├── ingest.py            # Embed (dense + sparse) and load into Qdrant
 │   ├── cloud_ingest.py      # Snapshot-transfer a local collection to Qdrant Cloud
 │   ├── export_openapi.py    # Write docs/api/openapi.json for frontend type generation
-│   └── startup.py           # Container entrypoint (execs uvicorn) + opt-in ingestion pipeline
+│   ├── startup.py           # Container entrypoint (execs uvicorn) + opt-in ingestion pipeline
+│   └── sync-assets.sh       # Sync brand assets from assets/ to web/static/
+├── CHANGELOG.md             # Version history following Keep a Changelog format
 ├── .env.example             # Environment variable template
 ├── data/
 │   ├── raw/                 # Downloaded dictionary files

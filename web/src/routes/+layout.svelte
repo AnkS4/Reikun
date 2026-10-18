@@ -1,9 +1,19 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import { page } from '$app/state';
 	import { onNavigate } from '$app/navigation';
-	import { API_BASE } from '#lib/api.ts';
+	import { API_BASE, apiReadyShared } from '#lib/api.ts';
+	import WakeBanner from '#lib/components/WakeBanner.svelte';
 	import '../app.css';
 	let { children } = $props();
+
+	// Wake the API (and its Qdrant behind it) the moment the app loads, so the
+	// cold start overlaps with the user reading the page instead of their first click.
+	// Header reads the same shared promise for its status dot; failures surface
+	// through <WakeBanner>, so there is nothing to handle here.
+	onMount(() => {
+		apiReadyShared().catch(() => {});
+	});
 
 	// Cross-fade between routes (/ <-> /about) where the browser supports view
 	// transitions. Same-page ?q= changes are excluded — results shouldn't fade
@@ -31,6 +41,8 @@
 </svelte:head>
 
 <a class="skip-link" href="#main">Skip to main content</a>
+
+<WakeBanner />
 
 <main id="main" tabindex="-1">
 	{@render children()}

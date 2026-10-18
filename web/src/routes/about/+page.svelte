@@ -13,7 +13,21 @@
 <nav class="about-nav"><a href="/">← Reikun</a></nav>
 
 <article class="about">
-	<h1>About Reikun</h1>
+	<div class="about-title-row">
+		<img
+			src="/icons/icon-light.svg"
+			alt=""
+			class="brand-icon brand-icon-light about-brand-icon"
+			aria-hidden="true"
+		/>
+		<img
+			src="/icons/icon-dark.svg"
+			alt=""
+			class="brand-icon brand-icon-dark about-brand-icon"
+			aria-hidden="true"
+		/>
+		<h1>About Reikun</h1>
+	</div>
 	<p class="lede">
 		Reikun (例訓) is a free, open-source Japanese reading assistant — a semantic dictionary that works in
 		both English and Japanese.
@@ -104,11 +118,25 @@
 		margin: 2.5rem auto 0;
 	}
 
+	.about-title-row {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+		margin: 0 0 1rem;
+	}
+
+	.about-brand-icon {
+		width: clamp(2rem, 5vw, 2.5rem);
+		height: clamp(2rem, 5vw, 2.5rem);
+		border-radius: 22%;
+		flex-shrink: 0;
+	}
+
 	.about h1 {
 		font-family: var(--font-display);
 		font-size: clamp(1.8rem, 5vw, 2.4rem);
 		font-weight: 500;
-		margin: 0 0 1rem;
+		margin: 0;
 	}
 
 	.lede {

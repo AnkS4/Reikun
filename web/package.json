@@ -1,14 +1,14 @@
 {
   "name": "reikun-web",
   "private": true,
-  "version": "0.5.0",
+  "version": "0.6.0",
   "type": "module",
   "imports": {
     "#lib/*": "./src/lib/*"
   },
   "scripts": {
     "dev": "vite dev",
-    "build": "vite build",
+    "build": "bash ../scripts/sync-assets.sh && vite build",
     "preview": "vite preview",
     "sync": "svelte-kit sync",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",

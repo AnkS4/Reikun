@@ -100,3 +100,10 @@ def test_feedback_records_and_validates() -> None:
     assert r.status_code == 201
     assert client.post("/feedback", json={"kind": "search", "rating": 0}).status_code == 422
     assert client.post("/feedback", json={"kind": "bogus", "rating": 1}).status_code == 422
+
+
+def test_cache_headers() -> None:
+    # Liveness must never be cached; static kanji hover data may be.
+    assert client.get("/health").headers["cache-control"] == "no-store"
+    batch = client.get("/kanji", params={"chars": "家"})
+    assert batch.headers["cache-control"].startswith("public")

@@ -11,7 +11,7 @@
 
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { apiReady } from '#lib/api.ts';
+	import { apiReadyShared } from '#lib/api.ts';
 	import { theme } from '#lib/theme.svelte.ts';
 	import KanjiText from './KanjiText.svelte';
 	import Popover from './Popover.svelte';
@@ -21,7 +21,7 @@
 
 	let status = $state<{ ok: boolean; entries: number | null; msg: string } | null>(null);
 	onMount(() => {
-		apiReady()
+		apiReadyShared()
 			.then((r) => (status = { ok: true, entries: r.entries, msg: 'Ready' }))
 			.catch((e) =>
 				(status = { ok: false, entries: null, msg: e instanceof Error ? e.message : 'API unreachable' })
@@ -73,7 +73,21 @@
 			</div>
 		{/if}
 		<h1 class="title-heading" class:hero-heading={hero} class:compact-title={!hero}>
-			<a class="title-home" href="/" title="Back to search">Reikun</a>
+			<a class="title-home" href="/" title="Back to search">
+				<img
+					src="/icons/icon-light.svg"
+					alt=""
+					class="brand-icon brand-icon-light"
+					aria-hidden="true"
+				/>
+				<img
+					src="/icons/icon-dark.svg"
+					alt=""
+					class="brand-icon brand-icon-dark"
+					aria-hidden="true"
+				/>
+				<span>Reikun</span>
+			</a>
 			<span class="brand-kanji" lang="ja">(<KanjiText text="例訓" />)</span>
 		</h1>
 		{#if hero && tagline}<p class="tagline">{tagline}</p>{/if}

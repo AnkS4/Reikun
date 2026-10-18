@@ -13,7 +13,7 @@
 	/* Text hierarchy — Rich Sumi Ink */
 	--text: #161514;
 	--text-muted: #665f56;
-	--text-faint: #70685d;
+	--text-faint: #6b635a;
 
 	/* Brand & Semantic Accents — Aizome Indigo & Botanicals */
 	--primary: #1f4874;
@@ -24,18 +24,18 @@
 	--btn-primary-hover: #163657;
 	--btn-primary-text: #ffffff;
 	--btn-primary-border: transparent;
-	--ok: #287a55;
-	--ok-soft: rgba(40, 122, 85, 0.10);
-	--err: #c93b3b;
-	--err-soft: rgba(201, 59, 59, 0.10);
+	--ok: #26734f;
+	--ok-soft: rgba(38, 115, 79, 0.10);
+	--err: #b83232;
+	--err-soft: rgba(184, 50, 50, 0.10);
 	--warning-color: #b87728;
 	--warning-soft: rgba(184, 119, 40, 0.10);
 
 	/* Palette chips */
-	--coral: #df5a42;
-	--coral-soft: rgba(223, 90, 66, 0.10);
-	--matcha: #2a7e58;
-	--matcha-soft: rgba(42, 126, 88, 0.10);
+	--coral: #c0402a;
+	--coral-soft: rgba(192, 64, 42, 0.10);
+	--matcha: #26734f;
+	--matcha-soft: rgba(38, 115, 79, 0.10);
 	--ochre: #b87728;
 	--ochre-soft: rgba(184, 119, 40, 0.10);
 	--lavender: #725fa8;
@@ -85,7 +85,7 @@
 	/* Text hierarchy — Cool moonlit off-white / slate blue */
 	--text: #eef3fa;
 	--text-muted: #9fb0c4;
-	--text-faint: #8294aa;
+	--text-faint: #8fa1b7;
 
 	/* Brand & Semantic Accents — Sky indigo */
 	--primary: #7cb3f0;
@@ -98,8 +98,8 @@
 	--btn-primary-border: rgba(124, 179, 240, 0.32);
 	--ok: #4fd6a0;
 	--ok-soft: rgba(79, 214, 160, 0.15);
-	--err: #f87b7b;
-	--err-soft: rgba(248, 123, 123, 0.15);
+	--err: #fb8a8a;
+	--err-soft: rgba(251, 138, 138, 0.15);
 	--warning-color: #f0b24e;
 	--warning-soft: rgba(240, 178, 78, 0.15);
 
@@ -140,7 +140,7 @@
 	/* Text hierarchy — High-contrast pure white to muted silvery gray */
 	--text: #ffffff;
 	--text-muted: #b5b5b5;
-	--text-faint: #8a8a8a;
+	--text-faint: #949494;
 
 	/* Brand & Semantic Accents — Vibrant and luminescent on pure black */
 	--primary: #85b8ea;
@@ -263,7 +263,7 @@ ruby rt {
 .title-heading {
 	margin: 0;
 	display: flex;
-	align-items: baseline;
+	align-items: center;
 	gap: 0.4rem;
 	flex-wrap: wrap;
 }
@@ -342,11 +342,51 @@ ruby rt {
 
 .title-home {
 	color: var(--text);
+	display: inline-flex;
+	align-items: center;
+	gap: 0.35em;
 	transition: opacity 0.15s;
 }
 
 .title-home:hover {
 	opacity: 0.8;
+}
+
+/* Brand icon alongside title — responsive to light/dark themes */
+.brand-icon {
+	width: 1.1em;
+	height: 1.1em;
+	flex-shrink: 0;
+	border-radius: 22%;
+	vertical-align: middle;
+	object-fit: contain;
+}
+
+.brand-icon-light {
+	display: inline-block;
+}
+
+.brand-icon-dark {
+	display: none;
+}
+
+[data-theme='dark'] .brand-icon-light,
+[data-theme='oled'] .brand-icon-light {
+	display: none;
+}
+
+[data-theme='dark'] .brand-icon-dark,
+[data-theme='oled'] .brand-icon-dark {
+	display: inline-block;
+}
+
+@media (prefers-color-scheme: dark) {
+	:root:not([data-theme='light']) .brand-icon-light {
+		display: none;
+	}
+	:root:not([data-theme='light']) .brand-icon-dark {
+		display: inline-block;
+	}
 }
 
 /* Both floating controls share one hit area: 2rem circle, neutral hover */
@@ -1772,6 +1812,85 @@ a.kanji-tip {
 }
 
 
+/* ---------- Cold-start banner (WakeBanner.svelte) ---------- */
+.wake-host {
+	position: fixed;
+	left: 0;
+	right: 0;
+	bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+	display: flex;
+	justify-content: center;
+	padding: 0 1rem;
+	z-index: 95;
+	pointer-events: none; /* only the card itself takes clicks */
+}
+
+.wake-banner {
+	pointer-events: auto;
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+	max-width: 30rem;
+	padding: 0.7rem 1rem;
+	background: var(--surface);
+	color: var(--text);
+	border: 1px solid var(--border);
+	border-radius: var(--radius-lg);
+	box-shadow: var(--shadow-lg);
+	font-size: 0.92rem;
+	line-height: 1.4;
+	animation: wake-in 0.2s ease-out;
+}
+
+.wake-banner p {
+	margin: 0;
+}
+
+.wake-banner.down {
+	border-color: color-mix(in srgb, var(--err) 40%, transparent);
+}
+
+.wake-banner > svg {
+	flex: none;
+	color: var(--err);
+}
+
+.wake-banner .spinner {
+	flex: none;
+}
+
+.wake-banner .btn {
+	flex: none;
+}
+
+.wake-title {
+	font-weight: 500;
+}
+
+.wake-sub {
+	display: block;
+	color: var(--text-muted);
+	font-size: 0.85rem;
+}
+
+@keyframes wake-in {
+	from {
+		opacity: 0;
+		transform: translateY(8px);
+	}
+	to {
+		opacity: 1;
+		transform: none;
+	}
+}
+
+@media (max-width: 680px) {
+	/* clear the floating back-to-top button (bottom-right) */
+	.wake-host {
+		bottom: calc(5rem + env(safe-area-inset-bottom, 0px));
+	}
+}
+
 /* ---------- Floating Buttons ---------- */
 .floating-buttons {
 	position: fixed;
@@ -1783,6 +1902,16 @@ a.kanji-tip {
 	z-index: 90;
 }
 
+
+/* Busy 3D buttons: show progress and keep the spinner legible on the glass face */
+.btn-3d:disabled {
+	cursor: progress;
+}
+
+.btn-3d .spinner {
+	border-color: color-mix(in srgb, currentColor 25%, transparent);
+	border-top-color: currentColor;
+}
 
 /* ---------- Helix Loader ---------- */
 .helix-loader {
@@ -2474,12 +2603,23 @@ button, a, input, summary {
 .search-row .btn-3d:hover::before,
 .search-row .popover-wrap > .btn:hover::before {
 	inset: 1px 0 calc(var(--lip) - 1px) 0;
+	border-color: var(--border-hover);
+}
+
+.search-row .btn-3d:hover::after,
+.search-row .popover-wrap > .btn:hover::after {
+	opacity: 0.8;
 }
 
 /* :active rules stay AFTER :hover so a pressed button wins */
 .search-row .btn-3d:active::before,
 .search-row .popover-wrap > .btn:active::before {
 	inset: var(--lip) 0 0 0;
+}
+
+.search-row .btn-3d:active::after,
+.search-row .popover-wrap > .btn:active::after {
+	opacity: 0.3;
 }
 
 /* ---------- Example row buttons: same behavior as search row (no translateY) ---------- */
@@ -2495,10 +2635,47 @@ button, a, input, summary {
 
 .example-actions .btn-3d:hover::before {
 	inset: 1px 0 calc(var(--lip) - 1px) 0;
+	border-color: var(--border-hover);
+}
+
+.example-actions .btn-3d:hover::after {
+	opacity: 0.8;
 }
 
 .example-actions .btn-3d:active::before {
 	inset: var(--lip) 0 0 0;
+}
+
+.example-actions .btn-3d:active::after {
+	opacity: 0.3;
+}
+
+/* ---------- Show more button: same behavior as search row (no translateY) ---------- */
+main .btn-3d:hover,
+main .btn-3d:active {
+	transform: none;
+	box-shadow: inset 0 calc(var(--lip) * -1) 0 0 var(--btn-base-shadow), var(--shadow-sm);
+}
+
+main .btn-3d:hover {
+	filter: brightness(1.06);
+}
+
+main .btn-3d:hover::before {
+	inset: 1px 0 calc(var(--lip) - 1px) 0;
+	border-color: var(--border-hover);
+}
+
+main .btn-3d:hover::after {
+	opacity: 0.8;
+}
+
+main .btn-3d:active::before {
+	inset: var(--lip) 0 0 0;
+}
+
+main .btn-3d:active::after {
+	opacity: 0.3;
 }
 
 /* ---------- Floating buttons: same behavior as search row (no translateY) ---------- */
@@ -2514,10 +2691,19 @@ button, a, input, summary {
 
 .floating-buttons .floating-btn:hover::before {
 	inset: 1px 0 calc(var(--lip) - 1px) 0;
+	border-color: var(--border-hover);
+}
+
+.floating-buttons .floating-btn:hover::after {
+	opacity: 0.8;
 }
 
 .floating-buttons .floating-btn:active::before {
 	inset: var(--lip) 0 0 0;
+}
+
+.floating-buttons .floating-btn:active::after {
+	opacity: 0.3;
 }
 
 /* ---------- 4. Windows high-contrast ---------- */

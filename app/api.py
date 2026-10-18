@@ -19,13 +19,23 @@ import time
 from contextlib import asynccontextmanager
 from typing import Annotated, Literal, get_args
 
-from fastapi import BackgroundTasks, FastAPI, HTTPException, Query
+from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException, Query, Response
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 from qdrant_client.http.exceptions import UnexpectedResponse
 
-from app.config import APP_VERSION, COLLECTION, CORS_ORIGINS, LLM_MODEL, qdrant_client
+from app.config import (
+    APP_VERSION,
+    COLLECTION,
+    CORS_ORIGINS,
+    LLM_MODEL,
+    RATE_LIMIT_EXPLAIN,
+    RATE_LIMIT_SEARCH,
+    TRUSTED_PROXY_HOPS,
+    qdrant_client,
+)
 from app.grammar_explain import (
     JLPT_LEVELS,
     MAX_HINT_CHARS,
@@ -35,9 +45,12 @@ from app.grammar_explain import (
     validate_input,
 )
 from app.kanji_lookup import is_kanji, jlpt_kanji, random_kanji
+from app.ratelimit import rate_limited
 from app.render import furigana_parts, kanji_card, kanji_hover, segment_chip
 from app.retrieval import MODES, is_headword, morph_hint, search, warm_headword_index
 from app.telemetry import telemetry
+
+log = logging.getLogger("reikun.api")
 
 # Standalone `uvicorn app.api:app` doesn't configure the root logger, so do it
 # here unless something else already did (the Streamlit entrypoint, pytest…).
@@ -66,6 +79,11 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+# Added before CORS so CORS stays outermost (error responses keep their CORS
+# headers). Starlette's GZip skips text/event-stream, so /explain/stream is
+# unaffected; small payloads (< 1 KB) aren't worth compressing.
+app.add_middleware(GZipMiddleware, minimum_size=1024)
+
 _origins = [o.strip() for o in CORS_ORIGINS.split(",") if o.strip()] or ["*"]
 app.add_middleware(
     CORSMiddleware,
@@ -74,6 +92,14 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+# Per-client request limits (see app/ratelimit.py) — 429 + Retry-After when exceeded.
+_explain_limit = Depends(rate_limited(RATE_LIMIT_EXPLAIN, TRUSTED_PROXY_HOPS))
+_search_limit = Depends(rate_limited(RATE_LIMIT_SEARCH, TRUSTED_PROXY_HOPS))
+
+# Static dictionary data: safe for browsers/CDNs to reuse for a day.
+_CACHE_STATIC = "public, max-age=86400, stale-while-revalidate=604800"
 
 
 # ── Schemas ──────────────────────────────────────────────────────────────────
@@ -246,8 +272,9 @@ class FeedbackResponse(BaseModel):
 # ── Meta ─────────────────────────────────────────────────────────────────────
 
 @app.get("/health", tags=["meta"], response_model=HealthResponse)
-def health() -> dict:
+def health(response: Response) -> dict:
     """Liveness only — the process is up. Dependencies are checked by /ready."""
+    response.headers["Cache-Control"] = "no-store"
     return {"status": "ok"}
 
 
@@ -259,9 +286,10 @@ def health() -> dict:
         503: {"model": ErrorResponse, "description": "Qdrant unreachable, or the collection is missing/empty"}
     },
 )
-def ready() -> dict:
+def ready(response: Response) -> dict:
     """Readiness: a real query against the Qdrant collection.
     503 when Qdrant is unreachable or the collection is missing/empty."""
+    response.headers["Cache-Control"] = "no-store"
     try:  # one round-trip: a missing collection is a 404 from count, not a second request
         client = qdrant_client()
         count = client.count(COLLECTION).count
@@ -282,7 +310,7 @@ def ready() -> dict:
 
 # ── Search ───────────────────────────────────────────────────────────────────
 
-@app.get("/search", tags=["search"], response_model=SearchResponseModel)
+@app.get("/search", tags=["search"], response_model=SearchResponseModel, dependencies=[_search_limit])
 def search_endpoint(
     background: BackgroundTasks,
     # pattern=\S: whitespace-only input is a 422, not an embed of "".
@@ -307,8 +335,11 @@ def search_endpoint(
     q = q.strip()
     try:
         resp = search(q, n, mode, rewrite_mode=None if rewrite else "off")
-    except Exception as exc:
-        raise HTTPException(502, f"Search failed: {exc}") from exc
+    except Exception:
+        # Full detail goes to the logs; the client gets no backend internals
+        # (Qdrant hostnames, stack text) from an exception string.
+        log.exception("search failed")
+        raise HTTPException(502, "Search is temporarily unavailable. Please try again.") from None
     search_id = None
     if log:
         # .search stays inline — its row id is part of the response; the
@@ -360,6 +391,7 @@ class RandomKanji(BaseModel):
 # Declared before /kanji/{char} so "random" isn't parsed as a kanji path param.
 @app.get("/kanji/random", tags=["kanji"], response_model=RandomKanji)
 def kanji_random_endpoint(
+    response: Response,
     level: Annotated[
         Level | None,
         Query(description="Prefer kanji tagged at this JLPT level (falls back to the common pool)"),
@@ -368,6 +400,7 @@ def kanji_random_endpoint(
     """A random kanji that is itself a JMdict headword — the shuffle button's
     pick. Same rules as the UI: frequency-ranked pool, optionally restricted
     to a JLPT level, up to 8 headword-verified tries then an unchecked pick."""
+    response.headers["Cache-Control"] = "no-store"  # a cached "random" would repeat itself
     pool = jlpt_kanji(level) if level else None
     try:
         for _ in range(8):
@@ -380,6 +413,7 @@ def kanji_random_endpoint(
 
 @app.get("/kanji", tags=["kanji"], response_model=dict[str, KanjiHover | None])
 def kanji_batch_endpoint(
+    response: Response,
     chars: Annotated[
         str,
         Query(
@@ -394,6 +428,7 @@ def kanji_batch_endpoint(
     seen = {c: kanji_hover(c) for c in dict.fromkeys(chars) if is_kanji(c)}
     if not seen:
         raise HTTPException(400, "Provide at least one kanji character")
+    response.headers["Cache-Control"] = _CACHE_STATIC
     return seen
 
 
@@ -421,7 +456,10 @@ def kanji_endpoint(
 
 # ── Grammar explanations ─────────────────────────────────────────────────────
 
-@app.post("/explain", tags=["grammar"], response_model=ExplainResponse)
+EXPLAIN_UNAVAILABLE = "The grammar explanation service is busy or unavailable. Please try again in a moment."
+
+
+@app.post("/explain", tags=["grammar"], response_model=ExplainResponse, dependencies=[_explain_limit])
 def explain_endpoint(req: ExplainRequest) -> dict:
     """JLPT-level-calibrated grammar explanation (Groq). Markdown bullets."""
     try:
@@ -430,14 +468,17 @@ def explain_endpoint(req: ExplainRequest) -> dict:
         raise HTTPException(422, str(exc)) from exc
     hint = morph_hint(sentence)[:MAX_HINT_CHARS]
     t0 = time.perf_counter()
+    text, ok = "", True
     try:
-        text, ok = explain_grammar(sentence, english, req.level, hint=hint), True
-    except Exception as exc:
-        text, ok = str(exc), False
+        text = explain_grammar(sentence, english, req.level, hint=hint)
+    except Exception:
+        # The provider's error text can carry org/model/quota details — log it, don't relay it.
+        log.exception("explain failed")
+        ok = False
     latency_ms = int((time.perf_counter() - t0) * 1000)
     expl_id = telemetry().explanation(sentence, req.level, model=last_model(), latency_ms=latency_ms, ok=ok)
     if not ok:
-        raise HTTPException(502, f"Explanation unavailable: {text}")
+        raise HTTPException(502, EXPLAIN_UNAVAILABLE)
     return {
         "explanation_id": expl_id,
         "level": req.level,
@@ -447,7 +488,7 @@ def explain_endpoint(req: ExplainRequest) -> dict:
     }
 
 
-@app.post("/explain/stream", tags=["grammar"])
+@app.post("/explain/stream", tags=["grammar"], dependencies=[_explain_limit])
 def explain_stream_endpoint(req: ExplainRequest) -> StreamingResponse:
     """
     Server-sent events: `data: {"text": "…"}` chunks as Groq streams them,
@@ -467,9 +508,10 @@ def explain_stream_endpoint(req: ExplainRequest) -> StreamingResponse:
             for c in explain_grammar_stream(sentence, english, req.level, hint=hint):
                 chunks.append(c)
                 yield f"data: {json.dumps({'text': c})}\n\n"
-        except Exception as exc:
+        except Exception:
+            log.exception("explain stream failed")
             ok = False
-            yield f"data: {json.dumps({'error': str(exc)})}\n\n"
+            yield f"data: {json.dumps({'error': EXPLAIN_UNAVAILABLE})}\n\n"
         latency_ms = int((time.perf_counter() - t0) * 1000)
         expl_id = telemetry().explanation(sentence, req.level, model=last_model(), latency_ms=latency_ms, ok=ok)
         payload = {
@@ -480,7 +522,13 @@ def explain_stream_endpoint(req: ExplainRequest) -> StreamingResponse:
         }
         yield f"data: {json.dumps(payload)}\n\n"
 
-    return StreamingResponse(events(), media_type="text/event-stream")
+    # no-transform + X-Accel-Buffering: keep proxies from buffering or compressing
+    # the stream, which would hold every chunk back until the end.
+    return StreamingResponse(
+        events(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache, no-transform", "X-Accel-Buffering": "no"},
+    )
 
 
 @app.post("/feedback", tags=["meta"], status_code=201, response_model=FeedbackResponse)

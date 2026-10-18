@@ -12,7 +12,7 @@
 			content="Search English or Japanese, break down sentences word-by-word with furigana, inspect kanji, get grammar explanations tuned to your JLPT level."
 		/>
 		<meta property="og:url" content="https://reikun.app/" />
-		<meta property="og:image" content="https://reikun.app/og-image.png" />
+		<meta property="og:image" content="https://reikun.app/images/og-image.png" />
 		<meta property="og:image:width" content="1200" />
 		<meta property="og:image:height" content="630" />
 		<meta property="og:image:alt" content="Reikun (例訓) — semantic Japanese dictionary" />
@@ -22,7 +22,7 @@
 			name="twitter:description"
 			content="Search English or Japanese, break down sentences word-by-word with furigana, inspect kanji, get grammar explanations tuned to your JLPT level."
 		/>
-		<meta name="twitter:image" content="https://reikun.app/og-image.png" />
+		<meta name="twitter:image" content="https://reikun.app/images/og-image.png" />
 		<script type="application/ld+json">
 			{
 				"@context": "https://schema.org",
@@ -39,7 +39,13 @@
 		<!-- One tag, kept current by the inline script below and theme.svelte.ts, so the
 		     browser chrome matches the *chosen* theme, not just the OS setting. -->
 		<meta name="theme-color" id="theme-color" content="#fcfaf6" />
-		<link rel="icon" href="%sveltekit.assets%/logo.png" />
+		<!-- Favicons & Touch Icons: Prefer SVG for sharpness across DPRs, PNG fallbacks as backup -->
+		<link rel="icon" type="image/svg+xml" href="%sveltekit.assets%/favicon.svg" />
+		<link rel="icon" type="image/png" sizes="48x48" href="%sveltekit.assets%/favicons/favicon-48.png" />
+		<link rel="icon" type="image/png" sizes="32x32" href="%sveltekit.assets%/favicons/favicon-32.png" />
+		<link rel="icon" type="image/png" sizes="16x16" href="%sveltekit.assets%/favicons/favicon-16.png" />
+		<link rel="apple-touch-icon" sizes="180x180" href="%sveltekit.assets%/icons/apple-touch-icon.png" />
+		<link rel="manifest" href="%sveltekit.assets%/site.webmanifest" />
 		<link rel="preconnect" href="https://fonts.googleapis.com" />
 		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 		<!-- Only the weights app.css uses (Space Grotesk 500, Inter 400/500/600,
@@ -60,8 +66,14 @@
 		<script>
 			// Apply persisted theme before first paint to avoid a flash.
 			(function () {
-				var t = localStorage.getItem('reikun-theme') || 'system';
+				var t = 'system';
+				// localStorage can throw (Safari "Block all cookies", in-app webviews,
+				// sandboxed iframes) — fall back to the OS preference, never abort.
+				try {
+					t = localStorage.getItem('reikun-theme') || 'system';
+				} catch (e) {}
 				if (t === 'amoled') t = 'oled'; // legacy value
+				if (t !== 'light' && t !== 'dark' && t !== 'oled') t = 'system';
 				var resolved = t;
 				if (t === 'system') {
 					// NOTE: 'oled' is intentionally the default dark resolution for system preference (not 'dark').
@@ -70,7 +82,8 @@
 				document.documentElement.dataset.theme = resolved;
 				// Keep in sync with --bg in app.css and CHROME_COLOR in theme.svelte.ts.
 				var bg = { light: '#fcfaf6', dark: '#0f1620', oled: '#000000' }[resolved] || '#fcfaf6';
-				document.getElementById('theme-color').setAttribute('content', bg);
+				var meta = document.getElementById('theme-color');
+				if (meta) meta.setAttribute('content', bg);
 			})();
 		</script>
 		%sveltekit.head%

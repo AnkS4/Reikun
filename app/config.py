@@ -94,6 +94,15 @@ CORS_ORIGINS = _env("CORS_ORIGINS", "*")
 
 QDRANT_TIMEOUT = int(_env("QDRANT_TIMEOUT", "30"))
 
+# ── Abuse protection ─────────────────────────────────────────────────────────
+# Requests per minute per client, enforced in memory per instance (0 disables).
+# /explain* spends the shared Groq quota; /search costs CPU (embedding).
+RATE_LIMIT_EXPLAIN = int(_env("RATE_LIMIT_EXPLAIN", "10"))
+RATE_LIMIT_SEARCH = int(_env("RATE_LIMIT_SEARCH", "120"))
+# Reverse proxies between the internet and the app (Cloud Run: 1). The client
+# address is read from X-Forwarded-For counting this many entries from the right.
+TRUSTED_PROXY_HOPS = int(_env("TRUSTED_PROXY_HOPS", "1"))
+
 
 @cache
 def qdrant_client() -> QdrantClient:
