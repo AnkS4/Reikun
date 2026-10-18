@@ -19,7 +19,7 @@
     <img src="https://img.shields.io/github/v/release/AnkS4/Reikun?style=flat&color=8b5cf6" alt="Release">
   </a>
   <a href="https://github.com/AnkS4/Reikun/blob/main/LICENSE">
-    <img src="https://img.shields.io/github/license/AnkS4/Reikun?style=flat&color=00a86b" alt="License">
+    <img src="https://img.shields.io/badge/license-Apache--2.0-00a86b?style=flat" alt="License">
   </a>
   <a href="https://reikun.app/">
     <img src="https://img.shields.io/badge/Try_it_live-reikun.app-3a86ff?style=flat" alt="Try it live">
@@ -32,8 +32,6 @@
 ## Demo
 
 ![Reikun demo — search, grammar explanation, kanji tooltip and card, sentence breakdown](docs/videos/demo_v3.gif)
-
-Full recording: [docs/videos/demo_v3.mp4](docs/videos/demo_v3.mp4)
 
 ## Features
 
