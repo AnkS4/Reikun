@@ -12,9 +12,11 @@
  * Plan.md note about 5-minute keep-alive monitors does NOT apply here:
  * daily pings cannot hold a Cloud Run instance warm.)
  *
- * HTTP requests never reach this script: the static-assets router serves
- * everything that matches, `not_found_handling: "single-page-application"`
- * serves the SPA shell for the rest, and no fetch handler is exported.
+ * HTTP requests reach this script only for paths the static-assets router
+ * cannot match: the fetch handler below serves the neutral SPA shell
+ * (200.html) so client-rendered routes (e.g. /kanji-group?by=grade&value=1)
+ * render instead of hydrating the prerendered home page. The assets router
+ * serves everything that matches, and no other request reaches the Worker.
  *
  * Optional alerting: if the `ALERT_WEBHOOK` secret is set (wrangler secret
  * put ALERT_WEBHOOK; e.g. a Discord/Slack incoming webhook), a non-2xx or a
@@ -25,6 +27,16 @@
 // Baked in at wrangler-config level (`vars` in wrangler.jsonc) — the same API
 // URL the frontend embeds at build time via PUBLIC_API_BASE.
 export default {
+	async fetch(request, env) {
+		// The SPA shell — adapter-static's 200.html fallback (a neutral shell,
+		// unlike index.html, which is the prerendered home page). Served with a
+		// 200 so the client router can take over the requested URL.
+		const shell = await env.ASSETS.fetch(new URL('/200.html', request.url));
+		const headers = new Headers(shell.headers);
+		headers.set('content-type', 'text/html; charset=utf-8');
+		headers.set('cache-control', 'no-cache');
+		return new Response(shell.body, { status: 200, headers });
+	},
 	async scheduled(_, env, ctx) {
 		const base = env.API_URL;
 		if (!base) {
