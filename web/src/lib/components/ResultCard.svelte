@@ -94,7 +94,7 @@
 	{/if}
 	{#if onSearchWord && result.related?.length}
 		<div class="related-row" aria-label="Related words">
-			{#each result.related as w (w.kanji_form || w.reading)}
+			{#each result.related as w, i ((w.kanji_form || w.reading) + (w.reading ?? '') + i)}
 				<button
 					type="button"
 					class="related-pill"
