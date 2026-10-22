@@ -11,9 +11,13 @@
 	"main": "./worker.js",
 	"assets": {
 		"directory": "./build",
-		// Unmatched paths get the SPA shell (index.html), same role the
-		// 200.html fallback plays on classic Pages.
-		"not_found_handling": "single-page-application"
+		// Unmatched paths are handled by the Worker's fetch handler, which
+		// serves the neutral SPA shell (200.html). NOT
+		// "single-page-application": that mode serves index.html, and
+		// index.html is the *prerendered home page* — the client would
+		// hydrate it as "/" and render the home page for every deep link
+		// (e.g. /kanji-group?by=grade&value=1).
+		"not_found_handling": "none"
 	},
 	// Keep-alive cron (web/worker.js): one /ready hit per day stops the Qdrant
 	// Cloud free cluster from auto-pausing. Daily is the cheapest valid cron
