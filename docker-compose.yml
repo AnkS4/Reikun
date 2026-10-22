@@ -42,6 +42,19 @@ services:
         condition: service_healthy
     restart: on-failure:3   # startup.py exits 1 on ingest failure; unless-stopped would retry forever
 
+  web:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+    image: reikun-web:latest
+    ports:
+      - "127.0.0.1:5173:5173"
+    environment:
+      PUBLIC_API_BASE: http://app:8000
+    depends_on:
+      - app
+    restart: unless-stopped
+
 volumes:
   qdrant_data:
   models:

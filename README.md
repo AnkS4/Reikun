@@ -83,7 +83,7 @@
 
 #### Option 1: Docker (Recommended)
 
-First run — let the container self-provision and ingest all ~219k entries at boot (embedding takes ~1 hr):
+First run — let the containers self-provision and ingest all ~219k entries at boot (embedding takes ~1 hr):
 
 ```bash
 INGEST_VIA_DOCKER=1 docker compose up -d --build
@@ -94,18 +94,12 @@ INGEST_VIA_DOCKER=1 docker compose up -d --build
 Once Qdrant is populated, plain `up` serves whatever it already holds:
 
 ```bash
-docker compose up -d        # API at http://localhost:8000 (or APP_PORT), Swagger docs at /docs
-docker compose logs -f app
+docker compose up -d        # API at http://localhost:8000, frontend at http://localhost:5173
+docker compose logs -f app  # follow API logs
 docker compose down
 ```
 
-The **API runs inside Docker**. The **frontend (SvelteKit)** runs locally and connects to the Docker API:
-
-```bash
-cd web && npm install && npm run dev     # dev server → http://localhost:5173
-```
-
-The API base URL is `http://localhost:8000` by default (settable via `PUBLIC_API_BASE`; see `web/.env.example`).
+Both the API (`app`) and frontend (`web`) run in Docker. The web container connects to the API via `http://app:8000` internally.
 
 #### Option 2: Local Development
 
