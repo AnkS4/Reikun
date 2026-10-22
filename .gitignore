@@ -56,11 +56,9 @@ Thumbs.db
 .Spotlight-V100
 .Trashes
 
+# NEVER uncomment local — local files and subfolders must never be tracked or committed.
 # Local-only benchmarking, notes, etc. (kept for context but not committed)
-# The notes/ tree is internal documentation — it is never published, so it
-# stays ignored (local/oci/ is the one exception).
-local/*
-!local/oci/
+# local/*
 
 # Agent scratch (plan/review notes from the coding harness)
 .agents/

@@ -63,7 +63,7 @@
 - **Docker and Docker Compose** (recommended path — runs the app + Qdrant)
 - **Groq API key** — powers grammar explanations and optional LLM query rewriting; search and kanji lookup work without it
 - **Git** (to clone) and ~3 GB free disk (dictionary data + embedding models)
-- Local development only: **Python 3.13+** and **[uv](https://docs.astral.sh/uv/)** (dependency manager — `pip` works too)
+- Local development only: **Python 3.14+** and **[uv](https://docs.astral.sh/uv/)** (dependency manager — `pip` works too)
 
 ### Setup
 
@@ -99,7 +99,13 @@ docker compose logs -f app
 docker compose down
 ```
 
-The frontend is the SvelteKit app in `web/` (see Option 2, step 6, to run it against the local API).
+The **API runs inside Docker**. The **frontend (SvelteKit)** runs locally and connects to the Docker API:
+
+```bash
+cd web && npm install && npm run dev     # dev server → http://localhost:5173
+```
+
+The API base URL is `http://localhost:8000` by default (settable via `PUBLIC_API_BASE`; see `web/.env.example`).
 
 #### Option 2: Local Development
 
@@ -161,62 +167,19 @@ The Search page keeps its state in the URL, so results are shareable and the bro
 
 ## Project Structure
 
+<!-- Concise overview — full breakdown in local/notes/Architecture.md -->
 ```
 Reikun/
-├── app/
-│   ├── config.py            # Central env-driven configuration
-│   ├── api.py               # FastAPI app — the serving entrypoint (/search, /kanji, /explain, /feedback, /health, /ready)
-│   ├── render.py            # UI-agnostic JSON shaping (ruby parts, kanji card, chips, stroke data)
-│   ├── telemetry.py         # Event logging interface (stdout JSON default, optional SQLite sink)
-│   ├── retrieval.py         # Vector / BM25 / hybrid search, routing, ja sentence segmentation
-│   ├── headword_index.py    # marisa-trie headword index (form → entries) for segmentation
-│   ├── query_rewrite.py     # Heuristic + optional LLM query rewriting
-│   ├── kanji_lookup.py      # Deterministic KANJIDIC2 + KanjiVG lookup
-│   ├── grammar_explain.py   # Groq client (primary→fallback chain), JLPT-level-aware prompts
-│   └── embedder.py          # FastEmbed dense/sparse model wrappers
-├── web/                     # SvelteKit static frontend (adapter-static → web/build/)
-│   ├── src/routes/          # /  (search SPA shell)
-│   ├── src/lib/             # openapi-fetch client (typed from openapi.d.ts), kanji-hover cache, theme
-│   ├── src/env.ts           # PUBLIC_API_BASE schema — build-time public env var
-│   └── wrangler.jsonc       # static-assets deploy config (SPA fallback)
-├── assets/                  # Brand assets (favicons, icons, images — svg/png)
-│   ├── favicons/            # Favicon files (16/32/48 px, svg/png)
-│   ├── icons/               # App icons (apple-touch, light/dark, circle variants)
-│   └── images/              # OG images (og-image.png/svg for social sharing)
-├── docs/
-│   ├── api/                 # Committed openapi.json (frontend type generation; CI drift check)
-│   ├── screenshots/         # UI captures (search, kanji card)
-│   └── videos/              # Demo recording (gif + mp4)
-├── eval/
-│   ├── gold_set.tsv         # gold set — 360 queries, 60 per category (en_words/en_verbs/en_descriptive/ja_*)
-│   ├── eval.py              # unified eval: headword bench + knob sweep (default), --report, --modes, --ir, --llm
-│   ├── report_meta.py       # provenance stamp shared by every report writer
-│   ├── embed_model_bench.py # dense embedding model benchmark
-│   ├── reports/             # curated headline reports (committed) — README.md index, eval.md, headword_eval.*, retrieval_eval*, llm_eval.*
-│   └── results/             # generated run outputs (gitignored)
-├── scripts/
-│   ├── download_edrdg.py    # Sync JMdict NG + KANJIDIC2 XML from EDRDG (rsync)
-│   ├── download_kanjivg.py  # Download KanjiVG stroke-order SVGs (packs strokes.json)
-│   ├── feedback_log.py      # SQLite telemetry sink (searches, feedback, kanji lookups, explanations)
-│   ├── build_chunks.py      # Parse and chunk dictionary data
-│   ├── ingest.py            # Embed (dense + sparse) and load into Qdrant
-│   ├── cloud_ingest.py      # Snapshot-transfer a local collection to Qdrant Cloud
-│   ├── export_openapi.py    # Write docs/api/openapi.json for frontend type generation
-│   ├── startup.py           # Container entrypoint (execs uvicorn) + opt-in ingestion pipeline
-│   └── sync-assets.sh       # Sync brand assets from assets/ to web/static/
-├── CHANGELOG.md             # Version history following Keep a Changelog format
-├── .env.example             # Environment variable template
-├── data/
-│   ├── raw/                 # Downloaded dictionary files
-│   ├── processed/           # Parsed chunks, kanji table, packed stroke data (strokes.json)
-│   ├── kanjivg/             # Stroke-order SVGs (build input only; not shipped)
-│   └── monitoring/          # SQLite telemetry database
-├── models/                  # Cached embedding models (local runs; Docker uses a named volume)
+├── app/         # FastAPI backend (search, kanji, grammar, embeddings)
+├── web/         # SvelteKit static SPA frontend
+├── assets/      # Brand assets (favicons, icons, OG images)
+├── docs/        # API spec, screenshots, demo videos
+├── eval/        # Gold set, benchmarks, reports
+├── scripts/     # Data download/build/ingest utilities
+├── data/        # Raw/processed dictionary data, stroke SVGs
+├── models/      # Cached embedding models
 ├── Dockerfile
-├── docker-compose.yml
-├── docker-compose.override.yml.example  # optional host-specific overrides (e.g. DNS)
-├── pyproject.toml           # pinned deps + ingest/dev dep groups
-└── uv.lock                  # locked resolution (uv sync --frozen)
+└── docker-compose.yml
 ```
 
 ## Environment Variables
@@ -231,19 +194,7 @@ Create a `.env` file (see `.env.example`):
 - `EMBED_MODEL`: Dense embedding model (default: `sentence-transformers/all-MiniLM-L6-v2`)
 - `QUERY_REWRITE`: `heuristic` (default, free), `auto` (adds one Groq call for long English queries — best MRR but uses free-tier quota), or `off`
 
-### Groq free-tier notes
-
-Tuned for the free tier (30 RPM / ~1,000 requests/day *per model*): explanations are on-demand only with bounded token budgets, and 429s honor the API's `retry-after` within a small retry budget. Rate limits are per-model, so when the primary's daily cap is exhausted requests automatically fail over to `LLM_MODEL_FALLBACK`; if both are down the API returns 502 rather than a fabricated answer. `QUERY_REWRITE=auto` adds one call per long English query — heuristic rewriting is the free default.
-
-## Port Configuration
-
-| Service     | Container | Host (Docker)                | Host (Local) |
-|-------------|-----------|------------------------------|--------------|
-| HTTP API    | 8000      | `APP_PORT` (default: 8000)   | 8000 (`uvicorn app.api:app`) |
-| Qdrant      | 6333      | 6333                         | 6333         |
-| Qdrant gRPC | 6334      | 6334                         | 6334         |
-
-Docker maps `127.0.0.1:${APP_PORT:-8000}:8000` — change `APP_PORT` in `.env`, then `docker compose up -d`. All host ports are bound to loopback only (Qdrant has no auth by default), so nothing is reachable from the LAN; the app reaches Qdrant over the internal compose network.
+See [docs/configuration.md](docs/configuration.md) for deployment notes, Groq free-tier details, and port configuration.
 
 ## Evaluation
 

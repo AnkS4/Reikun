@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import { apiKanjiGroup, type GroupKey, type KanjiGroupResponse } from '#lib/api.ts';
 	import Header from '#lib/components/Header.svelte';
@@ -14,6 +15,8 @@
 		grade: 'grade',
 		jlpt: 'JLPT level'
 	};
+
+	const fromWord = $derived(page.url.searchParams.get('from') ?? '');
 
 	// Validated request descriptor — anything unrecognized renders the
 	// bad-request notice instead of a fetch.
@@ -49,7 +52,18 @@
 	// Pagination navigates via ?page= so every page is a real entry in the
 	// session history (an explicit URL the back button undoes).
 	function pageHref(p: number): string {
-		return `/kanji-group?by=${req?.by}&value=${req?.value}&page=${p}`;
+		const fromParam = fromWord ? `&from=${encodeURIComponent(fromWord)}` : '';
+		return `/kanji-group?by=${req?.by}&value=${req?.value}&page=${p}${fromParam}`;
+	}
+
+	function goBack() {
+		if (typeof window !== 'undefined' && window.history.length > 1) {
+			window.history.back();
+		} else if (fromWord) {
+			goto(`/?q=${encodeURIComponent(fromWord)}`);
+		} else {
+			goto('/');
+		}
 	}
 
 	function metaLine(k: KanjiGroupResponse['kanjis'][number]): string {
@@ -69,7 +83,12 @@
 
 <Header />
 <div class="kgroup-wrap">
-	<nav class="about-nav"><a href="/">← Reikun</a></nav>
+	<nav class="group-nav-bar">
+		<button type="button" class="group-back-btn" onclick={goBack} title={fromWord ? `Back to ${fromWord}` : 'Go back'}>
+			← Back{#if fromWord}&nbsp;to <b lang="ja">{fromWord}</b>{:else}&nbsp;to search{/if}
+		</button>
+		<a href="/" class="group-home-link">Reikun home</a>
+	</nav>
 	{#if !req}
 		<p class="notice"><Icon name="info" size={16} /> Unknown group — pick one from any kanji card's
 			badges (strokes, grade or JLPT).</p>
@@ -104,6 +123,12 @@
 					{#if pageNo < pages}<a class="btn-3d" href={pageHref(pageNo)}>Next →</a>{/if}
 				</nav>
 			{/if}
+
+			<div class="kgroup-bottom-actions">
+				<button type="button" class="btn-3d" onclick={goBack}>
+					← Back{#if fromWord}&nbsp;to <b lang="ja">{fromWord}</b>{:else}&nbsp;to previous search{/if}
+				</button>
+			</div>
 		{/if}
 	{/if}
 </div>

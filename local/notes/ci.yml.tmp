@@ -1,0 +1,125 @@
+# Ideal GitHub Actions workflow: current CI + Cloud Run deploy via WIF.
+# Not wired — copy over .github/workflows/ci.yml if Cloud Run CD is ever wanted.
+# See Notes.md § "Cloud Run deploy from GitHub Actions — deferred".
+#
+# One-time GCP (project reikun / 164207734925), then fill WORKLOAD_IDENTITY_PROVIDER
+# and the github-deploy SA email below:
+#
+#   gcloud iam workload-identity-pools create github --location=global --project=reikun
+#   gcloud iam workload-identity-pools providers create-oidc github \
+#     --location=global --workload-identity-pool=github \
+#     --issuer-uri=https://token.actions.githubusercontent.com \
+#     --attribute-mapping="google.subject=assertion.sub,attribute.repository=assertion.repository,attribute.ref=assertion.ref" \
+#     --attribute-condition="assertion.repository=='OWNER/Reikun' && assertion.ref=='refs/heads/main'" \
+#     --project=reikun
+#   gcloud iam service-accounts create github-deploy --project=reikun
+#   gcloud run services add-iam-policy-binding reikun-api --region=europe-southwest1 \
+#     --member=serviceAccount:github-deploy@reikun.iam.gserviceaccount.com \
+#     --role=roles/run.developer
+#   gcloud projects add-iam-policy-binding reikun \
+#     --member=serviceAccount:github-deploy@reikun.iam.gserviceaccount.com \
+#     --role=roles/iam.serviceAccountUser
+#   gcloud projects add-iam-policy-binding reikun \
+#     --member=serviceAccount:github-deploy@reikun.iam.gserviceaccount.com \
+#     --role=roles/cloudbuild.builds.editor
+#   gcloud iam service-accounts add-iam-policy-binding \
+#     github-deploy@reikun.iam.gserviceaccount.com \
+#     --role=roles/iam.workloadIdentityUser \
+#     --member="principalSet://iam.googleapis.com/projects/164207734925/locations/global/workloadIdentityPools/github/attribute.repository/OWNER/Reikun"
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v6
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - run: uv sync --locked
+
+      - run: uv run ruff check .
+
+      - run: uv run pytest -q
+
+      - name: OpenAPI schema is up to date
+        run: |
+          uv run python scripts/export_openapi.py
+          git diff --exit-code docs/api/openapi.json
+
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - run: npm ci
+      - run: npm run check
+      - run: npm run build
+
+      - name: Generated API types are up to date
+        run: |
+          npm run gen:api
+          git diff --exit-code src/lib/openapi.d.ts
+
+  deploy-api:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [backend, frontend]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dorny/paths-filter@v3
+        id: changes
+        with:
+          filters: |
+            api:
+              - 'app/**'
+              - 'scripts/**'
+              - 'pyproject.toml'
+              - 'uv.lock'
+              - 'Dockerfile'
+              - '.gcloudignore'
+              - 'data/processed/**'
+
+      - uses: google-github-actions/auth@v2
+        if: steps.changes.outputs.api == 'true'
+        with:
+          workload_identity_provider: projects/164207734925/locations/global/workloadIdentityPools/github/providers/github
+          service_account: github-deploy@reikun.iam.gserviceaccount.com
+
+      - uses: google-github-actions/setup-gcloud@v2
+        if: steps.changes.outputs.api == 'true'
+
+      - run: gcloud run deploy reikun-api --source . --region europe-southwest1 --quiet
+        if: steps.changes.outputs.api == 'true'
+
+      - run: curl -sf https://reikun-api-164207734925.europe-southwest1.run.app/ready
+        if: steps.changes.outputs.api == 'true'

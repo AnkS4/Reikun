@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { goto } from '$app/navigation';
 	import type { Level, SearchResult } from '#lib/api.ts';
 	import Ruby from './Ruby.svelte';
 	import ExampleRow from './ExampleRow.svelte';
@@ -20,8 +21,23 @@
 	} = $props();
 
 	let copied = $state(false);
-	let conjOpen = $state(false);
 	let timer: ReturnType<typeof setTimeout> | undefined;
+
+	/** Build URL for the conjugations page. */
+	const conjHref = $derived.by(() => {
+		const word = result.kanji_form || result.reading;
+		if (!word) return '';
+		const params = new URLSearchParams({ word });
+		if (result.reading && result.reading !== word) params.set('reading', result.reading);
+		return `/conjugations?${params}`;
+	});
+
+	/** Navigate to the conjugations page, passing pre-loaded data via state. */
+	function openConj(e: MouseEvent) {
+		e.preventDefault();
+		if (!conjHref) return;
+		goto(conjHref, { state: { conjRows: result.inflected_forms } });
+	}
 
 	// Anki / notes format: 高い【たかい】— high, tall, expensive
 	const wordLine = $derived.by(() => {
@@ -68,28 +84,17 @@
 	{/if}
 	{#if result.inflected_forms?.length}
 		<div class="conj-section">
-			<button
-				type="button"
+			<a
 				class="conj-toggle"
-				onclick={() => (conjOpen = !conjOpen)}
-				aria-expanded={conjOpen}
+				href={conjHref}
+				onclick={openConj}
+				title="View all conjugations"
 			>
-				Conjugations <span class="conj-count">{result.inflected_forms.length}</span>
-				<Icon name="expand-more" size={14} />
-			</button>
-			{#if conjOpen}
-				<table class="conj-table">
-					<tbody>
-						{#each result.inflected_forms as row (row.form)}
-							<tr>
-								<th scope="row">{row.form}</th>
-								<td lang="ja">{row.surface}</td>
-								<td class="conj-kana" lang="ja">{row.kana ?? '—'}</td>
-							</tr>
-						{/each}
-					</tbody>
-				</table>
-			{/if}
+				<Icon name="book-open" size={13} />
+				<span class="conj-label">Conjugations</span>
+				<span class="conj-count">{result.inflected_forms.length}</span>
+				<Icon name="arrow-right" size={11} />
+			</a>
 		</div>
 	{/if}
 	{#if onSearchWord && result.related?.length}
