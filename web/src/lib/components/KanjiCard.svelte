@@ -58,11 +58,19 @@
 							<!-- Group badges are browse keys: the kanji of the whole
 							     group live on their own page (paginated there). -->
 							<a
-								class="meta-badge clickable"
-								href={`/kanji-group?by=${m.group.by}&value=${m.group.value}`}
+								class="meta-badge clickable meta-badge-{m.group.by}"
+								href={`/kanji-group?by=${m.group.by}&value=${m.group.value}&from=${encodeURIComponent(char)}`}
 								title={m.tip}
 							>
-								{m.label} <Icon name="expand-more" size={11} />
+								{#if m.group.by === 'strokes'}
+									<Icon name="pencil" size={11} />
+								{:else if m.group.by === 'grade'}
+									<Icon name="school" size={11} />
+								{:else if m.group.by === 'jlpt'}
+									<Icon name="sparkles" size={11} />
+								{/if}
+								<span>{m.label}</span>
+								<Icon name="arrow-right" size={10} />
 							</a>
 						{:else}
 							<span class="meta-badge" title={m.tip}>{m.label}</span>
