@@ -34,6 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Gold set: Hit@1 137 → 149 of 156 (87.8% → 95.5%), Hit@2 154, Hit@5 156/156 — en_words 51/55, en_verbs 49/50, ja_hiragana 49/51
 - Chunks schema bumped to 3 (new conjugation fields + gloss head-words) and again to 4 (new `head_gloss_keys` field); re-ingest required for the new payload data (`--update --reuse-vectors`)
 - Python 3.14: `.python-version`, `requires-python`, ruff `py314`, Dockerfile base and CI all pinned to 3.14; free wins from the new runtime (PEP 649 deferred annotations for faster imports, the tail-call interpreter) without API changes
+- Vite 8.3.5 (dev dependency) — clears the high-severity advisories in the dev server (cross-origin script execution via custom middleware, `server.fs` escapes, `launch-editor` flag handling on Windows). Dev-server only: the production bundle does not include Vite
 - Versions: API 0.8.0 (pyproject + openapi), web 0.8.0
 
 ## [0.7.0] - 2026-10-21
