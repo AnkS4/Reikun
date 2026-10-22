@@ -16,7 +16,7 @@ from pathlib import Path
 
 import marisa_trie
 
-PAYLOAD_FIELDS = ("kanji_form", "reading", "meanings", "kanji_forms", "readings", "is_common")
+PAYLOAD_FIELDS = ("kanji_form", "reading", "meanings", "kanji_forms", "readings", "is_common", "wf_score")
 
 
 class TrieIndex:
@@ -60,6 +60,10 @@ def add_entry(index: dict[str, list[dict]], pay: dict) -> None:
         # the segment tooltip entirely.
         "meanings": (pay.get("meanings") or [])[:5],
         "is_common": bool(pay.get("is_common")),
+        # Corpus Zipf (~0-7) — orders ambiguous candidate lists inside
+        # _ambiguous() so the tooltip leads with the entry people actually
+        # say (Issues.md S2); is_common alone left ingest order for ties.
+        "wf": round(float(pay.get("wf_score") or 0.0), 3),
     }
     pair = (entry["kanji_form"], entry["reading"])
     keys = (pay.get("kanji_form"), pay.get("reading"), *(pay.get("kanji_forms") or ()), *(pay.get("readings") or ()))

@@ -12,5 +12,13 @@ export const variables = defineEnvVars({
 		static: true,
 		schema: (value) => value || 'http://localhost:8000',
 		description: 'Base URL of the Reikun API (no trailing slash)'
+	},
+	PUBLIC_CF_ANALYTICS_TOKEN: {
+		public: true,
+		static: true,
+		schema: (value) => value || '',
+		description:
+			'Cloudflare Web Analytics beacon token — optional; get it from the CF dashboard ' +
+			'(Web Analytics → enable reikun.app → copy the JS snippet token). Empty string disables the beacon.'
 	}
 });

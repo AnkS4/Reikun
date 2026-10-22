@@ -57,7 +57,13 @@ Thumbs.db
 .Trashes
 
 # Local-only benchmarking, notes, etc. (kept for context but not committed)
-local/
+# The notes/ tree is internal documentation — it is never published, so it
+# stays ignored (local/oci/ is the one exception).
+local/*
+!local/oci/
+
+# Agent scratch (plan/review notes from the coding harness)
+.agents/
 
 # Logs
 *.log

@@ -13,7 +13,7 @@
 	import { onMount } from 'svelte';
 	import { apiReadyShared } from '#lib/api.ts';
 	import { theme } from '#lib/theme.svelte.ts';
-	import KanjiText from './KanjiText.svelte';
+		import KanjiText from './KanjiText.svelte';
 	import Popover from './Popover.svelte';
 	import Icon from './Icon.svelte';
 
@@ -54,13 +54,15 @@
 			{/if}
 		</span>
 	</span>
-	<Popover icon="palette" title="Theme">
+	<Popover icon="palette" title="Appearance — theme">
 		<p class="popover-title">Appearance</p>
 		<div class="segmented" role="group" aria-label="Theme">
 			{#each THEME_OPTIONS as t (t.v)}
 				<button type="button" class:sel={theme.choice === t.v} aria-pressed={theme.choice === t.v} onclick={() => theme.set(t.v)}>{t.label}</button>
 			{/each}
 		</div>
+		<!-- Furigana moved to the search row's あ button — the popover keeping a
+		     second toggle in sync was two controls for one preference. -->
 	</Popover>
 </div>
 

@@ -1,70 +1,80 @@
-[
-  {
-    "model": "sentence-transformers/all-MiniLM-L6-v2",
-    "embed_seconds": 615.5,
-    "docs_per_second": 60.1,
-    "hit@1": 0.125,
-    "hit@3": 0.417,
-    "hit@5": 0.583,
-    "hit@10": 0.667,
-    "mrr": 0.307,
-    "mrr_by_category": {
-      "exact_ja": 0.217,
-      "kana": 0.067,
-      "en_word": 0.625,
-      "en_phrase": 0.375,
-      "descriptive": 0.14
-    }
+{
+  "meta": {
+    "generated": "2026-09-13 18:35 UTC",
+    "version": "0.6.0",
+    "commit": "unknown",
+    "models": "sentence-transformers/all-MiniLM-L6-v2, BAAI/bge-small-en-v1.5, sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2, sentence-transformers/paraphrase-multilingual-mpnet-base-v2",
+    "note": "Original 4-model run, kept as the recorded comparison — the dense models are no longer in the local cache and re-embedding them costs ~2 h, so this was NOT re-run for 0.8.0. Reformatted to the current {meta, results} schema on 2026-10-22; the numbers are the original run's. The retrieval-formula work does not affect it (vector-only, in-memory, no FormulaQuery). Re-run with: uv run python eval/embed_model_bench.py --models <model> [<model> …]",
+    "reformatted": "2026-10-22"
   },
-  {
-    "model": "BAAI/bge-small-en-v1.5",
-    "embed_seconds": 2805.7,
-    "docs_per_second": 13.2,
-    "hit@1": 0.167,
-    "hit@3": 0.417,
-    "hit@5": 0.5,
-    "hit@10": 0.583,
-    "mrr": 0.29,
-    "mrr_by_category": {
-      "exact_ja": 0.127,
-      "kana": 0.0,
-      "en_word": 0.528,
-      "en_phrase": 0.675,
-      "descriptive": 0.076
+  "results": [
+    {
+      "model": "sentence-transformers/all-MiniLM-L6-v2",
+      "embed_seconds": 615.5,
+      "docs_per_second": 60.1,
+      "hit@1": 0.125,
+      "hit@3": 0.417,
+      "hit@5": 0.583,
+      "hit@10": 0.667,
+      "mrr": 0.307,
+      "mrr_by_category": {
+        "exact_ja": 0.217,
+        "kana": 0.067,
+        "en_word": 0.625,
+        "en_phrase": 0.375,
+        "descriptive": 0.14
+      }
+    },
+    {
+      "model": "BAAI/bge-small-en-v1.5",
+      "embed_seconds": 2805.7,
+      "docs_per_second": 13.2,
+      "hit@1": 0.167,
+      "hit@3": 0.417,
+      "hit@5": 0.5,
+      "hit@10": 0.583,
+      "mrr": 0.29,
+      "mrr_by_category": {
+        "exact_ja": 0.127,
+        "kana": 0.0,
+        "en_word": 0.528,
+        "en_phrase": 0.675,
+        "descriptive": 0.076
+      }
+    },
+    {
+      "model": "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
+      "embed_seconds": 2924.2,
+      "docs_per_second": 12.7,
+      "hit@1": 0.208,
+      "hit@3": 0.375,
+      "hit@5": 0.542,
+      "hit@10": 0.625,
+      "mrr": 0.33,
+      "mrr_by_category": {
+        "exact_ja": 0.322,
+        "kana": 0.0,
+        "en_word": 0.506,
+        "en_phrase": 0.675,
+        "descriptive": 0.096
+      }
+    },
+    {
+      "model": "sentence-transformers/paraphrase-multilingual-mpnet-base-v2",
+      "embed_seconds": 1646.3,
+      "docs_per_second": 22.5,
+      "hit@1": 0.167,
+      "hit@3": 0.292,
+      "hit@5": 0.458,
+      "hit@10": 0.625,
+      "mrr": 0.279,
+      "mrr_by_category": {
+        "exact_ja": 0.273,
+        "kana": 0.0,
+        "en_word": 0.565,
+        "en_phrase": 0.237,
+        "descriptive": 0.163
+      }
     }
-  },
-  {
-    "model": "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
-    "embed_seconds": 2924.2,
-    "docs_per_second": 12.7,
-    "hit@1": 0.208,
-    "hit@3": 0.375,
-    "hit@5": 0.542,
-    "hit@10": 0.625,
-    "mrr": 0.33,
-    "mrr_by_category": {
-      "exact_ja": 0.322,
-      "kana": 0.0,
-      "en_word": 0.506,
-      "en_phrase": 0.675,
-      "descriptive": 0.096
-    }
-  },
-  {
-    "model": "sentence-transformers/paraphrase-multilingual-mpnet-base-v2",
-    "embed_seconds": 1646.3,
-    "docs_per_second": 22.5,
-    "hit@1": 0.167,
-    "hit@3": 0.292,
-    "hit@5": 0.458,
-    "hit@10": 0.625,
-    "mrr": 0.279,
-    "mrr_by_category": {
-      "exact_ja": 0.273,
-      "kana": 0.0,
-      "en_word": 0.565,
-      "en_phrase": 0.237,
-      "descriptive": 0.163
-    }
-  }
-]
+  ]
+}

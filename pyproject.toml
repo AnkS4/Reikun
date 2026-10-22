@@ -4,12 +4,12 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "reikun"
-version = "0.6.0"
+version = "0.8.0"
 description = "Reikun (例訓) — Semantic Japanese Dictionary"
 authors = [{ name = "Aniket Satbhai" }]
 license = "Apache-2.0"
 license-files = ["LICENSE", "NOTICE"]
-requires-python = ">=3.13"
+requires-python = ">=3.14"
 dependencies = [
     "qdrant-client==1.19.1",
     "fastembed==0.9.0",
@@ -17,12 +17,12 @@ dependencies = [
     "python-dotenv==1.2.4",
     "httpx==0.28.1",
     "pydantic==2.14.1",
-    "fastapi==0.143.0",
+    "fastapi==0.159.1",
     "uvicorn==0.54.0",
     "sudachipy==0.7.0",
-    "sudachidict-small==20260723.1",
+    "sudachidict-small==20261015",
     "marisa-trie==1.4.1",
-    "starlette==1.8.0",
+    "starlette==1.9.0",
 ]
 
 [project.scripts]
@@ -52,7 +52,7 @@ testpaths = ["tests"]
 
 [tool.ruff]
 line-length = 120
-target-version = "py313"
+target-version = "py314"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "C4", "PERF", "RUF"]

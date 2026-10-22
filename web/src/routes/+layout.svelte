@@ -3,9 +3,23 @@
 	import { page } from '$app/state';
 	import { onNavigate } from '$app/navigation';
 	import { API_BASE, apiReadyShared } from '#lib/api.ts';
+	import { PUBLIC_CF_ANALYTICS_TOKEN } from '$app/env/public';
 	import WakeBanner from '#lib/components/WakeBanner.svelte';
 	import '../app.css';
 	let { children } = $props();
+
+	// Cloudflare Web Analytics — a free cookieless beacon (no consent banner
+	// needed), tracked per page-load; the beacon script covers SPA route
+	// changes itself. Token comes from the CF dashboard at build time; unset
+	// (empty string) → nothing loads, zero cost.
+	onMount(() => {
+		if (!PUBLIC_CF_ANALYTICS_TOKEN || document.querySelector('script[data-cf-beacon]')) return;
+		const s = document.createElement('script');
+		s.defer = true;
+		s.src = 'https://static.cloudflareinsights.com/beacon.min.js';
+		s.dataset.cfBeacon = JSON.stringify({ token: PUBLIC_CF_ANALYTICS_TOKEN });
+		document.head.appendChild(s);
+	});
 
 	// Wake the API (and its Qdrant behind it) the moment the app loads, so the
 	// cold start overlaps with the user reading the page instead of their first click.

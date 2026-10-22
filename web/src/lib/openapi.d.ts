@@ -89,6 +89,28 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/kanji/group": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Kanji Group Endpoint
+         * @description Browse the KANJI of one metadata group — the click target of the kanji
+         *     card's badges ("8 strokes", "Grade 3", "JLPT N4"). Pages of characters,
+         *     frequency-ranked most-common first; `total` drives Prev/Next pagination.
+         */
+        get: operations["kanji_group_endpoint_kanji_group_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/kanji": {
         parameters: {
             query?: never;
@@ -311,6 +333,18 @@ export interface components {
              */
             status: "ok";
         };
+        /**
+         * InflectionRow
+         * @description One row of a verb/adjective conjugation table.
+         */
+        InflectionRow: {
+            /** Form */
+            form: string;
+            /** Surface */
+            surface: string;
+            /** Kana */
+            kana?: string | null;
+        };
         /** KanjiCard */
         KanjiCard: {
             /** Literal */
@@ -360,6 +394,60 @@ export interface components {
             stroke?: components["schemas"]["StrokeData"] | null;
         };
         /**
+         * KanjiGroupEntry
+         * @description One kanji of a same-metadata group (strokes/grade/JLPT) on the
+         *     /kanji-group browse page — glyph, gloss and enough metadata for a grid
+         *     card; the full card is a click away (search the literal).
+         */
+        KanjiGroupEntry: {
+            /** Literal */
+            literal: string;
+            /**
+             * Meanings
+             * @default []
+             */
+            meanings: string[];
+            /**
+             * On Yomi
+             * @default []
+             */
+            on_yomi: string[];
+            /**
+             * Kun Yomi
+             * @default []
+             */
+            kun_yomi: string[];
+            /** Stroke Count */
+            stroke_count?: number | null;
+            /** Freq */
+            freq?: number | null;
+            /** Jlpt Level */
+            jlpt_level?: number | null;
+            /**
+             * Meta
+             * @default []
+             */
+            meta: components["schemas"]["MetaBadge"][];
+        };
+        /** KanjiGroupResponse */
+        KanjiGroupResponse: {
+            /**
+             * By
+             * @enum {string}
+             */
+            by: "strokes" | "grade" | "jlpt";
+            /** Value */
+            value: number;
+            /** Label */
+            label: string;
+            /** Total */
+            total: number;
+            /** Offset */
+            offset: number;
+            /** Kanjis */
+            kanjis: components["schemas"]["KanjiGroupEntry"][];
+        };
+        /**
          * KanjiHover
          * @description Compact card for kanji-in-text hover tooltips (batch endpoint).
          */
@@ -393,6 +481,21 @@ export interface components {
             label: string;
             /** Tip */
             tip: string;
+            group?: components["schemas"]["MetaBadgeGroup"] | null;
+        };
+        /**
+         * MetaBadgeGroup
+         * @description Browse key for a *clickable* badge — strokes/grade/JLPT badges link to
+         *     /kanji/group so the card can list words of the same metadata group.
+         */
+        MetaBadgeGroup: {
+            /**
+             * By
+             * @enum {string}
+             */
+            by: "strokes" | "grade" | "jlpt";
+            /** Value */
+            value: number;
         };
         /** RandomKanji */
         RandomKanji: {
@@ -544,6 +647,18 @@ export interface components {
              * @default []
              */
             ruby: components["schemas"]["RubyPart"][];
+            /**
+             * Related
+             * @default []
+             */
+            related: components["schemas"]["CommonWord"][];
+            /**
+             * Inflected Forms
+             * @default []
+             */
+            inflected_forms: components["schemas"]["InflectionRow"][];
+            /** Inflection */
+            inflection?: string | null;
         };
         /**
          * Segment
@@ -736,6 +851,42 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["RandomKanji"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    kanji_group_endpoint_kanji_group_get: {
+        parameters: {
+            query: {
+                /** @description Kanji metadata grouping key */
+                by: "strokes" | "grade" | "jlpt";
+                /** @description Group value (stroke count, KANJIDIC2 grade, or old-scale JLPT level) */
+                value: number;
+                n?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["KanjiGroupResponse"];
                 };
             };
             /** @description Validation Error */

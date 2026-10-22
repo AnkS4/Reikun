@@ -1,0 +1,3105 @@
+{
+  "meta": {
+    "generated": "2026-10-22 11:37 UTC",
+    "version": "0.8.0",
+    "commit": "8b492f1+dirty",
+    "ts": "20261022T113716Z",
+    "endpoint": "http://localhost:16333",
+    "points": 218786,
+    "mode": "auto",
+    "subsets": "en_words,en_verbs,en_descriptive,ja_words,ja_hiragana,ja_katakana",
+    "rewrite": "heuristic",
+    "CANONICAL_BOOST": 3.0,
+    "PREFETCH_MIN": 200,
+    "COMMON_BOOST": 1.0,
+    "HEAD_BONUS": 1.5
+  },
+  "totals": {
+    "hit1": 292,
+    "hit2": 298,
+    "hit5": 300,
+    "n": 300
+  },
+  "median_ms": 16.4,
+  "categories": {
+    "en_verbs": {
+      "n": 60,
+      "hit1": 58,
+      "hit2": 59,
+      "hit5": 60
+    },
+    "en_words": {
+      "n": 60,
+      "hit1": 56,
+      "hit2": 59,
+      "hit5": 60
+    },
+    "ja_hiragana": {
+      "n": 60,
+      "hit1": 58,
+      "hit2": 60,
+      "hit5": 60
+    },
+    "ja_katakana": {
+      "n": 60,
+      "hit1": 60,
+      "hit2": 60,
+      "hit5": 60
+    },
+    "ja_words": {
+      "n": 60,
+      "hit1": 60,
+      "hit2": 60,
+      "hit5": 60
+    },
+    "en_descriptive": {
+      "n": 60,
+      "hit1": 9,
+      "hit2": 13,
+      "hit5": 22
+    }
+  },
+  "queries": {
+    "sky": {
+      "category": "en_words",
+      "rank": 1,
+      "expected": [
+        "空"
+      ],
+      "latency_ms": 537.2
+    },
+    "cat": {
+      "category": "en_words",
+      "rank": 1,
+      "expected": [
+        "猫"
+      ],
+      "latency_ms": 22.7
+    },
+    "dog": {
+      "category": "en_words",
+      "rank": 1,
+      "expected": [
+        "犬"
+      ],
+      "latency_ms": 20.7
+    },
+    "water": {
+      "category": "en_words",
+      "rank": 1,
+      "expected": [
+        "水"
+      ],
+      "latency_ms": 23.3
+    },
+    "fire": {
+      "category": "en_words",
+      "rank": 1,
+      "expected": [
+        "火"
+      ],
+      "latency_ms": 22.9
+    },
+    "book": {
+      "category": "en_words",
+      "rank": 1,
+      "expected": [
+        "本"
+      ],
+      "latency_ms": 21.2
+    },
+    "car": {
+      "category": "en_words",
+      "rank": 1,
+      "expected": [
+        "車",
+        "自動車"
+      ],
+      "latency_ms": 20.7
+    },
+    "house": {
+      "category": "en_words",
+      "rank": 1,
+      "expected": [
+        "家"
+      ],
+      "latency_ms": 20.8
+    },
+    "school": {
+      "category": "en_words",
+      "rank": 1,
+      "expected": [
+        "学校"
+      ],
+      "latency_ms": 22.4
+    },
+    "friend": {
+      "category": "en_words",
+      "rank": 1,
+      "expected": [
+        "友達"
+      ],
+      "latency_ms": 20.3
+    },
+    "family": {
+      "category": "en_words",
+      "rank": 1,
+      "expected": [
+        "家族"
+      ],
+      "latency_ms": 20.6
+    },
+    "tomato": {
+      "category": "en_words",
+      "rank": 1,
+      "expected": [
+        "トマト"
+      ],
+      "latency_ms": 21.7
+    },
+    "garlic": {
+      "category": "en_words",
+      "rank": 1,
+      "expected": [
+        "大蒜",
+        "にんにく",
+        "ニンニク",
+        "ガーリック"
+      ],
+      "latency_ms": 20.8
+    },
+    "eraser": {
+      "category": "en_words",
+      "rank": 1,
+      "expected": [
+        "消しゴム",
+        "字消し",
+        "イレーザー"
+      ],
+      "latency_ms": 20.2
+    },
+    "potato": {
+      "category": "en_words",
+      "rank": 1,
+      "expected": [
+        "じゃが芋",
+        "ポテト",
+        "芋"
+      ],
+      "latency_ms": 20.7
+    },
+    "apartment": {
+      "category": "en_words",
+      "rank": 1,
+      "expected": [
+        "アパート",
+        "マンション",
+        "アパートメント"
+      ],
+      "latency_ms": 22.2
+    },
+    "money": {
+      "category": "en_words",
+      "rank": 2,
+      "expected": [
+        "お金"
+      ],
+      "latency_ms": 21.5
+    },
+    "time": {
+      "category": "en_words",
+      "rank": 2,
+      "expected": [
+        "時間"
+      ],
+      "latency_ms": 21.1
+    },
+    "morning": {
+      "category": "en_words",
+      "rank": 1,
+      "expected": [
+        "朝"
+      ],
+      "latency_ms": 21.1
+    },
+    "night": {
+      "category": "en_words",
+      "rank": 1,
+      "expected": [
+        "夜"
+      ],
+      "latency_ms": 20.4
+    },
+    "rain": {
+      "category": "en_words",
+      "rank": 1,
+      "expected": [
+        "雨"
+      ],
+      "latency_ms": 20.7
+    },
+    "snow": {
+      "category": "en_words",
+      "rank": 1,
+      "expected": [
+        "雪"
+      ],
+      "latency_ms": 19.9
+    },
+    "wind": {
+      "category": "en_words",
+      "rank": 1,
+      "expected": [
+        "風"
+      ],
+      "latency_ms": 21.1
+    },
+    "mountain": {
+      "category": "en_words",
+      "rank": 1,
+      "expected": [
+        "山"
+      ],
+      "latency_ms": 18.6
+    },
+    "river": {
+      "category": "en_words",
+      "rank": 1,
+      "expected": [
+        "川"
+      ],
+      "latency_ms": 19.6
+    },
+    "sea": {
+      "category": "en_words",
+      "rank": 1,
+      "expected": [
+        "海"
+      ],
+      "latency_ms": 20.2
+    },
+    "tree": {
+      "category": "en_words",
+      "rank": 1,
+      "expected": [
+        "木"
+      ],
+      "latency_ms": 22.2
+    },
+    "flower": {
+      "category": "en_words",
+      "rank": 1,
+      "expected": [
+        "花"
+      ],
+      "latency_ms": 21.5
+    },
+    "bird": {
+      "category": "en_words",
+      "rank": 1,
+      "expected": [
+        "鳥"
+      ],
+      "latency_ms": 21.4
+    },
+    "fish": {
+      "category": "en_words",
+      "rank": 1,
+      "expected": [
+        "魚"
+      ],
+      "latency_ms": 21.3
+    },
+    "door": {
+      "category": "en_words",
+      "rank": 1,
+      "expected": [
+        "ドア"
+      ],
+      "latency_ms": 20.8
+    },
+    "window": {
+      "category": "en_words",
+      "rank": 1,
+      "expected": [
+        "窓"
+      ],
+      "latency_ms": 21.7
+    },
+    "table": {
+      "category": "en_words",
+      "rank": 2,
+      "expected": [
+        "テーブル"
+      ],
+      "latency_ms": 22.3
+    },
+    "chair": {
+      "category": "en_words",
+      "rank": 1,
+      "expected": [
+        "椅子"
+      ],
+      "latency_ms": 29.7
+    },
+    "phone": {
+      "category": "en_words",
+      "rank": 1,
+      "expected": [
+        "電話"
+      ],
+      "latency_ms": 25.5
+    },
+    "computer": {
+      "category": "en_words",
+      "rank": 1,
+      "expected": [
+        "コンピュータ",
+        "パソコン"
+      ],
+      "latency_ms": 25.5
+    },
+    "music": {
+      "category": "en_words",
+      "rank": 1,
+      "expected": [
+        "音楽"
+      ],
+      "latency_ms": 30.7
+    },
+    "movie": {
+      "category": "en_words",
+      "rank": 1,
+      "expected": [
+        "映画"
+      ],
+      "latency_ms": 30.4
+    },
+    "game": {
+      "category": "en_words",
+      "rank": 1,
+      "expected": [
+        "ゲーム"
+      ],
+      "latency_ms": 27.0
+    },
+    "work": {
+      "category": "en_words",
+      "rank": 1,
+      "expected": [
+        "仕事"
+      ],
+      "latency_ms": 18.6
+    },
+    "dream": {
+      "category": "en_words",
+      "rank": 1,
+      "expected": [
+        "夢"
+      ],
+      "latency_ms": 18.9
+    },
+    "love": {
+      "category": "en_words",
+      "rank": 1,
+      "expected": [
+        "愛"
+      ],
+      "latency_ms": 22.6
+    },
+    "happy": {
+      "category": "en_words",
+      "rank": 1,
+      "expected": [
+        "嬉しい"
+      ],
+      "latency_ms": 21.4
+    },
+    "sad": {
+      "category": "en_words",
+      "rank": 1,
+      "expected": [
+        "悲しい"
+      ],
+      "latency_ms": 20.9
+    },
+    "hot": {
+      "category": "en_words",
+      "rank": 1,
+      "expected": [
+        "暑い",
+        "熱い"
+      ],
+      "latency_ms": 17.7
+    },
+    "cold": {
+      "category": "en_words",
+      "rank": 1,
+      "expected": [
+        "寒い",
+        "冷たい"
+      ],
+      "latency_ms": 18.6
+    },
+    "beautiful": {
+      "category": "en_words",
+      "rank": 1,
+      "expected": [
+        "美しい",
+        "綺麗",
+        "素敵"
+      ],
+      "latency_ms": 16.7
+    },
+    "difficult": {
+      "category": "en_words",
+      "rank": 1,
+      "expected": [
+        "難しい"
+      ],
+      "latency_ms": 17.7
+    },
+    "train station": {
+      "category": "en_words",
+      "rank": 1,
+      "expected": [
+        "駅"
+      ],
+      "latency_ms": 23.5
+    },
+    "hospital": {
+      "category": "en_words",
+      "rank": 1,
+      "expected": [
+        "病院"
+      ],
+      "latency_ms": 18.3
+    },
+    "teacher": {
+      "category": "en_words",
+      "rank": 1,
+      "expected": [
+        "先生"
+      ],
+      "latency_ms": 16.4
+    },
+    "student": {
+      "category": "en_words",
+      "rank": 1,
+      "expected": [
+        "学生"
+      ],
+      "latency_ms": 16.1
+    },
+    "library": {
+      "category": "en_words",
+      "rank": 3,
+      "expected": [
+        "図書館"
+      ],
+      "latency_ms": 16.5
+    },
+    "umbrella": {
+      "category": "en_words",
+      "rank": 1,
+      "expected": [
+        "傘",
+        "雨傘"
+      ],
+      "latency_ms": 17.3
+    },
+    "birthday": {
+      "category": "en_words",
+      "rank": 1,
+      "expected": [
+        "誕生日"
+      ],
+      "latency_ms": 20.5
+    },
+    "sun": {
+      "category": "en_words",
+      "rank": 1,
+      "expected": [
+        "太陽"
+      ],
+      "latency_ms": 19.2
+    },
+    "moon": {
+      "category": "en_words",
+      "rank": 1,
+      "expected": [
+        "月"
+      ],
+      "latency_ms": 18.5
+    },
+    "child": {
+      "category": "en_words",
+      "rank": 1,
+      "expected": [
+        "子供",
+        "子ども",
+        "子"
+      ],
+      "latency_ms": 20.3
+    },
+    "star": {
+      "category": "en_words",
+      "rank": 1,
+      "expected": [
+        "星"
+      ],
+      "latency_ms": 14.4
+    },
+    "road": {
+      "category": "en_words",
+      "rank": 1,
+      "expected": [
+        "道",
+        "道路"
+      ],
+      "latency_ms": 15.2
+    },
+    "to eat": {
+      "category": "en_verbs",
+      "rank": 1,
+      "expected": [
+        "食べる"
+      ],
+      "latency_ms": 17.8
+    },
+    "to drink": {
+      "category": "en_verbs",
+      "rank": 1,
+      "expected": [
+        "飲む"
+      ],
+      "latency_ms": 16.8
+    },
+    "to sleep": {
+      "category": "en_verbs",
+      "rank": 1,
+      "expected": [
+        "寝る"
+      ],
+      "latency_ms": 16.1
+    },
+    "to run": {
+      "category": "en_verbs",
+      "rank": 1,
+      "expected": [
+        "走る"
+      ],
+      "latency_ms": 17.2
+    },
+    "to walk": {
+      "category": "en_verbs",
+      "rank": 1,
+      "expected": [
+        "歩く"
+      ],
+      "latency_ms": 16.5
+    },
+    "to speak": {
+      "category": "en_verbs",
+      "rank": 1,
+      "expected": [
+        "話す"
+      ],
+      "latency_ms": 20.2
+    },
+    "to listen": {
+      "category": "en_verbs",
+      "rank": 1,
+      "expected": [
+        "聞く"
+      ],
+      "latency_ms": 17.7
+    },
+    "to read": {
+      "category": "en_verbs",
+      "rank": 1,
+      "expected": [
+        "読む"
+      ],
+      "latency_ms": 17.2
+    },
+    "to write": {
+      "category": "en_verbs",
+      "rank": 1,
+      "expected": [
+        "書く"
+      ],
+      "latency_ms": 18.9
+    },
+    "to buy": {
+      "category": "en_verbs",
+      "rank": 1,
+      "expected": [
+        "買う"
+      ],
+      "latency_ms": 17.9
+    },
+    "to sell": {
+      "category": "en_verbs",
+      "rank": 1,
+      "expected": [
+        "売る"
+      ],
+      "latency_ms": 22.3
+    },
+    "to forget": {
+      "category": "en_verbs",
+      "rank": 1,
+      "expected": [
+        "忘れる"
+      ],
+      "latency_ms": 19.1
+    },
+    "to remember": {
+      "category": "en_verbs",
+      "rank": 1,
+      "expected": [
+        "覚える",
+        "思い出す"
+      ],
+      "latency_ms": 17.3
+    },
+    "to arrive": {
+      "category": "en_verbs",
+      "rank": 1,
+      "expected": [
+        "入る",
+        "来る"
+      ],
+      "latency_ms": 22.2
+    },
+    "to leave": {
+      "category": "en_verbs",
+      "rank": 1,
+      "expected": [
+        "出る"
+      ],
+      "latency_ms": 37.1
+    },
+    "to wait": {
+      "category": "en_verbs",
+      "rank": 1,
+      "expected": [
+        "待つ"
+      ],
+      "latency_ms": 21.6
+    },
+    "to hurry": {
+      "category": "en_verbs",
+      "rank": 1,
+      "expected": [
+        "急ぐ"
+      ],
+      "latency_ms": 17.6
+    },
+    "to help": {
+      "category": "en_verbs",
+      "rank": 1,
+      "expected": [
+        "手伝う",
+        "助ける"
+      ],
+      "latency_ms": 16.4
+    },
+    "to borrow": {
+      "category": "en_verbs",
+      "rank": 1,
+      "expected": [
+        "借りる"
+      ],
+      "latency_ms": 16.7
+    },
+    "to lend": {
+      "category": "en_verbs",
+      "rank": 1,
+      "expected": [
+        "貸す"
+      ],
+      "latency_ms": 18.2
+    },
+    "to see": {
+      "category": "en_verbs",
+      "rank": 1,
+      "expected": [
+        "見る"
+      ],
+      "latency_ms": 17.7
+    },
+    "to go": {
+      "category": "en_verbs",
+      "rank": 1,
+      "expected": [
+        "行く"
+      ],
+      "latency_ms": 17.9
+    },
+    "to come": {
+      "category": "en_verbs",
+      "rank": 1,
+      "expected": [
+        "来る"
+      ],
+      "latency_ms": 17.3
+    },
+    "to make": {
+      "category": "en_verbs",
+      "rank": 1,
+      "expected": [
+        "作る"
+      ],
+      "latency_ms": 17.2
+    },
+    "to open": {
+      "category": "en_verbs",
+      "rank": 1,
+      "expected": [
+        "開ける",
+        "開く"
+      ],
+      "latency_ms": 18.1
+    },
+    "to close": {
+      "category": "en_verbs",
+      "rank": 1,
+      "expected": [
+        "閉める",
+        "閉じる"
+      ],
+      "latency_ms": 16.3
+    },
+    "to swim": {
+      "category": "en_verbs",
+      "rank": 1,
+      "expected": [
+        "泳ぐ"
+      ],
+      "latency_ms": 20.4
+    },
+    "to sing": {
+      "category": "en_verbs",
+      "rank": 1,
+      "expected": [
+        "歌う"
+      ],
+      "latency_ms": 18.0
+    },
+    "to dance": {
+      "category": "en_verbs",
+      "rank": 1,
+      "expected": [
+        "踊る"
+      ],
+      "latency_ms": 18.3
+    },
+    "to laugh": {
+      "category": "en_verbs",
+      "rank": 1,
+      "expected": [
+        "笑う"
+      ],
+      "latency_ms": 17.2
+    },
+    "to cry": {
+      "category": "en_verbs",
+      "rank": 1,
+      "expected": [
+        "泣く"
+      ],
+      "latency_ms": 19.1
+    },
+    "to smile": {
+      "category": "en_verbs",
+      "rank": 1,
+      "expected": [
+        "微笑む"
+      ],
+      "latency_ms": 20.3
+    },
+    "to think": {
+      "category": "en_verbs",
+      "rank": 1,
+      "expected": [
+        "考える",
+        "思う"
+      ],
+      "latency_ms": 25.1
+    },
+    "to know": {
+      "category": "en_verbs",
+      "rank": 1,
+      "expected": [
+        "知る"
+      ],
+      "latency_ms": 21.9
+    },
+    "to understand": {
+      "category": "en_verbs",
+      "rank": 1,
+      "expected": [
+        "分かる"
+      ],
+      "latency_ms": 26.4
+    },
+    "to teach": {
+      "category": "en_verbs",
+      "rank": 1,
+      "expected": [
+        "教える"
+      ],
+      "latency_ms": 20.3
+    },
+    "to learn": {
+      "category": "en_verbs",
+      "rank": 1,
+      "expected": [
+        "学ぶ"
+      ],
+      "latency_ms": 19.0
+    },
+    "to live": {
+      "category": "en_verbs",
+      "rank": 1,
+      "expected": [
+        "住む",
+        "生きる"
+      ],
+      "latency_ms": 16.8
+    },
+    "to die": {
+      "category": "en_verbs",
+      "rank": 1,
+      "expected": [
+        "死ぬ"
+      ],
+      "latency_ms": 16.4
+    },
+    "to stand": {
+      "category": "en_verbs",
+      "rank": 1,
+      "expected": [
+        "立つ"
+      ],
+      "latency_ms": 17.3
+    },
+    "to sit": {
+      "category": "en_verbs",
+      "rank": 1,
+      "expected": [
+        "座る"
+      ],
+      "latency_ms": 19.1
+    },
+    "to stop": {
+      "category": "en_verbs",
+      "rank": 1,
+      "expected": [
+        "止まる",
+        "止める"
+      ],
+      "latency_ms": 18.4
+    },
+    "to start": {
+      "category": "en_verbs",
+      "rank": 1,
+      "expected": [
+        "始まる",
+        "始める"
+      ],
+      "latency_ms": 28.3
+    },
+    "to finish": {
+      "category": "en_verbs",
+      "rank": 5,
+      "expected": [
+        "終わる"
+      ],
+      "latency_ms": 22.2
+    },
+    "to use": {
+      "category": "en_verbs",
+      "rank": 1,
+      "expected": [
+        "使う"
+      ],
+      "latency_ms": 20.9
+    },
+    "to need": {
+      "category": "en_verbs",
+      "rank": 1,
+      "expected": [
+        "要る",
+        "必要とする"
+      ],
+      "latency_ms": 18.8
+    },
+    "to want": {
+      "category": "en_verbs",
+      "rank": 1,
+      "expected": [
+        "求める",
+        "望む",
+        "欲する"
+      ],
+      "latency_ms": 19.5
+    },
+    "to be late": {
+      "category": "en_verbs",
+      "rank": 1,
+      "expected": [
+        "遅れる"
+      ],
+      "latency_ms": 18.3
+    },
+    "to ask": {
+      "category": "en_verbs",
+      "rank": 1,
+      "expected": [
+        "尋ねる",
+        "問う"
+      ],
+      "latency_ms": 20.0
+    },
+    "to answer": {
+      "category": "en_verbs",
+      "rank": 1,
+      "expected": [
+        "答える"
+      ],
+      "latency_ms": 19.4
+    },
+    "to cook": {
+      "category": "en_verbs",
+      "rank": 1,
+      "expected": [
+        "料理する",
+        "炊く"
+      ],
+      "latency_ms": 28.2
+    },
+    "to wash": {
+      "category": "en_verbs",
+      "rank": 1,
+      "expected": [
+        "洗う",
+        "ウォッシュ"
+      ],
+      "latency_ms": 17.3
+    },
+    "to cut": {
+      "category": "en_verbs",
+      "rank": 1,
+      "expected": [
+        "切る"
+      ],
+      "latency_ms": 19.0
+    },
+    "to carry": {
+      "category": "en_verbs",
+      "rank": 1,
+      "expected": [
+        "運ぶ"
+      ],
+      "latency_ms": 20.3
+    },
+    "to meet": {
+      "category": "en_verbs",
+      "rank": 1,
+      "expected": [
+        "会う"
+      ],
+      "latency_ms": 19.3
+    },
+    "to send": {
+      "category": "en_verbs",
+      "rank": 1,
+      "expected": [
+        "送る"
+      ],
+      "latency_ms": 19.0
+    },
+    "to show": {
+      "category": "en_verbs",
+      "rank": 1,
+      "expected": [
+        "見せる",
+        "示す"
+      ],
+      "latency_ms": 20.7
+    },
+    "to tell": {
+      "category": "en_verbs",
+      "rank": 1,
+      "expected": [
+        "言う",
+        "伝える",
+        "告げる"
+      ],
+      "latency_ms": 18.8
+    },
+    "to turn": {
+      "category": "en_verbs",
+      "rank": 2,
+      "expected": [
+        "曲がる",
+        "回す",
+        "回る"
+      ],
+      "latency_ms": 27.9
+    },
+    "to wear": {
+      "category": "en_verbs",
+      "rank": 1,
+      "expected": [
+        "着る"
+      ],
+      "latency_ms": 19.3
+    },
+    "how do you say thank you in japanese": {
+      "category": "en_descriptive",
+      "rank": 1,
+      "expected": [
+        "ありがとう",
+        "ありがとうございます",
+        "有難う"
+      ],
+      "latency_ms": 19.3
+    },
+    "what is the word for weather": {
+      "category": "en_descriptive",
+      "rank": 1,
+      "expected": [
+        "天気"
+      ],
+      "latency_ms": 19.7
+    },
+    "the vehicle that flies in the sky": {
+      "category": "en_descriptive",
+      "rank": 4,
+      "expected": [
+        "飛行機",
+        "航空機"
+      ],
+      "latency_ms": 20.2
+    },
+    "a place where you borrow books": {
+      "category": "en_descriptive",
+      "rank": 0,
+      "expected": [
+        "図書館"
+      ],
+      "latency_ms": 26.9
+    },
+    "something that is hard to do": {
+      "category": "en_descriptive",
+      "rank": 0,
+      "expected": [
+        "難しい",
+        "大変"
+      ],
+      "latency_ms": 27.5
+    },
+    "a person who teaches students": {
+      "category": "en_descriptive",
+      "rank": 0,
+      "expected": [
+        "先生",
+        "教師"
+      ],
+      "latency_ms": 20.8
+    },
+    "a word describing somewhere quiet and peaceful": {
+      "category": "en_descriptive",
+      "rank": 1,
+      "expected": [
+        "静か",
+        "閑静"
+      ],
+      "latency_ms": 23.6
+    },
+    "the season after winter": {
+      "category": "en_descriptive",
+      "rank": 0,
+      "expected": [
+        "春"
+      ],
+      "latency_ms": 16.9
+    },
+    "a small pet that meows": {
+      "category": "en_descriptive",
+      "rank": 0,
+      "expected": [
+        "猫"
+      ],
+      "latency_ms": 18.7
+    },
+    "the opposite of hot": {
+      "category": "en_descriptive",
+      "rank": 0,
+      "expected": [
+        "寒い",
+        "冷たい"
+      ],
+      "latency_ms": 20.4
+    },
+    "a place where you buy food": {
+      "category": "en_descriptive",
+      "rank": 0,
+      "expected": [
+        "スーパー",
+        "スーパーマーケット",
+        "コンビニ"
+      ],
+      "latency_ms": 21.5
+    },
+    "when you arrive late to work or school": {
+      "category": "en_descriptive",
+      "rank": 0,
+      "expected": [
+        "遅刻",
+        "遅れる"
+      ],
+      "latency_ms": 24.7
+    },
+    "a document that proves your identity": {
+      "category": "en_descriptive",
+      "rank": 3,
+      "expected": [
+        "身分証明書",
+        "身分証",
+        "ＩＤ"
+      ],
+      "latency_ms": 20.4
+    },
+    "the meal you eat in the morning": {
+      "category": "en_descriptive",
+      "rank": 0,
+      "expected": [
+        "朝食",
+        "朝ご飯",
+        "朝飯"
+      ],
+      "latency_ms": 22.6
+    },
+    "a place where you watch movies": {
+      "category": "en_descriptive",
+      "rank": 1,
+      "expected": [
+        "映画館",
+        "シネマ",
+        "シアター"
+      ],
+      "latency_ms": 22.9
+    },
+    "how do you say hospital in japanese": {
+      "category": "en_descriptive",
+      "rank": 1,
+      "expected": [
+        "病院"
+      ],
+      "latency_ms": 19.9
+    },
+    "a promise you make to someone": {
+      "category": "en_descriptive",
+      "rank": 0,
+      "expected": [
+        "約束"
+      ],
+      "latency_ms": 29.9
+    },
+    "a word for feeling very sleepy": {
+      "category": "en_descriptive",
+      "rank": 1,
+      "expected": [
+        "眠い",
+        "眠たい"
+      ],
+      "latency_ms": 18.8
+    },
+    "a word for feeling very tired": {
+      "category": "en_descriptive",
+      "rank": 0,
+      "expected": [
+        "疲れる",
+        "疲れた"
+      ],
+      "latency_ms": 18.1
+    },
+    "the place where trains stop": {
+      "category": "en_descriptive",
+      "rank": 0,
+      "expected": [
+        "駅"
+      ],
+      "latency_ms": 22.9
+    },
+    "a word meaning very delicious": {
+      "category": "en_descriptive",
+      "rank": 4,
+      "expected": [
+        "美味しい",
+        "旨い"
+      ],
+      "latency_ms": 17.8
+    },
+    "someone who studies at a school": {
+      "category": "en_descriptive",
+      "rank": 0,
+      "expected": [
+        "学生",
+        "生徒"
+      ],
+      "latency_ms": 19.9
+    },
+    "a pet animal that barks": {
+      "category": "en_descriptive",
+      "rank": 0,
+      "expected": [
+        "犬"
+      ],
+      "latency_ms": 18.9
+    },
+    "the opposite of big": {
+      "category": "en_descriptive",
+      "rank": 0,
+      "expected": [
+        "小さい"
+      ],
+      "latency_ms": 18.6
+    },
+    "a word for a feeling of loneliness": {
+      "category": "en_descriptive",
+      "rank": 2,
+      "expected": [
+        "寂しい",
+        "孤独"
+      ],
+      "latency_ms": 16.0
+    },
+    "the coldest season of the year": {
+      "category": "en_descriptive",
+      "rank": 0,
+      "expected": [
+        "冬"
+      ],
+      "latency_ms": 16.8
+    },
+    "a vehicle with four wheels you drive": {
+      "category": "en_descriptive",
+      "rank": 0,
+      "expected": [
+        "車",
+        "自動車"
+      ],
+      "latency_ms": 16.7
+    },
+    "a place where sick people go for treatment": {
+      "category": "en_descriptive",
+      "rank": 0,
+      "expected": [
+        "病院",
+        "クリニック"
+      ],
+      "latency_ms": 19.4
+    },
+    "a word for someone you love romantically": {
+      "category": "en_descriptive",
+      "rank": 0,
+      "expected": [
+        "恋人",
+        "パートナー"
+      ],
+      "latency_ms": 20.2
+    },
+    "the meal eaten in the evening": {
+      "category": "en_descriptive",
+      "rank": 1,
+      "expected": [
+        "夕食",
+        "晩ご飯",
+        "夕飯"
+      ],
+      "latency_ms": 18.8
+    },
+    "a word for being extremely happy": {
+      "category": "en_descriptive",
+      "rank": 2,
+      "expected": [
+        "嬉しい",
+        "ハッピー"
+      ],
+      "latency_ms": 20.7
+    },
+    "a word for something very expensive": {
+      "category": "en_descriptive",
+      "rank": 0,
+      "expected": [
+        "高い",
+        "高価"
+      ],
+      "latency_ms": 21.4
+    },
+    "a word for something cheap": {
+      "category": "en_descriptive",
+      "rank": 3,
+      "expected": [
+        "安い",
+        "安価",
+        "格安"
+      ],
+      "latency_ms": 18.3
+    },
+    "a person who cooks food professionally": {
+      "category": "en_descriptive",
+      "rank": 4,
+      "expected": [
+        "料理人",
+        "シェフ",
+        "コック"
+      ],
+      "latency_ms": 19.8
+    },
+    "a small yellow fruit that is sour": {
+      "category": "en_descriptive",
+      "rank": 0,
+      "expected": [
+        "レモン"
+      ],
+      "latency_ms": 17.7
+    },
+    "the day before today": {
+      "category": "en_descriptive",
+      "rank": 0,
+      "expected": [
+        "昨日"
+      ],
+      "latency_ms": 16.0
+    },
+    "the day after today": {
+      "category": "en_descriptive",
+      "rank": 0,
+      "expected": [
+        "明日"
+      ],
+      "latency_ms": 15.2
+    },
+    "a place built for people to swim": {
+      "category": "en_descriptive",
+      "rank": 0,
+      "expected": [
+        "プール"
+      ],
+      "latency_ms": 19.1
+    },
+    "a word for feeling nervous or anxious": {
+      "category": "en_descriptive",
+      "rank": 0,
+      "expected": [
+        "不安",
+        "心配",
+        "緊張"
+      ],
+      "latency_ms": 25.1
+    },
+    "a casual way to say goodbye": {
+      "category": "en_descriptive",
+      "rank": 3,
+      "expected": [
+        "じゃあね",
+        "バイバイ",
+        "またね"
+      ],
+      "latency_ms": 22.8
+    },
+    "a polite way to say goodbye": {
+      "category": "en_descriptive",
+      "rank": 0,
+      "expected": [
+        "さようなら",
+        "さよなら"
+      ],
+      "latency_ms": 23.1
+    },
+    "people who are close to you but not family": {
+      "category": "en_descriptive",
+      "rank": 0,
+      "expected": [
+        "友達",
+        "友人"
+      ],
+      "latency_ms": 19.8
+    },
+    "the small metal object that unlocks a door": {
+      "category": "en_descriptive",
+      "rank": 0,
+      "expected": [
+        "鍵",
+        "キー"
+      ],
+      "latency_ms": 17.7
+    },
+    "a feeling of wanting to eat something": {
+      "category": "en_descriptive",
+      "rank": 0,
+      "expected": [
+        "空腹",
+        "空腹感",
+        "お腹が空く",
+        "お腹が空いた"
+      ],
+      "latency_ms": 23.8
+    },
+    "a word for something that is boring": {
+      "category": "en_descriptive",
+      "rank": 5,
+      "expected": [
+        "つまらない",
+        "退屈"
+      ],
+      "latency_ms": 20.7
+    },
+    "a word for something that is interesting": {
+      "category": "en_descriptive",
+      "rank": 0,
+      "expected": [
+        "面白い",
+        "興味深い"
+      ],
+      "latency_ms": 19.7
+    },
+    "the place where airplanes take off": {
+      "category": "en_descriptive",
+      "rank": 0,
+      "expected": [
+        "空港",
+        "飛行場"
+      ],
+      "latency_ms": 20.5
+    },
+    "the feeling or sensation of sleepiness": {
+      "category": "en_descriptive",
+      "rank": 2,
+      "expected": [
+        "眠気",
+        "眠い",
+        "眠たい"
+      ],
+      "latency_ms": 20.9
+    },
+    "a formal word for a workplace": {
+      "category": "en_descriptive",
+      "rank": 0,
+      "expected": [
+        "職場"
+      ],
+      "latency_ms": 18.3
+    },
+    "a word for congratulations": {
+      "category": "en_descriptive",
+      "rank": 0,
+      "expected": [
+        "おめでとう",
+        "おめでとうございます"
+      ],
+      "latency_ms": 15.9
+    },
+    "a place where you take a bath": {
+      "category": "en_descriptive",
+      "rank": 2,
+      "expected": [
+        "浴室",
+        "お風呂",
+        "浴場"
+      ],
+      "latency_ms": 18.0
+    },
+    "the place where you cook food": {
+      "category": "en_descriptive",
+      "rank": 0,
+      "expected": [
+        "台所",
+        "キッチン"
+      ],
+      "latency_ms": 17.7
+    },
+    "a machine that washes clothes": {
+      "category": "en_descriptive",
+      "rank": 1,
+      "expected": [
+        "洗濯機"
+      ],
+      "latency_ms": 19.3
+    },
+    "a person who flies an airplane": {
+      "category": "en_descriptive",
+      "rank": 0,
+      "expected": [
+        "パイロット",
+        "機長"
+      ],
+      "latency_ms": 19.8
+    },
+    "a warm blanket for a bed": {
+      "category": "en_descriptive",
+      "rank": 4,
+      "expected": [
+        "毛布",
+        "ぶ毯"
+      ],
+      "latency_ms": 18.9
+    },
+    "a device you carry to see the time": {
+      "category": "en_descriptive",
+      "rank": 1,
+      "expected": [
+        "時計",
+        "腕時計"
+      ],
+      "latency_ms": 21.2
+    },
+    "a baby dog": {
+      "category": "en_descriptive",
+      "rank": 3,
+      "expected": [
+        "子犬"
+      ],
+      "latency_ms": 16.4
+    },
+    "the person who delivers letters": {
+      "category": "en_descriptive",
+      "rank": 0,
+      "expected": [
+        "郵便配達員",
+        "郵便配達"
+      ],
+      "latency_ms": 18.5
+    },
+    "the room where you sleep": {
+      "category": "en_descriptive",
+      "rank": 0,
+      "expected": [
+        "寝室",
+        "ベッドルーム"
+      ],
+      "latency_ms": 19.3
+    },
+    "a person who cuts hair": {
+      "category": "en_descriptive",
+      "rank": 0,
+      "expected": [
+        "美容師",
+        "理髪師"
+      ],
+      "latency_ms": 18.9
+    },
+    "食べる": {
+      "category": "ja_words",
+      "rank": 1,
+      "expected": [
+        "食べる"
+      ],
+      "latency_ms": 9.2
+    },
+    "空": {
+      "category": "ja_words",
+      "rank": 1,
+      "expected": [
+        "空"
+      ],
+      "latency_ms": 7.9
+    },
+    "図書館": {
+      "category": "ja_words",
+      "rank": 1,
+      "expected": [
+        "図書館"
+      ],
+      "latency_ms": 8.4
+    },
+    "電車": {
+      "category": "ja_words",
+      "rank": 1,
+      "expected": [
+        "電車"
+      ],
+      "latency_ms": 10.3
+    },
+    "約束": {
+      "category": "ja_words",
+      "rank": 1,
+      "expected": [
+        "約束"
+      ],
+      "latency_ms": 12.7
+    },
+    "本": {
+      "category": "ja_words",
+      "rank": 1,
+      "expected": [
+        "本"
+      ],
+      "latency_ms": 9.2
+    },
+    "水": {
+      "category": "ja_words",
+      "rank": 1,
+      "expected": [
+        "水"
+      ],
+      "latency_ms": 7.7
+    },
+    "学校": {
+      "category": "ja_words",
+      "rank": 1,
+      "expected": [
+        "学校"
+      ],
+      "latency_ms": 9.7
+    },
+    "犬": {
+      "category": "ja_words",
+      "rank": 1,
+      "expected": [
+        "犬"
+      ],
+      "latency_ms": 8.3
+    },
+    "車": {
+      "category": "ja_words",
+      "rank": 1,
+      "expected": [
+        "車"
+      ],
+      "latency_ms": 7.3
+    },
+    "家": {
+      "category": "ja_words",
+      "rank": 1,
+      "expected": [
+        "家"
+      ],
+      "latency_ms": 8.5
+    },
+    "先生": {
+      "category": "ja_words",
+      "rank": 1,
+      "expected": [
+        "先生"
+      ],
+      "latency_ms": 5.7
+    },
+    "日本": {
+      "category": "ja_words",
+      "rank": 1,
+      "expected": [
+        "日本"
+      ],
+      "latency_ms": 7.2
+    },
+    "山": {
+      "category": "ja_words",
+      "rank": 1,
+      "expected": [
+        "山"
+      ],
+      "latency_ms": 6.5
+    },
+    "川": {
+      "category": "ja_words",
+      "rank": 1,
+      "expected": [
+        "川"
+      ],
+      "latency_ms": 7.7
+    },
+    "猫": {
+      "category": "ja_words",
+      "rank": 1,
+      "expected": [
+        "猫"
+      ],
+      "latency_ms": 6.9
+    },
+    "友達": {
+      "category": "ja_words",
+      "rank": 1,
+      "expected": [
+        "友達"
+      ],
+      "latency_ms": 6.4
+    },
+    "学生": {
+      "category": "ja_words",
+      "rank": 1,
+      "expected": [
+        "学生"
+      ],
+      "latency_ms": 7.6
+    },
+    "病院": {
+      "category": "ja_words",
+      "rank": 1,
+      "expected": [
+        "病院"
+      ],
+      "latency_ms": 5.4
+    },
+    "教室": {
+      "category": "ja_words",
+      "rank": 1,
+      "expected": [
+        "教室"
+      ],
+      "latency_ms": 7.0
+    },
+    "会社": {
+      "category": "ja_words",
+      "rank": 1,
+      "expected": [
+        "会社"
+      ],
+      "latency_ms": 5.6
+    },
+    "仕事": {
+      "category": "ja_words",
+      "rank": 1,
+      "expected": [
+        "仕事"
+      ],
+      "latency_ms": 5.9
+    },
+    "電話": {
+      "category": "ja_words",
+      "rank": 1,
+      "expected": [
+        "電話"
+      ],
+      "latency_ms": 6.9
+    },
+    "天気": {
+      "category": "ja_words",
+      "rank": 1,
+      "expected": [
+        "天気"
+      ],
+      "latency_ms": 6.1
+    },
+    "音楽": {
+      "category": "ja_words",
+      "rank": 1,
+      "expected": [
+        "音楽"
+      ],
+      "latency_ms": 6.1
+    },
+    "映画": {
+      "category": "ja_words",
+      "rank": 1,
+      "expected": [
+        "映画"
+      ],
+      "latency_ms": 6.3
+    },
+    "時間": {
+      "category": "ja_words",
+      "rank": 1,
+      "expected": [
+        "時間"
+      ],
+      "latency_ms": 5.7
+    },
+    "部屋": {
+      "category": "ja_words",
+      "rank": 1,
+      "expected": [
+        "部屋"
+      ],
+      "latency_ms": 8.1
+    },
+    "公園": {
+      "category": "ja_words",
+      "rank": 1,
+      "expected": [
+        "公園"
+      ],
+      "latency_ms": 5.6
+    },
+    "銀行": {
+      "category": "ja_words",
+      "rank": 1,
+      "expected": [
+        "銀行"
+      ],
+      "latency_ms": 6.6
+    },
+    "駅": {
+      "category": "ja_words",
+      "rank": 1,
+      "expected": [
+        "駅"
+      ],
+      "latency_ms": 7.6
+    },
+    "空港": {
+      "category": "ja_words",
+      "rank": 1,
+      "expected": [
+        "空港"
+      ],
+      "latency_ms": 5.2
+    },
+    "新聞": {
+      "category": "ja_words",
+      "rank": 1,
+      "expected": [
+        "新聞"
+      ],
+      "latency_ms": 7.5
+    },
+    "手紙": {
+      "category": "ja_words",
+      "rank": 1,
+      "expected": [
+        "手紙"
+      ],
+      "latency_ms": 5.4
+    },
+    "財布": {
+      "category": "ja_words",
+      "rank": 1,
+      "expected": [
+        "財布"
+      ],
+      "latency_ms": 5.1
+    },
+    "眼鏡": {
+      "category": "ja_words",
+      "rank": 1,
+      "expected": [
+        "眼鏡"
+      ],
+      "latency_ms": 7.4
+    },
+    "携帯電話": {
+      "category": "ja_words",
+      "rank": 1,
+      "expected": [
+        "携帯電話"
+      ],
+      "latency_ms": 5.9
+    },
+    "誕生日": {
+      "category": "ja_words",
+      "rank": 1,
+      "expected": [
+        "誕生日"
+      ],
+      "latency_ms": 5.0
+    },
+    "結婚": {
+      "category": "ja_words",
+      "rank": 1,
+      "expected": [
+        "結婚"
+      ],
+      "latency_ms": 7.0
+    },
+    "旅行": {
+      "category": "ja_words",
+      "rank": 1,
+      "expected": [
+        "旅行"
+      ],
+      "latency_ms": 5.2
+    },
+    "料理": {
+      "category": "ja_words",
+      "rank": 1,
+      "expected": [
+        "料理"
+      ],
+      "latency_ms": 4.8
+    },
+    "野菜": {
+      "category": "ja_words",
+      "rank": 1,
+      "expected": [
+        "野菜"
+      ],
+      "latency_ms": 7.6
+    },
+    "果物": {
+      "category": "ja_words",
+      "rank": 1,
+      "expected": [
+        "果物"
+      ],
+      "latency_ms": 5.0
+    },
+    "動物": {
+      "category": "ja_words",
+      "rank": 1,
+      "expected": [
+        "動物"
+      ],
+      "latency_ms": 9.4
+    },
+    "植物": {
+      "category": "ja_words",
+      "rank": 1,
+      "expected": [
+        "植物"
+      ],
+      "latency_ms": 5.8
+    },
+    "世界": {
+      "category": "ja_words",
+      "rank": 1,
+      "expected": [
+        "世界"
+      ],
+      "latency_ms": 5.1
+    },
+    "歴史": {
+      "category": "ja_words",
+      "rank": 1,
+      "expected": [
+        "歴史"
+      ],
+      "latency_ms": 7.1
+    },
+    "科学": {
+      "category": "ja_words",
+      "rank": 1,
+      "expected": [
+        "科学"
+      ],
+      "latency_ms": 5.2
+    },
+    "経済": {
+      "category": "ja_words",
+      "rank": 1,
+      "expected": [
+        "経済"
+      ],
+      "latency_ms": 5.2
+    },
+    "文化": {
+      "category": "ja_words",
+      "rank": 1,
+      "expected": [
+        "文化"
+      ],
+      "latency_ms": 8.4
+    },
+    "言葉": {
+      "category": "ja_words",
+      "rank": 1,
+      "expected": [
+        "言葉"
+      ],
+      "latency_ms": 6.7
+    },
+    "空気": {
+      "category": "ja_words",
+      "rank": 1,
+      "expected": [
+        "空気"
+      ],
+      "latency_ms": 9.3
+    },
+    "写真": {
+      "category": "ja_words",
+      "rank": 1,
+      "expected": [
+        "写真"
+      ],
+      "latency_ms": 5.2
+    },
+    "季節": {
+      "category": "ja_words",
+      "rank": 1,
+      "expected": [
+        "季節"
+      ],
+      "latency_ms": 6.1
+    },
+    "質問": {
+      "category": "ja_words",
+      "rank": 1,
+      "expected": [
+        "質問"
+      ],
+      "latency_ms": 8.0
+    },
+    "会議": {
+      "category": "ja_words",
+      "rank": 1,
+      "expected": [
+        "会議"
+      ],
+      "latency_ms": 11.0
+    },
+    "趣味": {
+      "category": "ja_words",
+      "rank": 1,
+      "expected": [
+        "趣味"
+      ],
+      "latency_ms": 10.2
+    },
+    "理由": {
+      "category": "ja_words",
+      "rank": 1,
+      "expected": [
+        "理由"
+      ],
+      "latency_ms": 10.9
+    },
+    "距離": {
+      "category": "ja_words",
+      "rank": 1,
+      "expected": [
+        "距離"
+      ],
+      "latency_ms": 6.9
+    },
+    "温度": {
+      "category": "ja_words",
+      "rank": 1,
+      "expected": [
+        "温度"
+      ],
+      "latency_ms": 8.0
+    },
+    "たべる": {
+      "category": "ja_hiragana",
+      "rank": 1,
+      "expected": [
+        "食べる",
+        "たべる"
+      ],
+      "latency_ms": 5.4
+    },
+    "じてんしゃ": {
+      "category": "ja_hiragana",
+      "rank": 1,
+      "expected": [
+        "自転車",
+        "じてんしゃ"
+      ],
+      "latency_ms": 65.7
+    },
+    "やくそく": {
+      "category": "ja_hiragana",
+      "rank": 1,
+      "expected": [
+        "約束",
+        "やくそく"
+      ],
+      "latency_ms": 6.4
+    },
+    "としょかん": {
+      "category": "ja_hiragana",
+      "rank": 1,
+      "expected": [
+        "図書館",
+        "としょかん"
+      ],
+      "latency_ms": 5.5
+    },
+    "ねこ": {
+      "category": "ja_hiragana",
+      "rank": 1,
+      "expected": [
+        "猫",
+        "ねこ"
+      ],
+      "latency_ms": 4.7
+    },
+    "いぬ": {
+      "category": "ja_hiragana",
+      "rank": 1,
+      "expected": [
+        "犬",
+        "いぬ"
+      ],
+      "latency_ms": 6.3
+    },
+    "ありがとう": {
+      "category": "ja_hiragana",
+      "rank": 1,
+      "expected": [
+        "有難う",
+        "ありがとう"
+      ],
+      "latency_ms": 6.1
+    },
+    "こんにちは": {
+      "category": "ja_hiragana",
+      "rank": 1,
+      "expected": [
+        "今日は",
+        "こんにちは"
+      ],
+      "latency_ms": 5.1
+    },
+    "おはよう": {
+      "category": "ja_hiragana",
+      "rank": 1,
+      "expected": [
+        "お早う",
+        "おはよう"
+      ],
+      "latency_ms": 5.6
+    },
+    "ほん": {
+      "category": "ja_hiragana",
+      "rank": 1,
+      "expected": [
+        "本",
+        "ほん"
+      ],
+      "latency_ms": 5.4
+    },
+    "みず": {
+      "category": "ja_hiragana",
+      "rank": 1,
+      "expected": [
+        "水",
+        "みず"
+      ],
+      "latency_ms": 4.4
+    },
+    "がっこう": {
+      "category": "ja_hiragana",
+      "rank": 1,
+      "expected": [
+        "学校",
+        "がっこう"
+      ],
+      "latency_ms": 4.9
+    },
+    "せんせい": {
+      "category": "ja_hiragana",
+      "rank": 1,
+      "expected": [
+        "先生",
+        "せんせい"
+      ],
+      "latency_ms": 6.8
+    },
+    "がくせい": {
+      "category": "ja_hiragana",
+      "rank": 1,
+      "expected": [
+        "学生",
+        "がくせい"
+      ],
+      "latency_ms": 4.9
+    },
+    "びょういん": {
+      "category": "ja_hiragana",
+      "rank": 1,
+      "expected": [
+        "病院",
+        "びょういん"
+      ],
+      "latency_ms": 5.5
+    },
+    "でんしゃ": {
+      "category": "ja_hiragana",
+      "rank": 1,
+      "expected": [
+        "電車",
+        "でんしゃ"
+      ],
+      "latency_ms": 7.9
+    },
+    "くるま": {
+      "category": "ja_hiragana",
+      "rank": 1,
+      "expected": [
+        "車",
+        "くるま"
+      ],
+      "latency_ms": 7.1
+    },
+    "いえ": {
+      "category": "ja_hiragana",
+      "rank": 1,
+      "expected": [
+        "家",
+        "いえ"
+      ],
+      "latency_ms": 7.9
+    },
+    "やま": {
+      "category": "ja_hiragana",
+      "rank": 1,
+      "expected": [
+        "山",
+        "やま"
+      ],
+      "latency_ms": 5.8
+    },
+    "かわ": {
+      "category": "ja_hiragana",
+      "rank": 2,
+      "expected": [
+        "川",
+        "かわ"
+      ],
+      "latency_ms": 6.6
+    },
+    "うみ": {
+      "category": "ja_hiragana",
+      "rank": 1,
+      "expected": [
+        "海",
+        "うみ"
+      ],
+      "latency_ms": 5.8
+    },
+    "そら": {
+      "category": "ja_hiragana",
+      "rank": 1,
+      "expected": [
+        "空",
+        "そら"
+      ],
+      "latency_ms": 5.3
+    },
+    "あめ": {
+      "category": "ja_hiragana",
+      "rank": 1,
+      "expected": [
+        "雨",
+        "あめ"
+      ],
+      "latency_ms": 8.0
+    },
+    "ゆき": {
+      "category": "ja_hiragana",
+      "rank": 2,
+      "expected": [
+        "雪",
+        "ゆき"
+      ],
+      "latency_ms": 8.3
+    },
+    "かぜ": {
+      "category": "ja_hiragana",
+      "rank": 1,
+      "expected": [
+        "風",
+        "かぜ"
+      ],
+      "latency_ms": 11.3
+    },
+    "き": {
+      "category": "ja_hiragana",
+      "rank": 1,
+      "expected": [
+        "木",
+        "き"
+      ],
+      "latency_ms": 10.7
+    },
+    "はな": {
+      "category": "ja_hiragana",
+      "rank": 1,
+      "expected": [
+        "花",
+        "はな"
+      ],
+      "latency_ms": 11.6
+    },
+    "とり": {
+      "category": "ja_hiragana",
+      "rank": 1,
+      "expected": [
+        "鳥",
+        "とり"
+      ],
+      "latency_ms": 11.5
+    },
+    "さかな": {
+      "category": "ja_hiragana",
+      "rank": 1,
+      "expected": [
+        "魚",
+        "さかな"
+      ],
+      "latency_ms": 10.5
+    },
+    "でんわ": {
+      "category": "ja_hiragana",
+      "rank": 1,
+      "expected": [
+        "電話",
+        "でんわ"
+      ],
+      "latency_ms": 10.5
+    },
+    "おんがく": {
+      "category": "ja_hiragana",
+      "rank": 1,
+      "expected": [
+        "音楽",
+        "おんがく"
+      ],
+      "latency_ms": 11.2
+    },
+    "えいが": {
+      "category": "ja_hiragana",
+      "rank": 1,
+      "expected": [
+        "映画",
+        "えいが"
+      ],
+      "latency_ms": 10.0
+    },
+    "じかん": {
+      "category": "ja_hiragana",
+      "rank": 1,
+      "expected": [
+        "時間",
+        "じかん"
+      ],
+      "latency_ms": 10.8
+    },
+    "へや": {
+      "category": "ja_hiragana",
+      "rank": 1,
+      "expected": [
+        "部屋",
+        "へや"
+      ],
+      "latency_ms": 12.2
+    },
+    "こうえん": {
+      "category": "ja_hiragana",
+      "rank": 1,
+      "expected": [
+        "公園",
+        "こうえん"
+      ],
+      "latency_ms": 11.1
+    },
+    "ぎんこう": {
+      "category": "ja_hiragana",
+      "rank": 1,
+      "expected": [
+        "銀行",
+        "ぎんこう"
+      ],
+      "latency_ms": 12.7
+    },
+    "えき": {
+      "category": "ja_hiragana",
+      "rank": 1,
+      "expected": [
+        "駅",
+        "えき"
+      ],
+      "latency_ms": 13.5
+    },
+    "くうこう": {
+      "category": "ja_hiragana",
+      "rank": 1,
+      "expected": [
+        "空港",
+        "くうこう"
+      ],
+      "latency_ms": 10.3
+    },
+    "しんぶん": {
+      "category": "ja_hiragana",
+      "rank": 1,
+      "expected": [
+        "新聞",
+        "しんぶん"
+      ],
+      "latency_ms": 13.7
+    },
+    "てがみ": {
+      "category": "ja_hiragana",
+      "rank": 1,
+      "expected": [
+        "手紙",
+        "てがみ"
+      ],
+      "latency_ms": 11.3
+    },
+    "さいふ": {
+      "category": "ja_hiragana",
+      "rank": 1,
+      "expected": [
+        "財布",
+        "さいふ"
+      ],
+      "latency_ms": 11.4
+    },
+    "めがね": {
+      "category": "ja_hiragana",
+      "rank": 1,
+      "expected": [
+        "眼鏡",
+        "めがね"
+      ],
+      "latency_ms": 12.9
+    },
+    "たんじょうび": {
+      "category": "ja_hiragana",
+      "rank": 1,
+      "expected": [
+        "誕生日",
+        "たんじょうび"
+      ],
+      "latency_ms": 11.0
+    },
+    "りょこう": {
+      "category": "ja_hiragana",
+      "rank": 1,
+      "expected": [
+        "旅行",
+        "りょこう"
+      ],
+      "latency_ms": 11.5
+    },
+    "りょうり": {
+      "category": "ja_hiragana",
+      "rank": 1,
+      "expected": [
+        "料理",
+        "りょうり"
+      ],
+      "latency_ms": 14.9
+    },
+    "やさい": {
+      "category": "ja_hiragana",
+      "rank": 1,
+      "expected": [
+        "野菜",
+        "やさい"
+      ],
+      "latency_ms": 13.6
+    },
+    "くだもの": {
+      "category": "ja_hiragana",
+      "rank": 1,
+      "expected": [
+        "果物",
+        "くだもの"
+      ],
+      "latency_ms": 11.9
+    },
+    "どうぶつ": {
+      "category": "ja_hiragana",
+      "rank": 1,
+      "expected": [
+        "動物",
+        "どうぶつ"
+      ],
+      "latency_ms": 12.5
+    },
+    "しょくじ": {
+      "category": "ja_hiragana",
+      "rank": 1,
+      "expected": [
+        "食事",
+        "しょくじ"
+      ],
+      "latency_ms": 13.6
+    },
+    "かいもの": {
+      "category": "ja_hiragana",
+      "rank": 1,
+      "expected": [
+        "買い物",
+        "かいもの"
+      ],
+      "latency_ms": 9.9
+    },
+    "さようなら": {
+      "category": "ja_hiragana",
+      "rank": 1,
+      "expected": [
+        "さようなら"
+      ],
+      "latency_ms": 11.1
+    },
+    "あさ": {
+      "category": "ja_hiragana",
+      "rank": 1,
+      "expected": [
+        "朝",
+        "あさ"
+      ],
+      "latency_ms": 10.6
+    },
+    "よる": {
+      "category": "ja_hiragana",
+      "rank": 1,
+      "expected": [
+        "夜",
+        "よる"
+      ],
+      "latency_ms": 11.0
+    },
+    "あき": {
+      "category": "ja_hiragana",
+      "rank": 1,
+      "expected": [
+        "秋",
+        "あき"
+      ],
+      "latency_ms": 11.8
+    },
+    "ふゆ": {
+      "category": "ja_hiragana",
+      "rank": 1,
+      "expected": [
+        "冬",
+        "ふゆ"
+      ],
+      "latency_ms": 13.9
+    },
+    "はる": {
+      "category": "ja_hiragana",
+      "rank": 1,
+      "expected": [
+        "春",
+        "はる"
+      ],
+      "latency_ms": 11.9
+    },
+    "つき": {
+      "category": "ja_hiragana",
+      "rank": 1,
+      "expected": [
+        "月",
+        "つき"
+      ],
+      "latency_ms": 13.6
+    },
+    "ひ": {
+      "category": "ja_hiragana",
+      "rank": 1,
+      "expected": [
+        "日",
+        "ひ"
+      ],
+      "latency_ms": 12.0
+    },
+    "おと": {
+      "category": "ja_hiragana",
+      "rank": 1,
+      "expected": [
+        "音",
+        "おと"
+      ],
+      "latency_ms": 14.8
+    },
+    "じしょ": {
+      "category": "ja_hiragana",
+      "rank": 1,
+      "expected": [
+        "辞書",
+        "じしょ"
+      ],
+      "latency_ms": 13.8
+    },
+    "パン": {
+      "category": "ja_katakana",
+      "rank": 1,
+      "expected": [
+        "パン"
+      ],
+      "latency_ms": 15.2
+    },
+    "テレビ": {
+      "category": "ja_katakana",
+      "rank": 1,
+      "expected": [
+        "テレビ",
+        "テレビジョン"
+      ],
+      "latency_ms": 16.7
+    },
+    "コーヒー": {
+      "category": "ja_katakana",
+      "rank": 1,
+      "expected": [
+        "コーヒー"
+      ],
+      "latency_ms": 13.8
+    },
+    "パソコン": {
+      "category": "ja_katakana",
+      "rank": 1,
+      "expected": [
+        "パソコン"
+      ],
+      "latency_ms": 13.2
+    },
+    "ゲーム": {
+      "category": "ja_katakana",
+      "rank": 1,
+      "expected": [
+        "ゲーム"
+      ],
+      "latency_ms": 13.7
+    },
+    "スーパー": {
+      "category": "ja_katakana",
+      "rank": 1,
+      "expected": [
+        "スーパー",
+        "スーパーマーケット"
+      ],
+      "latency_ms": 14.8
+    },
+    "タクシー": {
+      "category": "ja_katakana",
+      "rank": 1,
+      "expected": [
+        "タクシー"
+      ],
+      "latency_ms": 14.0
+    },
+    "ホテル": {
+      "category": "ja_katakana",
+      "rank": 1,
+      "expected": [
+        "ホテル"
+      ],
+      "latency_ms": 16.5
+    },
+    "カメラ": {
+      "category": "ja_katakana",
+      "rank": 1,
+      "expected": [
+        "カメラ"
+      ],
+      "latency_ms": 14.6
+    },
+    "ドア": {
+      "category": "ja_katakana",
+      "rank": 1,
+      "expected": [
+        "ドア"
+      ],
+      "latency_ms": 17.4
+    },
+    "テーブル": {
+      "category": "ja_katakana",
+      "rank": 1,
+      "expected": [
+        "テーブル"
+      ],
+      "latency_ms": 18.6
+    },
+    "レストラン": {
+      "category": "ja_katakana",
+      "rank": 1,
+      "expected": [
+        "レストラン"
+      ],
+      "latency_ms": 14.3
+    },
+    "バス": {
+      "category": "ja_katakana",
+      "rank": 1,
+      "expected": [
+        "バス"
+      ],
+      "latency_ms": 14.6
+    },
+    "タオル": {
+      "category": "ja_katakana",
+      "rank": 1,
+      "expected": [
+        "タオル"
+      ],
+      "latency_ms": 14.0
+    },
+    "ノート": {
+      "category": "ja_katakana",
+      "rank": 1,
+      "expected": [
+        "ノート"
+      ],
+      "latency_ms": 13.7
+    },
+    "ペン": {
+      "category": "ja_katakana",
+      "rank": 1,
+      "expected": [
+        "ペン"
+      ],
+      "latency_ms": 14.6
+    },
+    "アイスクリーム": {
+      "category": "ja_katakana",
+      "rank": 1,
+      "expected": [
+        "アイスクリーム"
+      ],
+      "latency_ms": 13.8
+    },
+    "チョコレート": {
+      "category": "ja_katakana",
+      "rank": 1,
+      "expected": [
+        "チョコレート"
+      ],
+      "latency_ms": 16.4
+    },
+    "サラダ": {
+      "category": "ja_katakana",
+      "rank": 1,
+      "expected": [
+        "サラダ"
+      ],
+      "latency_ms": 16.1
+    },
+    "ジュース": {
+      "category": "ja_katakana",
+      "rank": 1,
+      "expected": [
+        "ジュース"
+      ],
+      "latency_ms": 13.4
+    },
+    "ビール": {
+      "category": "ja_katakana",
+      "rank": 1,
+      "expected": [
+        "ビール"
+      ],
+      "latency_ms": 12.5
+    },
+    "ワイン": {
+      "category": "ja_katakana",
+      "rank": 1,
+      "expected": [
+        "ワイン"
+      ],
+      "latency_ms": 16.6
+    },
+    "レモン": {
+      "category": "ja_katakana",
+      "rank": 1,
+      "expected": [
+        "レモン"
+      ],
+      "latency_ms": 14.8
+    },
+    "トマト": {
+      "category": "ja_katakana",
+      "rank": 1,
+      "expected": [
+        "トマト"
+      ],
+      "latency_ms": 13.9
+    },
+    "バナナ": {
+      "category": "ja_katakana",
+      "rank": 1,
+      "expected": [
+        "バナナ"
+      ],
+      "latency_ms": 16.8
+    },
+    "オレンジ": {
+      "category": "ja_katakana",
+      "rank": 1,
+      "expected": [
+        "オレンジ"
+      ],
+      "latency_ms": 13.9
+    },
+    "チーズ": {
+      "category": "ja_katakana",
+      "rank": 1,
+      "expected": [
+        "チーズ"
+      ],
+      "latency_ms": 15.5
+    },
+    "ハンバーガー": {
+      "category": "ja_katakana",
+      "rank": 1,
+      "expected": [
+        "ハンバーガー"
+      ],
+      "latency_ms": 15.8
+    },
+    "ピザ": {
+      "category": "ja_katakana",
+      "rank": 1,
+      "expected": [
+        "ピザ"
+      ],
+      "latency_ms": 15.4
+    },
+    "サンドイッチ": {
+      "category": "ja_katakana",
+      "rank": 1,
+      "expected": [
+        "サンドイッチ"
+      ],
+      "latency_ms": 15.5
+    },
+    "エレベーター": {
+      "category": "ja_katakana",
+      "rank": 1,
+      "expected": [
+        "エレベーター"
+      ],
+      "latency_ms": 16.0
+    },
+    "エスカレーター": {
+      "category": "ja_katakana",
+      "rank": 1,
+      "expected": [
+        "エスカレーター"
+      ],
+      "latency_ms": 14.1
+    },
+    "アパート": {
+      "category": "ja_katakana",
+      "rank": 1,
+      "expected": [
+        "アパート"
+      ],
+      "latency_ms": 11.5
+    },
+    "マンション": {
+      "category": "ja_katakana",
+      "rank": 1,
+      "expected": [
+        "マンション"
+      ],
+      "latency_ms": 13.8
+    },
+    "デパート": {
+      "category": "ja_katakana",
+      "rank": 1,
+      "expected": [
+        "デパート"
+      ],
+      "latency_ms": 13.7
+    },
+    "コンビニ": {
+      "category": "ja_katakana",
+      "rank": 1,
+      "expected": [
+        "コンビニ",
+        "コンビニエンスストア"
+      ],
+      "latency_ms": 13.0
+    },
+    "インターネット": {
+      "category": "ja_katakana",
+      "rank": 1,
+      "expected": [
+        "インターネット"
+      ],
+      "latency_ms": 14.3
+    },
+    "メール": {
+      "category": "ja_katakana",
+      "rank": 1,
+      "expected": [
+        "メール"
+      ],
+      "latency_ms": 11.8
+    },
+    "カード": {
+      "category": "ja_katakana",
+      "rank": 1,
+      "expected": [
+        "カード"
+      ],
+      "latency_ms": 15.0
+    },
+    "クレジットカード": {
+      "category": "ja_katakana",
+      "rank": 1,
+      "expected": [
+        "クレジットカード"
+      ],
+      "latency_ms": 15.2
+    },
+    "パスポート": {
+      "category": "ja_katakana",
+      "rank": 1,
+      "expected": [
+        "パスポート"
+      ],
+      "latency_ms": 15.0
+    },
+    "チケット": {
+      "category": "ja_katakana",
+      "rank": 1,
+      "expected": [
+        "チケット"
+      ],
+      "latency_ms": 14.1
+    },
+    "スポーツ": {
+      "category": "ja_katakana",
+      "rank": 1,
+      "expected": [
+        "スポーツ"
+      ],
+      "latency_ms": 13.9
+    },
+    "サッカー": {
+      "category": "ja_katakana",
+      "rank": 1,
+      "expected": [
+        "サッカー"
+      ],
+      "latency_ms": 13.4
+    },
+    "テニス": {
+      "category": "ja_katakana",
+      "rank": 1,
+      "expected": [
+        "テニス"
+      ],
+      "latency_ms": 14.3
+    },
+    "ピアノ": {
+      "category": "ja_katakana",
+      "rank": 1,
+      "expected": [
+        "ピアノ"
+      ],
+      "latency_ms": 14.0
+    },
+    "ギター": {
+      "category": "ja_katakana",
+      "rank": 1,
+      "expected": [
+        "ギター"
+      ],
+      "latency_ms": 14.2
+    },
+    "ラジオ": {
+      "category": "ja_katakana",
+      "rank": 1,
+      "expected": [
+        "ラジオ"
+      ],
+      "latency_ms": 13.7
+    },
+    "カレンダー": {
+      "category": "ja_katakana",
+      "rank": 1,
+      "expected": [
+        "カレンダー"
+      ],
+      "latency_ms": 13.3
+    },
+    "シャワー": {
+      "category": "ja_katakana",
+      "rank": 1,
+      "expected": [
+        "シャワー"
+      ],
+      "latency_ms": 13.7
+    },
+    "スマホ": {
+      "category": "ja_katakana",
+      "rank": 1,
+      "expected": [
+        "スマホ",
+        "スマートフォン"
+      ],
+      "latency_ms": 17.2
+    },
+    "エアコン": {
+      "category": "ja_katakana",
+      "rank": 1,
+      "expected": [
+        "エアコン"
+      ],
+      "latency_ms": 17.4
+    },
+    "ケーキ": {
+      "category": "ja_katakana",
+      "rank": 1,
+      "expected": [
+        "ケーキ"
+      ],
+      "latency_ms": 14.2
+    },
+    "ラーメン": {
+      "category": "ja_katakana",
+      "rank": 1,
+      "expected": [
+        "ラーメン",
+        "拉麺"
+      ],
+      "latency_ms": 12.6
+    },
+    "ソース": {
+      "category": "ja_katakana",
+      "rank": 1,
+      "expected": [
+        "ソース"
+      ],
+      "latency_ms": 14.2
+    },
+    "ボタン": {
+      "category": "ja_katakana",
+      "rank": 1,
+      "expected": [
+        "ボタン",
+        "鈕"
+      ],
+      "latency_ms": 11.4
+    },
+    "マフラー": {
+      "category": "ja_katakana",
+      "rank": 1,
+      "expected": [
+        "マフラー"
+      ],
+      "latency_ms": 10.0
+    },
+    "ディーゼル": {
+      "category": "ja_katakana",
+      "rank": 1,
+      "expected": [
+        "ディーゼル"
+      ],
+      "latency_ms": 9.8
+    },
+    "テスト": {
+      "category": "ja_katakana",
+      "rank": 1,
+      "expected": [
+        "テスト"
+      ],
+      "latency_ms": 10.5
+    },
+    "ローラースケート": {
+      "category": "ja_katakana",
+      "rank": 1,
+      "expected": [
+        "ローラースケート"
+      ],
+      "latency_ms": 7.4
+    }
+  }
+}

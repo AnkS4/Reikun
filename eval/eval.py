@@ -3,14 +3,24 @@
 Unified evaluation entrypoint for Reikun.
 
 `eval/gold_set.tsv` is the single source of truth. Subsets: `en_words` +
-`en_verbs` (the default ~106-query English-word benchmark), `en_descriptive`
-(question-style queries exercising the rewrite path), and `ja_words` /
-`ja_hiragana` / `ja_katakana` (exact-lookup route coverage) — all opt-in via
---subsets.
+`en_verbs` (common English nouns and "to X" verbs), `en_descriptive`
+(paraphrase/question-style queries — a different kind of query, so it is
+reported apart), and `ja_words` / `ja_hiragana` / `ja_katakana`
+(exact-lookup route coverage). The file holds 360 queries, 60 per category —
+a fixed count, so the per-category rates stay comparable across runs (see the
+counting rule at the top of the file).
 
-Default (no suite flag): headword benchmark against *current settings* — no
-mode/rewrite overrides, so it uses whatever the env configures (auto route,
-QUERY_REWRITE). The ranking knobs can be swept in-process;
+`--subsets` takes category names and group aliases:
+
+    (default)   every category except en_descriptive — the 300 ranking queries
+    all         every category (360)
+    en-only     en_words, en_verbs, en_descriptive
+    ja-only     ja_words, ja_hiragana, ja_katakana
+    list        print the category catalog (counts + one-liners) and exit
+
+Default suite (no suite flag): the headword benchmark against *current
+settings* — no mode/rewrite overrides, so it uses whatever the env configures
+(auto route, QUERY_REWRITE). The ranking knobs can be swept in-process;
 each is patched per variant and the search cache cleared between them (query
 rewrites stay cached, so Groq calls only happen on the first variant).
 Omitting a flag keeps the value committed in app/retrieval.py:
@@ -18,6 +28,8 @@ Omitting a flag keeps the value committed in app/retrieval.py:
     --canon   CANONICAL_BOOST — weight of wf_score x first-sense-gloss match
     --pool    PREFETCH_MIN    — candidates per retrieval arm (recall ceiling)
     --common  COMMON_BOOST    — flat prior on JMdict's is_common/commonness
+    --head    HEAD_BONUS      — weight of wf_score x first-gloss (headline
+                               translation) match
 
 Other suites (combine freely):
 
@@ -25,15 +37,6 @@ Other suites (combine freely):
     --ir      retrieval-config suite — Hit@k / MRR / NDCG / MAP / recall over
               relevant entry IDs, overall and per gold subset
     --llm     level-aware vs generic grammar-explanation eval (Groq judge)
-
-Usage:
-    python eval/eval.py                                   # production benchmark
-    python eval/eval.py --canon 0.5 1 2 --pool 30 100     # knob sweep
-    python eval/eval.py --subsets descriptive
-    python eval/eval.py --modes                           # mode comparison
-    python eval/eval.py --ir --configs vector hybrid      # IR suite subset
-    python eval/eval.py --ir --k 5 --no-llm               # skip LLM configs
-    python eval/eval.py --llm --sentences 2               # conserve Groq quota
 
 Outputs under eval/results/ (headword/mode runs are timestamped so runs never
 overwrite each other; the IR and LLM reports keep canonical names):
@@ -48,6 +51,7 @@ import argparse
 import csv
 import json
 import math
+import os
 import re
 import statistics
 import sys
@@ -55,13 +59,53 @@ import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+from report_meta import report_meta, stamp_line
 
 import app.retrieval as retrieval
 from app.config import COLLECTION, PROC_DIR, QDRANT_URL, QUERY_REWRITE, qdrant_client
 from app.retrieval import search
 
+EXAMPLES = """\
+examples:
+  # the ranking categories (300 queries — everything except en_descriptive)
+  uv run python eval/eval.py
+
+  # every category, including the paraphrase suite (360)
+  uv run python eval/eval.py --subsets all
+
+  # one language, or one category
+  uv run python eval/eval.py --subsets en-only
+  uv run python eval/eval.py --subsets ja-only
+  uv run python eval/eval.py --subsets ja_hiragana
+
+  # what categories exist
+  uv run python eval/eval.py --subsets list
+
+  # curated category report → eval/reports/headword_eval.{md,json}
+  uv run python eval/eval.py --report --subsets all
+
+  # ranking-knob sweep (CANONICAL_BOOST x PREFETCH_MIN)
+  uv run python eval/eval.py --canon 2 3 --pool 200
+
+  # retrieval-config grid (--no-llm skips the Groq configuration)
+  uv run python eval/eval.py --ir --no-llm
+  uv run python eval/eval.py --ir --subsets all --publish      # → eval/reports/
+  uv run python eval/eval.py --ir --subsets ja-only --publish \\
+      --report-name retrieval_eval_ja
+
+  # mode comparison (text / hybrid / auto)
+  uv run python eval/eval.py --modes
+
+  # grammar-prompt eval (Groq quota)
+  uv run python eval/eval.py --llm --sentences 2
+"""
+
 ROOT = Path(__file__).resolve().parent.parent
+PROJECT_ROOT = ROOT
 RESULTS_DIR = ROOT / "eval" / "results"
+REPORTS_DIR = ROOT / "eval" / "reports"
 
 # ---------------------------------------------------------------------------
 # Gold set — eval/gold_set.tsv is the single source for every suite. One row
@@ -87,8 +131,68 @@ def _load_gold() -> dict[str, dict[str, list[str]]]:
 
 
 GOLD = _load_gold()
-DEFAULT_SUBSETS = ("en_words", "en_verbs")
 EXPECTED = {q: exp for g in GOLD.values() for q, exp in g.items()}
+# query -> gold category (the category-wise report groups by it)
+QUERY_CATEGORY = {q: name for name, g in GOLD.items() for q in g}
+
+# Subset selection. `--subsets` takes category names and these group aliases:
+#   all      every category
+#   en-only  the English categories
+#   ja-only  the Japanese categories
+#   list     print the catalog (with query counts) and exit
+# The default — no --subsets — is every category EXCEPT en_descriptive: the
+# paraphrase suite is a different kind of query (a sentence, not a gloss), so
+# it is reported apart from the ranking categories rather than mixed into
+# their rates.
+SUBSET_ALIASES: dict[str, tuple[str, ...]] = {
+    "all": tuple(GOLD),
+    "en-only": tuple(c for c in GOLD if c.startswith("en_")),
+    "ja-only": tuple(c for c in GOLD if c.startswith("ja_")),
+}
+RANKING_SUBSETS = tuple(c for c in GOLD if c != "en_descriptive")
+DEFAULT_SUBSETS = RANKING_SUBSETS
+
+
+def _category_docs() -> dict[str, str]:
+    """One-line description per category, parsed from the gold file's header."""
+    docs: dict[str, str] = {}
+    for line in (Path(__file__).resolve().parent / "gold_set.tsv").read_text(
+            encoding="utf-8").splitlines():
+        m = re.match(r"#\s{3}(\w+)\s{2,}(\S.*?)\s*$", line)
+        if m and m.group(1) in GOLD:
+            docs[m.group(1)] = m.group(2)
+    return docs
+
+
+def print_subset_catalog() -> None:
+    """The category catalog — `--subsets list`."""
+    docs = _category_docs()
+    total = sum(len(v) for v in GOLD.values())
+    print(f"\nGold categories — eval/gold_set.tsv ({total} queries in {len(GOLD)} categories)\n")
+    for cat in GOLD:
+        print(f"  {cat:<16s}{len(GOLD[cat]):>3d}  {docs.get(cat, '')}")
+    print(f"\n  default (no --subsets) : every category except en_descriptive "
+          f"({sum(len(GOLD[c]) for c in RANKING_SUBSETS)} ranking queries)")
+    print(f"  all                    : every category ({total} queries)")
+    print(f"  en-only                : {', '.join(SUBSET_ALIASES['en-only'])}")
+    print(f"  ja-only                : {', '.join(SUBSET_ALIASES['ja-only'])}")
+    print("  list                   : this catalog\n")
+
+
+def resolve_subsets(tokens: list[str] | None) -> tuple[str, ...]:
+    """Resolve --subsets tokens (names + group aliases) to category names."""
+    if not tokens:
+        return DEFAULT_SUBSETS
+    out: list[str] = []
+    for token in tokens:
+        cats = SUBSET_ALIASES.get(token, (token,))
+        for cat in cats:
+            if cat not in GOLD:
+                valid = ", ".join([*GOLD, *SUBSET_ALIASES, "list"])
+                raise SystemExit(f"eval.py: error: unknown subset {cat!r} (choose from: {valid})")
+            if cat not in out:
+                out.append(cat)
+    return tuple(out)
 
 
 def load_queries(subsets=DEFAULT_SUBSETS) -> list[str]:
@@ -164,9 +268,10 @@ def headword_markdown(rows: list[dict], title: str, meta: dict | None = None) ->
 # Headword suite — default benchmark + knob sweep (--canon/--pool/--common).
 # ---------------------------------------------------------------------------
 
-def run_headword(canon: float, pool: int, common: float, queries: list[str]) -> list[dict]:
+def run_headword(canon: float, pool: int, common: float, head: float, queries: list[str]) -> list[dict]:
     retrieval.CANONICAL_BOOST, retrieval.PREFETCH_MIN = canon, pool
     retrieval.COMMON_BOOST = common
+    retrieval.HEAD_BONUS = head
     retrieval._search_cached.cache_clear()  # knobs aren't part of the cache key
     rows = []
     for q in queries:
@@ -183,10 +288,120 @@ def run_headword(canon: float, pool: int, common: float, queries: list[str]) -> 
     return rows
 
 
+def category_summary(rows: list[dict]) -> list[tuple[str, int, int, int, int]]:
+    """(category, n, hit1, hit2, hit5) per gold category.
+
+    `en_descriptive` is the long-English paraphrase suite — a different kind of
+    query, so it is reported apart from the ranking categories; the ranking
+    categories are the ones a headword search is scored on.
+    """
+    buckets: dict[str, list[dict]] = {}
+    for r in rows:
+        if not r.get("expected"):
+            continue
+        buckets.setdefault(QUERY_CATEGORY.get(r["query"], "?"), []).append(r)
+    out = []
+    for cat in sorted(c for c in buckets if c != "en_descriptive"):
+        group = buckets[cat]
+        out.append((cat, len(group),
+                    sum(1 for r in group if r["rank"] == 1),
+                    sum(1 for r in group if 0 < r["rank"] <= 2),
+                    sum(1 for r in group if r["rank"] > 0)))
+    if "en_descriptive" in buckets:
+        group = buckets["en_descriptive"]
+        out.append(("en_descriptive", len(group),
+                    sum(1 for r in group if r["rank"] == 1),
+                    sum(1 for r in group if 0 < r["rank"] <= 2),
+                    sum(1 for r in group if r["rank"] > 0)))
+    return out
+
+
+def format_category_table(rows: list[dict]) -> str:
+    """The category-wise score block (fixed width, copy-pasteable)."""
+    summary = category_summary(rows)
+    lines = ["  subset              n          Hit@1    Hit@2    Hit@5"]
+    ranking = [s for s in summary if s[0] != "en_descriptive"]
+    for cat, n, h1, h2, h5 in ranking:
+        lines.append(f"  {cat:<19s}{n:>2d}   {h1:>2d} ({100 * h1 / n:.1f}%)   {h2:>2d}     {h5:>2d}")
+    if len(summary) > len(ranking):
+        lines.append("  " + "-" * 46)
+        cat, n, h1, h2, h5 = summary[-1]
+        lines.append(f"  {cat:<19s}{n:>2d}   {h1:>2d} ({100 * h1 / n:.1f}%)   {h2:>2d}     {h5:>2d}")
+        lines.append("  " + "-" * 46)
+    if ranking:
+        n = sum(s[1] for s in ranking)
+        h1 = sum(s[2] for s in ranking)
+        h2 = sum(s[3] for s in ranking)
+        h5 = sum(s[4] for s in ranking)
+        lines.append(f"  {'ranking total':<19s}{n:>2d}   {h1:>2d} ({100 * h1 / n:.1f}%)   {h2:>2d}     {h5:>2d}")
+    return "\n".join(lines)
+
+
+def write_category_report(rows: list[dict], meta: dict, out_dir) -> tuple[Path, Path]:
+    """Curated category report → eval/reports/headword_eval.{md,json}."""
+    out_dir.mkdir(parents=True, exist_ok=True)
+    meta = report_meta(**meta)
+    summary = category_summary(rows)
+    ranking = [s for s in summary if s[0] != "en_descriptive"]
+    n = sum(s[1] for s in ranking)
+    totals = {
+        "hit1": sum(s[2] for s in ranking),
+        "hit2": sum(s[3] for s in ranking),
+        "hit5": sum(s[4] for s in ranking),
+        "n": n,
+    }
+    lat = [r["latency_ms"] for r in rows]
+    md = ["# Headword evaluation — category report\n",
+          f"Gold set: {len(rows)} queries (`eval/gold_set.tsv`), "
+          f"{summary[0][1] if summary else 0} per category. Hit@k = share of queries whose "
+          "expected headword (or an accepted alternative) is in the top k.\n",
+          " · ".join(f"{k}={v}" for k, v in meta.items()) + "\n",
+          format_category_table(rows) + "\n",
+          "\n| subset | n | Hit@1 | Hit@2 | Hit@5 |", "|---|---|---|---|---|"]
+    for cat, cn, h1, h2, h5 in summary:
+        md.append(f"| {cat} | {cn} | {h1} ({100 * h1 / cn:.1f}%) | {h2} | {h5} |")
+    md.append(f"| **ranking total** | **{n}** | **{totals['hit1']} ({100 * totals['hit1'] / n:.1f}%)** "
+              f"| **{totals['hit2']}** | **{totals['hit5']}** |")
+    md += ["\n## Misses (expected answer not at rank 1)\n"]
+    ranking_rows = [r for r in rows if r.get("expected") and r["rank"] != 1
+                    and QUERY_CATEGORY.get(r["query"]) != "en_descriptive"]
+    desc_rows = [r for r in rows if r.get("expected") and r["rank"] != 1
+                 and QUERY_CATEGORY.get(r["query"]) == "en_descriptive"]
+    md += ["| subset | query | expected | rank | top hits |", "|---|---|---|---|---|"]
+    for r in ranking_rows:
+        top = ", ".join(res["headword"] for res in r["results"][:3])
+        md.append(f"| {QUERY_CATEGORY.get(r['query'], '?')} | `{r['query']}` | "
+                  f"{'/'.join(r['expected'])} | {r['rank'] or '—'} | {top} |")
+    if desc_rows:
+        md += ["", f"<details><summary>Misses — en_descriptive ({len(desc_rows)})</summary>", "",
+               "| query | expected | rank | top hits |", "|---|---|---|---|"]
+        for r in desc_rows:
+            top = ", ".join(res["headword"] for res in r["results"][:3])
+            md.append(f"| `{r['query']}` | {'/'.join(r['expected'])} | {r['rank'] or '—'} | {top} |")
+        md += ["", "</details>"]
+    md.append("")
+    md_path = out_dir / "headword_eval.md"
+    md_path.write_text("\n".join(md), encoding="utf-8")
+
+    json_path = out_dir / "headword_eval.json"
+    json_path.write_text(json.dumps({
+        "meta": meta,
+        "totals": totals,
+        "median_ms": statistics.median(lat) if lat else 0,
+        "categories": {cat: {"n": cn, "hit1": h1, "hit2": h2, "hit5": h5}
+                       for cat, cn, h1, h2, h5 in summary},
+        "queries": {r["query"]: {"category": QUERY_CATEGORY.get(r["query"], "?"),
+                                 "rank": r["rank"], "expected": r["expected"],
+                                 "latency_ms": r["latency_ms"]} for r in rows},
+    }, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    return md_path, json_path
+
+
 def headword_suite(args) -> None:
     subsets = tuple(args.subsets or DEFAULT_SUBSETS)
     queries = load_queries(subsets)
-    combos = [(c, pl, cm) for c in args.canon for pl in args.pool for cm in args.common]
+    combos = [(c, pl, cm, h) for c in args.canon for pl in args.pool
+              for cm in args.common for h in args.head]
     stamp = time.strftime("%Y%m%dT%H%M%SZ", time.gmtime())
     points = qdrant_client().count(COLLECTION).count
     print(f"endpoint={QDRANT_URL[:50]} rewrite={QUERY_REWRITE} points={points}")
@@ -196,16 +411,16 @@ def headword_suite(args) -> None:
     grid: dict[str, dict[tuple, int]] = {q: {} for q in queries}
     summary: dict[tuple, dict] = {}
     labels: dict[tuple, str] = {}
-    for canon, pool, common in combos:
-        key = (canon, pool, common)
-        label = f"canon{canon:g}_pool{pool}_common{common:g}"
+    for canon, pool, common, head in combos:
+        key = (canon, pool, common, head)
+        label = f"canon{canon:g}_pool{pool}_common{common:g}_head{head:g}"
         labels[key] = label
-        print(f"→ CANONICAL_BOOST={canon} PREFETCH_MIN={pool} COMMON_BOOST={common}", flush=True)
-        rows = run_headword(canon, pool, common, queries)
+        print(f"→ CANONICAL_BOOST={canon} PREFETCH_MIN={pool} COMMON_BOOST={common} HEAD_BONUS={head}", flush=True)
+        rows = run_headword(canon, pool, common, head, queries)
         meta = {"ts": stamp, "endpoint": QDRANT_URL, "points": points, "mode": "auto",
                 "subsets": ",".join(subsets), "rewrite": QUERY_REWRITE,
                 "CANONICAL_BOOST": canon, "PREFETCH_MIN": pool,
-                "COMMON_BOOST": common}
+                "COMMON_BOOST": common, "HEAD_BONUS": head}
         md_path = RESULTS_DIR / f"eval_headword_{stamp}_{label}.md"
         md_path.write_text(headword_markdown(rows, f"Vocab scoring — current settings ({label})", meta),
                            encoding="utf-8")
@@ -221,6 +436,10 @@ def headword_suite(args) -> None:
         s = summary[key]
         print(f"   Hit@1={s['hit1']} Hit@2={s['hit2']} Hit@5={s['hit5']}/{len(scored)} "
               f"median={s['median_ms']}ms → {md_path.name}", flush=True)
+        print(format_category_table(rows), flush=True)
+        if args.report:
+            md_out, json_out = write_category_report(rows, meta, REPORTS_DIR)
+            print(f"   → curated report: {md_out.relative_to(PROJECT_ROOT)} + {json_out.name}", flush=True)
 
     csv_path = RESULTS_DIR / f"eval_grid_{stamp}.csv"
     with open(csv_path, "w", newline="", encoding="utf-8") as f:
@@ -272,7 +491,7 @@ def modes_suite(args) -> None:
 # IR suite — config comparison over relevant entry IDs (Hit@k/MRR/NDCG/MAP).
 # ---------------------------------------------------------------------------
 
-K_VALUES = (1, 3, 5)
+K_VALUES = (1, 2, 3, 5)
 
 IR_CONFIGS: dict[str, dict] = {
     "vector": {"mode": "vector", "rewrite_mode": "off"},
@@ -312,7 +531,13 @@ def run_ir_config(name: str, kwargs: dict, gold: list[dict], k: int) -> dict:
         map_total += ap
         rr = 1.0 / ranks[0] if ranks else 0.0
         rr_total += rr
-        per_cat.setdefault(g["category"], []).append(rr)
+        # Per-category hits as well as MRR — the JA view (ja_words /
+        # ja_hiragana / ja_katakana) and the per-category tables come from
+        # these, so one run answers both questions.
+        cat = per_cat.setdefault(g["category"], {"hits": dict.fromkeys(K_VALUES, 0), "rr": []})
+        for kk in K_VALUES:
+            cat["hits"][kk] += int(any(r <= kk for r in ranks))
+        cat["rr"].append(rr)
         if not ranks:
             misses.append({"query": g["query"], "rewritten": resp.rewrite.query,
                            "expected": g.get("expected", []),
@@ -325,7 +550,10 @@ def run_ir_config(name: str, kwargs: dict, gold: list[dict], k: int) -> dict:
         **{f"recall@{kk}": round(recall[kk] / n, 3) for kk in K_VALUES},
         "mrr": round(rr_total / n, 3),
         "map": round(map_total / n, 3),
-        "mrr_by_category": {c: round(sum(v) / len(v), 3) for c, v in per_cat.items()},
+        "mrr_by_category": {c: round(sum(v["rr"]) / len(v["rr"]), 3) for c, v in per_cat.items()},
+        "hits_by_category": {
+            c: {f"hit@{kk}": round(v["hits"][kk] / len(v["rr"]), 3) for kk in K_VALUES}
+            for c, v in per_cat.items()},
         "avg_latency_ms": int(sum(latency) / len(latency)),
         "misses": misses,
     }
@@ -338,18 +566,26 @@ def default_config_name(configs: list[str]) -> str | None:
     return next((n for n in configs if IR_CONFIGS[n] == want), None)
 
 
-def ir_markdown(results: list[dict], gold_n: int, k: int, default: str | None) -> str:
+def ir_markdown(results: list[dict], gold_n: int, k: int, default: str | None,
+                meta: dict | None = None, title: str = "Retrieval evaluation",
+                note: str = "") -> str:
     cats = sorted({c for r in results for c in r["mrr_by_category"]})
     cat_headers = " | ".join(f"MRR {c}" for c in cats)
     lines = [
-        "# Retrieval evaluation",
+        f"# {title}",
         "",
         f"Gold set: {gold_n} queries (`eval/gold_set.tsv`), top-k = {k}. "
         "Hit@k = share of queries with a relevant entry in the top k; MRR = mean reciprocal rank; "
         "NDCG = normalized discounted cumulative gain; MAP = mean average precision over all relevant IDs.",
-        "",
-        f"| Configuration | Hit@1 | Hit@3 | Hit@5 | MRR | NDCG@5 | MAP | R@5 | avg ms | {cat_headers} |",
-        "|---|" + "---|" * (8 + len(cats)),
+    ]
+    if note:
+        lines.append(note)
+    lines.append("")
+    if meta:
+        lines += [stamp_line(meta), ""]
+    lines += [
+        f"| Configuration | Hit@1 | Hit@2 | Hit@3 | Hit@5 | MRR | NDCG@5 | MAP | R@5 | avg ms | {cat_headers} |",
+        "|---|" + "---|" * (9 + len(cats)),
     ]
     # Production default pinned to the top row; the rest keep run order.
     ordered = sorted(results, key=lambda r: r["config"] != default)
@@ -367,14 +603,26 @@ def ir_markdown(results: list[dict], gold_n: int, k: int, default: str | None) -
     for r in ordered:
         cat_cells = " | ".join(f"{r['mrr_by_category'].get(c, 0):.2f}" for c in cats)
         lines.append(
-            f"| {label(r)} | {r['hit@1']:.2f} | {r['hit@3']:.2f} | {r['hit@5']:.2f} | {r['mrr']:.3f} | "
-            f"{r['ndcg@5']:.3f} | {r['map']:.3f} | {r['recall@5']:.2f} | {r['avg_latency_ms']} | {cat_cells} |"
+            f"| {label(r)} | {r['hit@1']:.2f} | {r['hit@2']:.2f} | {r['hit@3']:.2f} | {r['hit@5']:.2f} | "
+            f"{r['mrr']:.3f} | {r['ndcg@5']:.3f} | {r['map']:.3f} | {r['recall@5']:.2f} | "
+            f"{r['avg_latency_ms']} | {cat_cells} |"
         )
     tie = ""
     if len(tied) > 1:
         why = "default config" if best["config"] == default else "lowest avg ms"
         tie = f" — {len(tied)}-way tie, {why} wins"
     lines += ["", f"Best configuration: **{best['config']}** (MRR {best['mrr']:.3f}){tie}.", ""]
+
+    # Per-category Hit@1 — the JA view used to be a separate script for this
+    # table; now it falls out of the same run.
+    lines += ["## Hit@1 by category", "",
+              "| Configuration | " + " | ".join(cats) + " |", "|---|" + "---|" * len(cats)]
+    for r in ordered:
+        lines.append("| " + label(r) + " | " +
+                     " | ".join(f"{r.get('hits_by_category', {}).get(c, {}).get('hit@1', 0):.2f}"
+                                for c in cats) + " |")
+    lines.append("")
+
     for r in results:
         if r["misses"]:
             lines.append(f"<details><summary>Misses — {r['config']} ({len(r['misses'])})</summary>\n")
@@ -384,12 +632,13 @@ def ir_markdown(results: list[dict], gold_n: int, k: int, default: str | None) -
 
 
 def ir_suite(args) -> None:
-    gold = load_gold_qrels(tuple(args.subsets or GOLD))  # IR suite covers all subsets by default
+    subsets = tuple(args.subsets or GOLD)  # IR suite covers all subsets by default
+    gold = load_gold_qrels(subsets)
     if args.no_llm:
         configs = [c for c in args.configs if "auto/llm" not in c]
     else:
         configs = list(args.configs)
-    print(f"{len(gold)} gold queries · {len(configs)} configurations\n")
+    print(f"{len(gold)} gold queries ({' '.join(subsets)}) · {len(configs)} configurations\n")
 
     results = []
     for name in configs:
@@ -401,12 +650,27 @@ def ir_suite(args) -> None:
               f"({res['avg_latency_ms']} ms/query, {time.perf_counter() - t0:.0f}s)")
 
     RESULTS_DIR.mkdir(parents=True, exist_ok=True)
+    meta = report_meta(endpoint=QDRANT_URL, points=qdrant_client().count(COLLECTION).count,
+                       gold_queries=len(gold), top_k=args.k, subsets=",".join(subsets),
+                       configs=",".join(configs), default_config=default_config_name(configs))
+    # A Japanese-only run is the JA view of the same grid — same renderer, a
+    # subset of the gold set and a different title.
+    ja_only = set(subsets) <= {"ja_words", "ja_hiragana", "ja_katakana"}
+    title = "Retrieval evaluation — Japanese subsets" if ja_only else "Retrieval evaluation"
+    note = ("Companion to `retrieval_eval.md` (all 360 queries, per-category MRR only)."
+            if ja_only else "")
+    md = ir_markdown(results, len(gold), args.k, default_config_name(configs), meta, title, note)
     (RESULTS_DIR / "retrieval_eval.json").write_text(
-        json.dumps(results, indent=2, ensure_ascii=False), encoding="utf-8"
+        json.dumps({"meta": meta, "results": results}, indent=2, ensure_ascii=False), encoding="utf-8"
     )
-    (RESULTS_DIR / "retrieval_eval.md").write_text(
-        ir_markdown(results, len(gold), args.k, default_config_name(configs)), encoding="utf-8")
+    (RESULTS_DIR / "retrieval_eval.md").write_text(md, encoding="utf-8")
     print(f"\nSaved → {RESULTS_DIR / 'retrieval_eval.md'}")
+    if args.publish:
+        REPORTS_DIR.mkdir(parents=True, exist_ok=True)
+        (REPORTS_DIR / f"{args.report_name}.json").write_text(
+            json.dumps({"meta": meta, "results": results}, indent=2, ensure_ascii=False), encoding="utf-8")
+        (REPORTS_DIR / f"{args.report_name}.md").write_text(md, encoding="utf-8")
+        print(f"Published → {REPORTS_DIR / (args.report_name + '.md')}")
 
 
 # ---------------------------------------------------------------------------
@@ -539,13 +803,17 @@ def llm_summarise(rows: list[dict]) -> list[dict]:
     return out
 
 
-def llm_markdown(rows: list[dict], summary: list[dict]) -> str:
+def llm_markdown(rows: list[dict], summary: list[dict], meta: dict | None = None) -> str:
     lines = [
         "# LLM evaluation — level-aware vs generic grammar prompt",
         "",
         f"{len(rows) // (len(LEVELS) * len(PROMPTS))} sentences x levels {', '.join(LEVELS)} x 2 prompts. "
         "Judge = Groq (blind to prompt variant), scores 1-5.",
         "",
+    ]
+    if meta:
+        lines += [stamp_line(meta), ""]
+    lines += [
         "| Level | Prompt | avg words | avg jargon terms | analogy rate | judge: level fit | judge: accuracy |",
         "|---|---|---|---|---|---|---|",
     ]
@@ -583,29 +851,47 @@ def llm_suite(args) -> None:
               f"analogy={s['analogy_rate']:.0%} fit={s['judge_level_fit']} acc={s['judge_accuracy']}")
 
     RESULTS_DIR.mkdir(parents=True, exist_ok=True)
+    meta = report_meta(model=os.getenv("LLM_MODEL", "openai/gpt-oss-120b"),
+                       judge="groq", sentences=len(rows) // (len(LEVELS) * len(PROMPTS)))
     (RESULTS_DIR / "llm_eval.json").write_text(
-        json.dumps({"rows": rows, "summary": summary}, indent=2, ensure_ascii=False), encoding="utf-8"
-    )
-    (RESULTS_DIR / "llm_eval.md").write_text(llm_markdown(rows, summary), encoding="utf-8")
+        json.dumps({"meta": meta, "rows": rows, "summary": summary}, indent=2, ensure_ascii=False),
+        encoding="utf-8")
+    (RESULTS_DIR / "llm_eval.md").write_text(llm_markdown(rows, summary, meta), encoding="utf-8")
     print(f"\nSaved → {RESULTS_DIR / 'llm_eval.md'}")
 
 
 # ---------------------------------------------------------------------------
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--subsets", nargs="+", default=None, choices=list(GOLD),
-                        metavar="NAME", help="gold subsets to evaluate (default: en_words en_verbs; all for --ir)")
+    parser = argparse.ArgumentParser(
+        description=__doc__,
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog=EXAMPLES,
+    )
+    parser.add_argument("--subsets", nargs="+", default=None,
+                        choices=[*GOLD, *SUBSET_ALIASES, "list"], metavar="NAME",
+                        help="gold categories to evaluate — names, or the aliases "
+                             "all / en-only / ja-only / list. Default: every category "
+                             "except en_descriptive (the ranking categories)")
+    parser.add_argument("--report", action="store_true",
+                        help="write the curated category report to eval/reports/headword_eval.{md,json} "
+                             "(add --subsets all to include the paraphrase suite)")
     parser.add_argument("--canon", type=float, nargs="+", default=[retrieval.CANONICAL_BOOST],
                         help="CANONICAL_BOOST values to sweep (default: committed %(default)s)")
     parser.add_argument("--pool", type=int, nargs="+", default=[retrieval.PREFETCH_MIN],
                         help="PREFETCH_MIN values to sweep (default: committed %(default)s)")
     parser.add_argument("--common", type=float, nargs="+", default=[retrieval.COMMON_BOOST],
                         help="COMMON_BOOST values to sweep (default: committed %(default)s)")
+    parser.add_argument("--head", type=float, nargs="+", default=[retrieval.HEAD_BONUS],
+                        help="HEAD_BONUS values to sweep (default: committed %(default)s)")
     parser.add_argument("--modes", action="store_true",
                         help="run the text/hybrid/auto mode comparison (rewrite off)")
     parser.add_argument("--ir", action="store_true",
                         help="run the retrieval-config IR suite (Hit@k/MRR/NDCG/MAP)")
+    parser.add_argument("--publish", action="store_true",
+                        help="--ir: also write the report to eval/reports/ (the committed copy)")
+    parser.add_argument("--report-name", default="retrieval_eval",
+                        help="--ir --publish: basename for the committed report (default: %(default)s)")
     parser.add_argument("--configs", nargs="+", choices=list(IR_CONFIGS), default=list(IR_CONFIGS),
                         help="--ir configurations to run (default: all)")
     parser.add_argument("--k", type=int, default=5, help="--ir top-k (default: %(default)s)")
@@ -616,6 +902,12 @@ def main() -> None:
     parser.add_argument("--sentences", type=int, default=5,
                         help="--llm: sentences to evaluate (default: %(default)s)")
     args = parser.parse_args()
+
+    if args.subsets and "list" in args.subsets:
+        print_subset_catalog()
+        return
+    # One resolution for every suite: names + aliases → category names.
+    args.subsets = resolve_subsets(args.subsets)
 
     if not (args.modes or args.ir or args.llm):
         headword_suite(args)

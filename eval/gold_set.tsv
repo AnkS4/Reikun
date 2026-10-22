@@ -7,7 +7,22 @@
 #   notes — optional; explains a nuance, disambiguates near-synonyms, or
 #     flags why a listed alternative counts as acceptable.
 #
-# Categories (50 queries each, 300 total):
+# ── COUNTING RULE — the set size is fixed; don't quietly change it ─────────
+# Every category holds exactly 60 queries; the file holds 360. When you add a
+# query, add it to the same category in the same change and keep that
+# category at 60 — if you remove one, add a replacement in the same commit,
+# so the number of queries per category never moves.
+#   Why it matters: the per-category Hit@1 rates are computed against these
+#   counts (51/55 and 51/60 are different numbers), and every before/after
+#   comparison in local/notes/Issues.md (D9) and CHANGELOG.md is stated
+#   against a fixed set size. The 0.8.0 pass grew en_words and ja_hiragana
+#   with the user-reported regression guardrails (tomato, garlic, eraser,
+#   potato, apartment, じてんしゃ — local/notes/Issues.md S7) and left this
+#   header claiming 300 while the file held 306. Don't repeat that: fix the
+#   header *and* the counts together, or change neither.
+# ───────────────────────────────────────────────────────────────────────────
+#
+# Categories (60 queries each, 360 total):
 #   en_words        common English nouns/adjectives   -> Japanese headword
 #   en_verbs        "to X" English verb phrases        -> dictionary-form verb
 #   en_descriptive  descriptive/paraphrased English    -> target Japanese word
@@ -20,7 +35,7 @@
 
 category	query	expected_answers	notes
 
-# --- en_words (50 queries) ---
+# --- en_words (60 queries) ---
 en_words	sky	空
 en_words	cat	猫
 en_words	dog	犬
@@ -32,6 +47,11 @@ en_words	house	家
 en_words	school	学校
 en_words	friend	友達
 en_words	family	家族
+en_words	tomato	トマト
+en_words	garlic	大蒜 / にんにく / ニンニク / ガーリック
+en_words	eraser	消しゴム / 字消し / イレーザー
+en_words	potato	じゃが芋 / ポテト / 芋
+en_words	apartment	アパート / マンション / アパートメント
 en_words	money	お金
 en_words	time	時間
 en_words	morning	朝
@@ -72,7 +92,12 @@ en_words	library	図書館
 en_words	umbrella	傘 / 雨傘	雨傘 is the explicit rain-umbrella form, less common as a default translation
 en_words	birthday	誕生日
 
-# --- en_verbs (50 queries) ---
+# --- en_verbs (60 queries) ---
+en_words	sun	太陽
+en_words	moon	月
+en_words	child	子供 / 子ども / 子
+en_words	star	星
+en_words	road	道 / 道路
 en_verbs	to eat	食べる
 en_verbs	to drink	飲む
 en_verbs	to sleep	寝る
@@ -124,7 +149,17 @@ en_verbs	to be late	遅れる
 en_verbs	to ask	尋ねる / 問う	尋ねる = ask (a question, someone); 問う = inquire; 頼む/誘う/聞く also valid but excluded
 en_verbs	to answer	答える
 
-# --- en_descriptive (50 queries) ---
+# --- en_descriptive (60 queries) ---
+en_verbs	to cook	料理する / 炊く
+en_verbs	to wash	洗う / ウォッシュ
+en_verbs	to cut	切る
+en_verbs	to carry	運ぶ
+en_verbs	to meet	会う
+en_verbs	to send	送る
+en_verbs	to show	見せる / 示す
+en_verbs	to tell	言う / 伝える / 告げる
+en_verbs	to turn	曲がる / 回す / 回る
+en_verbs	to wear	着る
 en_descriptive	how do you say thank you in japanese	ありがとう / ありがとうございます / 有難う	ありがとうございます is the polite/formal everyday form
 en_descriptive	what is the word for weather	天気
 en_descriptive	the vehicle that flies in the sky	飛行機 / 航空機
@@ -176,7 +211,17 @@ en_descriptive	the feeling or sensation of sleepiness	眠気 / 眠い / 眠た�
 en_descriptive	a formal word for a workplace	職場
 en_descriptive	a word for congratulations	おめでとう / おめでとうございます	おめでとうございます is the polite/formal form
 
-# --- ja_words (50 queries) ---
+# --- ja_words (60 queries) ---
+en_descriptive	a place where you take a bath	浴室 / お風呂 / 浴場
+en_descriptive	the place where you cook food	台所 / キッチン
+en_descriptive	a machine that washes clothes	洗濯機
+en_descriptive	a person who flies an airplane	パイロット / 機長
+en_descriptive	a warm blanket for a bed	毛布 / ぶ毯
+en_descriptive	a device you carry to see the time	時計 / 腕時計
+en_descriptive	a baby dog	子犬
+en_descriptive	the person who delivers letters	郵便配達員 / 郵便配達
+en_descriptive	the room where you sleep	寝室 / ベッドルーム
+en_descriptive	a person who cuts hair	美容師 / 理髪師
 ja_words	食べる	食べる
 ja_words	空	空
 ja_words	図書館	図書館
@@ -228,8 +273,19 @@ ja_words	科学	科学
 ja_words	経済	経済
 ja_words	文化	文化
 
-# --- ja_hiragana (50 queries) ---
+# --- ja_hiragana (60 queries) ---
+ja_words	言葉	言葉
+ja_words	空気	空気
+ja_words	写真	写真
+ja_words	季節	季節
+ja_words	質問	質問
+ja_words	会議	会議
+ja_words	趣味	趣味
+ja_words	理由	理由
+ja_words	距離	距離
+ja_words	温度	温度
 ja_hiragana	たべる	食べる / たべる
+ja_hiragana	じてんしゃ	自転車 / じてんしゃ
 ja_hiragana	やくそく	約束 / やくそく
 ja_hiragana	としょかん	図書館 / としょかん
 ja_hiragana	ねこ	猫 / ねこ
@@ -280,7 +336,16 @@ ja_hiragana	しょくじ	食事 / しょくじ
 ja_hiragana	かいもの	買い物 / かいもの
 ja_hiragana	さようなら	さようなら	no common kanji form in modern usage
 
-# --- ja_katakana (50 queries) ---
+# --- ja_katakana (60 queries) ---
+ja_hiragana	あさ	朝 / あさ
+ja_hiragana	よる	夜 / よる
+ja_hiragana	あき	秋 / あき
+ja_hiragana	ふゆ	冬 / ふゆ
+ja_hiragana	はる	春 / はる
+ja_hiragana	つき	月 / つき
+ja_hiragana	ひ	日 / ひ
+ja_hiragana	おと	音 / おと
+ja_hiragana	じしょ	辞書 / じしょ
 ja_katakana	パン	パン
 ja_katakana	テレビ	テレビ / テレビジョン	unabbreviated form
 ja_katakana	コーヒー	コーヒー
@@ -331,3 +396,13 @@ ja_katakana	ギター	ギター
 ja_katakana	ラジオ	ラジオ
 ja_katakana	カレンダー	カレンダー
 ja_katakana	シャワー	シャワー
+ja_katakana	スマホ	スマホ / スマートフォン
+ja_katakana	エアコン	エアコン
+ja_katakana	ケーキ	ケーキ
+ja_katakana	ラーメン	ラーメン / 拉麺
+ja_katakana	ソース	ソース
+ja_katakana	ボタン	ボタン / 鈕
+ja_katakana	マフラー	マフラー
+ja_katakana	ディーゼル	ディーゼル
+ja_katakana	テスト	テスト
+ja_katakana	ローラースケート	ローラースケート

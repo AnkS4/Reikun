@@ -3,7 +3,7 @@
   "info": {
     "title": "Reikun API",
     "description": "Japanese dictionary search (hybrid dense + BM25), kanji details and JLPT-calibrated grammar explanations.",
-    "version": "0.6.0"
+    "version": "0.8.0"
   },
   "paths": {
     "/health": {
@@ -205,6 +205,92 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/RandomKanji"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/kanji/group": {
+      "get": {
+        "tags": [
+          "kanji"
+        ],
+        "summary": "Kanji Group Endpoint",
+        "description": "Browse the KANJI of one metadata group — the click target of the kanji\ncard's badges (\"8 strokes\", \"Grade 3\", \"JLPT N4\"). Pages of characters,\nfrequency-ranked most-common first; `total` drives Prev/Next pagination.",
+        "operationId": "kanji_group_endpoint_kanji_group_get",
+        "parameters": [
+          {
+            "name": "by",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "enum": [
+                "strokes",
+                "grade",
+                "jlpt"
+              ],
+              "type": "string",
+              "description": "Kanji metadata grouping key",
+              "title": "By"
+            },
+            "description": "Kanji metadata grouping key"
+          },
+          {
+            "name": "value",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "maximum": 30,
+              "minimum": 1,
+              "description": "Group value (stroke count, KANJIDIC2 grade, or old-scale JLPT level)",
+              "title": "Value"
+            },
+            "description": "Group value (stroke count, KANJIDIC2 grade, or old-scale JLPT level)"
+          },
+          {
+            "name": "n",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 40,
+              "title": "N"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KanjiGroupResponse"
                 }
               }
             }
@@ -710,6 +796,36 @@
         "type": "object",
         "title": "HealthResponse"
       },
+      "InflectionRow": {
+        "properties": {
+          "form": {
+            "type": "string",
+            "title": "Form"
+          },
+          "surface": {
+            "type": "string",
+            "title": "Surface"
+          },
+          "kana": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Kana"
+          }
+        },
+        "type": "object",
+        "required": [
+          "form",
+          "surface"
+        ],
+        "title": "InflectionRow",
+        "description": "One row of a verb/adjective conjugation table."
+      },
       "KanjiCard": {
         "properties": {
           "literal": {
@@ -843,6 +959,131 @@
         "type": "object",
         "title": "KanjiCard"
       },
+      "KanjiGroupEntry": {
+        "properties": {
+          "literal": {
+            "type": "string",
+            "title": "Literal"
+          },
+          "meanings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Meanings",
+            "default": []
+          },
+          "on_yomi": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "On Yomi",
+            "default": []
+          },
+          "kun_yomi": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Kun Yomi",
+            "default": []
+          },
+          "stroke_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stroke Count"
+          },
+          "freq": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Freq"
+          },
+          "jlpt_level": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Jlpt Level"
+          },
+          "meta": {
+            "items": {
+              "$ref": "#/components/schemas/MetaBadge"
+            },
+            "type": "array",
+            "title": "Meta",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "literal"
+        ],
+        "title": "KanjiGroupEntry",
+        "description": "One kanji of a same-metadata group (strokes/grade/JLPT) on the\n/kanji-group browse page — glyph, gloss and enough metadata for a grid\ncard; the full card is a click away (search the literal)."
+      },
+      "KanjiGroupResponse": {
+        "properties": {
+          "by": {
+            "type": "string",
+            "enum": [
+              "strokes",
+              "grade",
+              "jlpt"
+            ],
+            "title": "By"
+          },
+          "value": {
+            "type": "integer",
+            "title": "Value"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "offset": {
+            "type": "integer",
+            "title": "Offset"
+          },
+          "kanjis": {
+            "items": {
+              "$ref": "#/components/schemas/KanjiGroupEntry"
+            },
+            "type": "array",
+            "title": "Kanjis"
+          }
+        },
+        "type": "object",
+        "required": [
+          "by",
+          "value",
+          "label",
+          "total",
+          "offset",
+          "kanjis"
+        ],
+        "title": "KanjiGroupResponse"
+      },
       "KanjiHover": {
         "properties": {
           "literal": {
@@ -898,6 +1139,16 @@
           "tip": {
             "type": "string",
             "title": "Tip"
+          },
+          "group": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MetaBadgeGroup"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "type": "object",
@@ -906,6 +1157,30 @@
           "tip"
         ],
         "title": "MetaBadge"
+      },
+      "MetaBadgeGroup": {
+        "properties": {
+          "by": {
+            "type": "string",
+            "enum": [
+              "strokes",
+              "grade",
+              "jlpt"
+            ],
+            "title": "By"
+          },
+          "value": {
+            "type": "integer",
+            "title": "Value"
+          }
+        },
+        "type": "object",
+        "required": [
+          "by",
+          "value"
+        ],
+        "title": "MetaBadgeGroup",
+        "description": "Browse key for a *clickable* badge — strokes/grade/JLPT badges link to\n/kanji/group so the card can list words of the same metadata group."
       },
       "RandomKanji": {
         "properties": {
@@ -1255,6 +1530,33 @@
             "type": "array",
             "title": "Ruby",
             "default": []
+          },
+          "related": {
+            "items": {
+              "$ref": "#/components/schemas/CommonWord"
+            },
+            "type": "array",
+            "title": "Related",
+            "default": []
+          },
+          "inflected_forms": {
+            "items": {
+              "$ref": "#/components/schemas/InflectionRow"
+            },
+            "type": "array",
+            "title": "Inflected Forms",
+            "default": []
+          },
+          "inflection": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Inflection"
           }
         },
         "type": "object",

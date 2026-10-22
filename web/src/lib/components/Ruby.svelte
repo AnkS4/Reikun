@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { RubyPart } from '#lib/api.ts';
+	import { furigana } from '#lib/furigana.svelte.ts';
 	import KanjiText from './KanjiText.svelte';
 	let {
 		parts,
@@ -9,7 +10,7 @@
 </script>
 
 {#each parts as p}
-	{#if p.rt}<ruby><KanjiText text={p.text} {tips} {onpick} /><rt>{p.rt}</rt></ruby>{:else}<KanjiText
+	{#if p.rt && furigana.on}<ruby><KanjiText text={p.text} {tips} {onpick} /><rt>{p.rt}</rt></ruby>{:else}<KanjiText
 			text={p.text}
 			{tips}
 			{onpick}

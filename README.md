@@ -188,11 +188,11 @@ Reikun/
 │   ├── screenshots/         # UI captures (search, kanji card)
 │   └── videos/              # Demo recording (gif + mp4)
 ├── eval/
-│   ├── gold_set.tsv         # gold set — en_words/en_verbs (default), en_descriptive, ja_*
-│   ├── eval.py              # unified eval: headword bench + knob sweep (default), --modes, --ir, --llm
-│   ├── eval_ja.py           # JA-subset Hit@k report → eval/reports/retrieval_eval_ja.*
+│   ├── gold_set.tsv         # gold set — 360 queries, 60 per category (en_words/en_verbs/en_descriptive/ja_*)
+│   ├── eval.py              # unified eval: headword bench + knob sweep (default), --report, --modes, --ir, --llm
+│   ├── report_meta.py       # provenance stamp shared by every report writer
 │   ├── embed_model_bench.py # dense embedding model benchmark
-│   ├── reports/             # curated headline reports (committed)
+│   ├── reports/             # curated headline reports (committed) — README.md index, eval.md, headword_eval.*, retrieval_eval*, llm_eval.*
 │   └── results/             # generated run outputs (gitignored)
 ├── scripts/
 │   ├── download_edrdg.py    # Sync JMdict NG + KANJIDIC2 XML from EDRDG (rsync)
@@ -247,63 +247,21 @@ Docker maps `127.0.0.1:${APP_PORT:-8000}:8000` — change `APP_PORT` in `.env`, 
 
 ## Evaluation
 
-Reproducible evaluation scripts live in `eval/`; runs write to `eval/results/` (gitignored) — curated headline reports are committed in `eval/reports/`.
+Category-wise results on the gold set (360 queries, 60 per category) — default config (`mode=auto`, heuristic rewrite) against a local collection of 218,786 points:
 
-| Script | What it measures | Required setup | Outputs | API calls | Typical runtime |
-|---|---|---|---|---|---|
-| `eval/eval.py` | Headword Hit@1/2/5 vs gold (default); `--canon/--pool/--common` sweep; `--modes` text/hybrid/auto; `--ir` Hit@k/MRR/NDCG/MAP grid; `--llm` judge eval | Qdrant running with `jmdict_chunks` indexed (`GROQ_API_KEY` for `--llm` and LLM `--ir` configs) | `eval_headword_*`, `eval_grid_*.csv`, `eval_modes_*`, `retrieval_eval.*`, `llm_eval.*` in `eval/results/` | None for headword/modes/`--ir --no-llm`; Groq otherwise | headword ~30s; `--ir` full grid ~10–15min; `--llm` ~4–5min (30 calls/min cap) |
-| `eval/eval_ja.py` | JA-subset view of the IR grid: Hit@1/2/3/5 + MRR per config, overall and per `ja_*` subset | Qdrant running with `jmdict_chunks` indexed | `retrieval_eval_ja.*` in `eval/reports/` | None | ~1min |
-| `eval/embed_model_bench.py` | Dense embedding model throughput and retrieval accuracy (vector-only, in-memory) | `data/processed/chunks.json` and `eval/gold_set.tsv` | `eval/results/embed_model_bench.json` | None | ~20min (first run may download models) |
+| subset | n | Hit@1 | Hit@2 | Hit@5 |
+|---|---|---|---|---|
+| en_verbs | 60 | 58 (96.7%) | 59 | 60 |
+| en_words | 60 | 56 (93.3%) | 59 | 60 |
+| ja_hiragana | 60 | 58 (96.7%) | 60 | 60 |
+| ja_katakana | 60 | 60 (100.0%) | 60 | 60 |
+| ja_words | 60 | 60 (100.0%) | 60 | 60 |
+| **ranking total** | **300** | **292 (97.3%)** | **298** | **300** |
+| en_descriptive (paraphrase suite) | 60 | 9 (15.0%) | 13 | 22 |
 
-Runtimes are approximate on a modest CPU with local Qdrant; embedding-model and LLM cold starts can add time on the first run.
+Hit@1 **97.3%** over the 300 ranking queries, Hit@5 **300/300**, median ~15 ms per query; the Japanese exact-lookup route is at Hit@1 100%. The eight ranking misses are synonym ambiguities (金/お金, 時/時間, 表/テーブル, 文庫/図書館, 仕舞う/終わる, …) — every one has a valid answer in the top 5.
 
-**Gold subsets.** `eval/gold_set.tsv` holds 300 queries in 6 categories; `--subsets` selects them — default is `en_words` + `en_verbs` (the 100-query English-word benchmark):
-
-```bash
-# default: English words + verbs
-uv run python eval/eval.py
-
-# Japanese exact-lookup route (kanji / hiragana / katakana) — dedicated JA report
-uv run python eval/eval_ja.py
-
-# long descriptive queries (exercises the LLM rewrite path when QUERY_REWRITE=auto)
-uv run python eval/eval.py --subsets en_descriptive
-```
-
-On the Japanese subsets (ja_words + ja_hiragana + ja_katakana, 150 queries) the default config scores **Hit@1 = 100%** — the auto route's exact-match arm pins headwords (`retrieval_eval_ja.md`). BM25 alone still shows the weakness it masks: katakana Hit@1 0.38, compounds like テレビスクリーン outranking bare テレビ.
-
-Run the retrieval benchmark without any paid API calls:
-
-```bash
-# vector vs BM25 vs hybrid vs +heuristic rewrite (no LLM calls)
-uv run python eval/eval.py --ir --no-llm
-```
-
-Run the full grid, including `auto` LLM rewriting (uses Groq quota):
-
-```bash
-uv run python eval/eval.py --ir
-```
-
-Embedding model benchmark (defaults to the two models in `eval/embed_model_bench.py`; add others with `--models`):
-
-```bash
-uv run python eval/embed_model_bench.py
-```
-
-LLM prompt evaluation (default 5 sentences; tune with `--sentences N`):
-
-```bash
-uv run python eval/eval.py --llm
-```
-
-Headline results (`eval/reports/`, 300-query gold set + 150-query JA subsets):
-
-- **Default config (auto + heuristic rewrite)**: Hit@1 0.81, Hit@5 0.90, MRR 0.845 — `retrieval_eval.md`
-- **JA subsets**: Hit@1 1.00 on ja_words, ja_hiragana and ja_katakana — `retrieval_eval_ja.md`
-- **LLM judge**: level-aware prompts produce much tighter answers (N1 ~39 vs ~152 words generic, less jargon) at comparable judge scores — `llm_eval.md`
-
-Remaining headroom is `en_descriptive` (MRR 0.05–0.30 across configs). A re-ranking stage (local cross-encoder) was evaluated, reduced MRR on this bilingual corpus, and was removed.
+Full report: [eval/reports/headword_eval.md](eval/reports/headword_eval.md) · benchmark scripts, metrics and the other reports: [eval/reports/eval.md](eval/reports/eval.md)
 
 ## Data Sources
 

@@ -18,6 +18,7 @@ export type RubyPart = components['schemas']['RubyPart'];
 export type KanjiCard = components['schemas']['KanjiCard'];
 export type KanjiHover = components['schemas']['KanjiHover'];
 export type StrokeData = components['schemas']['StrokeData'];
+export type KanjiGroupResponse = components['schemas']['KanjiGroupResponse'];
 export type ReadyInfo = components['schemas']['ReadyResponse'];
 export type ExplainRequest = components['schemas']['ExplainRequest'];
 export type Level = ExplainRequest['level'];
@@ -173,6 +174,19 @@ export function apiRandomKanji(level: Level): Promise<string> {
 		const { data, error, response } = await client.GET('/kanji/random', { params: { query: { level } }, signal });
 		if (error) throw asError(error, response.status);
 		return data.kanji;
+	});
+}
+
+export type GroupKey = 'strokes' | 'grade' | 'jlpt';
+
+export function apiKanjiGroup(by: GroupKey, value: number, n = 40, offset = 0): Promise<KanjiGroupResponse> {
+	return call(async (signal) => {
+		const { data, error, response } = await client.GET('/kanji/group', {
+			params: { query: { by, value, n, offset } },
+			signal
+		});
+		if (error) throw asError(error, response.status);
+		return data;
 	});
 }
 

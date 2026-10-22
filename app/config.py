@@ -42,7 +42,8 @@ for _dir in (RAW_DIR, PROC_DIR, KANJIVG_DIR, MODELS_DIR, MONITORING_DB.parent):
 # chunks.meta.json and startup's check_state() refuses to ingest files that
 # lack it, so a stale pre-v2 chunks.json can't crash-loop ingest on missing
 # keys. Bump when the chunk payload shape changes.
-CHUNKS_SCHEMA = 2
+# v4: added head_gloss_keys (first gloss of the first sense) for HEAD_BONUS.
+CHUNKS_SCHEMA = 4
 
 # ── Qdrant ───────────────────────────────────────────────────────────────────
 # QDRANT_URL wins (e.g. a Qdrant Cloud endpoint); otherwise host/port are used.

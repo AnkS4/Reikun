@@ -16,6 +16,7 @@
 	import Icon from '#lib/components/Icon.svelte';
 	import ShareButton from '#lib/components/ShareButton.svelte';
 	import { loadRecent, pushRecent, clearRecent } from '#lib/recent.ts';
+	import { furigana } from '#lib/furigana.svelte.ts';
 	import { typewriter } from '#lib/typewriter.svelte.ts';
 
 	// Floating button state
@@ -332,6 +333,20 @@
 	>
 		{#if randomBusy}<span class="spinner" aria-hidden="true"></span>{:else}<Icon name="shuffle" size={17} />{/if}
 	</button>
+	<!-- Furigana toggle: visible one-click control (the Appearance popover in
+	     the Header is the secondary location). Reads are on by default; the あ
+	     glyph dims + strikes over when they're hidden. -->
+	<button
+		type="button"
+		class="btn-3d furi-toggle"
+		class:off={!furigana.on}
+		title={furigana.on ? 'Furigana shown — click to hide readings' : 'Furigana hidden — click to show readings'}
+		aria-pressed={furigana.on}
+		aria-label="Toggle furigana readings"
+		onclick={() => furigana.toggle()}
+	>
+		<span lang="ja" class="furi-kana" aria-hidden="true">あ</span>
+	</button>
 	<Popover icon="school" label={level} title="JLPT level for grammar explanations" buttonClass="btn-3d">
 		<p class="popover-title">JLPT Level</p>
 		<Segmented options={LEVELS} value={level} onchange={setLevel} label="JLPT level" />
@@ -431,7 +446,7 @@
 	{/if}
 
 	{#each resp.results as r, i (`${r.id ?? r.text}-${i}`)}
-		<ResultCard result={r} {level} onPickKanji={commit} active={i === activeCard} />
+		<ResultCard result={r} {level} searched={committed} onPickKanji={commit} onSearchWord={commit} active={i === activeCard} />
 	{/each}
 
 	{#if resp.results.length >= wantResults && wantResults < MAX_RESULTS}

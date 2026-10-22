@@ -24,6 +24,8 @@ from fastembed import TextEmbedding
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
+from report_meta import report_meta
+
 from app.embedder import CACHE_DIR
 from eval import GOLD, load_gold_qrels
 from scripts.ingest import load_chunks
@@ -93,7 +95,10 @@ def main() -> None:
               f"hit@1={res['hit@1']}  hit@5={res['hit@5']}  mrr={res['mrr']}  {res['mrr_by_category']}\n")
 
     args.out.parent.mkdir(parents=True, exist_ok=True)
-    args.out.write_text(json.dumps(results, indent=2, ensure_ascii=False), encoding="utf-8")
+    meta = report_meta(models=",".join(args.models), subsets=",".join(args.subsets),
+                        chunks=len(chunks), gold_queries=len(gold), mode="vector-only, in-memory")
+    args.out.write_text(json.dumps({"meta": meta, "results": results}, indent=2, ensure_ascii=False),
+                        encoding="utf-8")
     print(f"Saved → {args.out}")
 
 
