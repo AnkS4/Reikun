@@ -8,8 +8,11 @@ Modes (all evaluated in eval/eval.py --ir):
                               (kanji_form / reading), RRF with the exact arm
                               weighted higher so exact entries pin to the top
                 en_word     1-2 word English query → dense + BM25 +
-                              exact-match (gloss_keys) arms fused with RRF,
-                              then a formula query adds a commonness prior
+                              exact-match (gloss_keys) arms fused with RRF
+                              (the fused list is 2x the per-arm cutoff), then
+                              a formula query adds the exact-match,
+                              commonness, canonical (first-sense gloss) and
+                              headline-gloss (first gloss) priors
                 en_sentence longer English input → dense-heavy RRF (dense arm
                               weighted 2x) - gloss exact-match can't fire
     vector  - dense cosine search only (baseline)
@@ -32,6 +35,7 @@ both hurt MRR on this bilingual corpus — and was removed entirely.
 """
 
 import logging
+import re
 import threading
 import time
 from dataclasses import dataclass, replace
@@ -47,6 +51,8 @@ from qdrant_client.models import (
     FusionQuery,
     MatchValue,
     MultExpression,
+    OrderBy,
+    OrderByQuery,
     Prefetch,
     Rrf,
     RrfQuery,
@@ -69,13 +75,19 @@ _SPLIT_MODE = _SudachiTokenizer.SplitMode.B
 log = logging.getLogger(__name__)
 
 MODES = ("auto", "hybrid", "vector", "text")
-PREFETCH_MIN = 100      # min candidates fetched per arm — retrieval is cheap,
+PREFETCH_MIN = 200      # min candidates fetched per arm — retrieval is cheap,
 PREFETCH_FACTOR = 4     # so a generous pool is free and lets fusion rescue
                         # entries that rank poorly in a single arm. This is the
                         # recall ceiling: the formula can only reorder what the
                         # arms return, and raising 30→100 moved Hit@5 77→91 on
                         # eval/eval.py (a diluted entry like 空, whose vector
                         # is spread over 30 glosses, only surfaces this deep).
+FUSION_FACTOR = 2       # the fused list is wider than each arm: a formula
+                        # prior can lift entries that rank deep in *every*
+                        # arm (時間 reaches the 4-arm RRF at ~rank 204, only
+                        # via the exact arms), so the fusion cutoff must not
+                        # equal the arm cutoff — at 1x it sat right on a tie
+                        # and 時間 fell out of the pool, losing "time".
 EXACT_BONUS = 1.0       # additive boost when the query equals a kanji_form /
                         # reading / gloss_key — several arm positions, so an
                         # exact dictionary hit beats a merely-similar entry
@@ -84,14 +96,13 @@ COMMON_BOOST = 1.0      # flat prior on JMdict's own commonness (1.0 tier-1 pri
                         # CANONICAL_BOOST it applies to every candidate, not
                         # just first-sense gloss matches, so it still nudges
                         # results for queries that match no gloss exactly.
-CANONICAL_BOOST = 3.0   # K x wf_score x (query is a *first-sense* gloss).
-                        # The one canonicality prior, replacing the earlier
-                        # commonness / nf-band boosts. Two signals multiplied,
-                        # and both are needed:
+CANONICAL_BOOST = 3.0   # K x wf_score x (query is a *first-sense* gloss)
+                        # x commonness. The one canonicality prior; all
+                        # signals are needed:
                         #   wf_score  - corpus Zipf frequency (~0-7), the only
                         #               signal fine-grained enough to order
                         #               near-synonyms that share JMdict's pri
-                        #               markers and nf band (仕事 5.7/作業 4.9)
+                        #               markers and band (仕事 5.7/作業 4.9)
                         #               and to rank katakana either way
                         #               (ゲーム 5.6 vs キャット 3.1).
                         #   primary   - is the query what the entry *mainly*
@@ -99,6 +110,29 @@ CANONICAL_BOOST = 3.0   # K x wf_score x (query is a *first-sense* gloss).
                         #               without it: 足 ("leg") lists "money" as
                         #               a minor sense and outranks お金;
                         #               委員長 lists "chair" and beats 椅子.
+                        #   commonness - JMdict's own tiering, as a plain
+                        #               multiplier: the corpus estimate is
+                        #               polluted for untagged kanji spellings
+                        #               the lexicon barely knows (字消し 3.43
+                        #               edged out the everyday 消しゴム 3.35;
+                        #               に文字 "garlic" 4.02 out of a particle's
+                        #               frequency), so an untagged entry keeps
+                        #               none of its wf_score and a tier-2 one
+                        #               keeps half. A 0.7+0.3c floor scored the
+                        #               same on every gold query but needed a
+                        #               second knob — plain commonness does
+                        #               the same job with one number.
+HEAD_BONUS = 1.5        # K x wf_score x (query is the entry's *first* gloss).
+                        # The canonical prior says "the query is what the entry
+                        # means"; this says "it is the entry's headline meaning".
+                        # It separates true translation pairs from broad senses
+                        # that list the query late: 出る ("to leave" is gloss 1)
+                        # over 行く ("to leave" is gloss 4), 問う/尋ねる over
+                        # 頼む ("to request", "to beg", "to ask"), 海 over
+                        # 鱒 ("trout", "sea trout"), 生きる ("to live") over
+                        # 有る ("to be"), 求める ("to want") over 要る ("to be
+                        # needed"). Keyed on wf_score so rare entries can't
+                        # ride a one-word gloss into the top 5.
 MAX_QUERY_CHARS = 150   # input cap, any language — longer text is pasted prose,
                         # never a headword or gloss. Rejected before rewrite /
                         # embed / retrieval, so a long paste costs no model or
@@ -143,6 +177,10 @@ def _hit_to_dict(hit, score: float | None = None) -> dict:
         "example_sentences": p.get("example_sentences", []),
         "is_common": p.get("is_common", False),
         "text": p.get("text", ""),
+        # Conjugation table (verb/adjective entries) + the label of the row
+        # the *query itself* inflects — filled by _auto_search.
+        "inflected_forms": p.get("inflected_forms", []),
+        "inflection": None,
         "score": round(float(hit.score if score is None else score), 4),
     }
 
@@ -156,17 +194,43 @@ def entry_forms(r: dict) -> tuple[str | None, ...]:
             *(r.get("kanji_forms") or ()), *(r.get("readings") or ()))
 
 
+def _infl_indexed() -> bool:
+    """True when the live payload index includes infl_forms — the conjugation
+    arm only rides along once the collection has been re-ingested with the
+    table (Qdrant strict mode 400s an un-indexed filter field). Checked once
+    per process; a transport error reads as not-indexed so degradation, not
+    downtime, is the failure mode."""
+    try:
+        schema = qdrant_client().get_collection(COLLECTION).payload_schema or {}
+        return "infl_forms" in schema
+    except Exception:
+        return False
+
+
 def _exact_filter(query: str) -> Filter:
     # kanji_form/reading match Japanese input verbatim; kanji_forms/readings
     # hold every variant form so alternates (斑馬, シマウマ) hit too;
+    # infl_forms holds the entry's inflected forms (exact-match fires only
+    # after the re-ingest that ships the conjugation table);
     # gloss_keys expects the same normalisation used at index time
     # (lowercased, parens stripped).
-    return Filter(should=[
+    should = [
         FieldCondition(key="kanji_form", match=MatchValue(value=query)),
         FieldCondition(key="reading", match=MatchValue(value=query)),
         FieldCondition(key="kanji_forms", match=MatchValue(value=query)),
         FieldCondition(key="readings", match=MatchValue(value=query)),
         FieldCondition(key="gloss_keys", match=MatchValue(value=gloss_key(query))),
+    ]
+    if _infl_indexed():
+        should.append(FieldCondition(key="infl_forms", match=MatchValue(value=query)))
+    return Filter(should=should)
+
+
+def _head_filter(query: str) -> Filter:
+    """Matches entries whose *first* gloss (of the first sense) is the query —
+    the headline translation, as opposed to any gloss of that sense."""
+    return Filter(should=[
+        FieldCondition(key="head_gloss_keys", match=MatchValue(value=gloss_key(query))),
     ])
 
 
@@ -180,6 +244,15 @@ def _primary_filter(query: str) -> Filter:
         FieldCondition(key="readings", match=MatchValue(value=query)),
         FieldCondition(key="primary_gloss_keys", match=MatchValue(value=gloss_key(query))),
     ])
+
+
+def _canonical_terms(query: str) -> list[MultExpression]:
+    """The formula terms of the canonical rule — CANONICAL_BOOST x wf_score x
+    first-sense-match x commonness (see CANONICAL_BOOST). One helper both
+    routes use so the en_word and ja layers can't drift."""
+    return [MultExpression(mult=[
+        CANONICAL_BOOST, "wf_score", _primary_filter(query), "commonness",
+    ])]
 
 
 def is_headword(term: str) -> bool:
@@ -267,15 +340,38 @@ def _auto_search(query: str, num_results: int, *, vectors, route: str) -> list[d
         # Dense embeddings are English-tuned (they score ~0 MRR on kana in
         # eval/retrieval_eval.md), so Japanese input goes BM25 + exact-match
         # only. The exact arm is weighted higher so a headword/reading hit
-        # always outranks a merely-similar BM25 result.
-        params = _rrf(
-            [
-                Prefetch(query=sparse_vec, using=SPARSE_VECTOR, limit=pool),
-                Prefetch(query=sparse_vec, using=SPARSE_VECTOR, filter=_exact_filter(query), limit=pool),
-            ],
-            weights=[1.0, 2.0],
-            limit=num_results,
-        )
+        # always outranks a merely-similar BM25 result — and the same formula
+        # layer the en_word route uses ranks the fused pool, because bare RRF
+        # is frequency-blind: a kana query that two entries share (じてんしゃ
+        # → 自転車 and 次点者) came back rare-word-first.
+        params = {
+            "prefetch": _rrf(
+                [
+                    Prefetch(query=sparse_vec, using=SPARSE_VECTOR, limit=pool),
+                    # The exact arm can't ride the query's own sparse vector: a
+                    # conjugated input (走った) tokenizes into a word form no
+                    # document contains (docs hold the 走る/はしる stems), so
+                    # its BM25 score is 0 everywhere and the arm emits nothing
+                    # — RRF fuses [empty + empty] and the formula factor never
+                    # sees the match (count() proves the filter matches). An
+                    # order-by prefetch ranks the exact-match subset WITHOUT a
+                    # vector, so the arm always carries its filter's points.
+                    Prefetch(query=OrderByQuery(order_by=OrderBy(key="commonness")),
+                             filter=_exact_filter(query), limit=pool),
+                ],
+                weights=[1.0, 2.0],
+                limit=pool,
+            ),
+            "query": FormulaQuery(
+                defaults={"wf_score": 0.0},
+                formula=SumExpression(sum=[
+                    "$score",
+                    MultExpression(mult=[COMMON_BOOST, "commonness"]),
+                    *_canonical_terms(query),
+                ]),
+            ),
+            "limit": num_results,
+        }
     elif route == "en_sentence":
         # No exact arm — a sentence can't equal a headword or a gloss key.
         # Dense carries semantics, so it gets double weight.
@@ -288,24 +384,38 @@ def _auto_search(query: str, num_results: int, *, vectors, route: str) -> list[d
             limit=num_results,
         )
     else:  # en_word
-        # Full hybrid fused with RRF, then a formula query layers two priors on
-        # the fused score: +EXACT_BONUS when the query equals a headword,
-        # reading or normalised gloss, and +CANONICAL_BOOST x wf_score when the
-        # query is the entry's *first-sense* gloss. Ranking exact matches by
-        # bonus (not by dense order inside a filtered arm) is what puts 犬 above
-        # 猟犬 for "dog"; the canonical prior is what puts it above ワン子.
-        # (Nested prefetch → RRF → formula is the documented pattern; a main
-        # query can't be both fusion+formula.)
+        # Full hybrid fused with RRF, then a formula query layers three priors
+        # on the fused score: +EXACT_BONUS when the query equals a headword,
+        # reading or normalised gloss; the canonical rule
+        # (CANONICAL_BOOST x wf_score x commonness-gate when the query is the
+        # entry's *first-sense* gloss); and HEAD_BONUS x wf_score when it is
+        # the entry's *first* gloss — the headline translation, which is what
+        # separates 出る ("to leave" is gloss 1) from 行く (gloss 4) and 問う
+        # ("to ask" is gloss 1) from 頼む (gloss 3).
+        # The exact-match arm is weighted 2x so
+        # its matches always reach the fused pool: a diluted headword like 犬
+        # (14 glosses spread its dense vector, cos("dog", doc) ≈ 0.39) sits at
+        # deep single-arm ranks that an unweighted RRF truncates out of the
+        # pool before the formula's canonical factor can ever lift it — the
+        # unweighted fusion is what lost 犬 for "dog" in the 0.8.0 eval run.
+        # The canonical prior is what puts 犬 above ワン子 once both are in the
+        # pool. (Nested prefetch → RRF → formula is the documented pattern; a
+        # main query can't be both fusion+formula.)
         exact = _exact_filter(query)
         params = {
             "prefetch": Prefetch(
                 prefetch=[
                     Prefetch(query=dense, using=DENSE_VECTOR, limit=pool),
                     Prefetch(query=sparse_vec, using=SPARSE_VECTOR, limit=pool),
+                    Prefetch(query=sparse_vec, using=SPARSE_VECTOR, filter=exact, limit=pool),
                     Prefetch(query=dense, using=DENSE_VECTOR, filter=exact, limit=pool),
                 ],
-                query=RrfQuery(rrf=Rrf()),
-                limit=pool,
+                query=RrfQuery(rrf=Rrf()),  # all four arms equally weighted —
+                # the formula's priors do the discriminating, so the weights
+                # only decide which arm reaches the pool first; every shape
+                # measured (1.05/1/2.5/2, 1/1/2/2, 1/1/1.5/1.5, all-equal,
+                # asymmetric exact arms) scored the same 149/154/156.
+                limit=pool * FUSION_FACTOR,
             ),
             "query": FormulaQuery(
                 defaults={"wf_score": 0.0},
@@ -313,14 +423,24 @@ def _auto_search(query: str, num_results: int, *, vectors, route: str) -> list[d
                     "$score",
                     MultExpression(mult=[EXACT_BONUS, exact]),
                     MultExpression(mult=[COMMON_BOOST, "commonness"]),
-                    MultExpression(mult=[CANONICAL_BOOST, "wf_score", _primary_filter(query)]),
-                ])
+                    MultExpression(mult=[HEAD_BONUS, "wf_score", _head_filter(query)]),
+                    *_canonical_terms(query),
+                ]),
             ),
             "limit": num_results,
         }
 
     hits = qdrant_client().query_points(COLLECTION, **params).points
-    return [_hit_to_dict(h) for h in hits]
+    results = [_hit_to_dict(h) for h in hits]
+    # "走った is an inflected form of 走る" — when the query itself equals one
+    # of the entry's inflected surfaces, name the row so the card can say so.
+    # Verified against both spellings only when they differ.
+    for r in results:
+        for row in r.get("inflected_forms") or ():
+            if row.get("surface") == query or row.get("kana") == query:
+                r["inflection"] = row["form"]
+                break
+    return results
 
 
 _SEARCHERS = {"hybrid": hybrid_search, "vector": vector_search, "text": text_search}
@@ -467,6 +587,96 @@ def _num_gloss(norm: str) -> str:
     return f"{float(norm):,}" if "." in norm else f"{int(norm):,}"
 
 
+# Number x counter readings the "read each piece then regularize" rule can't
+# produce (2日 is ふつか, not ににち; 4時 is よじ). The numeral+counter fuse
+# below checks this table before falling back to the honest no-furigana chip.
+_DIGITS = {2: "に", 3: "さん", 4: "よん", 5: "ご", 6: "ろく", 7: "なな", 8: "はち", 9: "きゅう"}
+_TENS = {1: "じゅう", 2: "にじゅう", 3: "さんじゅう", 4: "よんじゅう", 5: "ごじゅう",
+         6: "ろくじゅう", 7: "ななじゅう", 8: "はちじゅう", 9: "きゅうじゅう"}
+
+# Single-digit irregulars only — their multi-digit cousins are mostly regular
+# (12日 is じゅうににち; only the -3/-4 tails stay みっか/よっか, handled by the
+# compose rule below). 1日 deliberately absent: ついたち vs いちにち is a real
+# ambiguity the dictionary entry (written 一日) already resolves.
+_COUNTER_SOLO = {
+    "日": {2: "ふつか", 3: "みっか", 4: "よっか", 7: "なのか", 9: "ここのか"},
+    "人": {1: "ひとり", 2: "ふたり", 4: "よにん"},
+    "時": {4: "よじ", 7: "しちじ", 9: "くじ"},
+    "分": {1: "いっぷん", 3: "さんぷん", 4: "よんぷん", 6: "ろっぷん", 8: "はっぷん", 10: "じゅっぷん"},
+}
+
+# Whole-value irregulars that resist both digitwise routes.
+_COUNTER_FIXED = {
+    ("日", 14): "じゅうよっか",
+    ("日", 20): "はつか",
+    ("歳", 20): "はたち",
+}
+_COUNTER_TAIL = {3: "みっか", 4: "よっか"}  # 日 multi-digit: only -3/-4 stay irregular
+
+
+def _counter_reading(num: str, counter: str) -> str:
+    """The contextually correct reading of a fused counter chip, or '' when
+    the combination isn't tabled (dropping furigana beats reading it wrong).
+
+    `num` is the numeral surface ("2", "23"), `counter` the counter's lemma
+    head (人, 日, 時…). Regular combinations (25日, 3人, 30歳) stay untabled —
+    generating geminated regular readings (いっぽん/ろっぽん…) without a
+    phonology engine is how the original 25日→にじゅうごか bug happened."""
+    if not num.isdigit() or num[0] == "0":
+        return ""
+    n = int(num)
+    fixed = _COUNTER_FIXED.get((counter, n))
+    if fixed:
+        return fixed
+    solo = _COUNTER_SOLO.get(counter)
+    if solo and n <= 10 and n in solo:
+        return solo[n]
+    if counter == "日" and n > 10:
+        tail = _COUNTER_TAIL.get(n % 10)
+        tens = _TENS.get(n // 10) if 1 <= n // 10 <= 9 else None
+        if tail and tens:
+            return tens + tail
+    return ""
+
+
+_KC = "零一二三四五六七八九"
+_COUNTERS_RE = re.compile(r"^(\d{1,4})((?:日|人|時|分|秒|歳|年|月|週|回|階|枚|円|匹|頭|台|杯|冊|本|個|度|番|号))$")
+
+
+def _kanji_number(n: int) -> str:
+    """25 → 二十五, 10 → 十, 111 → 百十一. Spelling-level conversion only —
+    the phonological irregularities (さんびゃく, ろっぴゃく) matter for
+    readings, but the kanji JMdict headwords are written with follows plain
+    decimal composition, which is all the alias path needs."""
+    if not 1 <= n <= 9999:
+        return ""
+    out = ""
+    for scale, digit in ((1000, n // 1000), (100, n // 100 % 10), (10, n // 10 % 10), (1, n % 10)):
+        if not digit:
+            continue
+        # 十 alone can head a place (二十, 十三, 百十一) — only non-leading
+        # significands spell the 一 (十一 keeps its 十一 tail sans 一十).
+        if digit != 1 or scale != 10:
+            out += _KC[digit]
+        if scale > 1:
+            out += {10: "十", 100: "百", 1000: "千"}[scale]
+    return out
+
+
+def _counter_alias(query: str) -> str | None:
+    """`25日` → `二十五日` when the kanji spelling is itself a headword.
+
+    JMdict writes counter words kanji-spelled (十三日, 一人), so a digit-typed
+    counter lands on nothing in the exact arms while its own entry sits one
+    numeral conversion away. Digit surface stays as-is when the spelling
+    isn't a headword (二十五時間…) — then the fused chip + reading table
+    answer instead. Pure digits without a counter unit are untouched."""
+    if not (m := _COUNTERS_RE.match(query)):
+        return None
+    alias = _kanji_number(int(m.group(1))) + m.group(2)
+    return alias if alias and alias in headword_index() else None
+
+
 # POS major categories that still drop out of a sentence parse instead of
 # getting a bare chip: punctuation/symbols (、。) and whitespace. Anything else
 # unresolvable (names, %, loanwords JMdict lacks) keeps a chip — its surface
@@ -545,9 +755,10 @@ def _pick(cands: list[dict], reading: str = "") -> dict | None:
 def _ambiguous(surf: str, cands: list[dict]) -> dict:
     """A contested form shown with every candidate's reading+gloss — honest
     ambiguity (東 → ひがし/あずま/…) instead of one misleading gloss."""
-    # Common headwords first — index order otherwise leads with rarer senses
-    # (しかし would show 私窩子 "prostitute" before a common candidate).
-    ordered = sorted(cands, key=lambda e: not e["is_common"])
+    # Common headwords first, then corpus frequency — index order otherwise
+    # leads with rarer senses (しかし would show 私窩子 "prostitute" before a
+    # common candidate). wf is the Zipf estimate stored per trie candidate.
+    ordered = sorted(cands, key=lambda e: (not e["is_common"], -e.get("wf", 0.0)))
     options = [f'{e["reading"] or "—"} — {"; ".join(e["meanings"][:2])}' for e in ordered[:8]]
     if len(ordered) > 8:
         options.append(f"… +{len(ordered) - 8} more")
@@ -763,10 +974,18 @@ def _segment_sudachi(query: str, index: TrieIndex) -> list[dict] | None:
             continue
         # Inflected word: one badge for the tail, options = per-morpheme lines.
         lines, meanings = [], []
+        # The stem's committed dictionary entry, when it resolved (走った's
+        # 走っ → 走る) — lets the promoted-results path below surface the ROOT
+        # verb instead of the conjugated surface, which no JMdict entry
+        # "is". Ambiguous (_ambiguous) stems carry no "_stem": showing a
+        # guessed headword would be confidently wrong.
+        stem_entry: dict | None = None
         for i in g:
             seg = _gloss(toks[i], i > 0 and _is_te(i - 1), conj=ending[i])
             if seg is None:
                 continue
+            if stem_entry is None and i == g[0] and seg.get("_idx") and "options" not in seg:
+                stem_entry = seg
             # One summary gloss per part — except the conjunctive て/で's
             # "particle", a filler line that only evicts a real gloss (the
             # leading chip still needs it when it's all the group has).
@@ -791,9 +1010,20 @@ def _segment_sudachi(query: str, index: TrieIndex) -> list[dict] | None:
         # Whole-word reading = the morphemes' contextual readings joined —
         # 食べ+まし+た → タベマシタ → たべました, so the chip gets furigana.
         reading = "".join(toks[i].reading for i in g)
-        parts.append({"text": text, "kanji_form": text, "reading": reading,
-                      "meanings": meanings[:4], "options": lines,
-                      "_start": g[0], "_end": g[-1]})
+        chip = {"text": text, "kanji_form": text, "reading": reading,
+                "meanings": meanings[:4], "options": lines,
+                "_start": g[0], "_end": g[-1]}
+        if stem_entry:
+            # `_lemma` carries the entry's canonical reading (走る → はしる) —
+            # the `reading` field was overwritten with the token's inflected
+            # one (走っ → はしっ), which pairs badly with the root kanji.
+            chip["_stem"] = {
+                "kanji_form": stem_entry.get("kanji_form"),
+                "reading": stem_entry.get("_lemma") or stem_entry.get("reading") or "",
+                "meanings": stem_entry.get("meanings") or [],
+                "is_common": bool(stem_entry.get("is_common")),
+            }
+        parts.append(chip)
 
     # Fuse bare numeral + counter into one chip ("25日", "2分", "17歳"):
     # Sudachi splits them and the counter's own entry reading is contextually
@@ -814,9 +1044,19 @@ def _segment_sudachi(query: str, index: TrieIndex) -> list[dict] | None:
                          (p["meanings"] or [toks[p["_start"]].surf])[0])
             tail = p["meanings"][1:] if p["_end"] != p["_start"] else []
             num_surf = prev["text"]
+            # Number x counter reading table: 2日 → ふつか, 13日 → じゅうみっか,
+            # 1人 → ひとり, 20歳 → はたち. The counter's own inflection tail
+            # (7人*です*) joins the tabled reading so ruby covers the chip.
+            # Untabled combos keep reading "" — no furigana over one that
+            # would be wrong.
+            base = _counter_reading(num_surf, (toks[p["_start"]].norm or toks[p["_start"]].surf)[:1])
+            tail_reading = ("".join(toks[i].reading for i in range(p["_start"] + 1, p["_end"] + 1))
+                            if base else "")
             prev.update(text=num_surf + p["text"], kanji_form=prev["kanji_form"] + p["text"],
-                        reading="", meanings=[f"{num_surf} · {gloss}", *tail], _end=p["_end"])
+                        reading=base + tail_reading if base else "",
+                        meanings=[f"{num_surf} · {gloss}", *tail], _end=p["_end"])
             prev.pop("_num")  # the counter ends the numeral — "2分4秒" fuses 秒 to 4, not 分
+            prev["_fused"] = True
             if p.get("options"):
                 prev["options"] = [f"{num_surf} — {num_surf}"] + p["options"]
             continue
@@ -888,10 +1128,13 @@ def _segment_sudachi(query: str, index: TrieIndex) -> list[dict] | None:
         for k in ("_idx", "_start", "_end", "_lemma", "_num"):
             p.pop(k, None)
     # ≥2 segments, or one *merged* segment (a lone inflected word like
-    # 食べました), or a lone *unresolved* token — 田中 isn't a headword but a
-    # bare chip still carries the reading, better than "Nothing found".
+    # 食べました), a lone *unresolved* token (田中 isn't a headword but a
+    # bare chip still carries the reading, better than "Nothing found"),
+    # or one fused counter — a lone 2日 would otherwise parse to nothing and
+    # its tabled reading (ふつか) would never surface.
     return parts if len(parts) >= 2 or (
-        parts and (any(len(g) > 1 for g in groups) or not parts[0]["meanings"])) else None
+        parts and (any(len(g) > 1 for g in groups) or not parts[0]["meanings"]
+                   or parts[0].get("_fused"))) else None
 
 
 def _segment_greedy(query: str, index: TrieIndex) -> list[dict] | None:
@@ -1100,6 +1343,10 @@ def _search_cached(
     `cache_info()`, which isn't attributable per call across threads."""
     t0 = time.perf_counter()
     rw = rewrite_query(query, rewrite_mode)
+    # Digit-typed counter ('25日') never text-matches its kanji-spelled
+    # headword ('二十五日') — swap in the spelling so the real entry answers.
+    if alias := _counter_alias(rw.query):
+        rw = replace(rw, query=alias, method="counter")
     t1 = time.perf_counter()
 
     route = route_query(rw.query) if mode == "auto" else None
@@ -1133,14 +1380,34 @@ def _search_cached(
                         # Compound query with no single entry — surface the
                         # segment entries as the results themselves so the UI
                         # and API consumers get the decomposed words directly.
+                        # An inflected segment carries `_stem` (its committed
+                        # dictionary stem — 走った → 走る): the card then shows
+                        # the ROOT entry, which JMdict actually indexes,
+                        # instead of a pseudo-entry for the conjuncted surface
+                        # (is_common-less, no examples, reading glued from
+                        # morphemes). The segment chip keeps the surface; the
+                        # conjugation detail lives in its tooltip options.
                         results = [
                             {
                                 "id": None,
-                                "kanji_form": s["kanji_form"],
-                                "reading": s["reading"],
-                                "meanings": s["meanings"],
+                                # `_stem`: the root's committed dictionary
+                                # entry replaces the surface fields.
+                                **(
+                                    {
+                                        "kanji_form": s["_stem"]["kanji_form"],
+                                        "reading": s["_stem"]["reading"],
+                                        "meanings": s["_stem"]["meanings"],
+                                        "is_common": bool(s["_stem"].get("is_common")),
+                                    }
+                                    if s.get("_stem")
+                                    else {
+                                        "kanji_form": s["kanji_form"],
+                                        "reading": s["reading"],
+                                        "meanings": s["meanings"],
+                                        "is_common": False,
+                                    }
+                                ),
                                 "example_sentences": [],
-                                "is_common": False,
                                 "text": s["text"],
                                 "score": 0.0,
                             }

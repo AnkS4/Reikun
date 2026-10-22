@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 
-FROM python:3.13-slim-trixie
+FROM python:3.14-slim-trixie
 
 LABEL org.opencontainers.image.title="Reikun" \
       org.opencontainers.image.description="Reikun (例訓) — Semantic Japanese Dictionary" \

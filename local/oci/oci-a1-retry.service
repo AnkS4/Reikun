@@ -1,0 +1,25 @@
+# Install: ~/.config/systemd/user/oci-a1-retry.service
+#   systemctl --user daemon-reload
+#   systemctl --user enable --now oci-a1-retry.service
+#   loginctl enable-linger "$USER"     # REQUIRED to start at boot without logging in
+[Unit]
+Description=OCI A1 Always Free capacity retry
+# User units cannot order against system targets (network-online.target is ignored);
+# the script tolerates a missing network at boot and Restart= covers the rest.
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+# Added: user services have a minimal PATH; the OCI CLI installer uses ~/bin or ~/.local/bin.
+Environment=PATH=%h/bin:%h/.local/bin:/usr/local/bin:/usr/bin:/bin
+Environment=OCI_CLI_SUPPRESS_FILE_PERMISSIONS_WARNING=True
+Restart=on-failure
+RestartSec=60
+RestartPreventExitStatus=2
+ExecStartPre=/usr/bin/mkdir -p %h/logs
+ExecStart=/usr/bin/bash %h/REPO/Reikun/local/oci/oci-a1-retry.sh
+StandardOutput=append:%h/logs/oci-a1-retry.log
+StandardError=append:%h/logs/oci-a1-retry.log
+
+[Install]
+WantedBy=default.target

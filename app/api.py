@@ -46,7 +46,14 @@ from app.grammar_explain import (
 )
 from app.kanji_lookup import is_kanji, jlpt_kanji, random_kanji
 from app.ratelimit import rate_limited
-from app.render import furigana_parts, kanji_card, kanji_hover, segment_chip
+from app.render import (
+    furigana_parts,
+    kanji_card,
+    kanji_group_cards,
+    kanji_hover,
+    related_words,
+    segment_chip,
+)
 from app.retrieval import MODES, is_headword, morph_hint, search, warm_headword_index
 from app.telemetry import telemetry
 
@@ -131,6 +138,21 @@ class ExampleSentence(BaseModel):
     english: str = ""
 
 
+class CommonWord(BaseModel):
+    kanji_form: str | None = None
+    reading: str = ""
+    meanings: list[str] = []
+    gloss: str = ""
+    ruby: list[RubyPart] = []
+
+
+class InflectionRow(BaseModel):
+    """One row of a verb/adjective conjugation table."""
+    form: str            # English row label: "Past", "Te-form", …
+    surface: str         # written form: 走った
+    kana: str | None = None
+
+
 class SearchResult(BaseModel):
     id: int | None
     kanji_form: str | None = None
@@ -143,6 +165,11 @@ class SearchResult(BaseModel):
     text: str = ""
     score: float = 0.0
     ruby: list[RubyPart] = []
+    related: list[CommonWord] = []
+    inflected_forms: list[InflectionRow] = []
+    # when the *query itself* is one of the entry's inflected forms, its row
+    # label ("走った searching 走る → "Past")
+    inflection: str | None = None
 
 
 class RewriteInfo(BaseModel):
@@ -193,17 +220,17 @@ class ReadingChip(BaseModel):
     okurigana: str | None = None
 
 
+class MetaBadgeGroup(BaseModel):
+    """Browse key for a *clickable* badge — strokes/grade/JLPT badges link to
+    /kanji/group so the card can list words of the same metadata group."""
+    by: Literal["strokes", "grade", "jlpt"]
+    value: int
+
+
 class MetaBadge(BaseModel):
     label: str
     tip: str
-
-
-class CommonWord(BaseModel):
-    kanji_form: str | None = None
-    reading: str = ""
-    meanings: list[str] = []
-    gloss: str = ""
-    ruby: list[RubyPart] = []
+    group: MetaBadgeGroup | None = None
 
 
 class StrokeNumber(BaseModel):
@@ -217,6 +244,29 @@ class StrokeData(BaseModel):
     view_box: str
     strokes: list[str]
     numbers: list[StrokeNumber]
+
+
+class KanjiGroupEntry(BaseModel):
+    """One kanji of a same-metadata group (strokes/grade/JLPT) on the
+    /kanji-group browse page — glyph, gloss and enough metadata for a grid
+    card; the full card is a click away (search the literal)."""
+    literal: str
+    meanings: list[str] = []
+    on_yomi: list[str] = []
+    kun_yomi: list[str] = []
+    stroke_count: int | None = None
+    freq: int | None = None
+    jlpt_level: int | None = None
+    meta: list[MetaBadge] = []
+
+
+class KanjiGroupResponse(BaseModel):
+    by: Literal["strokes", "grade", "jlpt"]
+    value: int
+    label: str
+    total: int
+    offset: int
+    kanjis: list[KanjiGroupEntry]
 
 
 class KanjiCard(BaseModel):
@@ -356,16 +406,22 @@ def search_endpoint(
             background.add_task(telemetry().kanji_lookup, q, source="search")
     meta = dict(resp.meta)
     raw_segments = meta.pop("segments", None)
-    results = [
-        {
+    results = []
+    for r in resp.results:
+        head = r.get("kanji_form") or r.get("reading") or r.get("text") or ""
+        entry = {
             **r,
-            "ruby": furigana_parts(
-                r.get("kanji_form") or r.get("reading") or r.get("text") or "",
-                r.get("reading"),
-            ),
+            "ruby": furigana_parts(head, r.get("reading")),
+            # Whole-entry-card only: every written form joins the exclusion
+            # set so the word can't recommend itself.
+            "related": related_words(
+                (head, *(r.get("kanji_forms") or ()), *(r.get("readings") or ())),
+                (head, *(r.get("kanji_forms") or ()), *(r.get("readings") or ())),
+            )
+            if head
+            else [],
         }
-        for r in resp.results
-    ]
+        results.append(entry)
     return {
         "search_id": search_id,
         "results": results,
@@ -391,6 +447,7 @@ class RandomKanji(BaseModel):
 # Declared before /kanji/{char} so "random" isn't parsed as a kanji path param.
 @app.get("/kanji/random", tags=["kanji"], response_model=RandomKanji)
 def kanji_random_endpoint(
+
     response: Response,
     level: Annotated[
         Level | None,
@@ -409,6 +466,29 @@ def kanji_random_endpoint(
     except Exception:
         pass  # Qdrant unreachable → unchecked pick below
     return {"kanji": random_kanji(within=pool)}
+
+
+GroupKey = Literal["strokes", "grade", "jlpt"]
+
+
+@app.get("/kanji/group", tags=["kanji"], response_model=KanjiGroupResponse)
+def kanji_group_endpoint(
+    response: Response,
+    by: Annotated[GroupKey, Query(description="Kanji metadata grouping key")],
+    value: Annotated[
+        int, Query(ge=1, le=30, description="Group value (stroke count, KANJIDIC2 grade, or old-scale JLPT level)")
+    ],
+    n: Annotated[int, Query(ge=1, le=100)] = 40,
+    offset: Annotated[int, Query(ge=0)] = 0,
+) -> dict:
+    """Browse the KANJI of one metadata group — the click target of the kanji
+    card's badges ("8 strokes", "Grade 3", "JLPT N4"). Pages of characters,
+    frequency-ranked most-common first; `total` drives Prev/Next pagination."""
+    cards = kanji_group_cards(by, str(value), n, offset)
+    if cards is None or cards["total"] == 0:
+        raise HTTPException(404, f"No kanji in group {by}={value}")
+    response.headers["Cache-Control"] = _CACHE_STATIC
+    return cards
 
 
 @app.get("/kanji", tags=["kanji"], response_model=dict[str, KanjiHover | None])

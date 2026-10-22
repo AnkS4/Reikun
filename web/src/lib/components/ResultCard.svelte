@@ -7,10 +7,20 @@
 		result,
 		level,
 		onPickKanji,
-		active = false
-	}: { result: SearchResult; level: Level; onPickKanji: (c: string) => void; active?: boolean } = $props();
+		onSearchWord,
+		active = false,
+		searched = null
+	}: {
+		result: SearchResult;
+		level: Level;
+		onPickKanji: (c: string) => void;
+		onSearchWord?: (q: string) => void;
+		active?: boolean;
+		searched?: string | null;
+	} = $props();
 
 	let copied = $state(false);
+	let conjOpen = $state(false);
 	let timer: ReturnType<typeof setTimeout> | undefined;
 
 	// Anki / notes format: 高い【たかい】— high, tall, expensive
@@ -50,6 +60,53 @@
 		</button>
 	</div>
 	<p class="meanings-line">{result.meanings.slice(0, 6).join('; ')}</p>
+	{#if searched && result.inflection}
+		<p class="inflection-bar">
+			<span lang="ja">{searched}</span>
+			— {result.inflection.toLowerCase()} form of this word
+		</p>
+	{/if}
+	{#if result.inflected_forms?.length}
+		<div class="conj-section">
+			<button
+				type="button"
+				class="conj-toggle"
+				onclick={() => (conjOpen = !conjOpen)}
+				aria-expanded={conjOpen}
+			>
+				Conjugations <span class="conj-count">{result.inflected_forms.length}</span>
+				<Icon name="expand-more" size={14} />
+			</button>
+			{#if conjOpen}
+				<table class="conj-table">
+					<tbody>
+						{#each result.inflected_forms as row (row.form)}
+							<tr>
+								<th scope="row">{row.form}</th>
+								<td lang="ja">{row.surface}</td>
+								<td class="conj-kana" lang="ja">{row.kana ?? '—'}</td>
+							</tr>
+						{/each}
+					</tbody>
+				</table>
+			{/if}
+		</div>
+	{/if}
+	{#if onSearchWord && result.related?.length}
+		<div class="related-row" aria-label="Related words">
+			{#each result.related as w (w.kanji_form || w.reading)}
+				<button
+					type="button"
+					class="related-pill"
+					title="Search {w.kanji_form || w.reading}"
+					onclick={() => onSearchWord(w.kanji_form || w.reading)}
+				>
+					<span lang="ja"><Ruby parts={w.ruby} tips={false} /></span>
+					<span class="related-gloss">{w.gloss}</span>
+				</button>
+			{/each}
+		</div>
+	{/if}
 	{#if examples.length}
 		<div class="example-section">
 			{#each examples as ex, i (ex.japanese + i)}

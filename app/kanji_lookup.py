@@ -83,6 +83,48 @@ def lookup_kanji(char: str) -> dict | None:
     return _load_kanji_table().get(char)
 
 
+def kanji_group(by: str, value: str, n: int = 40, offset: int = 0) -> tuple[list[dict], int] | None:
+    """
+    The KANJI of a "same metadata" group: every kanji whose `by`-field
+    (strokes / grade / jlpt) equals `value`, ordered by KANJIDIC2 frequency
+    (rank 1 first; unranked kanji trail alphabetically) and sliced to one
+    page. Returns `(page, total)` so the client can paginate; None for an
+    unknown `by` or a non-integer `value`.
+
+    Characters, not words — a stroke-count or grade group is about the
+    script itself (browse 7-stroke kanji), and words of a group mixed
+    unrelated meanings; the full kanji card is one click away per character.
+    """
+    try:
+        v = int(value)
+    except ValueError:
+        return None
+    if by not in ("strokes", "grade", "jlpt"):
+        return None
+
+    pool = _kanji_pool(by, v)  # cached — static table, stable ordering
+    return pool[offset : offset + n], len(pool)
+
+
+@cache
+def _kanji_pool(by: str, v: int) -> tuple[dict, ...]:
+    """The full ordered kanji pool of one group. Static table + pure keys →
+    process-wide cache; each browse page slice comes free off this tuple."""
+    table = _load_kanji_table()
+    pred = {
+        "strokes": lambda d: d.get("stroke_count") == v,
+        "grade": lambda d: d.get("grade") == v,
+        "jlpt": lambda d: d.get("jlpt_level") == v,
+    }[by]
+    # Freq rank first (1 = most common), unranked kanji trail alphabetically
+    # so the tail is stable across pages.
+    return tuple(
+        table[c]
+        for c in sorted(table, key=lambda c: (table[c].get("freq") or 10**9, c))
+        if pred(table[c])
+    )
+
+
 # ── Stroke order ─────────────────────────────────────────────────────────────
 # KanjiVG ships one SVG per kanji (~27 MB for the 6.4k KANJIDIC2 overlap), of
 # which the frontend only draws the stroke paths and number labels. Those are

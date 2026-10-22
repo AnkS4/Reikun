@@ -37,9 +37,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from wordfreq import zipf_frequency
 
 from app.config import CHUNKS_SCHEMA, PROC_DIR, RAW_DIR
+from app.conjugation import conjugate
 from app.headword_index import add_entry, build_trie
 from app.kanji_lookup import is_kanji
-from app.query_rewrite import gloss_keys
+from app.query_rewrite import gloss_key, gloss_keys
 
 log = logging.getLogger(__name__)
 
@@ -157,6 +158,25 @@ def _ja_tokenizer():
     return tok
 
 
+_HEAD_SKIP = ("to ", "and ", "or ", "be ")  # verb/conj-gloss openers
+
+
+def _gloss_head_words(glosses: list[str]) -> set[str]:
+    """Head word of every multi-word gloss ("apartment building" →
+    "apartment") so a one-word query matches phrase-glossed entries. Verb
+    glosses ("to eat" — head word "to") and non-alphabetic heads are exempt;
+    the head word is one extra MatchValue candidate, not a ranking signal,
+    so the first-sense exclusivity stays with primary_gloss_keys."""
+    out: set[str] = set()
+    for m in glosses:
+        key = gloss_key(m)
+        words = key.split()
+        if len(words) < 2 or not words[0].isalpha() or key.startswith(_HEAD_SKIP):
+            continue
+        out.add(words[0])
+    return out
+
+
 @lru_cache(maxsize=65_536)
 def _ja_tokens(text: str) -> list[str]:
     """Sudachi surfaces for `text`. The main win is deduping the back-to-back
@@ -168,6 +188,10 @@ def _ja_tokens(text: str) -> list[str]:
 
 def _entry_to_chunk(entry: ET.Element) -> dict | None:
     word_id = entry.findtext("ent_seq")
+
+    # Sense-level POS texts (entity-resolved: "Godan verb with 'ru' ending"…)
+    # drive the inflection table — see app/conjugation.py.
+    pos_texts = {p.text for p in entry.findall("sense/pos") if p.text}
 
     kanji_forms: list[str] = []
     readings: list[str] = []
@@ -277,13 +301,32 @@ def _entry_to_chunk(entry: ET.Element) -> dict | None:
         "reading": primary_kana,
         "meanings": kept,
         # Normalised glosses for exact-match filtering (see
-        # app.query_rewrite.gloss_keys).
-        "gloss_keys": sorted({k for m in kept for k in gloss_keys(m)}),
+        # app.query_rewrite.gloss_keys). Multi-word glosses also index their
+        # head word ("apartment building" → also "apartment") so a one-word
+        # query can land the full-phrase-glossed entry — アパート's own
+        # primary senses are all 2-word phrases, which left マンション (a
+        # single-word gloss) as the top 'apartment' hit. Verb-gloss keys
+        # ("to eat") are exempt: their head word is just "to".
+        "gloss_keys": sorted(
+            {k for m in kept for k in gloss_keys(m)} | _gloss_head_words(kept)),
         # Gloss keys of the FIRST sense only — "is this English word what the
         # entry primarily means?". Without it, a frequency prior is actively
         # harmful: 足 ("leg") lists "money" as a minor sense and would beat
         # お金 on frequency alone; 委員長 lists "chair" and beats 椅子.
-        "primary_gloss_keys": sorted({k for m in primary_meanings for k in gloss_keys(m)}),
+        "primary_gloss_keys": sorted(
+            {k for m in primary_meanings for k in gloss_keys(m)}
+            | _gloss_head_words(primary_meanings)),
+        # Gloss keys of the FIRST gloss of the FIRST sense — the entry's
+        # headline translation ("is this word what the entry leads with?").
+        # JMdict orders a sense's glosses by centrality, so the first one is
+        # the primary translation and the rest are refinements: 行く lists
+        # "to leave (for)" as gloss 4, 頼む lists "to ask" as gloss 3, while
+        # 出る/問う/尋ねる/海 lead with "to leave"/"to ask"/"sea". Used as a
+        # small frequency-weighted bonus on top of the canonical prior — it
+        # separates a true translation pair from a broad sense that happens to
+        # mention the query late (see HEAD_BONUS in app/retrieval.py).
+        "head_gloss_keys": sorted(
+            {k for m in primary_meanings[:1] for k in gloss_keys(m)}),
         "example_sentences": example_sentences[:5],
         "text": text,
         "sparse_text": sparse_text,
@@ -294,6 +337,13 @@ def _entry_to_chunk(entry: ET.Element) -> dict | None:
         # they are too coarse to rank with (500-word nf buckets, binary pri).
         "wf_score": _wf_score(primary_kanji, primary_kana, kana_pref),
     }
+    # Inflection table for verb/adjective entries (see app/conjugation.py):
+    # the render rows plus a flat keyword list so a typed inflection
+    # (走った) exact-matches this very entry.
+    if inflected := conjugate(pos_texts, primary_kanji, primary_kana):
+        chunk["inflected_forms"] = inflected
+        chunk["infl_forms"] = sorted(
+            {r["surface"] for r in inflected} | {r["kana"] for r in inflected if r.get("kana")})
     # Optional payload fields — written only when present to keep chunks.json lean.
     if freq_band is not None:
         chunk["freq_band"] = freq_band

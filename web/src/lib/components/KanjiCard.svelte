@@ -54,7 +54,19 @@
 			{#if card.meta.length}
 				<div class="meta-badges">
 					{#each card.meta as m (m.label)}
-						<span class="meta-badge" title={m.tip}>{m.label}</span>
+						{#if m.group}
+							<!-- Group badges are browse keys: the kanji of the whole
+							     group live on their own page (paginated there). -->
+							<a
+								class="meta-badge clickable"
+								href={`/kanji-group?by=${m.group.by}&value=${m.group.value}`}
+								title={m.tip}
+							>
+								{m.label} <Icon name="expand-more" size={11} />
+							</a>
+						{:else}
+							<span class="meta-badge" title={m.tip}>{m.label}</span>
+						{/if}
 					{/each}
 				</div>
 			{/if}

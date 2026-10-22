@@ -7,7 +7,7 @@ Deliberately dependency-light (kanji_lookup + config only) so it is importable
 in the lean API image — no Streamlit, no pandas.
 """
 
-from app.kanji_lookup import has_kanji, is_kanji, lookup_kanji, stroke_data
+from app.kanji_lookup import has_kanji, is_kanji, kanji_group, kanji_in, lookup_kanji, stroke_data
 
 
 def furigana_parts(word: str, reading: str | None) -> list[dict]:
@@ -53,21 +53,26 @@ def _grade_badge(grade: int) -> dict:
 
 
 def meta_parts(d: dict) -> list[dict]:
-    """[{label, tip}] badges for a kanji's strokes / grade / JLPT / frequency
-    rank, skipping fields the entry lacks."""
+    """[{label, tip, group}] badges for a kanji's strokes / grade / JLPT /
+    frequency rank, skipping fields the entry lacks. `group` (absent on freq)
+    marks badges that are lookup keys — the frontend renders those as buttons
+    that browse words of the same group via /kanji/group."""
     parts = []
     if d.get("stroke_count"):
         parts.append({"label": f"{d['stroke_count']} strokes",
-                      "tip": "Number of strokes in the standard stroke order"})
+                      "tip": "Number of strokes in the standard stroke order",
+                      "group": {"by": "strokes", "value": d["stroke_count"]}})
     if d.get("grade"):
-        parts.append(_grade_badge(d["grade"]))
+        parts.append({**_grade_badge(d["grade"]),
+                      "group": {"by": "grade", "value": d["grade"]}})
     if d.get("jlpt_level"):
         # kanji_table stores KANJIDIC2's former 4-level scale (4 elementary →
         # 1 advanced); old level 2 spans N2-N3 so it can't be shown as one level.
         label = {4: "N5", 3: "N4", 2: "N2-N3", 1: "N1"}.get(d["jlpt_level"], f"N{d['jlpt_level']}")
         parts.append({"label": f"JLPT {label}",
                       "tip": "Japanese Language Proficiency Test level this kanji is expected at "
-                             "(N5 easiest, N1 hardest)"})
+                             "(N5 easiest, N1 hardest)",
+                      "group": {"by": "jlpt", "value": d["jlpt_level"]}})
     if d.get("freq"):
         parts.append({"label": f"Freq #{d['freq']}",
                       "tip": "Frequency rank among the 2,500 most-used kanji in newspapers (1 = most common)"})
@@ -91,6 +96,42 @@ def _word_json(word: dict) -> dict:
         "gloss": (word.get("meanings") or [""])[0],
         "ruby": furigana_parts(head, word.get("reading")),
     }
+
+
+def related_words(forms: tuple[str | None, ...], exclude: tuple[str | None, ...], n: int = 8) -> list[dict]:
+    """
+    Related words for a result card: words (from the kanji table's
+    frequency-ranked common-word pools) that share a kanji with the card's
+    headword forms — 走る's card gets 滑走 / 滑走路 / 完走 … because they all
+    contain 走. Kana-only entries (no kanji to hang a relation on) get an
+    empty list, which the frontend hides.
+
+    Single-sense chips (`meanings` capped at 1, like the gloss line) — the
+    card is a link, not a full entry. Deduped by (form, reading) across the
+    card's own forms and against the headword itself.
+    """
+    seen: dict[tuple[str, str], dict] = {}
+    excl = {e for e in exclude if e}
+    for form in forms:
+        if not form:
+            continue
+        for ch in kanji_in(form):
+            d = lookup_kanji(ch)
+            if not d:
+                continue
+            for w in d.get("common_words") or ():
+                kf, rd = w.get("kanji_form"), w.get("reading") or ""
+                if not kf or kf in excl:
+                    continue
+                if (kf, rd) in seen:
+                    continue
+                seen[(kf, rd)] = w
+    out = []
+    for w in list(seen.values())[:n]:
+        chip = _word_json(w)
+        chip["meanings"] = chip["meanings"][:1]
+        out.append(chip)
+    return out
 
 
 def kanji_card(char: str, *, strokes: bool = False) -> dict | None:
@@ -146,6 +187,41 @@ def kanji_hover(char: str) -> dict | None:
         "kun_yomi": (d.get("kun_yomi") or [])[:4],
         "meta": meta_parts(d),
     }
+
+
+def kanji_group_cards(by: str, value: str, n: int = 40, offset: int = 0) -> dict | None:
+    """
+    One page of a kanji group for the /kanji-group browse page — the kanji
+    themselves (glyph + gloss + metadata), not words. None for a bad
+    `by`/`value`.
+
+    `label` is the display name of the group ("7 strokes", "Grade 3",
+    "JLPT N2-N3"); `total` drives the Prev/Next pagination.
+    """
+    raw = kanji_group(by, value, n, offset)
+    if raw is None:
+        return None
+    pool, total = raw
+    kanjis = [
+        {
+            "literal": d["literal"],
+            "meanings": (d.get("meanings") or [])[:2],
+            "on_yomi": (d.get("on_yomi") or [])[:1],
+            "kun_yomi": (d.get("kun_yomi") or [])[:1],
+            "stroke_count": d.get("stroke_count"),
+            "freq": d.get("freq"),
+            "jlpt_level": d.get("jlpt_level"),
+            "meta": meta_parts(d),
+        }
+        for d in pool
+    ]
+    v = int(value)
+    label = {
+        "strokes": f"{v} strokes",
+        "grade": f"Grade {v}",
+        "jlpt": {4: "N5", 3: "N4", 2: "N2-N3", 1: "N1"}.get(v, f"N{v}"),
+    }.get(by, by)
+    return {"by": by, "value": v, "label": label, "total": total, "offset": offset, "kanjis": kanjis}
 
 
 def chip_ruby(text: str, reading: str) -> list[dict]:

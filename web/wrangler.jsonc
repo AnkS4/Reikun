@@ -1,14 +1,30 @@
 {
-	// Static-assets-only Worker deployment: serve web/build/ as-is — no SSR
-	// worker script (this app is fully client-side; the API lives elsewhere).
+	// Static-assets Worker: serve web/build/ as-is — no SSR request handler
+	// (this app is fully client-side; the API lives elsewhere). The `main`
+	// script below runs only for cron triggers; HTTP traffic never reaches it
+	// (matching paths are served by the assets router, the rest get the SPA
+	// shell via not_found_handling before any worker invocation).
 	// Committed config also stops `wrangler deploy`'s SvelteKit auto-config
 	// from trying to convert the project to adapter-cloudflare.
 	"name": "reikun",
 	"compatibility_date": "2026-10-01",
+	"main": "./worker.js",
 	"assets": {
 		"directory": "./build",
 		// Unmatched paths get the SPA shell (index.html), same role the
 		// 200.html fallback plays on classic Pages.
 		"not_found_handling": "single-page-application"
+	},
+	// Keep-alive cron (web/worker.js): one /ready hit per day stops the Qdrant
+	// Cloud free cluster from auto-pausing. Daily is the cheapest valid cron
+	// under the multi-day pause threshold ("*/48" isn't expressible).
+	"triggers": {
+		"crons": ["17 9 * * *"]
+	},
+	"vars": {
+		"API_URL": "https://reikun-api-cmudl7elbq-no.a.run.app"
+	},
+	"observability": {
+		"enabled": true
 	}
 }
