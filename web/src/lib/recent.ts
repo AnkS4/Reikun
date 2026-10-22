@@ -10,9 +10,15 @@ const MAX_CHARS = 150; // matches the API's query cap — never render junk from
 export function loadRecent(): string[] {
 	try {
 		const v: unknown = JSON.parse(safeStorage.get(KEY) ?? '[]');
-		return Array.isArray(v)
-			? v.filter((x): x is string => typeof x === 'string' && x.length > 0 && x.length <= MAX_CHARS).slice(0, MAX)
-			: [];
+		if (!Array.isArray(v)) return [];
+		// Deduped: a duplicate entry would be a duplicate key in the recent
+		// list's each block (Svelte throws on that), and a list written by an
+		// older build may still hold one.
+		const seen = new Set<string>();
+		return v
+			.filter((x): x is string => typeof x === 'string' && x.length > 0 && x.length <= MAX_CHARS)
+			.filter((x) => (seen.has(x) ? false : (seen.add(x), true)))
+			.slice(0, MAX);
 	} catch {
 		return [];
 	}
