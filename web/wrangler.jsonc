@@ -11,6 +11,9 @@
 	"main": "./worker.js",
 	"assets": {
 		"directory": "./build",
+		// The ASSETS binding lets the fetch handler below read the neutral
+		// SPA shell (200.html) for paths the router cannot match.
+		"binding": "ASSETS",
 		// Unmatched paths are handled by the Worker's fetch handler, which
 		// serves the neutral SPA shell (200.html). NOT
 		// "single-page-application": that mode serves index.html, and
