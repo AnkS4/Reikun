@@ -1,5 +1,4 @@
 <script lang="ts">
-	import Footer from '#lib/components/Footer.svelte';
 </script>
 
 <svelte:head>
@@ -44,7 +43,7 @@
 			</li>
 			<li>
 				<strong>Grammar explanations</strong> — concise explanations calibrated to a JLPT level
-				(N5–N1), generated on demand.
+				(N5–N1), generated on demand by a LLM provider.
 			</li>
 		</ul>
 	</section>
@@ -88,8 +87,6 @@
 		</p>
 	</section>
 </article>
-
-<Footer />
 
 <style>
 	.about-nav {

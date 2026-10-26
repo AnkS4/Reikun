@@ -20,5 +20,8 @@
 		<p class="footer-data">
 			Queries are logged anonymously to improve embeddings and ranking — no cross-site tracking. Recent searches are stored locally in your browser.
 		</p>
+		<p class="footer-data">
+			Grammar explanations and English descriptive query rewrites are generated on demand by a LLM provider.
+		</p>
 	</div>
 </footer>

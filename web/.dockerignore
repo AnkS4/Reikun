@@ -1,0 +1,13 @@
+# Dependencies — installed by `npm ci` in the image; copying the host's
+# node_modules over it would overwrite platform-specific native binaries.
+node_modules/
+
+# Build state
+.svelte-kit/
+build/
+.vite/
+
+# Environment & secrets
+.env
+.env.*
+!.env.example

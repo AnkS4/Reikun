@@ -1,6 +1,6 @@
 # Evaluation
 
-Reproducible evaluation scripts live in `eval/`; runs write to `eval/results/` (gitignored) — curated headline reports are committed in this directory (`eval/reports/`). See [`README.md`](README.md) in this directory for the index of every report, what it measures, how to regenerate it, and when it was last run. Every report carries its own provenance stamp (generated-at, app version, commit, run configuration) on its first lines and in its JSON `meta` block.
+Reproducible evaluation scripts live in `eval/`; runs write to `eval/results/` (gitignored) — curated headline reports are committed in this directory (`eval/reports/`). See [`README.md`](README.md) in this directory for the index of every report, what it measures, how to regenerate it, and when it was last run. Every report carries its own provenance stamp (generated-at, app version, run configuration) on its first lines and in its JSON `meta` block.
 
 | Script | What it measures | Required setup | Outputs | API calls | Typical runtime |
 |---|---|---|---|---|---|
@@ -66,7 +66,7 @@ Default config (`mode=auto`, `QUERY_REWRITE=heuristic`, `CANONICAL_BOOST=3.0`, `
   ranking total      300   292 (97.3%)   298     300
 ```
 
-Hit@1 **97.3%** over the 300 ranking queries, Hit@5 **300/300**, median ~15 ms per query. The Japanese exact-lookup route is at **Hit@1 100%** on `ja_words` and `ja_katakana`. `en_descriptive` is the paraphrase suite — it is a different kind of query and is reported separately (it is where the remaining headroom is).
+Hit@1 **97.3%** over the 300 ranking queries, Hit@5 **300/300**, median ~15 ms per query. The Japanese exact-lookup route is at **Hit@1 100%** on `ja_words` and `ja_katakana`. `en_descriptive` is the paraphrase suite — it is a different kind of query and is reported separately. The 9/60 above is the default heuristic path; the current Japanese-pivot rewrite is tested separately in `descriptive_models.md`.
 
 The eight ranking misses are all synonym ambiguities rather than retrieval failures: `money` (金 above お金), `time` (時 above 時間), `table` (表 above テーブル), `library` (文庫 above 図書館), `to finish` (仕舞う/済む above 終わる), `to turn`, `かわ`, `ゆき`. Every one of them has a valid answer in the top 5.
 
@@ -100,8 +100,9 @@ uv run python eval/eval.py --llm
 - **Retrieval-config grid** (`--ir`, all 360 queries): Hit@k / MRR / NDCG / MAP per retrieval mode — default (`auto + rewrite(heuristic)`) **Hit@1 0.84 · Hit@5 0.90 · MRR 0.861**, vs hybrid 0.57, BM25 0.42, dense-only 0.06 — `retrieval_eval.md`
 - **JA subsets** of the same grid (180 queries): Hit@1 **1.00** for every hybrid/auto config; BM25 alone 0.79, dense-only 0.00 — `retrieval_eval_ja.md`
 - **LLM judge**: level-aware prompts produce much tighter answers (N1 ~39 vs ~152 words generic, less jargon) at comparable judge scores — `llm_eval.md`
+- **Descriptive model sweep** (`descriptive_models.md`, `descriptive_models.json`): Hit@1/2/5 for every provider/model pair on the 60 descriptive queries (current Japanese pivot); highest is Groq 120B 57/60 Hit@1.
 - **Embedding models**: `embed_model_bench.json` — the September 4-model run, **not re-run** for 0.8.0 (the dense models are no longer cached and re-embedding them costs ~2 h). It is vector-only and never touches the formula, so the ranking work does not affect it; its `meta` block says so.
 
-Remaining headroom is `en_descriptive` (MRR 0.05–0.30 across configs). A re-ranking stage (local cross-encoder) was evaluated, reduced MRR on this bilingual corpus, and was removed.
+Remaining headroom in this default heuristic grid is `en_descriptive` (MRR 0.05–0.30 across configs); the Japanese-pivot `QUERY_REWRITE=auto` path is tested separately in `descriptive_models.md`. A re-ranking stage (local cross-encoder) was evaluated, reduced MRR on this bilingual corpus, and was removed.
 
-**On precision.** The ranking categories are stable run to run (Hit@1 292/300 in every 0.8.0 run). `en_descriptive` jitters by ±1 on Hit@1 between identical runs — its paraphrase queries have near-duplicate candidates and ONNX's float reductions differ slightly between runs, flipping their order. Read its Hit@1 as "≈9/60", not an exact figure.
+**On precision.** The ranking categories are stable run to run (Hit@1 292/300 in every 0.8.0 run). `en_descriptive` jitters by ±1 on Hit@1 between identical runs — its paraphrase queries have near-duplicate candidates and ONNX's float reductions differ slightly between runs, flipping their order. Read its default heuristic Hit@1 as "≈9/60", not an exact figure; the optional auto pivot is a different rewrite path.

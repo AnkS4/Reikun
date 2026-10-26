@@ -5,7 +5,35 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.9.0] - 2026-10-26
+
+### Added
+- Qdrant Cloud hosted inference: Optional `QDRANT_CLOUD_INFERENCE` flag enables Qdrant Cloud to handle embedding (dense + sparse) via `models.Document`, removing FastEmbed/ONNX from the container. When enabled, the API sends plain text to Qdrant instead of pre-computed vectors. Requires Qdrant Cloud (QDRANT_URL) and uses the free tier's request budget (~0.05–0.18 s/query observed). Model names must be fully qualified (e.g. `sentence-transformers/all-MiniLM-L6-v2`). Ingest scripts still use local FastEmbed, so query-side savings alone drops ~90 MB of models from the production image
+- Multi-provider LLM support: Grammar explanations and query rewrites now support Groq, Gemini, Cohere, and Nebius via a unified OpenAI-compatible abstraction (`app/llm.py`). Switch providers with `LLM_PROVIDER` env var; each provider has default model(s) (primary plus an optional fallback) configurable via `LLM_MODEL` / `LLM_MODEL_FALLBACK` overrides; optional `LLM_BASE_URL` overrides the provider's endpoint (regional or self-hosted)
+- Japanese-pivot rewrites: `QUERY_REWRITE=auto` now asks the LLM for one JSON object — a 1-3 word English gloss plus 1-3 ranked Japanese dictionary headwords — and the exact-Japanese route searches the headwords directly (the English gloss stays the display value and the fallback when no pivot resolves). The prompt carries dictionary-form and usage guidance (静か not 静かな, スーパー not 店, 嬉しい vs 幸せ…), and parsing tolerates code fences and non-JSON replies so small models degrade to the old single-gloss behaviour
+- Descriptive-model sweep report: `eval/reports/descriptive_models.md` + `.json` score Hit@1/2/5 for every shipped provider/model pair over the 60 descriptive queries under the current Japanese pivot — Groq `openai/gpt-oss-120b` leads at 57/60 Hit@1; `eval/reports/README.md` indexes it as a sixth report family
+- SvelteKit web container: Added a SvelteKit dev server to Docker Compose (`web` service) for local development at http://localhost:5173
+- Provider display: Grammar explanations now show the LLM provider name alongside the model in the UI and SSE payload (`provider` field); the regenerated OpenAPI schema (`docs/api/openapi.json`) and web types carry it
+
+### Changed
+- Gemini default model: removed `gemini-3.5-flash` (free tier is capped at 20 requests/day); the Gemini provider now defaults to `gemini-3.5-flash-lite` only
+- LLM SDK migration: Replaced `groq` SDK with `openai` SDK (v3.36.1) for unified provider support across all backends
+- In-container ingest control: `INGEST_VIA_DOCKER` moved from a Docker build arg to a runtime environment variable. Enable with `INGEST_VIA_DOCKER=1 docker compose up -d --build` (do not set in `.env` — it's a one-time boot flag)
+- Dockerfile simplification: All images now include rsync and the ingest dependency group (previously conditional on `INGEST_VIA_DOCKER`), removing build-time branching
+- Footer placement: Footer component moved from individual pages to the root layout (`+layout.svelte`) for consistent display across all routes
+- .env.example reworked: LLM-provider block (`LLM_PROVIDER`, per-provider API keys, per-provider model override examples, `LLM_BASE_URL`), `QUERY_REWRITE` set to `auto` (the Japanese pivot), `QDRANT_CLOUD_INFERENCE` documented, and `INGEST_VIA_DOCKER` removed from the file with a note to pass it as a compose prefix
+- Versions: API 0.9.0 (pyproject + openapi), web 0.9.0
+- README restructure: Evaluation section split into ranking (300 queries) vs descriptive (60 queries) with a per-provider model table, environment variables consolidated into `docs/configuration.md`, Tech Stack trimmed, and the brand emblem (`assets/emblems/emblem.svg`) replaces the themed-logo picture block
+- Dependency updates: qdrant-client 1.19.1 → 1.20.0, fastembed 0.9.0 → 0.9.1, openai 3.36.1 → 3.37.0, fastapi 0.159.1 → 0.162.0, starlette 1.9.0 → 1.10.0
+
+### Fixed
+- Duplicate footers: with the Footer moved into the root layout (`+layout.svelte`), the homepage, `/conjugations` and `/kanji-group` still imported and rendered their own `<Footer>` — those routes displayed the footer twice. The per-page copies are removed; the layout is the single renderer now
+- Footer column: rendered as a sibling of `main`, the footer inherited no width constraint and stretched edge-to-edge across the viewport; it now carries the same centered 50rem column and side paddings as the page content (including the 680px breakpoint's tighter padding)
+- Web Docker build: `npm run build` invoked `bash ../scripts/sync-assets.sh`, but the `web` image is Alpine (no bash) and the `web/`-only build context does not contain `../scripts` — the build aborted with `bash: not found`. The sycn is replaced with a portable Node step (`web/tools/sync-assets.mjs`) that copies brand assets when the repo-root `assets/` directory is inside the context and skips silently otherwise, since the synced files are committed to `web/static/`
+- `web/.dockerignore` added: the host's `node_modules` (85 MB) was going into the build context and would have overridden the `npm ci`-installed, platform-specific packages; the context now carries source only
+
+### Removed
+- `local/` from the repository — notes, skills, benchmark results, the OCI-A1 retry runner and autorecord scripts had been tracked since 0.8.0 despite never being meant to ship. History since then is rewritten so no commit contains them (v0.8.0 / v0.9.0 are re-published at the rewritten commits), and `.gitignore` now ignores `local/` so it can never be tracked again
 
 ## [0.8.0] - 2026-10-21
 

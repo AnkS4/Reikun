@@ -1,9 +1,10 @@
 """
-LLM-powered, JLPT-level-calibrated grammar explanations via Groq.
+LLM-powered, JLPT-level-calibrated grammar explanations.
 
-Reads GROQ_API_KEY from .env (or the environment). Two prompt variants are
-kept side by side so eval/eval.py --llm can compare them; the app uses the
-level-aware one (see eval/reports/llm_eval.md).
+Provider is selected with LLM_PROVIDER (groq / gemini / cohere / nebius) and
+the matching *_API_KEY — see app/llm.py. Two prompt variants are kept side by
+side so eval/eval.py --llm can compare them; the app uses the level-aware one
+(see eval/reports/llm_eval.md).
 
 Level calibration is grounded in the JLPT's own level descriptions and the
 commonly-cited kanji-count estimates (JLPT stopped publishing official
@@ -24,9 +25,11 @@ import re
 import time
 from collections.abc import Iterator
 from dataclasses import dataclass
-from functools import cache, lru_cache
+from functools import lru_cache
 
-from app.config import GROQ_API_KEY, LLM_MODEL, LLM_MODEL_FALLBACK
+from app.config import LLM_MODEL, LLM_MODEL_FALLBACK
+from app.llm import client as _llm_client
+from app.llm import provider as _llm_provider
 
 JLPT_LEVELS = ("N5", "N4", "N3", "N2", "N1")
 
@@ -218,21 +221,6 @@ def validate_input(sentence: str, english: str = "", hint: str = "") -> tuple[st
     return sentence, english, hint[:MAX_HINT_CHARS]
 
 
-@cache
-def _groq():
-    """Lazily instantiated Groq client — keeps the import (and the API-key
-    requirement) out of the startup path for retrieval-only use.
-
-    max_retries=0: the retry ladder in `chat`/`explain_grammar_stream` owns
-    retries (bounded, honoring retry-after, failover-aware) — the SDK's own
-    default of 2 would compound underneath it, adding its backoff before a
-    daily-quota 429 even reaches our failover. timeout=30: the slowest real
-    call is ~3 s; a hung request must not pin an SSE connection for minutes."""
-    from groq import Groq
-
-    return Groq(api_key=GROQ_API_KEY, max_retries=0, timeout=30)
-
-
 _last_model = LLM_MODEL
 
 
@@ -245,9 +233,9 @@ def last_model() -> str:
 def _retryable(exc: Exception) -> bool:
     """Rate limits, 5xx and network errors are worth retrying; auth errors,
     bad model names and malformed requests are not (retrying only burns time)."""
-    import groq
+    import openai
 
-    if isinstance(exc, groq.APIConnectionError):  # includes timeouts
+    if isinstance(exc, (openai.APIConnectionError, openai.APITimeoutError)):
         return True
     status = getattr(exc, "status_code", None)
     return status == 429 or (isinstance(status, int) and status >= 500)
@@ -263,22 +251,31 @@ def _retry_after(exc: Exception) -> float:
 
 def _complete(model: str, messages: list[dict[str, str]], budget: int, effort: str,
               stream: bool = False, **kw):
-    """One `chat.completions.create` call. `reasoning_effort` is sent only
-    while the model accepts it: a non-reasoning fallback (a Llama, say)
-    rejects the param outright, and that request-shape error is non-retryable
-    — so on that specific rejection the call is reissued once without the
-    param, inside the same retry attempt, rather than sinking the failover."""
-    args = {"model": model, "messages": messages, "max_completion_tokens": budget,
-            "stream": stream, **kw}
-    if effort:
+    """One `chat.completions.create` call against the active LLM_PROVIDER.
+
+    `reasoning_effort` is only offered when the provider advertises support
+    (e.g. gpt-oss on some hosts); a non-reasoning model that still rejects it
+    is retried once without the param inside the same attempt.
+    """
+    p = _llm_provider()
+    args = {"model": model, "messages": messages, "stream": stream, **kw}
+    args[p.token_param] = budget
+    if effort and p.reasoning:
         args["reasoning_effort"] = effort
     try:
-        return _groq().chat.completions.create(**args)
+        return _llm_client().chat.completions.create(**args)
     except Exception as exc:
-        if not effort or "reasoning_effort" not in str(exc):
+        if "reasoning_effort" not in args or "reasoning_effort" not in str(exc):
             raise
         del args["reasoning_effort"]
-        return _groq().chat.completions.create(**args)
+        return _llm_client().chat.completions.create(**args)
+
+
+def _models_to_try(model: str | None) -> tuple[str, ...]:
+    """Pinned model, or the configured primary/fallback pair (empty entries skipped)."""
+    if model:
+        return (model,)
+    return tuple(m for m in (LLM_MODEL, LLM_MODEL_FALLBACK) if m)
 
 
 def chat(
@@ -292,24 +289,24 @@ def chat(
     **kwargs,
 ) -> str:
     """
-    Single-turn chat completion via Groq's OpenAI-compatible endpoint.
+    Single-turn chat completion via the active LLM_PROVIDER.
 
-    Tries each model in `models` — default `LLM_MODEL` then
-    `LLM_MODEL_FALLBACK`, separate per-model quota pools. Per model:
-    transient errors (429 with a short `retry-after`, 5xx, network) retry up
-    to `retries` times; truncated/empty/leaky completions retry with a 1.5x
-    token budget; non-retryable errors, and 429s whose `retry-after` exceeds
-    MAX_BACKOFF_S (daily quota gone), skip straight to the next model.
+    Tries each model in `models` — default `LLM_MODEL`, then
+    `LLM_MODEL_FALLBACK` when configured (separate per-model quota pools
+    where applicable).
+    Per model: transient errors (429 with a short `retry-after`, 5xx, network)
+    retry up to `retries` times; truncated/empty/leaky completions retry with
+    a 1.5x token budget; non-retryable errors, and 429s whose `retry-after`
+    exceeds MAX_BACKOFF_S (daily quota gone), skip straight to the next model.
 
     Raises RuntimeError("Grammar explanation service is down …") once every
     candidate is exhausted — /explain surfaces that as a 502.
     """
     global _last_model
-    candidates = models or (LLM_MODEL, LLM_MODEL_FALLBACK)
+    candidates = models or _models_to_try(None)
     messages = [{"role": "system", "content": system}, {"role": "user", "content": user}]
     kwargs.setdefault("temperature", TEMPERATURE)
-    # Cohere-era kwarg a stale caller may still pass — Groq's SDK would reject
-    # it with a TypeError. Reasoning is set via `effort`.
+    # Legacy kwarg some callers still pass — providers reject unknown create() kwargs.
     kwargs.pop("thinking_budget", None)
     errors: list[str] = []
     for m in candidates:
@@ -395,7 +392,7 @@ def explain_grammar_stream(
     messages = [{"role": "system", "content": level_aware_system(jlpt_level)},
                 {"role": "user", "content": level_aware_prompt(sentence, english, jlpt_level, hint)}]
     emitted = False
-    for m in ((model,) if model else (LLM_MODEL, LLM_MODEL_FALLBACK)):
+    for m in _models_to_try(model):
         budget = cfg.token_budget
         for _attempt in range(2):
             hit_length = False

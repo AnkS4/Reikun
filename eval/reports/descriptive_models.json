@@ -1,0 +1,156 @@
+{
+  "meta": {
+    "generated": "2026-10-23 00:00 UTC",
+    "version": "0.8.0",
+    "queries": 60,
+    "config": "mode=auto, QUERY_REWRITE=auto, CANONICAL_BOOST=3.0, PREFETCH_MIN=200, COMMON_BOOST=1.0, HEAD_BONUS=1.5",
+    "points": 218786,
+    "rewrite": "Japanese pivot (temperature 0)",
+    "sort": "Hit@1 > Hit@2 > Hit@5"
+  },
+  "models": [
+    {
+      "provider": "Groq",
+      "model": "openai/gpt-oss-120b",
+      "n": 60,
+      "hit1": 57,
+      "hit2": 57,
+      "hit5": 57,
+      "median_ms": 1635.2,
+      "source": "eval_headword_20261022T214425Z_canon3_pool200_common1_head1.5.md"
+    },
+    {
+      "provider": "Nebius",
+      "model": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+      "n": 60,
+      "hit1": 56,
+      "hit2": 56,
+      "hit5": 56,
+      "median_ms": 2824.6,
+      "source": "eval_headword_20261022T214425Z_canon3_pool200_common1_head1.5.md"
+    },
+    {
+      "provider": "Nebius",
+      "model": "nvidia/nemotron-3-super-120b-a12b",
+      "n": 60,
+      "hit1": 54,
+      "hit2": 54,
+      "hit5": 54,
+      "median_ms": 2692.5,
+      "source": "eval_headword_20261022T215211Z_canon3_pool200_common1_head1.5.md"
+    },
+    {
+      "provider": "Cohere",
+      "model": "command-r-plus-08-2024",
+      "n": 60,
+      "hit1": 53,
+      "hit2": 53,
+      "hit5": 54,
+      "median_ms": 2470.0,
+      "source": "eval_headword_20261022T215211Z_canon3_pool200_common1_head1.5.md"
+    },
+    {
+      "provider": "Cohere",
+      "model": "command-a-plus-05-2026",
+      "n": 60,
+      "hit1": 49,
+      "hit2": 51,
+      "hit5": 52,
+      "median_ms": 3680.5,
+      "source": "eval_headword_20261022T214425Z_canon3_pool200_common1_head1.5.md"
+    },
+    {
+      "provider": "Gemini",
+      "model": "gemini-3.5-flash-lite",
+      "n": 60,
+      "hit1": 46,
+      "hit2": 46,
+      "hit5": 48,
+      "median_ms": 600.6,
+      "source": "eval_headword_20261022T214425Z_canon3_pool200_common1_head1.5.md"
+    },
+    {
+      "provider": "Groq",
+      "model": "openai/gpt-oss-20b",
+      "n": 60,
+      "hit1": 21,
+      "hit2": 26,
+      "hit5": 33,
+      "median_ms": 168.1,
+      "source": "eval_headword_20261022T215211Z_canon3_pool200_common1_head1.5.md"
+    }
+  ],
+  "excluded": [
+    {
+      "provider": "Gemini",
+      "model": "gemini-3.5-flash",
+      "reason": "removed from the shipped defaults (see the comment in app/llm.py) — free tier allows only 20 requests/day, so a 60-query suite run cannot complete",
+      "partial_pivot_hit1": 9,
+      "partial_single_gloss_hit1": 20
+    }
+  ],
+  "historical_single_gloss": [
+    {
+      "provider": "Groq",
+      "model": "openai/gpt-oss-20b",
+      "n": 60,
+      "hit1": 34,
+      "hit2": 40,
+      "hit5": 49
+    },
+    {
+      "provider": "Nebius",
+      "model": "nvidia/nemotron-3-super-120b-a12b",
+      "n": 60,
+      "hit1": 34,
+      "hit2": 39,
+      "hit5": 48
+    },
+    {
+      "provider": "Groq",
+      "model": "openai/gpt-oss-120b",
+      "n": 60,
+      "hit1": 33,
+      "hit2": 40,
+      "hit5": 49
+    },
+    {
+      "provider": "Gemini",
+      "model": "gemini-3.5-flash-lite",
+      "n": 60,
+      "hit1": 33,
+      "hit2": 39,
+      "hit5": 50
+    },
+    {
+      "provider": "Cohere",
+      "model": "command-r-plus-08-2024",
+      "n": 60,
+      "hit1": 33,
+      "hit2": 37,
+      "hit5": 45
+    },
+    {
+      "provider": "Cohere",
+      "model": "command-a-plus-05-2026",
+      "n": 60,
+      "hit1": 32,
+      "hit2": 38,
+      "hit5": 47
+    },
+    {
+      "provider": "Nebius",
+      "model": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+      "n": 60,
+      "hit1": 32,
+      "hit2": 38,
+      "hit5": 47
+    }
+  ],
+  "baseline": {
+    "n": 60,
+    "hit1": 9,
+    "hit2": 14,
+    "hit5": 24
+  }
+}

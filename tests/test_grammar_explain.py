@@ -1,4 +1,4 @@
-"""Groq failover/retry behavior of the grammar explainer (SDK mocked out)."""
+"""LLM failover/retry behavior of the grammar explainer (SDK mocked out)."""
 
 from unittest.mock import MagicMock
 
@@ -9,7 +9,7 @@ from app.config import LLM_MODEL, LLM_MODEL_FALLBACK
 
 
 def _resp(text: str, finish: str = "stop"):
-    """Minimal stand-in for a Groq ChatCompletion / stream chunk."""
+    """Minimal stand-in for a ChatCompletion / stream chunk."""
     choice = MagicMock()
     choice.message.content = text
     choice.delta.content = text
@@ -29,9 +29,13 @@ def _no_sleep(monkeypatch):
     monkeypatch.setattr(ge.time, "sleep", lambda _: None)
 
 
+def _patch_client(monkeypatch, client):
+    monkeypatch.setattr(ge, "_llm_client", lambda: client)
+
+
 def test_chat_primary_success(monkeypatch):
     client = _client(lambda **kw: _resp("answer"))
-    monkeypatch.setattr(ge, "_groq", lambda: client)
+    _patch_client(monkeypatch, client)
     assert ge.chat("sys", "user") == "answer"
     assert client.chat.completions.create.call_args.kwargs["model"] == LLM_MODEL
     assert ge.last_model() == LLM_MODEL
@@ -43,7 +47,7 @@ def test_chat_fails_over_to_fallback(monkeypatch):
             raise RuntimeError("429: daily quota exhausted")
         return _resp("fallback answer")
 
-    monkeypatch.setattr(ge, "_groq", lambda: _client(create))
+    _patch_client(monkeypatch, _client(create))
     _no_sleep(monkeypatch)
     assert ge.chat("sys", "user", retries=0) == "fallback answer"
     assert ge.last_model() == LLM_MODEL_FALLBACK
@@ -53,10 +57,24 @@ def test_chat_all_models_down(monkeypatch):
     def create(**kw):
         raise RuntimeError("boom")
 
-    monkeypatch.setattr(ge, "_groq", lambda: _client(create))
+    _patch_client(monkeypatch, _client(create))
     _no_sleep(monkeypatch)
     with pytest.raises(RuntimeError, match="service is down"):
         ge.chat("sys", "user", retries=0)
+
+
+def test_chat_skips_empty_fallback(monkeypatch):
+    calls = []
+
+    def create(**kw):
+        calls.append(kw["model"])
+        return _resp("ok")
+
+    _patch_client(monkeypatch, _client(create))
+    monkeypatch.setattr(ge, "LLM_MODEL", "primary")
+    monkeypatch.setattr(ge, "LLM_MODEL_FALLBACK", "")
+    assert ge.chat("sys", "user", retries=0) == "ok"
+    assert calls == ["primary"]
 
 
 def test_chat_retries_same_model_then_succeeds(monkeypatch):
@@ -71,7 +89,7 @@ def test_chat_retries_same_model_then_succeeds(monkeypatch):
             raise FlakeError("transient 5xx")
         return _resp("ok")
 
-    monkeypatch.setattr(ge, "_groq", lambda: _client(create))
+    _patch_client(monkeypatch, _client(create))
     _no_sleep(monkeypatch)
     assert ge.chat("sys", "user", retries=1) == "ok"
     assert calls == [LLM_MODEL, LLM_MODEL]  # retried before falling over
@@ -79,14 +97,17 @@ def test_chat_retries_same_model_then_succeeds(monkeypatch):
 
 def test_chat_truncated_retries_with_bigger_budget(monkeypatch):
     budgets = []
+    from app.llm import provider
+
+    token_param = provider().token_param
 
     def create(**kw):
-        budgets.append(kw["max_completion_tokens"])
+        budgets.append(kw[token_param])
         if len(budgets) == 1:
             return _resp("cut off mid-", finish="length")
         return _resp("full answer")
 
-    monkeypatch.setattr(ge, "_groq", lambda: _client(create))
+    _patch_client(monkeypatch, _client(create))
     _no_sleep(monkeypatch)
     assert ge.chat("sys", "user", max_tokens=100, retries=1) == "full answer"
     assert budgets == [100, 150]
@@ -98,7 +119,7 @@ def test_stream_failover(monkeypatch):
             raise RuntimeError("stream refused")
         return iter([_resp("hel", None), _resp("lo", "stop")])
 
-    monkeypatch.setattr(ge, "_groq", lambda: _client(create))
+    _patch_client(monkeypatch, _client(create))
     _no_sleep(monkeypatch)
     assert "".join(ge.explain_grammar_stream("文です。", "It is a sentence.")) == "hello"
     assert ge.last_model() == LLM_MODEL_FALLBACK
@@ -108,7 +129,7 @@ def test_stream_all_down_raises_service_down(monkeypatch):
     def create(**kw):
         raise RuntimeError("429: quota")
 
-    monkeypatch.setattr(ge, "_groq", lambda: _client(create))
+    _patch_client(monkeypatch, _client(create))
     _no_sleep(monkeypatch)
     with pytest.raises(RuntimeError, match="service is down"):
         list(ge.explain_grammar_stream("文です。", "It is a sentence."))
@@ -116,10 +137,12 @@ def test_stream_all_down_raises_service_down(monkeypatch):
 
 def test_explain_grammar_uses_level_budget(monkeypatch):
     client = _client(lambda **kw: _resp("answer"))
-    monkeypatch.setattr(ge, "_groq", lambda: client)
+    _patch_client(monkeypatch, client)
     ge.explain_grammar("文です。", "It is a sentence.", "N5")
     kw = client.chat.completions.create.call_args.kwargs
-    assert kw["max_completion_tokens"] == ge._LEVEL["N5"].token_budget
+    from app.llm import provider
+
+    assert kw[provider().token_param] == ge._LEVEL["N5"].token_budget
     assert "<sentence>文です。</sentence>" in kw["messages"][1]["content"]
     assert "<meaning>It is a sentence.</meaning>" in kw["messages"][1]["content"]
 
@@ -135,7 +158,7 @@ def test_chat_permanent_error_skips_to_fallback(monkeypatch):
             raise RuntimeError("401 invalid api key")  # no status_code → non-retryable
         return _resp("fallback ok")
 
-    monkeypatch.setattr(ge, "_groq", lambda: _client(create))
+    _patch_client(monkeypatch, _client(create))
     _no_sleep(monkeypatch)
     assert ge.chat("sys", "user", retries=2) == "fallback ok"
     assert calls == [LLM_MODEL, LLM_MODEL_FALLBACK]  # one attempt each, no retries
@@ -155,15 +178,17 @@ def test_chat_long_retry_after_fails_over(monkeypatch):
             raise RateLimited("quota")
         return _resp("fallback ok")
 
-    monkeypatch.setattr(ge, "_groq", lambda: _client(create))
+    _patch_client(monkeypatch, _client(create))
     _no_sleep(monkeypatch)
     assert ge.chat("sys", "user", retries=2) == "fallback ok"
     assert calls == [LLM_MODEL, LLM_MODEL_FALLBACK]
 
 
 def test_chat_drops_reasoning_effort_when_model_rejects_it(monkeypatch):
-    """A non-reasoning fallback (a Llama, say) 400s on reasoning_effort —
-    the param is dropped and the same model retried inside that attempt."""
+    """A non-reasoning model 400s on reasoning_effort — the param is dropped
+    and the same model retried inside that attempt (reasoning-capable path)."""
+    from app.llm import Provider
+
     calls = []
 
     def create(**kw):
@@ -172,7 +197,21 @@ def test_chat_drops_reasoning_effort_when_model_rejects_it(monkeypatch):
             raise RuntimeError("400: reasoning_effort is not supported")
         return _resp("plain ok")
 
-    monkeypatch.setattr(ge, "_groq", lambda: _client(create))
+    # Force a reasoning-capable provider so the first attempt includes the param.
+    monkeypatch.setattr(
+        ge,
+        "_llm_provider",
+        lambda: Provider(
+            name="groq",
+            base_url="https://api.groq.com/openai/v1",
+            api_key_env="GROQ_API_KEY",
+            default_model=LLM_MODEL,
+            default_fallback=LLM_MODEL_FALLBACK,
+            reasoning=True,
+            token_param="max_completion_tokens",
+        ),
+    )
+    _patch_client(monkeypatch, _client(create))
     _no_sleep(monkeypatch)
     assert ge.chat("sys", "user", retries=0) == "plain ok"
     assert "reasoning_effort" in calls[0] and "reasoning_effort" not in calls[1]
@@ -197,13 +236,22 @@ def test_prompt_is_data_only_and_system_carries_level():
     assert ge.level_aware_system("N1") is ge.level_aware_system("N1")  # cached
 
 
-def test_groq_client_owns_retries(monkeypatch):
+def test_llm_client_owns_retries(monkeypatch):
     """SDK-level retries must be off (our ladder owns them) and a timeout set."""
-    monkeypatch.setattr(ge, "GROQ_API_KEY", "test-key")
     monkeypatch.setenv("GROQ_API_KEY", "test-key")
-    ge._groq.cache_clear()
-    client = ge._groq()
-    assert client.max_retries == 0 and client.timeout == 30
+    monkeypatch.setenv("LLM_PROVIDER", "groq")
+    import app.llm as llm
+
+    monkeypatch.setattr(llm, "api_key", lambda: "test-key")
+    monkeypatch.setattr(
+        llm,
+        "provider",
+        lambda: llm.PROVIDERS["groq"],
+    )
+    llm.client.cache_clear()
+    client = llm.client()
+    assert client.max_retries == 0 and client.timeout == 30.0
+    llm.client.cache_clear()
 
 
 def test_prompt_rules_present():
@@ -215,3 +263,9 @@ def test_prompt_rules_present():
 
 def test_last_model_starts_at_primary():
     assert ge.last_model() == LLM_MODEL or ge.last_model() in (LLM_MODEL, LLM_MODEL_FALLBACK)
+
+
+def test_providers_registered():
+    from app.llm import PROVIDERS
+
+    assert set(PROVIDERS) == {"groq", "gemini", "cohere", "nebius"}

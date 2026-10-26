@@ -10,6 +10,10 @@ Embedding models (fastembed / ONNX, CPU-only).
 
 Everything is lazily instantiated once per process via `functools.cache`, so the
 first call pays the model load cost and later calls are free.
+
+When QDRANT_CLOUD_INFERENCE is enabled, embeddings are handled by Qdrant Cloud
+via models.Document instead of local FastEmbed — the container no longer needs
+FastEmbed/ONNX for query-side work (ingest still uses local models).
 """
 
 from collections.abc import Iterable, Iterator
@@ -18,8 +22,9 @@ from functools import cache
 import numpy as np
 from fastembed import SparseTextEmbedding, TextEmbedding
 from fastembed.sparse.sparse_embedding_base import SparseEmbedding
+from qdrant_client.models import Document
 
-from app.config import EMBED_MODEL, MODELS_DIR, SPARSE_MODEL
+from app.config import EMBED_MODEL, MODELS_DIR, QDRANT_CLOUD_INFERENCE, SPARSE_MODEL
 
 VECTOR_DIM = 384
 CACHE_DIR = str(MODELS_DIR)
@@ -37,7 +42,7 @@ def sparse_model() -> SparseTextEmbedding:
 
 def embed_query(
     text: str, *, dense: bool = True, sparse: bool = True,
-) -> tuple[list[float] | None, SparseEmbedding | None]:
+) -> tuple[list[float] | None, SparseEmbedding | None] | Document:
     """
     Dense + sparse embeddings for a single query (uses query-side prefixes).
 
@@ -45,7 +50,30 @@ def embed_query(
     Japanese route and `text` mode never read the dense vector (the
     English-tuned dense model adds nothing but latency there), `vector` mode
     never reads the sparse one. A skipped side comes back as None.
+
+    When QDRANT_CLOUD_INFERENCE is enabled, returns a qdrant_client.models.Document
+    instead of pre-computed vectors — Qdrant Cloud handles embedding.
     """
+    if QDRANT_CLOUD_INFERENCE:
+        # Cloud inference: return Document for Qdrant to embed
+        # Model names must be fully qualified (e.g. sentence-transformers/all-MiniLM-L6-v2)
+        from app.config import EMBED_MODEL, SPARSE_MODEL
+
+        if dense and sparse:
+            # For hybrid, Qdrant can handle both in one Document via options
+            document = Document(text=text, model=EMBED_MODEL, options={"sparse_model": SPARSE_MODEL})
+        elif dense:
+            document = Document(text=text, model=EMBED_MODEL)
+        elif sparse:
+            document = Document(text=text, model=SPARSE_MODEL)
+        else:
+            # Neither dense nor sparse - shouldn't happen in practice
+            dense_vec = None
+            sparse_vec = None
+            return dense_vec, sparse_vec
+        return document
+
+    # Local inference: compute vectors with FastEmbed
     dense_vec = next(iter(dense_model().query_embed(text))).tolist() if dense else None
     sparse_vec = next(iter(sparse_model().query_embed(text))) if sparse else None
     return dense_vec, sparse_vec

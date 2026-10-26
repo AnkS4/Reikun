@@ -3,7 +3,6 @@
 	import { page } from '$app/state';
 	import { apiKanjiGroup, type GroupKey, type KanjiGroupResponse } from '#lib/api.ts';
 	import Header from '#lib/components/Header.svelte';
-	import Footer from '#lib/components/Footer.svelte';
 	import Icon from '#lib/components/Icon.svelte';
 
 	// One page of the grid; eight columns of six rows on desktop, and the
@@ -132,4 +131,3 @@
 		{/if}
 	{/if}
 </div>
-<Footer />

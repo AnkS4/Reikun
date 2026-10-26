@@ -5,6 +5,7 @@
 	import { API_BASE, apiReadyShared } from '#lib/api.ts';
 	import { PUBLIC_CF_ANALYTICS_TOKEN } from '$app/env/public';
 	import WakeBanner from '#lib/components/WakeBanner.svelte';
+	import Footer from '#lib/components/Footer.svelte';
 	import '../app.css';
 	let { children } = $props();
 
@@ -61,3 +62,5 @@
 <main id="main" tabindex="-1">
 	{@render children()}
 </main>
+
+<Footer />

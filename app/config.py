@@ -13,6 +13,8 @@ from pathlib import Path
 from dotenv import find_dotenv, load_dotenv
 from qdrant_client import QdrantClient
 
+from app.llm import PROVIDERS
+
 load_dotenv(find_dotenv(usecwd=True))
 
 
@@ -53,6 +55,11 @@ QDRANT_URL = os.getenv("QDRANT_URL") or (
 QDRANT_API_KEY = os.getenv("QDRANT_API_KEY") or None
 COLLECTION = os.getenv("QDRANT_COLLECTION", "jmdict_chunks")
 
+# Cloud inference: when set, Qdrant Cloud handles embedding (dense + sparse) via
+# models.Document, removing FastEmbed/ONNX from the container. Requires QDRANT_URL
+# (Cloud) and the free tier's request budget (1 fused call per /search).
+QDRANT_CLOUD_INFERENCE = _env("QDRANT_CLOUD_INFERENCE", "false").lower() == "true"
+
 # ── Models ───────────────────────────────────────────────────────────────────
 # all-MiniLM-L6-v2 beat bge-small-en-v1.5 and snowflake-arctic-embed-xs on the
 # gold set (eval/embed_model_bench.py → eval/reports/embed_model_bench.json):
@@ -61,14 +68,36 @@ COLLECTION = os.getenv("QDRANT_COLLECTION", "jmdict_chunks")
 EMBED_MODEL = os.getenv("EMBED_MODEL", "sentence-transformers/all-MiniLM-L6-v2")
 SPARSE_MODEL = os.getenv("SPARSE_MODEL", "Qdrant/bm25")
 
-# Groq — OpenAI-compatible chat. LLM_MODEL serves explanations/rewrites;
-# LLM_MODEL_FALLBACK takes over when the primary hits its daily cap.
+# Grammar / rewrite LLM — OpenAI-compatible providers (see app/llm.py).
+# Switch with LLM_PROVIDER=groq|gemini|cohere|nebius; set the matching *_API_KEY.
+_VALID_LLM_PROVIDERS = frozenset(PROVIDERS)
+LLM_PROVIDER = _env("LLM_PROVIDER", "groq").lower()
+if LLM_PROVIDER not in _VALID_LLM_PROVIDERS:
+    raise ValueError(
+        f"LLM_PROVIDER={LLM_PROVIDER!r} invalid; expected one of {sorted(_VALID_LLM_PROVIDERS)}"
+    )
+
 GROQ_API_KEY = os.getenv("GROQ_API_KEY") or None
-LLM_MODEL = _env("LLM_MODEL", "openai/gpt-oss-120b")
-LLM_MODEL_FALLBACK = _env("LLM_MODEL_FALLBACK", "openai/gpt-oss-20b")
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY") or None
+COHERE_API_KEY = os.getenv("COHERE_API_KEY") or None
+NEBIUS_API_KEY = os.getenv("NEBIUS_API_KEY") or None
+
+_prov = PROVIDERS[LLM_PROVIDER]
+# Env overrides win; otherwise use the active provider's defaults so flipping
+# LLM_PROVIDER alone does not leave another provider's model id in place.
+LLM_MODEL = (os.getenv("LLM_MODEL") or _prov.default_model).strip()
+LLM_MODEL_FALLBACK = (os.getenv("LLM_MODEL_FALLBACK") or _prov.default_fallback).strip()
+
+# Key required by the active provider (None if unset — explain routes 502).
+LLM_API_KEY = {
+    "groq": GROQ_API_KEY,
+    "gemini": GEMINI_API_KEY,
+    "cohere": COHERE_API_KEY,
+    "nebius": NEBIUS_API_KEY,
+}[LLM_PROVIDER]
 
 # Default "heuristic": free regex normalisation only. "auto" additionally
-# spends one Groq call on long English sentence-like queries (best MRR in
+# spends one LLM call on long English sentence-like queries (best MRR in
 # eval/reports/retrieval_eval.md, but costs trial-tier tokens per query).
 _VALID_QUERY_REWRITE = {"auto", "heuristic", "off"}
 QUERY_REWRITE = _env("QUERY_REWRITE", "heuristic").lower()
@@ -76,8 +105,11 @@ if QUERY_REWRITE not in _VALID_QUERY_REWRITE:
     raise ValueError(
         f"QUERY_REWRITE={QUERY_REWRITE!r} invalid; expected one of {sorted(_VALID_QUERY_REWRITE)}"
     )
-if QUERY_REWRITE == "auto" and not GROQ_API_KEY:
-    raise ValueError("QUERY_REWRITE=auto requires GROQ_API_KEY to be set")
+if QUERY_REWRITE == "auto" and not LLM_API_KEY:
+    raise ValueError(
+        f"QUERY_REWRITE=auto requires {_prov.api_key_env} "
+        f"(LLM_PROVIDER={LLM_PROVIDER})"
+    )
 
 DENSE_VECTOR = "dense"
 SPARSE_VECTOR = "bm25"
@@ -97,7 +129,7 @@ QDRANT_TIMEOUT = int(_env("QDRANT_TIMEOUT", "30"))
 
 # ── Abuse protection ─────────────────────────────────────────────────────────
 # Requests per minute per client, enforced in memory per instance (0 disables).
-# /explain* spends the shared Groq quota; /search costs CPU (embedding).
+# /explain* spends the shared LLM quota; /search costs CPU (embedding).
 RATE_LIMIT_EXPLAIN = int(_env("RATE_LIMIT_EXPLAIN", "10"))
 RATE_LIMIT_SEARCH = int(_env("RATE_LIMIT_SEARCH", "120"))
 # Reverse proxies between the internet and the app (Cloud Run: 1). The client
@@ -114,4 +146,9 @@ def qdrant_client() -> QdrantClient:
     needs a different timeout (a boot-time reachability probe) builds its
     own short-lived client from QDRANT_URL / QDRANT_API_KEY.
     """
-    return QdrantClient(url=QDRANT_URL, api_key=QDRANT_API_KEY, timeout=QDRANT_TIMEOUT)
+    return QdrantClient(
+        url=QDRANT_URL,
+        api_key=QDRANT_API_KEY,
+        timeout=QDRANT_TIMEOUT,
+        cloud_inference=QDRANT_CLOUD_INFERENCE,
+    )

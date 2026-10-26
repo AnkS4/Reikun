@@ -30,7 +30,7 @@ by scripts/build_chunks.py — it fixes exact-match for English queries whose
 raw glosses carry parentheticals, e.g. 犬 is "dog (Canis (lupus) familiaris)".
 
 Query rewriting runs before retrieval (app.query_rewrite). A re-ranking
-stage (local cross-encoder / Cohere Rerank) was implemented and evaluated —
+stage (local cross-encoder / external Rerank API) was implemented and evaluated —
 both hurt MRR on this bilingual corpus — and was removed entirely.
 """
 
@@ -44,6 +44,7 @@ from types import MappingProxyType
 
 from fastembed.sparse.sparse_embedding_base import SparseEmbedding
 from qdrant_client.models import (
+    Document,
     FieldCondition,
     Filter,
     FormulaQuery,
@@ -285,31 +286,55 @@ def _pool(num_results: int) -> int:
 
 def vector_search(query: str, num_results: int = 5, *, vectors=None) -> list[dict]:
     """Dense cosine search only."""
-    dense, _ = vectors or embed_query(query)
-    hits = qdrant_client().query_points(COLLECTION, query=dense, using=DENSE_VECTOR, limit=num_results).points
+    vectors = vectors or embed_query(query)
+    if isinstance(vectors, Document):
+        # Cloud inference: pass Document directly
+        hits = qdrant_client().query_points(COLLECTION, query=vectors, using=DENSE_VECTOR, limit=num_results).points
+    else:
+        # Local inference: unpack pre-computed vectors
+        dense, _ = vectors
+        hits = qdrant_client().query_points(COLLECTION, query=dense, using=DENSE_VECTOR, limit=num_results).points
     return [_hit_to_dict(h) for h in hits]
 
 
 def text_search(query: str, num_results: int = 5, *, vectors=None) -> list[dict]:
     """Sparse BM25 search only."""
-    _, sparse = vectors or embed_query(query)
-    hits = qdrant_client().query_points(
-        COLLECTION, query=_sparse(sparse), using=SPARSE_VECTOR, limit=num_results
-    ).points
+    vectors = vectors or embed_query(query)
+    if isinstance(vectors, Document):
+        # Cloud inference: pass Document directly
+        hits = qdrant_client().query_points(
+            COLLECTION, query=vectors, using=SPARSE_VECTOR, limit=num_results
+        ).points
+    else:
+        # Local inference: unpack pre-computed vectors
+        _, sparse = vectors
+        hits = qdrant_client().query_points(
+            COLLECTION, query=_sparse(sparse), using=SPARSE_VECTOR, limit=num_results
+        ).points
     return [_hit_to_dict(h) for h in hits]
 
 
 def hybrid_search(query: str, num_results: int = 5, *, vectors=None) -> list[dict]:
     """Dense + BM25 + exact-match arms fused with RRF inside Qdrant."""
-    dense, sparse = vectors or embed_query(query)
+    vectors = vectors or embed_query(query)
     pool = _pool(num_results)
-    hits = qdrant_client().query_points(
-        COLLECTION,
-        prefetch=[
-            Prefetch(query=dense, using=DENSE_VECTOR, limit=pool),
-            Prefetch(query=_sparse(sparse), using=SPARSE_VECTOR, limit=pool),
-            Prefetch(query=dense, using=DENSE_VECTOR, filter=_exact_filter(query), limit=pool),
-        ],
+    if isinstance(vectors, Document):
+        # Cloud inference: pass Document directly (Qdrant handles dense+BM25 fusion)
+        hits = qdrant_client().query_points(
+            COLLECTION,
+            query=vectors,
+            limit=num_results,
+        ).points
+    else:
+        # Local inference: unpack pre-computed vectors
+        dense, sparse = vectors
+        hits = qdrant_client().query_points(
+            COLLECTION,
+            prefetch=[
+                Prefetch(query=dense, using=DENSE_VECTOR, limit=pool),
+                Prefetch(query=_sparse(sparse), using=SPARSE_VECTOR, limit=pool),
+                Prefetch(query=dense, using=DENSE_VECTOR, filter=_exact_filter(query), limit=pool),
+            ],
         query=FusionQuery(fusion=Fusion.RRF),
         limit=num_results,
     ).points
@@ -332,6 +357,12 @@ def _rrf(prefetches: list[Prefetch], weights: list[float], limit: int) -> dict:
 
 
 def _auto_search(query: str, num_results: int, *, vectors, route: str) -> list[dict]:
+    if isinstance(vectors, Document):
+        # Cloud inference: Qdrant handles all routing internally
+        hits = qdrant_client().query_points(COLLECTION, query=vectors, limit=num_results).points
+        return [_hit_to_dict(h) for h in hits]
+
+    # Local inference: unpack pre-computed vectors
     dense, sparse = vectors
     pool = _pool(num_results)
     sparse_vec = _sparse(sparse)
@@ -1349,18 +1380,40 @@ def _search_cached(
         rw = replace(rw, query=alias, method="counter")
     t1 = time.perf_counter()
 
-    route = route_query(rw.query) if mode == "auto" else None
-    # Only embed with the model(s) the plan will read: the Japanese route and
-    # explicit `text` mode never read the dense vector (English-tuned,
-    # ~useless on kana), explicit `vector` mode never reads the sparse one.
-    vectors = embed_query(rw.query, dense=route != "ja" and mode != "text", sparse=mode != "vector")
-    t2 = time.perf_counter()
+    # The LLM pivot puts Japanese headwords first. Try them in rank order,
+    # falling back to the English gloss only when every pivot search is empty
+    # (e.g. the model invented a word outside the dictionary). Explicit
+    # `vector`/`text`/`hybrid` modes keep their original single-query path;
+    # the pivot is part of the auto router's contract.
+    pivot = rw.japanese if mode == "auto" else ()
+    candidates = tuple(dict.fromkeys((*pivot, rw.query))) if pivot else (rw.query,)
+    retrieval_query = rw.query
+    route = None
+    vectors = None
+    results: list[dict] = []
+    embed_s = retrieve_s = 0.0
+    for candidate in candidates:
+        retrieval_query = candidate
+        route = route_query(candidate) if mode == "auto" else None
+        # Only embed with the model(s) the plan will read: the Japanese route
+        # and explicit `text` mode never read the dense vector (English-tuned,
+        # ~useless on kana), explicit `vector` mode never reads the sparse one.
+        t_embed = time.perf_counter()
+        vectors = embed_query(
+            candidate, dense=route != "ja" and mode != "text", sparse=mode != "vector"
+        )
+        embed_s += time.perf_counter() - t_embed
 
-    if mode == "auto":
-        results = _auto_search(rw.query, num_results, vectors=vectors, route=route)
-    else:
-        results = _SEARCHERS[mode](rw.query, num_results, vectors=vectors)
-    t3 = time.perf_counter()
+        t_retrieve = time.perf_counter()
+        if mode == "auto":
+            results = _auto_search(candidate, num_results, vectors=vectors, route=route)
+        else:
+            results = _SEARCHERS[mode](candidate, num_results, vectors=vectors)
+        retrieve_s += time.perf_counter() - t_retrieve
+        if results:
+            break
+    t2 = t1 + embed_s
+    t3 = t2 + retrieve_s
 
     meta = {
         "rewrite_ms": int((t1 - t0) * 1000),
@@ -1371,10 +1424,10 @@ def _search_cached(
         meta["route"] = route
         # A Japanese query with no exact headword hit may be a compound
         # expression — decompose it so the UI can show the parts.
-        if route == "ja" and not any(rw.query in entry_forms(r) for r in results):
+        if route == "ja" and not any(retrieval_query in entry_forms(r) for r in results):
             t4 = time.perf_counter()
             try:
-                if segments := segment_japanese(rw.query):
+                if segments := segment_japanese(retrieval_query):
                     meta["segments"] = tuple(segments)
                     if not results:
                         # Compound query with no single entry — surface the
@@ -1414,7 +1467,7 @@ def _search_cached(
                             for s in segments[:num_results]
                         ]
             except Exception as exc:
-                log.warning("segmentation failed for %r: %s", rw.query, exc)
+                log.warning("segmentation failed for %r: %s", retrieval_query, exc)
             # Segmentation runs after t3 — without its own timer its whole cost
             # (Sudachi dict load on the cold path) hides inside latency_ms.
             meta["segment_ms"] = int((time.perf_counter() - t4) * 1000)

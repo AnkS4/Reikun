@@ -1,10 +1,9 @@
 """Provenance stamp shared by every report writer.
 
-A report in `eval/reports/` should answer three questions on sight: when was
-it generated, from which app version, and from which commit — plus the
-configuration the run used. Every writer in `eval/` stamps its output with
-`report_meta()` so those facts travel with the file instead of living only
-in the author's head.
+A report in `eval/reports/` should answer on sight: when was it generated,
+from which app version, and from which commit — plus the configuration the
+run used. Every writer in `eval/` stamps its output with `report_meta()` so
+those facts travel with the file instead of living only in the author's head.
 """
 
 import subprocess

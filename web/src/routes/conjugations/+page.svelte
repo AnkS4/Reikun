@@ -3,7 +3,6 @@
 	import { page } from '$app/state';
 	import { apiSearch, type SearchResult } from '#lib/api.ts';
 	import Header from '#lib/components/Header.svelte';
-	import Footer from '#lib/components/Footer.svelte';
 	import Icon from '#lib/components/Icon.svelte';
 
 	// Conjugation data can arrive two ways:
@@ -128,4 +127,3 @@
 		</div>
 	{/if}
 </div>
-<Footer />

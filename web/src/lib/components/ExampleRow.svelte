@@ -30,7 +30,13 @@
 		onpick
 	}: { ex: ExampleSentence; level: Level; onpick?: (char: string) => void } = $props();
 
-	let expl = $state<{ level: string; text: string; id: number | null; model: string } | null>(null);
+	let expl = $state<{
+		level: string;
+		text: string;
+		id: number | null;
+		provider: string;
+		model: string;
+	} | null>(null);
 	let streaming = $state(false);
 	let streamText = $state('');
 	let copied = $state(false);
@@ -61,6 +67,7 @@
 				level: lvl,
 				text: streamText.trim() || 'Explanation unavailable.',
 				id: done.explanation_id,
+				provider: done.provider ?? '',
 				model: done.model ?? ''
 			};
 		} catch (e) {
@@ -68,6 +75,7 @@
 				level: lvl,
 				text: `**Explanation unavailable:** ${e instanceof Error ? e.message : e}`,
 				id: null,
+				provider: '',
 				model: ''
 			};
 		} finally {
@@ -113,7 +121,9 @@
 		{#if md}{@html md(expl.text)}{:else}<pre class="stream-text">{expl.text}</pre>{/if}
 	</div>
 	<p class="caption">
-		AI-generated for {expl.level}{expl.model ? ` · ${expl.model}` : ''}
+		AI-generated for {expl.level}{expl.provider ? ` · ${expl.provider}` : ''}{expl.model
+			? ` · ${expl.model}`
+			: ''}
 		<Feedback kind="explanation" refId={expl.id} query={ex.japanese} />
 	</p>
 {/if}

@@ -1,10 +1,10 @@
 """
 Tiny in-memory, per-client rate limiter for the public API.
 
-Why: `/explain*` spends Groq quota (the daily cap is shared by every visitor)
-and `/search` burns CPU on embedding — on a public Cloud Run URL one script can
-exhaust either. State is per process, so with N instances the effective limit
-is N times that — fine as an abuse brake, not as a billing guarantee.
+Why: `/explain*` spends LLM quota (shared by every visitor) and `/search` burns
+CPU on embedding — on a public Cloud Run URL one script can exhaust either.
+State is per process, so with N instances the effective limit is N times that —
+fine as an abuse brake, not as a billing guarantee.
 
 Client identity: behind a reverse proxy the socket peer is the proxy, so the
 real client comes from `X-Forwarded-For`. Each proxy *appends* the address it

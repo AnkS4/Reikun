@@ -6,7 +6,6 @@
 	import { apiRandomKanji, apiSearch, LEVELS, type Level, type SearchResponse } from '#lib/api.ts';
 	import { isKanji } from '#lib/kanji.ts';
 	import Header from '#lib/components/Header.svelte';
-	import Footer from '#lib/components/Footer.svelte';
 	import Popover from '#lib/components/Popover.svelte';
 	import Segmented from '#lib/components/Segmented.svelte';
 	import SegChips from '#lib/components/SegChips.svelte';
@@ -510,4 +509,3 @@
 	</div>
 {/if}
 
-<Footer />

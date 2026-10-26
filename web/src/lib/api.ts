@@ -206,6 +206,7 @@ export async function apiFeedback(
 export interface ExplainDone {
 	explanation_id: number | null;
 	latency_ms: number;
+	provider?: string;
 	model?: string;
 }
 
@@ -215,6 +216,7 @@ type SsePayload = {
 	done?: boolean;
 	explanation_id?: number | null;
 	latency_ms?: number;
+	provider?: string;
 	model?: string;
 };
 
@@ -282,6 +284,7 @@ export async function explainStream(
 					done = {
 						explanation_id: payload.explanation_id ?? null,
 						latency_ms: payload.latency_ms ?? 0,
+						provider: payload.provider,
 						model: payload.model
 					};
 				}

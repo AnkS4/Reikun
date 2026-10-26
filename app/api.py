@@ -31,6 +31,7 @@ from app.config import (
     COLLECTION,
     CORS_ORIGINS,
     LLM_MODEL,
+    LLM_PROVIDER,
     RATE_LIMIT_EXPLAIN,
     RATE_LIMIT_SEARCH,
     TRUSTED_PROXY_HOPS,
@@ -303,6 +304,7 @@ class ExplainRequest(BaseModel):
 class ExplainResponse(BaseModel):
     explanation_id: int | None = None
     level: str
+    provider: str
     model: str
     latency_ms: int
     text: str
@@ -541,7 +543,7 @@ EXPLAIN_UNAVAILABLE = "The grammar explanation service is busy or unavailable. P
 
 @app.post("/explain", tags=["grammar"], response_model=ExplainResponse, dependencies=[_explain_limit])
 def explain_endpoint(req: ExplainRequest) -> dict:
-    """JLPT-level-calibrated grammar explanation (Groq). Markdown bullets."""
+    """JLPT-level-calibrated grammar explanation (LLM). Markdown bullets."""
     try:
         sentence, english, _ = validate_input(req.sentence, req.english)
     except ValueError as exc:
@@ -562,6 +564,7 @@ def explain_endpoint(req: ExplainRequest) -> dict:
     return {
         "explanation_id": expl_id,
         "level": req.level,
+        "provider": LLM_PROVIDER,
         "model": last_model(),
         "latency_ms": latency_ms,
         "text": text,
@@ -571,7 +574,7 @@ def explain_endpoint(req: ExplainRequest) -> dict:
 @app.post("/explain/stream", tags=["grammar"], dependencies=[_explain_limit])
 def explain_stream_endpoint(req: ExplainRequest) -> StreamingResponse:
     """
-    Server-sent events: `data: {"text": "…"}` chunks as Groq streams them,
+    Server-sent events: `data: {"text": "…"}` chunks as the LLM streams them,
     then `data: {"done": true, "explanation_id": …, "latency_ms": …}`.
     """
     try:
@@ -598,6 +601,7 @@ def explain_stream_endpoint(req: ExplainRequest) -> StreamingResponse:
             "done": True,
             "explanation_id": expl_id,
             "latency_ms": latency_ms,
+            "provider": LLM_PROVIDER,
             "model": last_model(),
         }
         yield f"data: {json.dumps(payload)}\n\n"

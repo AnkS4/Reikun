@@ -8,10 +8,7 @@ LABEL org.opencontainers.image.title="Reikun" \
       org.opencontainers.image.authors="Aniket Satbhai" \
       org.opencontainers.image.licenses="Apache-2.0"
 
-# INGEST_VIA_DOCKER=1 → self-provisioning image (rsync + ingest group; pipeline runs at boot)
-ARG INGEST_VIA_DOCKER=0
-ENV INGEST_VIA_DOCKER=$INGEST_VIA_DOCKER \
-    PYTHONDONTWRITEBYTECODE=1 \
+ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     MODELS_DIR=/app/models/fastembed \
     UV_COMPILE_BYTECODE=1 \
@@ -19,41 +16,31 @@ ENV INGEST_VIA_DOCKER=$INGEST_VIA_DOCKER \
     UV_PYTHON_DOWNLOADS=never \
     UV_CACHE_DIR=/home/app/.cache/uv
 
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends rsync \
+    && rm -rf /var/lib/apt/lists/*
 RUN useradd --create-home --uid 1000 app \
-    && mkdir /app && chown app:app /app \
-    && if [ "$INGEST_VIA_DOCKER" = "1" ]; then \
-         apt-get update \
-         && apt-get install -y --no-install-recommends rsync \
-         && rm -rf /var/lib/apt/lists/*; \
-       fi
+    && mkdir /app && chown app:app /app
 USER app
 WORKDIR /app
 
 # deps layer — cached until uv.lock changes
 COPY --chown=app:app pyproject.toml uv.lock ./
 RUN /usr/local/bin/python -m pip install --no-cache-dir --target=/tmp/uvpkg uv==0.12.17 \
-    && if [ "$INGEST_VIA_DOCKER" = "1" ]; then \
-      /tmp/uvpkg/bin/uv sync --frozen --no-default-groups --group ingest --no-install-project; \
-    else \
-      /tmp/uvpkg/bin/uv sync --frozen --no-default-groups --no-install-project; \
-    fi \
+    && /tmp/uvpkg/bin/uv sync --frozen --no-default-groups --no-install-project \
     && rm -rf /tmp/uvpkg /home/app/.cache/uv
 ENV PATH="/app/.venv/bin:$PATH"
 
-# model warm layer — ~90 MB of downloads; depends only on the three modules
+# model warm layer — ~90 MB of downloads; depends only on the modules
 # embedder imports, so code edits don't invalidate it
-COPY --chown=app:app app/__init__.py app/config.py app/embedder.py app/
+COPY --chown=app:app app/__init__.py app/config.py app/embedder.py app/llm.py app/
 RUN python -c "from app.embedder import warm_models; warm_models()"
 
 # project layer — editable install provides the `reikun` script
 COPY --chown=app:app app/ app/
 COPY --chown=app:app scripts/ scripts/
 RUN /usr/local/bin/python -m pip install --no-cache-dir --target=/tmp/uvpkg uv==0.12.17 \
-    && if [ "$INGEST_VIA_DOCKER" = "1" ]; then \
-      /tmp/uvpkg/bin/uv sync --frozen --no-default-groups --group ingest; \
-    else \
-      /tmp/uvpkg/bin/uv sync --frozen --no-default-groups; \
-    fi \
+    && /tmp/uvpkg/bin/uv sync --frozen --no-default-groups --group ingest \
     && rm -rf /tmp/uvpkg /home/app/.cache/uv
 
 COPY --chown=app:app \

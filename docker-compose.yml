@@ -21,8 +21,6 @@ services:
   app:
     build:
       context: .
-      args:
-        INGEST_VIA_DOCKER: ${INGEST_VIA_DOCKER:-0}
     image: reikun:latest
     ports:
       - "127.0.0.1:${APP_PORT:-8000}:8000"
@@ -31,6 +29,9 @@ services:
         required: false
     environment:
       QDRANT_HOST: qdrant
+      # Runtime only — not baked into the image. Default off; enable with
+      # `INGEST_VIA_DOCKER=1 docker compose up -d --build` (do not put this in .env).
+      INGEST_VIA_DOCKER: ${INGEST_VIA_DOCKER:-0}
     volumes:
       - ./data/processed:/app/data/processed
       - ./data/raw:/app/data/raw

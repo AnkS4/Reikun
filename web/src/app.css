@@ -2160,8 +2160,12 @@ a.kanji-tip {
 
 /* ---------- Footer ---------- */
 .footer {
-	margin-top: 5rem;
-	padding-top: 2rem;
+	/* The layout renders <Footer> as a sibling of <main>, so unlike page
+	   content the footer does not inherit main's centered 50rem column —
+	   carry the same metrics here or it stretches edge-to-edge. */
+	max-width: 50rem;
+	margin: 5rem auto 0;
+	padding: 2rem 1.25rem 0;
 	border-top: 1px solid var(--border-soft);
 }
 
@@ -2209,6 +2213,11 @@ a.kanji-tip {
 @media (max-width: 680px) {
 	main {
 		padding: 0 1rem 3rem;
+	}
+
+	/* Match main's tighter side padding on small screens */
+	.footer {
+		padding-inline: 1rem;
 	}
 
 	.hero {

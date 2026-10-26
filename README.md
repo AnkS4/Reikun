@@ -1,10 +1,6 @@
 <p align="center">
   <a href="https://reikun.app/">
-    <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="assets/icons/icon-dark.svg">
-      <source media="(prefers-color-scheme: light)" srcset="assets/icons/icon-light.svg">
-      <img src="assets/icons/icon-light.svg" alt="Reikun logo" width="128">
-    </picture>
+    <img src="assets/emblems/emblem.svg" alt="Reikun emblem" width="128">
   </a>
 </p>
 
@@ -35,14 +31,14 @@
 
 ## Features
 
-- **Hybrid Search with query routing**: Dense vector embeddings (FastEmbed) + BM25 sparse vectors fused server-side in Qdrant (RRF). `mode=auto` routes the query: Japanese → BM25 + exact match, English word → hybrid + commonness prior, English sentence → dense-weighted fusion.
-- **Query Rewriting**: Natural-language questions ("how do you say hospital") are normalised to dictionary glosses before retrieval — free regex heuristics by default, optional Groq LLM rewriting for descriptive queries
+- **Hybrid Search with query routing**: Dense + BM25 sparse vectors fused server-side in Qdrant (RRF). `mode=auto` routes the query: Japanese → BM25 + exact match, English word → hybrid + commonness prior, English sentence → dense-weighted fusion.
+- **Query Rewriting**: Natural-language questions ("how do you say hospital") are normalised to dictionary glosses before retrieval — free regex heuristics by default, optional LLM pivoting to ranked Japanese headwords for descriptive queries
 - **Sentence Breakdown**: Paste Japanese text and Sudachi splits it into word units — furigana on top, gloss underneath, full breakdown on hover. Inflection tails merge into single chips and adjacent segments re-resolve into JMdict compounds
 - **Kanji Lookup**: Deterministic kanji information (no LLM) — stroke-order diagrams (KanjiVG), readings, meanings, and common compound words
-- **Grammar Explanations**: AI-generated grammar explanations calibrated to your JLPT level (N5–N1) via Groq, on demand only, with a smaller fallback model if the primary is exhausted
+- **Grammar Explanations**: AI-generated explanations calibrated to your JLPT level (N5–N1) via a configurable LLM provider, on demand only, with a smaller fallback model if the primary is exhausted
 - **Feedback & Telemetry**: Thumbs-up/down feedback and query telemetry as JSON events (stdout sink, picked up by platform logs) or a local SQLite file; search queries are logged verbatim (feedback/explanation text stays SHA-256-only) and rows are kept indefinitely
 - **Interface**: Search-first landing page, furigana (`<ruby>`) headwords, animated stroke order, light/dark themes, shareable URLs (`?q=猫&level=N3`), one-click level-aware grammar explanations
-- **HTTP API**: FastAPI layer (`app/api.py`) over the same pipeline — standalone uvicorn service with routes at the root (what the Docker image serves); includes SSE streaming for explanations and JSON-shaped rendering (ruby parts, kanji card, segment chips, stroke data) for the web frontend
+- **HTTP API**: FastAPI layer (`app/api.py`) over the same pipeline — SSE streaming for explanations and JSON-shaped rendering (ruby parts, kanji card, segment chips, stroke data) for the web frontend
 
 ## Tech Stack
 
@@ -50,10 +46,8 @@
 - **API**: FastAPI + Uvicorn (the production serving process; one worker)
 - **Vector Database**: Qdrant (named dense + sparse vectors, server-side RRF hybrid)
 - **Embeddings**: FastEmbed — `all-MiniLM-L6-v2` (dense, 384-dim) + `Qdrant/bm25` (sparse), ONNX-quantized for CPU
-- **LLM**: Groq `openai/gpt-oss-120b` (→ `gpt-oss-20b` fallback) — grammar explanations, optional query rewriting, LLM-judged evals (all token-budgeted)
-- **Ingestion pipeline**: `scripts/startup.py` can run wait-for-Qdrant → check-state → download → build → ingest with retries, then launch the app — opt-in via `INGEST_VIA_DOCKER=1` or `--ingest` (off by default; `--ingest-only` runs it without launching the API server). Populated collections get an incremental top-up instead — rsync delta + upsert of new/edited entries only
-- **Monitoring**: JSON event telemetry (`app/telemetry.py`; optional SQLite sink in `scripts/feedback_log.py`)
-- **Data Sources**: JMdict, KANJIDIC2, Tatoeba Corpus, KanjiVG
+- **LLM**: Groq, Gemini, Cohere, or Nebius via `LLM_PROVIDER` — powers grammar explanations, optional query rewriting, and LLM-judged evals (token-budgeted)
+- **Telemetry**: JSON events (`app/telemetry.py`); optional SQLite sink (`scripts/feedback_log.py`)
 - **Containerization**: Docker & Docker Compose
 
 ## Installation
@@ -61,7 +55,7 @@
 ### Prerequisites
 
 - **Docker and Docker Compose** (recommended path — runs the app + Qdrant)
-- **Groq API key** — powers grammar explanations and optional LLM query rewriting; search and kanji lookup work without it
+- **LLM API key** — powers grammar explanations and optional query rewriting (see `docs/configuration.md` for provider options); search and kanji lookup work without it
 - **Git** (to clone) and ~3 GB free disk (dictionary data + embedding models)
 - Local development only: **Python 3.14+** and **[uv](https://docs.astral.sh/uv/)** (dependency manager — `pip` works too)
 
@@ -76,22 +70,20 @@
 2. **Set up environment variables**:
    ```bash
    cp .env.example .env
-   # Edit .env and add your GROQ_API_KEY
+   # Edit .env: see docs/configuration.md for all options
    ```
 
 ### Running the Application
 
 #### Option 1: Docker (Recommended)
 
-First run — let the containers self-provision and ingest all ~219k entries at boot (embedding takes ~1 hr):
+First run — pass `INGEST_VIA_DOCKER=1` on the compose command so the API container downloads, builds, and ingests all ~219k entries at boot (embedding takes ~1 hr). `scripts/startup.py` handles this: wait for Qdrant → check state → download → build → ingest with retries, then launch the app (also exposed as `--ingest`; `--ingest-only` runs just the pipeline). Plain `up` never ingests; do not put this flag in `.env`.
 
 ```bash
 INGEST_VIA_DOCKER=1 docker compose up -d --build
 ```
 
-(or set `INGEST_VIA_DOCKER=1` in `.env` for the same effect on every `docker compose up --build`)
-
-Once Qdrant is populated, plain `up` serves whatever it already holds:
+Once Qdrant is populated, omit the flag so the same stack just serves — repeat startups only top up the collection (rsync delta of new/edited entries):
 
 ```bash
 docker compose up -d        # API at http://localhost:8000, frontend at http://localhost:5173
@@ -99,7 +91,7 @@ docker compose logs -f app  # follow API logs
 docker compose down
 ```
 
-Both the API (`app`) and frontend (`web`) run in Docker. The web container connects to the API via `http://app:8000` internally.
+Both the API (`app`) and frontend (`web`) run in Docker; the web container connects to the API via `http://app:8000`.
 
 #### Option 2: Local Development
 
@@ -127,7 +119,7 @@ For local development without Docker:
    QDRANT_HOST=localhost uv run python scripts/ingest.py
    ```
 
-5. **Run the HTTP API** — the same FastAPI app the Docker image serves (`app/api.py`, routes at the root):
+5. **Run the HTTP API** — the same app the Docker image serves (`app/api.py`, routes at the root):
    ```bash
    uv run uvicorn app.api:app --reload          # Swagger UI at http://localhost:8000/docs
    ```
@@ -139,9 +131,7 @@ For local development without Docker:
    npm run build                            # static build → web/build/ (adapter-static)
    ```
 
-   Note: The build script automatically syncs brand assets from `assets/` to `web/static/`. To manually sync assets, run `bash scripts/sync-assets.sh` from the project root.
-
-   The API base URL is baked in at build time via `PUBLIC_API_BASE` (default `http://localhost:8000`; schema in `web/src/env.ts`, see `web/.env.example`). The static output deploys to any static host as-is.
+   Note: the build auto-syncs brand assets from `assets/` to `web/static/` (`bash scripts/sync-assets.sh` to sync them manually). The API base URL is baked in at build time via `PUBLIC_API_BASE` (default `http://localhost:8000`; schema in `web/src/env.ts`, see `web/.env.example`), and the static output deploys to any static host as-is.
 
 7. **(Optional) Lint + tests** (CI runs the same — `.github/workflows/ci.yml`):
    ```bash
@@ -151,7 +141,7 @@ For local development without Docker:
 
 ### URL parameters
 
-The Search page keeps its state in the URL, so results are shareable and the browser back button works:
+Search state lives in the URL, so results are shareable and the browser back button works:
 
 | Param | Example | Meaning |
 |---|---|---|
@@ -176,23 +166,13 @@ Reikun/
 └── docker-compose.yml
 ```
 
-## Environment Variables
-
-Create a `.env` file (see `.env.example`):
-
-- `APP_PORT`: Port the API container is published on (default: 8000)
-- `GROQ_API_KEY`: Required for grammar explanations (get at https://console.groq.com/keys)
-- `LLM_MODEL` / `LLM_MODEL_FALLBACK`: Groq chat models — primary and failover (defaults: `openai/gpt-oss-120b` / `openai/gpt-oss-20b`)
-- `QDRANT_HOST` / `QDRANT_PORT`: Qdrant connection (defaults: localhost / 6333); `QDRANT_URL` + `QDRANT_API_KEY` override for Qdrant Cloud
-- `QDRANT_COLLECTION`: Qdrant collection name (default: jmdict_chunks)
-- `EMBED_MODEL`: Dense embedding model (default: `sentence-transformers/all-MiniLM-L6-v2`)
-- `QUERY_REWRITE`: `heuristic` (default, free), `auto` (adds one Groq call for long English queries — best MRR but uses free-tier quota), or `off`
-
-See [docs/configuration.md](docs/configuration.md) for deployment notes, Groq free-tier details, and port configuration.
-
 ## Evaluation
 
-Category-wise results on the gold set (360 queries, 60 per category) — default config (`mode=auto`, heuristic rewrite) against a local collection of 218,786 points:
+360-query gold set: 300 ranking + 60 descriptive. The table uses the 218,786-point local collection, `mode=auto`, and default retrieval settings. Methodology: [eval/reports/eval.md](eval/reports/eval.md); per-model roles, rewrite counts, and caveats: [local/notes/Architecture.md](local/notes/Architecture.md).
+
+### Ranking queries (300)
+
+Default config (`QUERY_REWRITE=auto`):
 
 | subset | n | Hit@1 | Hit@2 | Hit@5 |
 |---|---|---|---|---|
@@ -202,11 +182,24 @@ Category-wise results on the gold set (360 queries, 60 per category) — default
 | ja_katakana | 60 | 60 (100.0%) | 60 | 60 |
 | ja_words | 60 | 60 (100.0%) | 60 | 60 |
 | **ranking total** | **300** | **292 (97.3%)** | **298** | **300** |
-| en_descriptive (paraphrase suite) | 60 | 9 (15.0%) | 13 | 22 |
 
-Hit@1 **97.3%** over the 300 ranking queries, Hit@5 **300/300**, median ~15 ms per query; the Japanese exact-lookup route is at Hit@1 100%. The eight ranking misses are synonym ambiguities (金/お金, 時/時間, 表/テーブル, 文庫/図書館, 仕舞う/終わる, …) — every one has a valid answer in the top 5.
+All 300 queries have a valid answer in the top 5; median ~15 ms per query. Per-query misses: [headword report](eval/reports/headword_eval.md).
 
-Full report: [eval/reports/headword_eval.md](eval/reports/headword_eval.md) · benchmark scripts, metrics and the other reports: [eval/reports/eval.md](eval/reports/eval.md)
+### Descriptive queries (60)
+
+All seven models in the shipped provider defaults, tested under the current Japanese-pivot rewrite (`QUERY_REWRITE=auto`), sorted by Hit@1, then Hit@2/Hit@5:
+
+| provider | model | Hit@1 | Hit@2 | Hit@5 |
+|---|---|---|---|---|
+| Groq | `openai/gpt-oss-120b` | 57 (95.0%) | 57 | 57 |
+| Nebius | `nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B` | 56 (93.3%) | 56 | 56 |
+| Nebius | `nvidia/nemotron-3-super-120b-a12b` | 54 (90.0%) | 54 | 54 |
+| Cohere | `command-r-plus-08-2024` | 53 (88.3%) | 53 | 54 |
+| Cohere | `command-a-plus-05-2026` | 49 (81.7%) | 51 | 52 |
+| Gemini | `gemini-3.5-flash-lite` | 46 (76.7%) | 46 | 48 |
+| Groq | `openai/gpt-oss-20b` | 21 (35.0%) | 26 | 33 |
+
+Single-run scores; one-query gaps are within the paraphrase suite's ±1 jitter. Per-model details: [descriptive_models.md](eval/reports/descriptive_models.md).
 
 ## Data Sources
 

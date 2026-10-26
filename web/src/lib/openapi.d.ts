@@ -164,7 +164,7 @@ export interface paths {
         put?: never;
         /**
          * Explain Endpoint
-         * @description JLPT-level-calibrated grammar explanation (Groq). Markdown bullets.
+         * @description JLPT-level-calibrated grammar explanation (LLM). Markdown bullets.
          */
         post: operations["explain_endpoint_explain_post"];
         delete?: never;
@@ -184,7 +184,7 @@ export interface paths {
         put?: never;
         /**
          * Explain Stream Endpoint
-         * @description Server-sent events: `data: {"text": "…"}` chunks as Groq streams them,
+         * @description Server-sent events: `data: {"text": "…"}` chunks as the LLM streams them,
          *     then `data: {"done": true, "explanation_id": …, "latency_ms": …}`.
          */
         post: operations["explain_stream_endpoint_explain_stream_post"];
@@ -287,6 +287,8 @@ export interface components {
             explanation_id?: number | null;
             /** Level */
             level: string;
+            /** Provider */
+            provider: string;
             /** Model */
             model: string;
             /** Latency Ms */

@@ -1,6 +1,6 @@
 """Rate limiter: window maths, client identity, and the FastAPI dependency.
 
-Pure-Python — builds its own tiny app, so no Qdrant/Groq and no shared state
+Pure-Python — builds its own tiny app, so no Qdrant/LLM and no shared state
 with the real endpoints' limiters.
 """
 
