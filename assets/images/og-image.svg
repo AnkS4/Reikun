@@ -1,34 +1,33 @@
 <svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg">
 	<!-- Reikun OG image — 1200×630 (Open Graph / Twitter card)
-	     Brand: current icon (lens + sun + mountains) on warm washi canvas.
-	     Palette: washi #FCFAF6 · charcoal #19262C · persimmon #EF3C19 ·
-	     card cream #EFECE1 / #F6F3E9 · muted sumi #665F56 -->
+	     Brand lockup mirrors the homepage hero: the emblem sits inline with
+	     "Reikun (例訓)" — "Reikun" in Space Grotesk 500, the kanji in Noto Sans
+	     JP 400 at 0.72em in the muted ink, exactly as .hero-heading renders it —
+	     the brand subtext rides the mono badge pill (.hero-badge-tag), and the
+	     feature lines are centred beneath for a symmetric frame. Palette:
+	     washi #FCFAF6 · charcoal #19262C · persimmon #EF3C19 ·
+	     badge cream #EFECE1 · muted sumi #665F56 -->
 
 	<rect width="1200" height="630" fill="#FCFAF6"/>
 
-	<!-- Brand icon card: icon-light.svg artwork scaled 148→300 -->
-	<g transform="translate(104 185) scale(2.0270)">
-		<rect width="148" height="148" rx="32" fill="#EFECE1"/>
-		<path d="M105.969 64.7969C105.969 86.4654 88.4029 104.031 66.7344 104.031C45.0658 104.031 27.5 86.4654 27.5 64.7969C27.5 43.1283 45.0658 25.5625 66.7344 25.5625C88.4029 25.5625 105.969 43.1283 105.969 64.7969Z" stroke-width="5.32812" stroke="#19262C"/>
-		<path d="M96.7656 96.7656L120.016 120.016" stroke-width="9.20312" stroke-linecap="round" stroke="#19262C"/>
-		<path d="M57.5312 65.2812C65.0216 65.2812 71.0938 59.2091 71.0938 51.7188C71.0938 44.2284 65.0216 38.1562 57.5312 38.1562C50.0409 38.1562 43.9688 44.2284 43.9688 51.7188C43.9688 59.2091 50.0409 65.2812 57.5312 65.2812Z" fill="#EF3C19"/>
-		<path d="M34.7656 76.4219L51.2344 65.7656L59.9531 69.6406L79.3281 50.2656L97.7344 73.0312L101.125 79.3281H32.8281L34.7656 76.4219Z" fill="#19262C" stroke-width="1.9375" stroke-linejoin="round" stroke="#F6F3E9"/>
-		<path d="M68.1875 66.7344L79.3281 54.1406L89.0156 65.7656L81.75 62.375L78.3594 67.7031L76.4219 61.4062L68.1875 66.7344Z" fill="#F6F3E9"/>
-		<path d="M41.0625 86.1094H63.8281M72.5469 86.1094H92.4062M49.7812 93.375H74.9688M81.75 93.375H84.6562" stroke-width="3.875" stroke-linecap="round" stroke="#19262C"/>
+	<!-- Subtext badge (homepage .hero-badge-tag: mono, uppercase, cream pill) -->
+	<rect x="162" y="142" width="876" height="48" rx="24" fill="#EFECE1"/>
+	<text x="600" y="175" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-weight="500" font-size="21" letter-spacing="4" fill="#665F56">SEMANTIC JAPANESE DICTIONARY &amp; READING ASSISTANT</text>
+
+	<!-- Emblem (assets/emblems/emblem.svg, 248→128, 1.1em of the title like .brand-icon) -->
+	<g transform="translate(216 204) scale(0.516)" fill="none">
+		<path d="M187.938 105.594C187.938 148.931 152.806 184.062 109.469 184.062C66.1317 184.062 31 148.931 31 105.594C31 62.2567 66.1317 27.125 109.469 27.125C152.806 27.125 187.938 62.2567 187.938 105.594Z" stroke-width="10.6562" stroke="#19262C"/>
+		<path d="M169.531 169.531L216.031 216.031" stroke-width="18.4062" stroke-linecap="round" stroke="#19262C"/>
+		<path d="M91.0625 106.562C106.043 106.562 118.188 94.4182 118.188 79.4375C118.188 64.4568 106.043 52.3125 91.0625 52.3125C76.0818 52.3125 63.9375 64.4568 63.9375 79.4375C63.9375 94.4182 76.0818 106.562 91.0625 106.562Z" fill="#EF3C19"/>
+		<path d="M45.5312 128.844L78.4688 107.531L95.9062 115.281L134.656 76.5312L171.469 122.062L178.25 134.656H41.6562L45.5312 128.844Z" fill="#19262C" stroke-width="3.875" stroke-linejoin="round" stroke="#F6F3E9"/>
+		<path d="M112.375 109.469L134.656 84.2812L154.031 107.531L139.5 100.75L132.719 111.406L128.844 98.8125L112.375 109.469Z" fill="#F6F3E9"/>
+		<path d="M58.125 148.219H103.656M121.094 148.219H160.812M75.5625 162.75H125.938M139.5 162.75H145.312" stroke-width="7.75" stroke-linecap="round" stroke="#19262C"/>
 	</g>
 
-	<!-- Wordmark -->
-	<text x="488" y="300" font-family="'Space Grotesk', sans-serif" font-weight="500" font-size="118" letter-spacing="-2.4" fill="#19262C">Reikun</text>
+	<!-- Wordmark + kanji, inline like the homepage h1 (366px + 247px) -->
+	<text x="370" y="310" font-family="'Space Grotesk', sans-serif" font-weight="500" font-size="118" letter-spacing="-3" fill="#19262C">Reikun<tspan x="736" font-family="'Noto Sans JP', sans-serif" font-weight="400" font-size="85" letter-spacing="0" fill="#665F56"> (例訓)</tspan></text>
 
-	<!-- Kanji brand name -->
-	<text x="492" y="388" font-family="'Noto Sans JP', sans-serif" font-weight="500" font-size="62" fill="#665F56">例訓</text>
-
-	<!-- Tagline -->
-	<text x="490" y="480" font-family="'Space Grotesk', sans-serif" font-weight="500" font-size="44" fill="#EF3C19">Semantic Japanese Dictionary</text>
-
-	<!-- Feature line -->
-	<text font-family="'Inter', sans-serif" font-weight="400" font-size="26" fill="#665F56">
-		<tspan x="490" y="540">Search in English or Japanese · furigana breakdowns</tspan>
-		<tspan x="490" y="578">kanji stroke order · JLPT-level grammar</tspan>
-	</text>
+	<!-- Feature lines -->
+	<text x="600" y="427" text-anchor="middle" font-family="'Inter', sans-serif" font-weight="400" font-size="27" fill="#665F56">English or Japanese search<tspan fill="#EF3C19"> · </tspan>furigana sentence breakdowns</text>
+	<text x="600" y="473" text-anchor="middle" font-family="'Inter', sans-serif" font-weight="400" font-size="27" fill="#665F56">kanji &amp; stroke order<tspan fill="#EF3C19"> · </tspan>conjugation tables<tspan fill="#EF3C19"> · </tspan>JLPT grammar</text>
 </svg>

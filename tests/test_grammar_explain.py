@@ -125,6 +125,95 @@ def test_stream_failover(monkeypatch):
     assert ge.last_model() == LLM_MODEL_FALLBACK
 
 
+def test_stream_blocking_fallback_keeps_pinned_model(monkeypatch):
+    """A pinned model must not silently widen to the primary/fallback pair
+    when every stream attempt fails and the blocking call takes over."""
+    calls = []
+
+    def create(**kw):
+        calls.append(kw["model"])
+        if kw.get("stream"):
+            raise RuntimeError("stream refused")
+        return _resp("blocking answer")
+
+    _patch_client(monkeypatch, _client(create))
+    _no_sleep(monkeypatch)
+    out = "".join(ge.explain_grammar_stream("文です。", "It is a sentence.", model="pinned-model"))
+    assert out == "blocking answer"
+    assert calls == ["pinned-model", "pinned-model"]
+
+
+def test_stream_tidy_strips_repeated_parentheticals(monkeypatch):
+    """Live deltas obey tidy_bullets' rules: `**が** (が)` loses the echo
+    parenthetical and a repeated pattern bullet vanishes entirely."""
+    chunks = [
+        _resp("- **が** (が) — marks", None),
+        _resp(" the subject.\n- **を** (を) — marks", None),
+        _resp(" the object.\n- **が** (が) — marks the subject again.", "stop"),
+    ]
+    _patch_client(monkeypatch, _client(lambda **kw: iter(chunks)))
+    _no_sleep(monkeypatch)
+    out = "".join(ge.explain_grammar_stream("誰が食べますか。", "who eats"))
+    assert out == "- **が** — marks the subject.\n- **を** — marks the object.\n"
+
+
+def test_tidy_bullets_dedupes_and_deparenthesises():
+    text = ("- **が** (が) — marks the subject.\n"
+            "- **が** — marks the subject again.\n"
+            "- **を** (を) — marks the object.\n"
+            "- **。** (。) — 。\n")
+    out = ge.tidy_bullets(text, 4)
+    assert out == "- **が** — marks the subject.\n- **を** — marks the object."
+
+
+def test_tidy_bullets_preserves_prose_parentheticals_and_empty_scaffolds():
+    text = ("- **が** (が) — explains that (が) marks the subject.\n"
+            "- **〜たい** (たい) — \n"
+            "- **〜たい** (たい) — expresses desire.\n"
+            "- **たい** — also expresses desire.\n"
+            "- **を** — marks object.\n")
+    out = ge.tidy_bullets(text, 4)
+    assert out == ("- **が** — explains that (が) marks the subject.\n"
+                   "- **〜たい** — expresses desire.\n"
+                   "- **を** — marks object.")
+
+
+def test_tidy_bullets_strips_fullwidth_echo_parenthetical():
+    text = "- **は**\uff08は\uff09— marks the topic.\n- **が**\uff08が\uff09— marks the subject."
+    assert ge.tidy_bullets(text, 4) == "- **は** — marks the topic.\n- **が** — marks the subject."
+
+
+def test_tidy_bullets_keeps_pattern_match_in_prose():
+    """A parenthetical in the explanation that happens to repeat the pattern
+    is prose, not the echo parenthesis — only a pattern-segment one goes."""
+    text = ("- **は** — the topic marker; (は) is pronounced wa.\n"
+            "- **が** — marks the subject (が) in this sentence.\n")
+    out = ge.tidy_bullets(text, 4)
+    assert out == ("- **は** — the topic marker; (は) is pronounced wa.\n"
+                   "- **が** — marks the subject (が) in this sentence.")
+
+
+def test_stream_tidy_suppresses_cut_off_when_cap_satisfied():
+    deltas = [
+        "- **が** — marks subject\n",
+        "- **を** — marks object\n",
+        "- **に** — marks target\n",
+        "\n\n*(cut off — press Explain again)*",
+    ]
+    out = "".join(ge._tidy_stream(iter(deltas), max_bullets=3))
+    assert out == "- **が** — marks subject\n- **を** — marks object\n- **に** — marks target\n"
+
+
+def test_stream_tidy_keeps_cut_off_when_cap_not_satisfied():
+    deltas = [
+        "- **が** — marks subject\n",
+        "- **を** — marks the obj",
+        "\n\n*(cut off — press Explain again)*",
+    ]
+    out = "".join(ge._tidy_stream(iter(deltas), max_bullets=3))
+    assert out == "- **が** — marks subject\n- **を** — marks the obj\n\n*(cut off — press Explain again)*"
+
+
 def test_stream_all_down_raises_service_down(monkeypatch):
     def create(**kw):
         raise RuntimeError("429: quota")
@@ -256,7 +345,8 @@ def test_llm_client_owns_retries(monkeypatch):
 
 def test_prompt_rules_present():
     sys_prompt = ge.level_aware_system("N1")
-    assert "English" in sys_prompt and "ceilings, not targets" in sys_prompt
+    assert "English" in sys_prompt and "hard limits" in sys_prompt
+    assert "never paraphrase or revisit" in sys_prompt  # anti-repetition remains a rule
     assert "<sentence>" in ge.level_aware_prompt("文", "en", "N5")
     assert "<analysis>" in ge.level_aware_prompt("文", "en", "N5", hint="verb/past")
 

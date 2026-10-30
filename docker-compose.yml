@@ -47,11 +47,15 @@ services:
     build:
       context: ./web
       dockerfile: Dockerfile
+      # Build-time arg: PUBLIC_API_BASE is baked into the static bundle the
+      # *browser* loads — the value must be reachable from the host, i.e. the
+      # app service's published loopback port, not the container-network
+      # `app` hostname (only containers resolve that, never browsers).
+      args:
+        PUBLIC_API_BASE: http://127.0.0.1:${APP_PORT:-8000}
     image: reikun-web:latest
     ports:
       - "127.0.0.1:5173:5173"
-    environment:
-      PUBLIC_API_BASE: http://app:8000
     depends_on:
       - app
     restart: unless-stopped

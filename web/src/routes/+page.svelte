@@ -17,16 +17,13 @@
 	import { loadRecent, pushRecent, clearRecent } from '#lib/recent.ts';
 	import { furigana } from '#lib/furigana.svelte.ts';
 	import { typewriter } from '#lib/typewriter.svelte.ts';
+	import { t } from '#lib/i18n.svelte.ts';
+	import { BRAND_TITLE } from '#lib/brand.ts';
 
 	// Floating button state
 	let showBackToTop = $state(false);
 
-	const EXAMPLES = ['train', '国', '海外', 'How do you say cheese in Japanese', 'あの店のサービスは素晴らしいです。'];
-	const TAGLINE =
-		'Search in English or Japanese, break down sentences word-by-word with furigana and meanings, inspect kanji, and get grammar explanations.';
-	const HINTS = [
-		'Type or tap an example below'
-	];
+	const EXAMPLES = ['water', '日', '食べる', 'How do you say front door in Japanese', 'あの店のケーキはとても美味しいです。'];
 	// Retrieval is ~25 ms — a page of ten costs the same as five; "Show more" refetches.
 	const DEFAULT_RESULTS = 10;
 	const PAGE_RESULTS = 10;
@@ -35,7 +32,8 @@
 	const MAX_QUERY_CHARS = 150;
 	const MAX_JA_QUERY_CHARS = 100;
 
-	let recent = $state<string[]>([]);
+	// Reassigned whole, never mutated — raw avoids proxying the list.
+	let recent = $state.raw<string[]>([]);
 	let activeCard = $state(-1);
 	let qInput = $state('');
 	let searchInput = $state<HTMLInputElement>();
@@ -44,13 +42,13 @@
 	onMount(() => {
 		recent = loadRecent();
 		if (!matchMedia('(pointer: coarse)').matches) searchInput?.focus({ preventScroll: true });
-		// Floating buttons: track scroll
-		const handleScroll = () => {
-			showBackToTop = window.scrollY > 300;
-		};
-		window.addEventListener('scroll', handleScroll, { passive: true });
-		return () => window.removeEventListener('scroll', handleScroll);
+		showBackToTop = window.scrollY > 300;
 	});
+
+	// <svelte:window> owns the listener; no manual add/remove needed.
+	function handleScroll() {
+		showBackToTop = window.scrollY > 300;
+	}
 
 	function scrollToTop() {
 		window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -113,10 +111,10 @@
 		meta?.embed_ms == null
 			? ''
 			: [
-					meta.rewrite_ms ? `rewrite ${meta.rewrite_ms} ms` : '',
-					`embed ${meta.embed_ms} ms`,
-					`retrieve ${meta.retrieve_ms} ms`,
-					meta.segment_ms != null ? `parse ${meta.segment_ms} ms` : '',
+					meta.rewrite_ms ? t('phaseRewrite', { ms: meta.rewrite_ms }) : '',
+					t('phaseEmbed', { ms: meta.embed_ms }),
+					t('phaseRetrieve', { ms: meta.retrieve_ms ?? 0 }),
+					meta.segment_ms != null ? t('phaseParse', { ms: meta.segment_ms }) : '',
 				]
 					.filter(Boolean)
 					.join(' · '),
@@ -127,16 +125,18 @@
 	// outcome without having to find the visual stats line.
 	const announce = $derived(
 		searching
-			? 'Searching…'
+			? t('searching')
 			: error
 				? error
 				: resp
-					? `${resp.results.length} ${resp.results.length === 1 ? 'entry' : 'entries'} for ${committed}`
+					? resp.results.length === 1
+						? t('resultsForOne', { query: committed })
+						: t('resultsForMany', { count: resp.results.length, query: committed })
 					: ''
 	);
 	// The getter lets the typewriter stop entirely once results take over the
 	// placeholder — no timer churning behind a finished search.
-	const hint = typewriter(() => (hasResults ? [] : HINTS));
+	const hint = typewriter(() => (hasResults ? [] : [t('hint')]));
 
 	// URL → search: ?q= drives everything (deep links, back/forward, pills).
 	// ?kanji= is a legacy deep link → becomes a single-kanji search. urlKey
@@ -189,12 +189,29 @@
 		} catch (e) {
 			if (seq === reqSeq) {
 				resp = null;
-				error = e instanceof Error ? e.message : 'Search failed';
+				error = e instanceof Error ? e.message : t('searchFailed');
 			}
 		} finally {
 			if (seq === reqSeq) searching = false;
 		}
 	}
+
+	// Skeletons only once a search proves slow: under ~250 ms the real result
+	// card beats the placeholder to the paint, and a skeleton visible for a
+	// single frame — exactly what the quick random-kanji path used to do — is
+	// the glitch, not the loading state. Fast answers skip it entirely (the
+	// entrance animation on the cards covers the content handoff); slow ones
+	// get the same cards only after the delay. Reduced motion keeps skeletons.
+	const SKELETON_DELAY_MS = 250;
+	let showSkeletons = $state(false);
+	$effect(() => {
+		if (!searching || resp) {
+			showSkeletons = false;
+			return;
+		}
+		const t = setTimeout(() => (showSkeletons = true), SKELETON_DELAY_MS);
+		return () => clearTimeout(t);
+	});
 
 	function setQuery(v: string) {
 		const u = new URL(page.url.href);
@@ -235,7 +252,7 @@
 		try {
 			commit(await apiRandomKanji(level));
 		} catch (e) {
-			error = e instanceof Error ? e.message : 'Could not get a random kanji.';
+			error = e instanceof Error ? e.message : t('randomFailed');
 		} finally {
 			randomBusy = false;
 		}
@@ -294,38 +311,49 @@
 </script>
 
 <svelte:head>
-	<title>{committed ? `${committed} — Reikun` : 'Reikun (例訓) — Semantic Japanese Dictionary'}</title>
+	<title>{committed ? `${committed} — Reikun` : BRAND_TITLE}</title>
 </svelte:head>
 
-<svelte:window onkeydown={handleWindowKeydown} />
+<svelte:window onkeydown={handleWindowKeydown} onscroll={handleScroll} />
 
-<Header hero={!hasResults && !searching} tagline={TAGLINE} />
+<Header hero={!hasResults && !searching} tagline={t('tagline')} />
 
 <form class="search-row" role="search" onsubmit={submit}>
 	<div class="search-pair">
-		<span class="search-icon-prefix">
-			<Icon name="search" size={18} />
-		</span>
 		<input
 			type="search"
 			id="search"
-			placeholder={hasResults ? 'Search English or Japanese…' : hint.text}
-			aria-label="Search"
+			placeholder={hasResults ? t('searchPlaceholder') : hint.text}
+			aria-label={t('search')}
 			bind:value={qInput}
 			bind:this={searchInput}
 			autocomplete="off"
 			autocapitalize="none"
 			spellcheck="false"
 		/>
-		<button type="submit" class="search-submit">
-			Search
+		{#if qInput}
+			<button
+				type="button"
+				class="search-clear"
+				aria-label={t('clear')}
+				title={t('clear')}
+				onclick={() => {
+					qInput = '';
+					searchInput?.focus();
+				}}
+			>
+				<Icon name="close" size={14} />
+			</button>
+		{/if}
+		<button type="submit" class="search-submit" aria-label={t('search')} title={t('search')}>
+			<Icon name="search" size={17} />
 		</button>
 	</div>
 	<button
 		type="button"
 		class="btn-3d"
-		title="Random {level} kanji"
-		aria-label="Random {level} kanji"
+		title={t('randomKanji', { level })}
+		aria-label={t('randomKanji', { level })}
 		aria-busy={randomBusy}
 		disabled={randomBusy}
 		onclick={randomKanji}
@@ -339,22 +367,22 @@
 		type="button"
 		class="btn-3d furi-toggle"
 		class:off={!furigana.on}
-		title={furigana.on ? 'Furigana shown — click to hide readings' : 'Furigana hidden — click to show readings'}
+		title={furigana.on ? t('furiganaShown') : t('furiganaHidden')}
 		aria-pressed={furigana.on}
-		aria-label="Toggle furigana readings"
+		aria-label={t('furiganaToggle')}
 		onclick={() => furigana.toggle()}
 	>
 		<span lang="ja" class="furi-kana" aria-hidden="true">あ</span>
 	</button>
-	<Popover icon="school" label={level} title="JLPT level for grammar explanations" buttonClass="btn-3d">
-		<p class="popover-title">JLPT Level</p>
-		<Segmented options={LEVELS} value={level} onchange={setLevel} label="JLPT level" />
+	<Popover label={level} title={t('jlptTitle')} buttonClass="btn-3d jlpt-trigger">
+		<p class="popover-title">{t('jlptLevel')}</p>
+		<Segmented options={LEVELS} value={level} onchange={setLevel} label={t('jlptLevel')} />
 	</Popover>
 </form>
 
 <div class="sr-only" role="status" aria-live="polite">{announce}</div>
 
-{#if searching && !resp}
+{#if showSkeletons}
 	<div class="skeletons" aria-hidden="true">
 		{#each [0, 1, 2] as n (n)}
 			<div class="skeleton-card">
@@ -378,7 +406,7 @@
 	{/if}
 
 	<div class="stats-line">
-		<span class="stats-count">{resp.results.length} {resp.results.length === 1 ? 'entry' : 'entries'}</span>
+		<span class="stats-count">{resp.results.length === 1 ? t('entryOne') : t('entryMany', { count: resp.results.length })}</span>
 		<Feedback kind="search" refId={resp.search_id ?? null} query={committed} />
 		{#if committed}<ShareButton query={committed} />{/if}
 		<span class="stats-details">
@@ -387,23 +415,23 @@
 				class="stats-info"
 				role="img"
 				tabindex="0"
-				aria-label="Query route, timing and cache details"
+				aria-label={t('statsInfo')}
 				aria-describedby={infoId}
 			>
 				<Icon name="info" size={14} />
 			</span>
 			<span class="stats-pop" role="tooltip" id={infoId}>
-				<span class="popover-title">Technical info</span>
+				<span class="popover-title">{t('technicalInfo')}</span>
 				<span class="stats-meta"
-					><span class="stats-label">route</span>{resp.mode}{meta?.route
+					><span class="stats-label">{t('route')}</span>{resp.mode}{meta?.route
 						? ` · ${meta.route}`
 						: ''}</span
 				>
-				<span class="stats-meta"><span class="stats-label">total</span>{resp.latency_ms} ms</span>
+				<span class="stats-meta"><span class="stats-label">{t('total')}</span>{resp.latency_ms} ms</span>
 				{#if meta?.cached}
-					<span class="stats-meta"><span class="stats-label">cache</span>hit</span>
+					<span class="stats-meta"><span class="stats-label">{t('cache')}</span>{t('cacheHit')}</span>
 				{:else if phases}
-					<span class="stats-meta"><span class="stats-label">stages</span>{phases}</span>
+					<span class="stats-meta"><span class="stats-label">{t('stages')}</span>{phases}</span>
 				{/if}
 			</span>
 		</span>
@@ -411,7 +439,7 @@
 
 	{#if resp.rewrite.changed}
 		<p class="caption">
-			Searched for <b>{resp.rewrite.query}</b>
+			{t('searchedForBefore')}<b>{resp.rewrite.query}</b>{t('searchedForAfter')}
 		</p>
 	{/if}
 
@@ -425,27 +453,32 @@
 			<div class="warning">
 				<Icon name="warning" size={16} />
 				{#if meta.too_long === MAX_JA_QUERY_CHARS}
-					“{shown}” is too long — Japanese input is parsed up to {MAX_JA_QUERY_CHARS} characters;
-					enter a word or a shorter sentence.
+					{t('tooLongJa', { shown, max: MAX_JA_QUERY_CHARS })}
 				{:else}
-					“{shown}” is too long for a dictionary lookup — enter a single word or a short phrase
-					({MAX_QUERY_CHARS} characters max).
+					{t('tooLong', { shown, max: MAX_QUERY_CHARS })}
 				{/if}
 			</div>
 		{:else if kanjiChar}
 			<div class="notice">
-				<Icon name="info" size={16} /> “{kanjiChar}” isn't a standalone dictionary word — see the
-				common words above for it in use.
+				<Icon name="info" size={16} /> {t('notAWord', { char: kanjiChar })}
 			</div>
 		{:else}
 			<div class="warning">
-				<Icon name="warning" size={16} /> Nothing found. Try a different English or Japanese word.
+				<Icon name="warning" size={16} /> {t('nothingFound')}
 			</div>
 		{/if}
 	{/if}
 
 	{#each resp.results as r, i (`${r.id ?? r.text}-${i}`)}
-		<ResultCard result={r} {level} searched={committed} onPickKanji={commit} onSearchWord={commit} active={i === activeCard} />
+		<ResultCard
+			result={r}
+			{level}
+			searched={committed}
+			onPickKanji={commit}
+			onSearchWord={commit}
+			active={i === activeCard}
+			style={`animation-delay: ${Math.min(i, 8) * 40}ms`}
+		/>
 	{/each}
 
 	{#if resp.results.length >= wantResults && wantResults < MAX_RESULTS}
@@ -453,14 +486,14 @@
 			type="button"
 			class="btn-3d"
 			onclick={showMore}
-			title="Refetches the search with up to {MAX_RESULTS} results"
+			title={t('showMoreTitle', { max: MAX_RESULTS })}
 		>
-			<Icon name="expand-more" size={15} /> Show {PAGE_RESULTS} more
+			<Icon name="expand-more" size={15} /> {t('showMore', { count: PAGE_RESULTS })}
 		</button>
 	{/if}
 {:else if !searching && !error}
 	{#if recent.length === 0}
-	<div class="pills" aria-label="Example searches">
+	<div class="pills" aria-label={t('exampleSearches')}>
 		{#each EXAMPLES as ex (ex)}
 			<button type="button" class="pill" onclick={() => commit(ex)}>
 				<Icon name="search" size={14} />
@@ -472,17 +505,17 @@
 	{#if recent.length}
 		<div class="recent">
 			<p class="popover-title">
-				Recent
+				{t('recent')}
 				<button
 					type="button"
 					class="recent-clear"
 					onclick={() => {
 						clearRecent();
 						recent = [];
-					}}>Clear</button
+					}}>{t('clear')}</button
 				>
 			</p>
-			<div class="pills" aria-label="Recent searches">
+			<div class="pills" aria-label={t('recentSearches')}>
 				{#each recent as q (q)}
 					<button type="button" class="pill" onclick={() => commit(q)}>
 						<Icon name="search" size={14} />
@@ -501,8 +534,8 @@
 			type="button"
 			class="floating-btn visible"
 			onclick={scrollToTop}
-			title="Scroll to top"
-			aria-label="Scroll to top"
+			title={t('scrollTop')}
+			aria-label={t('scrollTop')}
 		>
 			<Icon name="arrow-up" size={16} />
 		</button>

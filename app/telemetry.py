@@ -4,10 +4,12 @@ Usage/event logging behind a small interface.
 The API is a stateless instance: by default events go to stdout as one JSON
 object per line (`TELEMETRY=stdout`), which the platform's log collection can
 pick up. `TELEMETRY=sqlite` keeps the existing SQLite sink
-(scripts/feedback_log) for self-hosted setups and the dashboard page.
+(scripts/feedback_log) for self-hosted setups that persist locally.
 
 Both sinks expose the same surface — search / feedback / kanji_lookup /
-explanation — returning the row id when the backend has one, else None.
+explanation — returning the row id when the backend has one, else None. Neither
+sink can raise: telemetry decorates the request, it must never fail it (a sink
+error is logged as a `telemetry_error` JSON line and treated as unrecorded).
 
 Search events carry the raw query and rewritten query text plus a `rewritten`
 flag — with `TELEMETRY=stdout` that text lands in the platform's log store.
@@ -19,7 +21,7 @@ import json
 import logging
 import sys
 from datetime import UTC, datetime
-from functools import cache
+from functools import cache, wraps
 from typing import Protocol
 
 from app.config import TELEMETRY
@@ -43,6 +45,24 @@ def _h(text: str | None) -> str | None:
 def _emit(event: str, **fields) -> None:
     _log.info(json.dumps({"event": event, "ts": datetime.now(UTC).isoformat(timespec="seconds"),
                           **fields}, ensure_ascii=False))
+
+
+def _never_raises(fn):
+    """Sink failures must never break the request they observe: SQLite that
+    can't be written (read-only disk, locked db) is an annotation gone missing,
+    not a 500 — the decorated method logs one JSON warning line (scraper-safe,
+    like every line of this logger) and returns None, the same shape as a sink
+    with no row ids. The stdout sink additionally can't raise: the logging
+    framework swallows handler errors, so only the SQLite delegations need it."""
+    @wraps(fn)
+    def wrapper(*args, **kwargs):
+        try:
+            return fn(*args, **kwargs)
+        except Exception as exc:
+            _log.warning(json.dumps(
+                {"event": "telemetry_error", "method": fn.__name__, "error": str(exc)}, ensure_ascii=False))
+            return None
+    return wrapper
 
 
 class Telemetry(Protocol):
@@ -85,6 +105,7 @@ class _StdoutTelemetry:
 class _SqliteTelemetry:
     """The SQLite sink — delegates to scripts/feedback_log's writers."""
 
+    @_never_raises
     def search(self, query: str, *, rewritten_query: str, rewrite_method: str, mode: str,
                num_results: int, result_count: int, top_result: str | None, latency_ms: int,
                cached: bool = False, route: str | None = None,
@@ -95,14 +116,17 @@ class _SqliteTelemetry:
                           top_result=top_result, latency_ms=latency_ms, cached=cached,
                           route=route, embed_ms=embed_ms, retrieve_ms=retrieve_ms)
 
+    @_never_raises
     def feedback(self, kind: str, ref_id: int | None, rating: int, query: str | None = None) -> int:
         from scripts.feedback_log import log_feedback
         return log_feedback(kind, ref_id, rating, query)
 
+    @_never_raises
     def kanji_lookup(self, kanji: str, source: str = "api") -> int:
         from scripts.feedback_log import log_kanji_lookup
         return log_kanji_lookup(kanji, source=source)
 
+    @_never_raises
     def explanation(self, sentence: str, jlpt_level: str, *, model: str, latency_ms: int,
                     ok: bool) -> int:
         from scripts.feedback_log import log_explanation

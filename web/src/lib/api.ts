@@ -9,6 +9,7 @@ import createClient from 'openapi-fetch';
 import { PUBLIC_API_BASE } from '$app/env/public';
 import type { components, paths } from './openapi';
 import { backend } from './backend.svelte.ts';
+import { t } from './i18n.svelte.ts';
 
 export type SearchResponse = components['schemas']['SearchResponseModel'];
 export type SearchResult = components['schemas']['SearchResult'];
@@ -40,11 +41,6 @@ export class ApiError extends Error {
 	}
 }
 
-const MSG_UNREACHABLE =
-	"Can't reach the dictionary server. It may still be waking up — try again in a few seconds.";
-const MSG_TIMEOUT = 'The server took too long to respond. It may be waking up — please try again.';
-const MSG_GATEWAY = 'The dictionary server is starting up or temporarily unavailable. Please try again shortly.';
-
 /** Transient = worth an automatic retry: no response, timeouts, gateway blips. */
 export const isTransient = (e: unknown): boolean =>
 	e instanceof ApiError && (e.status === 0 || e.status === 502 || e.status === 503 || e.status === 504);
@@ -60,9 +56,9 @@ function asError(err: unknown, status: number): ApiError {
 	} else if (Array.isArray(body?.detail)) {
 		msg = (body.detail as { msg?: string }[]).map((d) => d.msg ?? d).join('; ');
 	} else if (status === 502 || status === 503 || status === 504) {
-		msg = MSG_GATEWAY;
+		msg = t('errorGateway');
 	} else {
-		msg = `Request failed (${status})`;
+		msg = t('errorRequestFailed', { status });
 	}
 	return new ApiError(status, msg);
 }
@@ -70,9 +66,9 @@ function asError(err: unknown, status: number): ApiError {
 /** Raw fetch failures (TypeError: Failed to fetch / NetworkError…, timeouts) → friendly ApiError(0). */
 function normalize(e: unknown): unknown {
 	if (e instanceof ApiError) return e;
-	if (e instanceof TypeError) return new ApiError(0, MSG_UNREACHABLE);
+	if (e instanceof TypeError) return new ApiError(0, t('errorUnreachable'));
 	if (e instanceof DOMException && (e.name === 'TimeoutError' || e.name === 'AbortError')) {
-		return new ApiError(0, MSG_TIMEOUT);
+		return new ApiError(0, t('errorTimeout'));
 	}
 	return e;
 }
@@ -293,6 +289,6 @@ export async function explainStream(
 	} catch (e) {
 		throw normalize(e);
 	}
-	if (!done && !gotText) throw new ApiError(502, 'The explanation stream ended unexpectedly. Please try again.');
+	if (!done && !gotText) throw new ApiError(502, t('errorStreamEnded'));
 	return done ?? { explanation_id: null, latency_ms: 0 };
 }

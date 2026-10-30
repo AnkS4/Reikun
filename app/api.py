@@ -82,7 +82,8 @@ app = FastAPI(
     title="Reikun API",
     version=APP_VERSION,
     description=(
-        "Japanese dictionary search (hybrid dense + BM25), kanji details and JLPT-calibrated grammar explanations."
+        "Semantic Japanese Dictionary & Reading Assistant — hybrid dense + BM25 search, "
+        "kanji details and JLPT-calibrated grammar explanations."
     ),
     lifespan=lifespan,
 )
@@ -478,7 +479,7 @@ def kanji_group_endpoint(
     response: Response,
     by: Annotated[GroupKey, Query(description="Kanji metadata grouping key")],
     value: Annotated[
-        int, Query(ge=1, le=30, description="Group value (stroke count, KANJIDIC2 grade, or old-scale JLPT level)")
+        int, Query(ge=1, le=50, description="Group value (stroke count, KANJIDIC2 grade, or old-scale JLPT level)")
     ],
     n: Annotated[int, Query(ge=1, le=100)] = 40,
     offset: Annotated[int, Query(ge=0)] = 0,
@@ -585,12 +586,11 @@ def explain_stream_endpoint(req: ExplainRequest) -> StreamingResponse:
     t0 = time.perf_counter()
 
     def events():
-        chunks: list[str] = []
         ok = True
         try:
             for c in explain_grammar_stream(sentence, english, req.level, hint=hint):
-                chunks.append(c)
-                yield f"data: {json.dumps({'text': c})}\n\n"
+                # UTF-8 SSE stream: don't \uXXXX-escape the Japanese fragments.
+                yield f"data: {json.dumps({'text': c}, ensure_ascii=False)}\n\n"
         except Exception:
             log.exception("explain stream failed")
             ok = False
@@ -604,7 +604,7 @@ def explain_stream_endpoint(req: ExplainRequest) -> StreamingResponse:
             "provider": LLM_PROVIDER,
             "model": last_model(),
         }
-        yield f"data: {json.dumps(payload)}\n\n"
+        yield f"data: {json.dumps(payload, ensure_ascii=False)}\n\n"
 
     # no-transform + X-Accel-Buffering: keep proxies from buffering or compressing
     # the stream, which would hold every chunk back until the end.

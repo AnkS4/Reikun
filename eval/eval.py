@@ -36,7 +36,7 @@ Other suites (combine freely):
     --modes   fixed text / hybrid / auto comparison, rewrite off (no Groq)
     --ir      retrieval-config suite — Hit@k / MRR / NDCG / MAP / recall over
               relevant entry IDs, overall and per gold subset
-    --llm     level-aware vs generic grammar-explanation eval (Groq judge)
+    --llm     level-aware vs generic grammar-explanation eval (active-provider judge)
 
 Outputs under eval/results/ (headword/mode runs are timestamped so runs never
 overwrite each other; the IR and LLM reports keep canonical names):
@@ -51,7 +51,6 @@ import argparse
 import csv
 import json
 import math
-import os
 import re
 import statistics
 import sys
@@ -64,7 +63,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from report_meta import report_meta, stamp_line
 
 import app.retrieval as retrieval
-from app.config import COLLECTION, PROC_DIR, QDRANT_URL, QUERY_REWRITE, qdrant_client
+from app.config import COLLECTION, LLM_MODEL, LLM_PROVIDER, PROC_DIR, QDRANT_URL, QUERY_REWRITE, qdrant_client
 from app.retrieval import search
 
 EXAMPLES = """\
@@ -674,14 +673,14 @@ def ir_suite(args) -> None:
 
 
 # ---------------------------------------------------------------------------
-# LLM suite — level-aware vs generic grammar prompt, Groq judge (opt-in).
+# LLM suite — level-aware vs generic grammar prompt, active-provider judge (opt-in).
 # ---------------------------------------------------------------------------
 
 LEVELS = ("N5", "N1")
 PROMPTS = {"level-aware": True, "generic": False}
 
-# Groq free tier caps at 30 RPM per model. Each eval row makes two calls on
-# the primary pool (generation + judge), so we pace under that.
+# Free tiers are per-model and tight (Groq's is 30 RPM). Each eval row makes
+# two calls on the primary pool (generation + judge), so we pace under that.
 _LLM_MAX_CALLS_PER_MIN = 25
 _LLM_MIN_INTERVAL = 60.0 / _LLM_MAX_CALLS_PER_MIN
 _last_llm_call = 0.0
@@ -851,8 +850,9 @@ def llm_suite(args) -> None:
               f"analogy={s['analogy_rate']:.0%} fit={s['judge_level_fit']} acc={s['judge_accuracy']}")
 
     RESULTS_DIR.mkdir(parents=True, exist_ok=True)
-    meta = report_meta(model=os.getenv("LLM_MODEL", "openai/gpt-oss-120b"),
-                       judge="groq", sentences=len(rows) // (len(LEVELS) * len(PROMPTS)))
+    meta = report_meta(model=LLM_MODEL,
+                       judge=f"{LLM_PROVIDER}/{LLM_MODEL}",
+                       sentences=len(rows) // (len(LEVELS) * len(PROMPTS)))
     (RESULTS_DIR / "llm_eval.json").write_text(
         json.dumps({"meta": meta, "rows": rows, "summary": summary}, indent=2, ensure_ascii=False),
         encoding="utf-8")

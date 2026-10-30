@@ -2,6 +2,7 @@
 	import type { Segment } from '#lib/api.ts';
 	import Ruby from './Ruby.svelte';
 	import { clampTip } from '#lib/tooltip.ts';
+	import { t } from '#lib/i18n.svelte.ts';
 	let {
 		segments,
 		onjump
@@ -12,7 +13,7 @@
 	const approx = $derived(segments.some((s) => s.approx));
 
 	function tip(s: Segment): string {
-		const t = s.options.length
+		const detail = s.options.length
 			? s.options.join(' / ')
 			: [
 					s.kanji_form && s.kanji_form !== s.text ? s.kanji_form : '',
@@ -21,7 +22,11 @@
 				]
 				.filter(Boolean)
 				.join(' · ');
-		return s.approx ? (t ? `approximate — ${t}` : 'approximate') : t;
+		return s.approx
+			? detail
+				? `${t('approximate')} — ${detail}`
+				: t('approximate')
+			: detail;
 	}
 
 	let hovered = $state(-1);
@@ -57,16 +62,16 @@
 <div class="seg-card">
 	<div class="seg-header">
 		<p class="seg-title">
-			<span>Sentence Breakdown</span>
+			<span>{t('breakdown')}</span>
 			{#if approx}
-				<span class="meta-badge" title="Fallback segmenter used">Approximate</span>
+				<span class="meta-badge" title={t('approximateTitle')}>{t('approximate')}</span>
 			{/if}
 		</p>
-		<span class="stats-meta">Hover for definitions · Click to view entry</span>
+		<span class="stats-meta">{t('breakdownHint')}</span>
 	</div>
 	<div class="seg-row">
 		{#each segments as s, i (s.text + i)}
-			{@const t = tip(s)}
+			{@const detail = tip(s)}
 			<!-- svelte-ignore a11y_no_noninteractive_element_interactions — role=button + Enter/Space handled in handleKey -->
 			<span
 				class="seg"
@@ -74,8 +79,8 @@
 				class:open={hovered === i}
 				role="button"
 				tabindex="0"
-				title="Jump to {s.kanji_form || s.reading || s.text}"
-				use:clampTip
+				title={t('jumpTo', { word: s.kanji_form || s.reading || s.text })}
+				{@attach clampTip}
 				onpointerenter={() => onenter(i)}
 				onpointerleave={() => onleave(i)}
 				onclick={() => handleClick(s, i)}
@@ -83,7 +88,7 @@
 			>
 				<span class="seg-word" lang="ja"><Ruby parts={s.ruby} tips={false} /></span>
 				<span class="seg-mean">{s.gloss}</span>
-				{#if hovered === i && t}<span class="seg-tip" role="tooltip">{t}</span>{/if}
+				{#if hovered === i && detail}<span class="seg-tip" role="tooltip">{detail}</span>{/if}
 			</span>
 		{/each}
 	</div>

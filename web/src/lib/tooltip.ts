@@ -1,3 +1,5 @@
+import type { Attachment } from 'svelte/attachments';
+
 /**
  * Edge clamp for centre-anchored tooltips: sets --tip-shift on the anchor
  * so `translateX(calc(-50% + var(--tip-shift)))` keeps the tip inside the
@@ -5,10 +7,13 @@
  * measured — the shift is computed from the anchor rect and --tip-w,
  * treating the tip as its max width (tips narrower than that just sit
  * slightly off-centre, never clipped).
+ *
+ * An attachment (not an action): it reads no reactive state, so it runs once
+ * per element mount, and returns the listener cleanup.
  */
 const MARGIN = 8;
 
-export function clampTip(node: HTMLElement) {
+export const clampTip: Attachment<HTMLElement> = (node) => {
 	function set() {
 		const rect = node.getBoundingClientRect();
 		const tipW = parseFloat(getComputedStyle(node).getPropertyValue('--tip-w')) || 290;
@@ -34,11 +39,9 @@ export function clampTip(node: HTMLElement) {
 	node.addEventListener('pointerenter', set);
 	node.addEventListener('pointerdown', set);
 	node.addEventListener('focusin', set);
-	return {
-		destroy() {
-			node.removeEventListener('pointerenter', set);
-			node.removeEventListener('pointerdown', set);
-			node.removeEventListener('focusin', set);
-		}
+	return () => {
+		node.removeEventListener('pointerenter', set);
+		node.removeEventListener('pointerdown', set);
+		node.removeEventListener('focusin', set);
 	};
-}
+};

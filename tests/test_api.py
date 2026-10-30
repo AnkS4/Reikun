@@ -60,6 +60,20 @@ def test_kanji_batch_rejects_no_kanji() -> None:
     assert client.get("/kanji", params={"chars": "abc"}).status_code == 400
 
 
+def test_kanji_group() -> None:
+    # High stroke count kanji (>30 strokes) must not fail query validation.
+    r = client.get("/kanji/group", params={"by": "strokes", "value": 33})
+    assert r.status_code == 200
+    data = r.json()
+    assert data["total"] > 0
+    assert any(k["literal"] in ("鱻", "麤", "龗") for k in data["kanjis"])
+
+    # Invalid group or value out of bounds
+    assert client.get("/kanji/group", params={"by": "bogus", "value": 5}).status_code == 422
+    assert client.get("/kanji/group", params={"by": "strokes", "value": 0}).status_code == 422
+    assert client.get("/kanji/group", params={"by": "strokes", "value": 51}).status_code == 422
+
+
 def test_kanji_random() -> None:
     for params in ({}, {"level": "N5"}):
         r = client.get("/kanji/random", params=params)

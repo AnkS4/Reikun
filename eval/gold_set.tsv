@@ -14,12 +14,11 @@
 # so the number of queries per category never moves.
 #   Why it matters: the per-category Hit@1 rates are computed against these
 #   counts (51/55 and 51/60 are different numbers), and every before/after
-#   comparison in local/notes/Issues.md (D9) and CHANGELOG.md is stated
-#   against a fixed set size. The 0.8.0 pass grew en_words and ja_hiragana
-#   with the user-reported regression guardrails (tomato, garlic, eraser,
-#   potato, apartment, じてんしゃ — local/notes/Issues.md S7) and left this
-#   header claiming 300 while the file held 306. Don't repeat that: fix the
-#   header *and* the counts together, or change neither.
+#   comparison in CHANGELOG.md is stated against a fixed set size. The 0.8.0
+#   pass grew en_words and ja_hiragana with the user-reported regression
+#   guardrails (tomato, garlic, eraser, potato, apartment, じてんしゃ) and
+#   left this header claiming 300 while the file held 306. Don't repeat that:
+#   fix the header *and* the counts together, or change neither.
 # ───────────────────────────────────────────────────────────────────────────
 #
 # Categories (60 queries each, 360 total):

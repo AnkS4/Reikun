@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { hovers, wantKanji } from '#lib/hover.svelte.ts';
 	import { clampTip } from '#lib/tooltip.ts';
+	import { t } from '#lib/i18n.svelte.ts';
 	let { char, onpick }: { char: string; onpick?: (char: string) => void } = $props();
 
 	$effect(() => wantKanji([char]));
@@ -79,19 +80,19 @@
 	<span class="kanji-tip-body" role="tooltip">
 		<span class="big">{char}</span>
 		{#if d?.meanings.length}
-			<div class="tip-meanings"><b>Meanings</b> {d.meanings.join(', ')}</div>
+			<div class="tip-meanings"><b>{t('tipMeanings')}</b> {d.meanings.join(', ')}</div>
 		{/if}
 		{#if d?.on_yomi.length}
-			<div class="tip-readings"><span class="tip-label">On</span>{d.on_yomi.join('、')}</div>
+			<div class="tip-readings"><span class="tip-label">{t('tipOn')}</span>{d.on_yomi.join('、')}</div>
 		{/if}
 		{#if d?.kun_yomi.length}
-			<div class="tip-readings"><span class="tip-label">Kun</span>{d.kun_yomi.join('、')}</div>
+			<div class="tip-readings"><span class="tip-label">{t('tipKun')}</span>{d.kun_yomi.join('、')}</div>
 		{/if}
 		{#if d?.meta.length}
 			<div class="tip-stroke">{d.meta.map((m) => m.label).join(' · ')}</div>
 		{/if}
 		<a class="tip-go" href="/?q={encodeURIComponent(char)}" onclick={pick}
-			>Search {char} →</a
+			>{t('tipSearch', { char })}</a
 		>
 	</span>
 {/snippet}
@@ -104,9 +105,9 @@
 		role="button"
 		tabindex="0"
 		aria-expanded={pinned}
-		aria-label="Kanji {char} details"
+		aria-label={t('tipAria', { char })}
 		bind:this={anchorEl}
-		use:clampTip
+		{@attach clampTip}
 		onpointerenter={onenter}
 		onpointerleave={onleave}
 		onclick={toggle}
@@ -116,7 +117,7 @@
 	</span>
 {:else if onpick}
 	<!-- hover data still loading/failed — keep plain-link navigation -->
-	<a class="kanji-tip" href="/?q={encodeURIComponent(char)}" onclick={pick} use:clampTip
+	<a class="kanji-tip" href="/?q={encodeURIComponent(char)}" onclick={pick} {@attach clampTip}
 		>{char}</a
 	>
 {:else}

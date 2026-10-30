@@ -4,6 +4,8 @@ All rows use the current Japanese-pivot rewrite. 60 `en_descriptive` queries · 
 
 Rows are single runs; one-query gaps are within the paraphrase suite's ±1 jitter. Exception: Groq `openai/gpt-oss-20b` is unstable across identical-config re-runs (60 → 21 → 14 Hit@1; this table records the sweep's 21), so treat its row as indicative rather than exact.
 
+Post-2026-10-26: `app/llm.py` sends `chat_template_kwargs.enable_thinking=false` for Nebius (Nemotron reasoning was eating every level's token budget — see the comment there). These rows were measured thinking-on, so re-run the Nebius rows with the current code before treating gaps as real.
+
 | provider | model | Hit@1 | Hit@2 | Hit@5 |
 |---|---|---|---|---|
 | Groq | `openai/gpt-oss-120b` | 57 (95.0%) | 57 | 57 |

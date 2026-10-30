@@ -6,8 +6,14 @@
 	import { PUBLIC_CF_ANALYTICS_TOKEN } from '$app/env/public';
 	import WakeBanner from '#lib/components/WakeBanner.svelte';
 	import Footer from '#lib/components/Footer.svelte';
+	import { i18n, t } from '#lib/i18n.svelte.ts';
+	import { BRAND_TITLE } from '#lib/brand.ts';
 	import '../app.css';
 	let { children } = $props();
+
+	// Persisted interface language. SSR/first render stay English (so the
+	// prerendered HTML matches); the stored choice applies right after mount.
+	onMount(() => i18n.init());
 
 	// Cloudflare Web Analytics — a free cookieless beacon (no consent banner
 	// needed), tracked per page-load; the beacon script covers SPA route
@@ -47,7 +53,7 @@
 </script>
 
 <svelte:head>
-	<title>Reikun (例訓) — Semantic Japanese Dictionary</title>
+	<title>{BRAND_TITLE}</title>
 	<!-- Canonical is per-route (the app is also served on the workers.dev
 	     mirror); prerendered into the HTML since SSR is on. -->
 	<link rel="canonical" href="https://reikun.app{page.url.pathname}" />
@@ -55,7 +61,7 @@
 	{#if API_BASE}<link rel="preconnect" href={API_BASE} crossorigin="anonymous" />{/if}
 </svelte:head>
 
-<a class="skip-link" href="#main">Skip to main content</a>
+<a class="skip-link" href="#main">{t('skipToContent')}</a>
 
 <WakeBanner />
 

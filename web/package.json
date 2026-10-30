@@ -1,7 +1,7 @@
 {
   "name": "reikun-web",
   "private": true,
-  "version": "0.9.0",
+  "version": "1.0.0",
   "type": "module",
   "imports": {
     "#lib/*": "./src/lib/*"
@@ -16,17 +16,17 @@
   },
   "devDependencies": {
     "@sveltejs/adapter-static": "^4.0.0",
-    "@sveltejs/kit": "^3.0.0",
+    "@sveltejs/kit": "^3.1.0",
     "@sveltejs/vite-plugin-svelte": "^7.3.1",
-    "svelte": "^5.57.1",
-    "svelte-check": "^4.7.6",
+    "svelte": "^5.57.3",
+    "svelte-check": "^4.7.7",
     "tslib": "^2.8.1",
     "typescript": "~6.0.3",
-    "vite": "^8.3.2"
+    "vite": "^8.3.5"
   },
   "dependencies": {
-    "dompurify": "^3.2.6",
-    "marked": "^16.4.1",
+    "dompurify": "^3.4.17",
+    "marked": "^18.1.2",
     "openapi-fetch": "^0.17.0"
   }
 }

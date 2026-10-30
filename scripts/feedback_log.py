@@ -2,7 +2,7 @@
 Lightweight usage + feedback logging to a local SQLite database.
 
 Tables
-    searches      one row per search request (hashed query, mode, latency, …)
+    searches      one row per search request (raw query text + hash, mode, latency, …)
     feedback      thumbs up/down (+1 / -1) tied to a search or an explanation
     kanji_lookups one row per kanji detail view
     explanations  one row per grammar-explanation request (JLPT level, latency)
@@ -109,8 +109,9 @@ _ADDED_COLUMNS = {
                  "query": "TEXT", "rewritten_query": "TEXT", "rewritten": "INTEGER"},
 }
 
-# Columns renamed when raw text gave way to hashes. Old rows keep their data
-# — the raw values are re-hashed in place by _migrate().
+# Columns renamed when a hash-only schema replaced raw text. The rename is
+# done before _ADDED_COLUMNS so a DB from that era gets its raw columns back;
+# existing rows keep the new hash but cannot recover the discarded raw text.
 _RENAMED_COLUMNS = {
     "searches": {"query": "query_hash", "rewritten_query": "rewritten_query_hash"},
     "feedback": {"query": "query_hash"},
@@ -119,11 +120,6 @@ _RENAMED_COLUMNS = {
 
 
 def _migrate(conn: sqlite3.Connection) -> None:
-    for table, cols in _ADDED_COLUMNS.items():
-        have = {row[1] for row in conn.execute(f"PRAGMA table_info({table})")}
-        for name, sql_type in cols.items():
-            if name not in have:
-                conn.execute(f"ALTER TABLE {table} ADD COLUMN {name} {sql_type}")
     for table, cols in _RENAMED_COLUMNS.items():
         have = {row[1] for row in conn.execute(f"PRAGMA table_info({table})")}
         for old, new in cols.items():
@@ -131,6 +127,13 @@ def _migrate(conn: sqlite3.Connection) -> None:
                 conn.execute(f"ALTER TABLE {table} RENAME COLUMN {old} TO {new}")
                 for rid, raw in conn.execute(f"SELECT id, {new} FROM {table}"):
                     conn.execute(f"UPDATE {table} SET {new} = ? WHERE id = ?", (_h(raw), rid))
+    # Runs after the renames so the raw search columns are re-added even when
+    # an old DB still had the pre-hash `query`/`rewritten_query` pair.
+    for table, cols in _ADDED_COLUMNS.items():
+        have = {row[1] for row in conn.execute(f"PRAGMA table_info({table})")}
+        for name, sql_type in cols.items():
+            if name not in have:
+                conn.execute(f"ALTER TABLE {table} ADD COLUMN {name} {sql_type}")
 
 
 def _insert(table: str, **values) -> int:

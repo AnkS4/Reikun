@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { StrokeData } from '#lib/api.ts';
 	import Icon from './Icon.svelte';
+	import { t } from '#lib/i18n.svelte.ts';
 	let { stroke }: { stroke: StrokeData } = $props();
 	let replay = $state(0);
 	const STEP = 0.75; // delay between consecutive strokes — matches draw duration, strictly sequential
@@ -44,13 +45,13 @@
 	<button
 		type="button"
 		class="stroke-replay"
-		title="Replay the stroke-order animation"
-		aria-label="Replay the stroke-order animation"
+		title={t('replayStroke')}
+		aria-label={t('replayStroke')}
 		onclick={() => replay++}
 	>
 		<Icon name="replay" size={14} />
 	</button>
-	<svg viewBox={stroke.view_box} xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Stroke order diagram">
+	<svg viewBox={stroke.view_box} xmlns="http://www.w3.org/2000/svg" role="img" aria-label={t('strokeDiagram')}>
 		{#each stroke.strokes as d, i (i)}
 			<path
 				{d}

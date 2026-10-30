@@ -4,16 +4,11 @@
 	import { apiKanjiGroup, type GroupKey, type KanjiGroupResponse } from '#lib/api.ts';
 	import Header from '#lib/components/Header.svelte';
 	import Icon from '#lib/components/Icon.svelte';
+	import { t } from '#lib/i18n.svelte.ts';
 
 	// One page of the grid; eight columns of six rows on desktop, and the
 	// API cap keeps a foulest-offset request from doing more work than this.
 	const PAGE_SIZE = 48;
-
-	const GROUPS: Record<GroupKey, string> = {
-		strokes: 'strokes',
-		grade: 'grade',
-		jlpt: 'JLPT level'
-	};
 
 	const fromWord = $derived(page.url.searchParams.get('from') ?? '');
 
@@ -41,7 +36,7 @@
 		busy = true;
 		apiKanjiGroup(r.by, r.value, PAGE_SIZE, r.skip)
 			.then((d) => (data = d))
-			.catch((e) => (error = e instanceof Error ? e.message : 'Failed to load the kanji group'))
+			.catch((e) => (error = e instanceof Error ? e.message : t('groupLoadFailed')))
 			.finally(() => (busy = false));
 	});
 
@@ -65,11 +60,15 @@
 		}
 	}
 
+	function groupLabel(by: GroupKey): string {
+		return t(by === 'jlpt' ? 'jlpt' : by);
+	}
+
 	function metaLine(k: KanjiGroupResponse['kanjis'][number]): string {
 		return [
-			k.stroke_count ? `${k.stroke_count} strokes` : '',
+			k.stroke_count ? t('strokesCount', { n: k.stroke_count }) : '',
 			k.jlpt_level ? { 4: 'N5', 3: 'N4', 2: 'N2-N3', 1: 'N1' }[k.jlpt_level] : '',
-			k.freq ? `Freq #${k.freq}` : ''
+			k.freq ? t('freq', { n: k.freq }) : ''
 		]
 			.filter(Boolean)
 			.join(' · ');
@@ -77,28 +76,26 @@
 </script>
 
 <svelte:head>
-	<title>{data ? `${data.label} kanji — Reikun` : 'Reikun'}</title>
+	<title>{data ? `${data.label} ${t('kanjiSuffix')} — Reikun` : 'Reikun'}</title>
 </svelte:head>
 
 <Header />
 <div class="kgroup-wrap">
 	<nav class="group-nav-bar">
-		<button type="button" class="group-back-btn" onclick={goBack} title={fromWord ? `Back to ${fromWord}` : 'Go back'}>
-			← Back{#if fromWord}&nbsp;to <b lang="ja">{fromWord}</b>{:else}&nbsp;to search{/if}
+		<button type="button" class="group-back-btn" onclick={goBack} title={fromWord ? t('backTo', { word: fromWord }) : t('goBack')}>
+			← {#if fromWord}{t('backTo', { word: fromWord })}{:else}{t('backToSearch')}{/if}
 		</button>
-		<a href="/" class="group-home-link">Reikun home</a>
+		<a href="/" class="group-home-link">{t('reikunHome')}</a>
 	</nav>
 	{#if !req}
-		<p class="notice"><Icon name="info" size={16} /> Unknown group — pick one from any kanji card's
-			badges (strokes, grade or JLPT).</p>
+		<p class="notice"><Icon name="info" size={16} /> {t('unknownGroup')}</p>
 	{:else}
 		<h1 class="kgroup-title">
-			{data?.label ?? GROUPS[req.by]} kanji
+			{data?.label ?? groupLabel(req.by)} {t('kanjiSuffix')}
 			{#if data}<span class="kgroup-total">{data.total}</span>{/if}
 		</h1>
 		<p class="kgroup-sub">
-			Every kanji with the same {GROUPS[req.by]}, frequency-ranked most-common first. Click one to
-			open its full card with readings, stroke order and words.
+			{t('groupSubtitle', { group: groupLabel(req.by) })}
 		</p>
 
 		{#if busy}
@@ -108,7 +105,7 @@
 		{:else if data}
 			<div class="kg-grid">
 				{#each data.kanjis as k (k.literal)}
-					<a class="kg-card" href="/?q={encodeURIComponent(k.literal)}" title={`Open ${k.literal}`}>
+					<a class="kg-card" href="/?q={encodeURIComponent(k.literal)}" title={t('openKanji', { char: k.literal })}>
 						<span class="kg-glyph" lang="ja">{k.literal}</span>
 						<span class="kg-gloss">{k.meanings[0] ?? '—'}</span>
 						<span class="kg-meta">{metaLine(k)}</span>
@@ -116,16 +113,16 @@
 				{/each}
 			</div>
 			{#if pages > 1}
-				<nav class="kg-pager" aria-label="Group pages">
-					{#if pageNo > 1}<a class="btn-3d" href={pageHref(pageNo - 2)}>← Previous</a>{/if}
-					<span class="kg-pager-label">Page {pageNo} of {pages}</span>
-					{#if pageNo < pages}<a class="btn-3d" href={pageHref(pageNo)}>Next →</a>{/if}
+				<nav class="kg-pager" aria-label={t('groupPages')}>
+					{#if pageNo > 1}<a class="btn-3d" href={pageHref(pageNo - 2)}>{t('previous')}</a>{/if}
+					<span class="kg-pager-label">{t('pageOf', { page: pageNo, pages })}</span>
+					{#if pageNo < pages}<a class="btn-3d" href={pageHref(pageNo)}>{t('next')}</a>{/if}
 				</nav>
 			{/if}
 
 			<div class="kgroup-bottom-actions">
 				<button type="button" class="btn-3d" onclick={goBack}>
-					← Back{#if fromWord}&nbsp;to <b lang="ja">{fromWord}</b>{:else}&nbsp;to previous search{/if}
+					← {#if fromWord}{t('backTo', { word: fromWord })}{:else}{t('backPrevious')}{/if}
 				</button>
 			</div>
 		{/if}

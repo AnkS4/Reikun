@@ -84,12 +84,15 @@ class Rewrite:
         return self.method != "none"
 
 
+_STRIP_PUNCT = " \t\r\n\u3000\"'“”\u2018\u2019「」『』\uff08\uff09()【】[]〜~・…"
+
+
 def is_japanese(text: str) -> bool:
     """Check if text starts with Japanese (for mixed text detection)."""
     if not text:
         return False
-    # Strip leading whitespace and check if first character is Japanese
-    text = text.lstrip()
+    # Strip leading whitespace and punctuation/brackets, then check if first char is Japanese
+    text = text.lstrip(_STRIP_PUNCT)
     return bool(_JAPANESE.match(text))
 
 

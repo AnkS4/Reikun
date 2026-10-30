@@ -26,9 +26,13 @@ class Provider:
     reasoning: bool = False
     # Newer OpenAI-style APIs prefer max_completion_tokens; most compat layers want max_tokens.
     token_param: str = "max_tokens"
+    # Provider-specific request extensions, sent verbatim as the OpenAI
+    # `extra_body` — hosts with chat templates may accept kwargs no standard
+    # param covers (Nebius Nemotron: chat_template_kwargs.enable_thinking).
+    extra_body: dict | None = None
 
 
-# Defaults match production (groq) and local/llm_compare baselines; override
+# Defaults match production (nebius / Nemotron-3-Nano-30B-A3B); override
 # per deploy with LLM_MODEL / LLM_MODEL_FALLBACK without changing provider.
 PROVIDERS: dict[str, Provider] = {
     "groq": Provider(
@@ -63,6 +67,12 @@ PROVIDERS: dict[str, Provider] = {
         # Catalog IDs are exact (case-sensitive): Nano uses NVIDIA- prefix; Super is lowercase.
         default_model="nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
         default_fallback="nvidia/nemotron-3-super-120b-a12b",
+        # Nemotron reasons by default, and reasoning tokens eat the level token
+        # budgets before prose exists (truncation -> fallback handoff, 40-85 s
+        # calls). `reasoning_effort` is silently IGNORED by Nebius, but the
+        # chat-template flag works: probe 2026-10-26 returned `finish_reason:
+        # stop`, immediate content, `reasoning: null`, at ~0.3 s.
+        extra_body={"chat_template_kwargs": {"enable_thinking": False}},
     ),
 }
 

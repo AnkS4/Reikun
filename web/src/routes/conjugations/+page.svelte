@@ -4,6 +4,7 @@
 	import { apiSearch, type SearchResult } from '#lib/api.ts';
 	import Header from '#lib/components/Header.svelte';
 	import Icon from '#lib/components/Icon.svelte';
+	import { t } from '#lib/i18n.svelte.ts';
 
 	// Conjugation data can arrive two ways:
 	// 1. Via SvelteKit navigation state (instant, no extra fetch — from ResultCard link)
@@ -55,44 +56,43 @@
 					fetchedRows = match.inflected_forms;
 					fetchedHeadword = match.kanji_form || match.reading || w;
 				} else {
-					error = `No conjugation data found for "${w}".`;
+					error = t('noConjData', { word: w });
 				}
 			})
 			.catch((e) => {
-				error = e instanceof Error ? e.message : 'Failed to load conjugation data';
+				error = e instanceof Error ? e.message : t('conjLoadFailed');
 			})
 			.finally(() => (busy = false));
 	});
 
 	const rows = $derived(stateRows ?? fetchedRows ?? []);
-	const heading = $derived(word || fetchedHeadword || 'Conjugation');
+	const heading = $derived(word || fetchedHeadword || t('conjugationFallback'));
 	const displayReading = $derived(reading && reading !== word ? reading : '');
 </script>
 
 <svelte:head>
-	<title>{heading} conjugations — Reikun</title>
+	<title>{t('conjPageTitle', { word: heading })} — Reikun</title>
 </svelte:head>
 
 <Header />
 <div class="conj-page-wrap">
 	<nav class="group-nav-bar">
-		<button type="button" class="group-back-btn" onclick={goBack} title={word ? `Back to ${word}` : 'Go back'}>
-			← Back{#if word}&nbsp;to <b lang="ja">{word}</b>{:else}&nbsp;to search{/if}
+		<button type="button" class="group-back-btn" onclick={goBack} title={word ? t('backTo', { word }) : t('goBack')}>
+			← {#if word}{t('backTo', { word })}{:else}{t('backToSearch')}{/if}
 		</button>
-		<a href="/" class="group-home-link">Reikun home</a>
+		<a href="/" class="group-home-link">{t('reikunHome')}</a>
 	</nav>
 	{#if !word}
-		<p class="notice"><Icon name="info" size={16} /> No word specified — pick a conjugation from any
-			search result card.</p>
+		<p class="notice"><Icon name="info" size={16} /> {t('noWord')}</p>
 	{:else}
 		<h1 class="conj-page-title" lang="ja">
 			{heading}
 			{#if displayReading}<span class="conj-page-reading">【{displayReading}】</span>{/if}
-			<span class="conj-page-label">conjugations</span>
+			<span class="conj-page-label">{t('conjugationsLabel')}</span>
 			{#if rows.length}<span class="kgroup-total">{rows.length}</span>{/if}
 		</h1>
 		<p class="conj-page-sub">
-			All inflected forms of <span lang="ja">{heading}</span>. Click the back arrow or use your browser's back button to return.
+			{t('conjSubtitle', { word: heading })}
 		</p>
 
 		{#if busy}
@@ -103,9 +103,9 @@
 			<table class="conj-page-table">
 				<thead>
 					<tr>
-						<th>Form</th>
-						<th>Written</th>
-						<th>Kana</th>
+						<th>{t('form')}</th>
+						<th>{t('written')}</th>
+						<th>{t('kana')}</th>
 					</tr>
 				</thead>
 				<tbody>
@@ -122,7 +122,7 @@
 
 		<div class="conj-page-back">
 			<button type="button" class="btn-3d" onclick={goBack}>
-				← Back to <span lang="ja">{heading}</span>
+				← {t('backTo', { word: heading })}
 			</button>
 		</div>
 	{/if}

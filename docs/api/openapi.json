@@ -2,8 +2,8 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Reikun API",
-    "description": "Japanese dictionary search (hybrid dense + BM25), kanji details and JLPT-calibrated grammar explanations.",
-    "version": "0.9.0"
+    "description": "Semantic Japanese Dictionary & Reading Assistant — hybrid dense + BM25 search, kanji details and JLPT-calibrated grammar explanations.",
+    "version": "1.0.0"
   },
   "paths": {
     "/health": {
@@ -253,7 +253,7 @@
             "required": true,
             "schema": {
               "type": "integer",
-              "maximum": 30,
+              "maximum": 50,
               "minimum": 1,
               "description": "Group value (stroke count, KANJIDIC2 grade, or old-scale JLPT level)",
               "title": "Value"

@@ -23,6 +23,7 @@
 	import KanjiText from './KanjiText.svelte';
 	import Feedback from './Feedback.svelte';
 	import Icon from './Icon.svelte';
+	import { t } from '#lib/i18n.svelte.ts';
 
 	let {
 		ex,
@@ -30,7 +31,7 @@
 		onpick
 	}: { ex: ExampleSentence; level: Level; onpick?: (char: string) => void } = $props();
 
-	let expl = $state<{
+	let expl = $state.raw<{
 		level: string;
 		text: string;
 		id: number | null;
@@ -39,19 +40,6 @@
 	} | null>(null);
 	let streaming = $state(false);
 	let streamText = $state('');
-	let copied = $state(false);
-	let copyTimer: ReturnType<typeof setTimeout> | undefined;
-
-	async function copyJapanese() {
-		try {
-			await navigator.clipboard.writeText(ex.japanese);
-			copied = true;
-			clearTimeout(copyTimer);
-			copyTimer = setTimeout(() => (copied = false), 1500);
-		} catch {
-			/* clipboard access rejected */
-		}
-	}
 
 	async function explain() {
 		const lvl = level; // pinned: a mid-stream level change mustn't relabel this expl.
@@ -65,7 +53,7 @@
 			);
 			expl = {
 				level: lvl,
-				text: streamText.trim() || 'Explanation unavailable.',
+				text: streamText.trim() || t('explanationUnavailable'),
 				id: done.explanation_id,
 				provider: done.provider ?? '',
 				model: done.model ?? ''
@@ -73,7 +61,7 @@
 		} catch (e) {
 			expl = {
 				level: lvl,
-				text: `**Explanation unavailable:** ${e instanceof Error ? e.message : e}`,
+				text: t('explanationError', { error: e instanceof Error ? e.message : String(e) }),
 				id: null,
 				provider: '',
 				model: ''
@@ -90,25 +78,16 @@
 		{#if ex.english}<p class="en">{ex.english}</p>{/if}
 	</div>
 	<div class="example-actions">
-		<button
-			type="button"
-			class="btn tertiary"
-			title={copied ? 'Copied to clipboard' : 'Copy Japanese sentence'}
-			aria-label={copied ? 'Copied' : 'Copy Japanese sentence'}
-			onclick={copyJapanese}
-		>
-			<Icon name={copied ? 'check' : 'copy'} size={15} />
-		</button>
 		{#if !expl || expl.level !== level}
 			<button
 				type="button"
 				class="btn-3d"
 				disabled={streaming}
 				onclick={explain}
-				title="JLPT-calibrated grammar explanation for this sentence"
+				title={t('explainTitle')}
 			>
 				<Icon name="sparkles" size={14} />
-				<span>{expl ? 'Explain again' : 'Explain'}</span>
+				<span>{expl ? t('explainAgain') : t('explain')}</span>
 				<span class="level-indicator">{level}</span>
 			</button>
 		{/if}
@@ -121,7 +100,7 @@
 		{#if md}{@html md(expl.text)}{:else}<pre class="stream-text">{expl.text}</pre>{/if}
 	</div>
 	<p class="caption">
-		AI-generated for {expl.level}{expl.provider ? ` · ${expl.provider}` : ''}{expl.model
+		{t('aiGenerated', { level: expl.level })}{expl.provider ? ` · ${expl.provider}` : ''}{expl.model
 			? ` · ${expl.model}`
 			: ''}
 		<Feedback kind="explanation" refId={expl.id} query={ex.japanese} />

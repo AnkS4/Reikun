@@ -49,6 +49,140 @@ TOKENS_PER_WORD = 2.2  # English prose plus the Japanese fragments in each bulle
 
 _LEAKED_SPECIAL_TOKEN = re.compile(r"<\|[^|]*\|>.*", re.DOTALL)
 
+_BOLD = re.compile(r"\*\*(.+?)\*\*")
+# ASCII and fullwidth parentheses: a model writing Japanese often picks the
+# fullwidth pair for the fragment even though the prompt's examples use ASCII.
+# \uFF08/\uFF09 keep the source unambiguous under RUF001.
+_PAREN = re.compile(r"[(\uFF08]([^()\uFF08\uFF09]+)[)\uFF09]")
+_BULLET = re.compile(r"^(\s*[-*]\s+)(.*)$")
+# Marks that carry no grammar on their own. The fullwidth twins of ASCII
+# marks are \u escapes so the source stays unambiguous under RUF001.
+_PUNCT_TABLE = set("。、…‥・ー「」『』 ,.!?:;-—") | set("\u3000\uff01\uff1f\uff08\uff09")
+
+
+def _is_punct_run(text: str) -> bool:
+    stripped = text.strip()
+    return bool(stripped) and all(ch in _PUNCT_TABLE for ch in stripped)
+
+
+def _stem(lead: str) -> str:
+    """Pattern without the 〜/~ prefix — `**〜たい** (たい)` repeats the pattern."""
+    return lead.lstrip("〜~") or lead
+
+
+class _BulletTidier:
+    """The per-line bullet rules with cross-line state — one bullet per
+    distinct fragment (dedup), no punctuation-only bullets, no redundant
+    parentheticals (`**は** (は)`, `**〜たい** (たい)`), no contentless scaffold
+    bullets ("— ~"), and the level's bullet cap. Shared by `tidy_bullets`
+    (full text of `chat()`) and `_tidy_stream` (the live SSE stream) so both
+    paths enforce identical rules."""
+
+    def __init__(self, max_bullets: int) -> None:
+        self.max_bullets = max_bullets
+        self.seen: set[str] = set()
+        self.n_bullets = 0
+
+    def line(self, line: str) -> str | None:
+        """Tidy one line: return it (possibly de-parenthesised) or None to
+        drop it."""
+        if line.strip().startswith("*(cut off") and self.n_bullets >= self.max_bullets:
+            return None
+        m = _BULLET.match(line)
+        if not m:
+            return line
+        prefix, body = m.group(1), m.group(2).strip()
+        bold = _BOLD.search(body)
+        lead = bold.group(1).strip() if bold else body.split("—", 1)[0].split("(", 1)[0].strip()
+        if not lead or _is_punct_run(lead):
+            return None  # "。 (。) — punctuation — …" — nothing to keep
+        pm = _PAREN.search(body)
+        paren = pm.group(1).strip() if pm else ""
+        stem = _stem(lead)
+        dash = body.find("—")
+        if paren and stem == paren and (dash < 0 or pm.start() < dash):
+            # Parenthetical in the pattern segment repeats the pattern
+            # (ignoring the tilde) — drop it, preserving exactly one space
+            # around the boundary. A matching parenthetical in the
+            # explanation prose ("the topic marker; (は) is pronounced wa")
+            # sits after the em dash and must stay.
+            start, end = pm.start(), pm.end()
+            l_part = body[:start].rstrip(" ")
+            r_part = body[end:].lstrip(" ")
+            sep = " " if l_part and r_part else ""
+            body = l_part + sep + r_part
+            line = prefix + body
+        at = body.rfind("—")
+        tail = body[at + 1:].strip() if at >= 0 else ""
+        if at >= 0 and (not tail or _is_punct_run(tail)):
+            # Nothing after the dash ("〜たい (たい) — …") — a copied example
+            # scaffold, not an explanation.
+            return None
+        if stem in self.seen:
+            return None  # repeated fragment — the model re-walking the analysis
+        if self.n_bullets >= self.max_bullets:
+            return None  # hard cap; keep the first and best
+        self.seen.add(stem)
+        self.n_bullets += 1
+        return line
+
+
+def tidy_bullets(text: str, max_bullets: int) -> str:
+    """Deterministic post-generation cleanup: `_BulletTidier`'s per-line rules
+    over the full text of `chat()` (i.e. /explain and the stream endpoint's
+    blocking fallback), plus the whole-text fallbacks a line-tidier can't do —
+    collapsing blank-line runs and restoring the model's original text if
+    every bullet tidies away. The live SSE stream applies the same rules
+    incrementally via `_tidy_stream`."""
+    tidier = _BulletTidier(max_bullets)
+    out: list[str] = []
+    for line in text.splitlines():
+        kept = tidier.line(line)
+        if kept is not None:
+            out.append(kept)
+
+    cleaned = re.sub(r"\n{3,}", "\n\n", "\n".join(out)).strip("\n")
+    if not any(_BULLET.match(ln) for ln in cleaned.splitlines()):
+        # Every bullet tidied away — keep the model's original rather than
+        # presenting an empty explanation.
+        return re.sub(r"\n{3,}", "\n\n", text).strip("\n")
+    return cleaned
+
+
+def _tidy_stream(deltas: Iterator[str], max_bullets: int) -> Iterator[str]:
+    """Line-buffered `_BulletTidier` for the SSE stream: hold deltas until
+    each newline, apply the same per-line rules as `tidy_bullets`, re-emit.
+    Dropped lines vanish with their newline (a tidied-away bullet never
+    paints); blank-line runs collapse to two. The whole-text fallbacks are
+    impossible here — a stream can't retroactively un-emit what it already
+    sent — but they only cover degenerate outputs the prompt now forbids,
+    and an altogether empty stream already reroutes to the blocking call
+    upstream."""
+
+    tidier = _BulletTidier(max_bullets)
+    buf = ""
+    blanks = 0
+    for delta in deltas:
+        buf += delta
+        while "\n" in buf:
+            raw, buf = buf.split("\n", 1)
+            line = tidier.line(raw)
+            if line is None:
+                continue
+            if not line.strip():
+                blanks = min(blanks + 1, 2)
+                continue
+            if blanks:
+                yield "\n" * blanks
+                blanks = 0
+            yield f"{line}\n"
+    if buf and (line := tidier.line(buf)) is not None and line.strip():
+        # Final partial line (stream ended mid-line or cut off): no trailing
+        # newline, the "cut off" marker may follow directly.
+        if blanks:
+            yield "\n" * blanks
+        yield line
+
 
 @dataclass(frozen=True, slots=True)
 class LevelConfig:
@@ -72,11 +206,12 @@ _LEVEL: dict[str, LevelConfig] = {
             "the first time you use it (e.g. \"particle — a small word marking the noun's role\"). "
             "Say what the pattern does first, then how it is built. Compare to an English "
             "construction only where it genuinely clarifies. Everything is new to this student, "
-            "so do not skip basics — but keep each bullet to one idea."
+            "so do not skip basics — but keep each bullet to one idea. Never label a form with "
+            "traditional conjugation-class names (連体形, 未然形); describe the form in plain words."
         ),
-        max_bullets=5,
-        bullet_words=38,
-        words=220,
+        max_bullets=4,
+        bullet_words=30,
+        words=160,
     ),
     "N4": LevelConfig(
         desc="beginner — knows ~300 kanji, basic verb conjugations, simple sentence patterns",
@@ -85,9 +220,9 @@ _LEVEL: dict[str, LevelConfig] = {
             "what it does the first time. Skip N5 basics (です, plain は/が/を) unless used in a "
             "non-obvious way. A short English comparison is fine, not required."
         ),
-        max_bullets=5,
-        bullet_words=30,
-        words=180,
+        max_bullets=4,
+        bullet_words=24,
+        words=130,
     ),
     "N3": LevelConfig(
         desc="intermediate — knows ~650 kanji, can read everyday texts with some difficulty",
@@ -96,9 +231,9 @@ _LEVEL: dict[str, LevelConfig] = {
             "redefining basics. Skip N5/N4 basics entirely. Where a pattern is easily confused "
             "with a close one, state the distinction in a clause."
         ),
-        max_bullets=4,
-        bullet_words=28,
-        words=140,
+        max_bullets=3,
+        bullet_words=20,
+        words=100,
     ),
     "N2": LevelConfig(
         desc="upper-intermediate — knows ~1000 kanji, reads most Japanese with a dictionary",
@@ -107,9 +242,9 @@ _LEVEL: dict[str, LevelConfig] = {
             "at N3 or below. Focus on nuance, formality, and why this construction was chosen "
             "over its closest alternative."
         ),
-        max_bullets=4,
-        bullet_words=22,
-        words=110,
+        max_bullets=3,
+        bullet_words=16,
+        words=85,
     ),
     "N1": LevelConfig(
         desc="advanced — knows 2000+ kanji, understands complex and nuanced Japanese",
@@ -120,8 +255,8 @@ _LEVEL: dict[str, LevelConfig] = {
             "bullet saying so rather than padding."
         ),
         max_bullets=3,
-        bullet_words=25,
-        words=80,
+        bullet_words=18,
+        words=70,
     ),
 }
 
@@ -131,14 +266,20 @@ at a specific JLPT level.
 
 Format:
 - Markdown bullets only — no preamble, no headings, no closing summary.
-- One bullet per distinct grammar pattern, in the order the patterns appear in the sentence.
+- One bullet per distinct grammar pattern, in the order the patterns appear in the sentence. \
+Each fragment appears in exactly one bullet: never paraphrase or revisit a fragment you \
+already covered. Sentence-final and list punctuation (。 、 …) is never a bullet.
 - Each bullet: the pattern in bold, the fragment as it appears in the sentence in \
-parentheses, an em dash, then the explanation. Example shape:
-  - **〜ている** (食べている) — …
+parentheses, an em dash, then a real explanation. Example shape:
+  - **〜ている** (食べている) — ongoing action or current state, built on the te-form
+- Never end a bullet on the em dash or an ellipsis; every bullet carries its \
+explanation. The examples here are filled-in sentences, not blanks to fill.
 - The parenthetical must add information — a conjugated surface (**〜ました** (食べました)) \
 or a decomposition (**ではなく** (では + なく)). Never write a parenthetical that merely \
-repeats the pattern name: **ではなく** (ではなく) is wrong. For an all-kana pattern with \
-no decomposition to show, write the bullet with no parentheses (**どうやら** — …).
+repeats the pattern name — **ではなく** (ではなく) and **〜たい** (たい) are both wrong \
+(the 〜 prefix doesn't save it). For an all-kana pattern with no decomposition to show, \
+write the bullet with no parentheses: **どうやら** — it seems (a set phrase that needs \
+no gloss of its own).
 - For conjugated forms, name the dictionary form and the form: \
 **〜ました** (食べました) — polite past of 食べる.
 
@@ -147,7 +288,9 @@ Content:
 or pad to fill space; fewer bullets is better than filler.
 - Grammar, not vocabulary: cover particles, conjugations, auxiliaries, sentence-final \
 forms, conjunction patterns and set phrases (〜わけにはいかない). Do not gloss ordinary \
-nouns, verbs or adjectives.
+nouns, verbs or adjectives — even when the analysis lists them.
+- The analysis is context to LOCATE forms, never a checklist: never walk it token by \
+token; pick the few grammar-bearing spots and stop.
 - If a pattern is well above the student's level, still cover it, in one short line.
 - Accuracy over coverage: if a nuance depends on context you cannot see, say so briefly \
 instead of guessing.
@@ -179,8 +322,9 @@ def level_aware_system(jlpt_level: str) -> str:
         f"{_BASE_RULES}\n\n"
         f"Student level: {jlpt_level} ({cfg.desc}).\n"
         f"Depth and tone: {cfg.style}\n"
-        f"Length: at most {cfg.max_bullets} bullets, each at most {cfg.bullet_words} words, "
-        f"{cfg.words} words in total. These are ceilings, not targets."
+        f"Length — hard limits: at most {cfg.max_bullets} bullets, each at most {cfg.bullet_words} words, "
+        f"{cfg.words} words total. Exceeding any of these is a defect, not extra value; prefer a "
+        f"shorter answer that covers the load-bearing patterns."
     )
 
 
@@ -262,6 +406,8 @@ def _complete(model: str, messages: list[dict[str, str]], budget: int, effort: s
     args[p.token_param] = budget
     if effort and p.reasoning:
         args["reasoning_effort"] = effort
+    if p.extra_body:
+        args["extra_body"] = {**p.extra_body, **args.get("extra_body", {})}
     try:
         return _llm_client().chat.completions.create(**args)
     except Exception as exc:
@@ -356,18 +502,19 @@ def explain_grammar(
     """
     models = (model,) if model else ()
     if level_aware:
-        return chat(
+        text = chat(
             level_aware_system(jlpt_level),
             level_aware_prompt(sentence, english, jlpt_level, hint),
             models=models,
             max_tokens=_cfg(jlpt_level).token_budget,
             retries=retries,
         )
+        return tidy_bullets(text, _cfg(jlpt_level).max_bullets)
     return chat(GENERIC_SYSTEM, generic_prompt(sentence, english), models=models,
                 max_tokens=900, retries=retries)
 
 
-def explain_grammar_stream(
+def _explain_grammar_stream(
     sentence: str,
     english: str,
     jlpt_level: str = "N5",
@@ -376,7 +523,8 @@ def explain_grammar_stream(
     hint: str = "",
 ) -> Iterator[str]:
     """
-    Generator variant of `explain_grammar` for SSE / st.write_stream.
+    `explain_grammar_stream`'s transport: failover/retry/budget handling that
+    yields the model's deltas unfiltered (the public wrapper tidies them).
 
     Per candidate model (primary → fallback), up to two attempts: a stream
     that dies *before* any text was emitted is retried once if the error is
@@ -426,4 +574,27 @@ def explain_grammar_stream(
                 continue
             break  # empty stream, no error: next model
     if not emitted:  # every stream failed → last resort: blocking call
-        yield explain_grammar(sentence, english, jlpt_level, retries=1, hint=hint)
+        yield explain_grammar(
+            sentence, english, jlpt_level, model=model, retries=1, hint=hint)
+
+
+def explain_grammar_stream(
+    sentence: str,
+    english: str,
+    jlpt_level: str = "N5",
+    *,
+    model: str | None = None,
+    hint: str = "",
+) -> Iterator[str]:
+    """
+    Generator variant of `explain_grammar` for SSE / st.write_stream: the
+    transport in `_explain_grammar_stream` plus `_tidy_stream`, so the live
+    output obeys the same bullet rules as the blocking `explain_grammar` —
+    no redundant parentheticals (`**は** (は)`, `**が** (が)`), no
+    repeated-pattern or scaffold bullets, and the level's bullet cap,
+    applied line-buffered as the text arrives.
+    """
+    yield from _tidy_stream(
+        _explain_grammar_stream(
+            sentence, english, jlpt_level, model=model, hint=hint),
+        _cfg(jlpt_level).max_bullets)

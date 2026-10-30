@@ -87,10 +87,66 @@ def test_counter_reading_table(num: str, counter: str, reading: str) -> None:
 
 def test_counter_chip_in_sentence_and_alone() -> None:
     """The table reading lands on the fused chip both inside a sentence and
-    as a bare query, and the counter's inflection tail joins the ruby."""
-    assert segment_japanese("2日です")[0]["reading"] == "ふつかです"
+    as a bare query; a trailing copula after a counter still rides along
+    (2日です is the previous/merged behaviour)."""
+    sentence = segment_japanese("2日です")
+    assert [s["text"] for s in sentence] == ["2日です"]
+    assert sentence[0]["reading"] == "ふつかです"
     bare = segment_japanese("2日")
     assert bare and bare[0]["text"] == "2日" and bare[0]["reading"] == "ふつか"
+
+
+@pytest.mark.parametrize(
+    "sentence,chips",
+    [
+        # Content word + terminal copula: the copula is its own chip.
+        ("学生です", ["学生", "です"]),
+        ("学生だ", ["学生", "だ"]),
+        ("学生だった", ["学生", "だった"]),
+        ("学生でした", ["学生", "でした"]),
+        ("静かです", ["静か", "です"]),
+        ("元気です", ["元気", "です"]),
+        ("水です", ["水", "です"]),
+        ("静かな部屋です", ["静かな", "部屋", "です"]),
+        ("有名な人です", ["有名な", "人", "です"]),
+        # Pronouns are content words too — the merged chip (何です) matches
+        # no dictionary entry, so the copula splits off after them as well.
+        ("何ですか", ["何", "です", "か"]),
+        ("誰ですか", ["誰", "です", "か"]),
+        ("それですね", ["それ", "です", "ね"]),
+        ("あの店のケーキはとても美味しいです", None),
+        # Auxiliary / particle / non-independent / continuative: merge as
+        # before — the split must not disturb these.
+        ("食べました", ["食べました"]),
+        ("行かなかった", ["行かなかった"]),
+        ("行きませんでした", ["行きませんでした"]),
+        ("行かなかったです", ["行かなかったです"]),
+        ("美しくないです", ["美しく", "ないです"]),
+        ("美味しくなかったです", ["美味しく", "なかったです"]),
+        ("食べるんです", ["食べる", "んです"]),
+        ("学生じゃないです", ["学生じゃ", "ないです"]),
+        ("2日です", ["2日です"]),
+        ("7人でした", ["7人でした"]),
+        ("山で", ["山で"]),
+        ("学生で", ["学生で"]),
+        # Past-tense auxiliary だ (助動詞-タ) must still merge.
+        ("休んだ", ["休んだ"]),
+        ("読んだ", ["読んだ"]),
+        ("飲んだ", ["飲んだ"]),
+    ],
+)
+def test_copula_is_its_own_chip(sentence: str, chips: list[str] | None) -> None:
+    """です/だ are words after a content word, not inflection tails:
+    美味しいです must not become a pseudo-headword that matches no dictionary
+    entry or result card. Every auxiliary/particle case keeps the previous
+    merged grouping."""
+    segments = segment_japanese(sentence) or []
+    texts = [s["text"] for s in segments]
+    if chips is None:
+        assert texts[-2:] == ["美味しい", "です"], texts
+        assert all(s["text"] != "美味しいです" for s in segments)
+    else:
+        assert texts == chips, texts
 
 
 @pytest.mark.parametrize(

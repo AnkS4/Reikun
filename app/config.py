@@ -69,9 +69,9 @@ EMBED_MODEL = os.getenv("EMBED_MODEL", "sentence-transformers/all-MiniLM-L6-v2")
 SPARSE_MODEL = os.getenv("SPARSE_MODEL", "Qdrant/bm25")
 
 # Grammar / rewrite LLM — OpenAI-compatible providers (see app/llm.py).
-# Switch with LLM_PROVIDER=groq|gemini|cohere|nebius; set the matching *_API_KEY.
+# Switch with LLM_PROVIDER=nebius|groq|gemini|cohere; set the matching *_API_KEY.
 _VALID_LLM_PROVIDERS = frozenset(PROVIDERS)
-LLM_PROVIDER = _env("LLM_PROVIDER", "groq").lower()
+LLM_PROVIDER = _env("LLM_PROVIDER", "nebius").lower()
 if LLM_PROVIDER not in _VALID_LLM_PROVIDERS:
     raise ValueError(
         f"LLM_PROVIDER={LLM_PROVIDER!r} invalid; expected one of {sorted(_VALID_LLM_PROVIDERS)}"

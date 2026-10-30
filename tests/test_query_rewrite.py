@@ -107,8 +107,19 @@ def test_heuristic_mode_never_calls_the_llm(monkeypatch):
 def test_japanese_input_is_not_pivoted(monkeypatch):
     calls: list[str] = []
     _patch_chat(monkeypatch, "{}", calls)
-    rw = query_rewrite.rewrite_query("猫", mode="auto")
-    assert rw.query == "猫"
-    assert rw.method == "none"
-    assert rw.japanese == ()
+    for q in ("猫", "「猫」", "〜たい", "\uff08東京\uff09"):
+        rw = query_rewrite.rewrite_query(q, mode="auto")
+        assert rw.query == q
+        assert rw.method == "none"
+        assert rw.japanese == ()
     assert calls == []
+
+
+def test_is_japanese_detection():
+    assert query_rewrite.is_japanese("猫")
+    assert query_rewrite.is_japanese("「猫」")
+    assert query_rewrite.is_japanese("〜たい")
+    assert query_rewrite.is_japanese("\uff08美味しいケーキ\uff09")
+    assert not query_rewrite.is_japanese("how to say 食べる")
+    assert not query_rewrite.is_japanese("water")
+    assert not query_rewrite.is_japanese("")

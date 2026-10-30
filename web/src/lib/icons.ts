@@ -31,6 +31,7 @@ export const icons = {
 		'<path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="m16 6-4-4-4 4"/><path d="M12 2v13"/>',
 	warning:
 		'<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/>',
+	close: '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
 	'arrow-up': '<path d="m5 12 7-7 7 7"/><path d="M12 19V5"/>',
 	'arrow-right': '<path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>',
 	pencil: '<path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>',

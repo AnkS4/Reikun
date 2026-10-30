@@ -19,6 +19,12 @@ RUN npm ci
 # Copy source
 COPY . .
 
+# PUBLIC_API_BASE is baked into the static bundle ($app/env/public declares it
+# `static: true`) — pass it as a build arg (docker-compose's web service does)
+# or the empty value falls back to the schema default in src/env.ts.
+ARG PUBLIC_API_BASE=""
+ENV PUBLIC_API_BASE="${PUBLIC_API_BASE}"
+
 # Build the app
 RUN npm run build
 

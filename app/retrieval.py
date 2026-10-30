@@ -195,12 +195,16 @@ def entry_forms(r: dict) -> tuple[str | None, ...]:
             *(r.get("kanji_forms") or ()), *(r.get("readings") or ()))
 
 
+@cache
 def _infl_indexed() -> bool:
     """True when the live payload index includes infl_forms — the conjugation
     arm only rides along once the collection has been re-ingested with the
     table (Qdrant strict mode 400s an un-indexed filter field). Checked once
-    per process; a transport error reads as not-indexed so degradation, not
-    downtime, is the failure mode."""
+    per process — the schema is fixed at ingest time and ingest completes
+    before the API boots — and cached so _exact_filter never pays a
+    get_collection round-trip per search. Either answer latches; a transport
+    error reads as not-indexed so degradation, not downtime, is the failure
+    mode."""
     try:
         schema = qdrant_client().get_collection(COLLECTION).payload_schema or {}
         return "infl_forms" in schema
@@ -855,6 +859,26 @@ def _tokenizer():
 
 
 _AUX_POS, _PARTICLE_POS = "助動詞", "助詞"
+# Copulas are words of their own after a CONTENT word: 美味しいです is
+# 美味しい + です (学生です → 学生 + です, それです → それ + です), unlike
+# 食べました where まし/た inflect the verb. Sudachi's LEMMA cannot
+# distinguish them — the past auxiliary た/だ (休んだ, 助動詞-タ) also
+# lemmatises to だ — so match the conjugation type. Pronouns count as
+# content words (何ですか → 何 + です + か); the split is otherwise
+# deliberately narrow: after an auxiliary or particle keep the old merge
+# (んです, 行きませんでした), and keep the continuative/attributive copulas
+# as before (山で, 学生じゃないです, 静かな部屋です). The merged surface
+# matches no dictionary entry (and no result card).
+_COPULA_CTYPES = {"助動詞-ダ", "助動詞-デス"}
+_CONTENT_POS = {"名詞", "代名詞", "形容詞", "形状詞"}
+_MERGED_COPULA_FORMS = {"で", "じゃ", "な"}
+
+
+def _copula_starts_word(prev: _Morph, cur: _Morph) -> bool:
+    if cur.ctype not in _COPULA_CTYPES or cur.surf in _MERGED_COPULA_FORMS:
+        return False
+    return (prev.pos in _CONTENT_POS
+            and prev.pos_sub not in ("非自立", "非自立可能"))
 
 
 class _Morph:
@@ -883,8 +907,10 @@ def _segment_sudachi(query: str, index: TrieIndex) -> list[dict] | None:
     Display grouping: a maximal tail of *ending parts* — 助動詞 auxiliaries
     (まし/た/ない), subsidiary verbs after て/で (いる/しまう…), and the
     conjunctive て/で gluing them — merges with its stem token into ONE
-    segment (食べ+まし+た → 食べました, し+て+い+ます → しています). The badge
-    shows the inflected word; the tooltip keeps the per-morpheme breakdown.
+    segment (食べ+まし+た → 食べました, し+て+い+ます → しています). Copulas
+    (です/だ) are excluded: they are separate words, so 美味しいです stays
+    美味しい + です. The badge shows the inflected word; the tooltip keeps
+    the per-morpheme breakdown.
     """
     # Snapshot each morpheme's fields once — every accessor is a Rust FFI call
     # and the passes below would otherwise re-read pos/reading several times
@@ -899,7 +925,8 @@ def _segment_sudachi(query: str, index: TrieIndex) -> list[dict] | None:
     # part only when what follows is one (て働く keeps its て as a connector).
     ending = [False] * n
     for i in range(n - 1, -1, -1):
-        if toks[i].pos == _AUX_POS:
+        if toks[i].pos == _AUX_POS and not (
+                i > 0 and _copula_starts_word(toks[i - 1], toks[i])):
             ending[i] = True
         elif (toks[i].pos == "動詞" and i and _is_te(i - 1)
               and toks[i].lemma in _SUBSIDIARY):
@@ -1210,6 +1237,9 @@ def _segment_bare(query: str) -> list[dict] | None:
     return parts if len(parts) >= 2 else None
 
 
+_JA_RUN = re.compile(r"[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff]+")  # mixed text: the Japanese prefix
+
+
 def segment_japanese(query: str, max_len: int = MAX_JA_QUERY_CHARS) -> list[dict] | None:
     """
     Split a Japanese sentence/compound into dictionary segments for the
@@ -1231,9 +1261,7 @@ def segment_japanese(query: str, max_len: int = MAX_JA_QUERY_CHARS) -> list[dict
         return None
 
     # Handle mixed text: find where Japanese ends and English begins
-    import re
-    _JA_PATTERN = re.compile(r"[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff]+")
-    match = _JA_PATTERN.match(query)
+    match = _JA_RUN.match(query)
     if match:
         ja_part = match.group()
         en_part = query[len(ja_part):].strip()

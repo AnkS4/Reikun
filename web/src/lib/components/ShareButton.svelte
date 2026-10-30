@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/state';
+	import { t } from '#lib/i18n.svelte.ts';
 	import Icon from './Icon.svelte';
 
 	let { query }: { query: string } = $props();
@@ -52,11 +53,11 @@
 <button
 	type="button"
 	class="btn tertiary copy-link-btn"
-	title="Share this search"
-	aria-label={copied ? 'Link copied' : 'Share this search'}
+	title={t('shareTitle')}
+	aria-label={copied ? t('linkCopied') : t('shareTitle')}
 	onclick={share}
 >
 	<Icon name={copied ? 'check' : 'share'} size={14} />
-	<span>{copied ? 'Link copied' : 'Share'}</span>
+	<span>{copied ? t('linkCopied') : t('share')}</span>
 </button>
-<span class="sr-only" role="status">{copied ? 'Link copied to clipboard' : ''}</span>
+<span class="sr-only" role="status">{copied ? t('linkCopiedSr') : ''}</span>

@@ -222,6 +222,7 @@ a {
 }
 
 main {
+	flex: 1 0 auto;
 	max-width: 50rem;
 	margin: 0 auto;
 	padding: 0 1.25rem 4rem;
@@ -260,6 +261,16 @@ ruby rt {
 	gap: 0.15rem;
 }
 
+/* Compact pages keep the floating controls at their usual fixed spot and
+   lift the wordmark to their centre line instead of pulling the controls down. */
+.header-bar.compact {
+	margin-top: 0.6rem;
+}
+
+.header-bar.compact .compact-title {
+	margin-top: 0;
+}
+
 .title-heading {
 	margin: 0;
 	display: flex;
@@ -293,6 +304,7 @@ ruby rt {
 }
 
 .hero-heading .brand-kanji {
+	font-family: var(--font-japanese);
 	font-weight: 400;
 	color: var(--text-muted);
 	font-size: 0.72em;
@@ -335,6 +347,7 @@ ruby rt {
 }
 
 .compact-title .brand-kanji {
+	font-family: var(--font-japanese);
 	font-size: 0.85em;
 	font-weight: 400;
 	color: var(--text-muted);
@@ -472,6 +485,7 @@ ruby rt {
 
 /* ---------- Sticky Search Row (Command Palette Style) ---------- */
 .search-row {
+	--utility-w: 3.25rem;
 	display: flex;
 	gap: 0.5rem;
 	align-items: stretch;
@@ -507,25 +521,12 @@ ruby rt {
 	box-shadow: 0 0 0 3px var(--primary-light), var(--shadow-sm);
 }
 
-.search-icon-prefix {
-	display: flex;
-	align-items: center;
-	padding-left: 0.9rem;
-	color: var(--text-faint);
-	pointer-events: none;
-	flex-shrink: 0;
-}
-
-.search-pair:focus-within .search-icon-prefix {
-	color: var(--primary);
-}
-
 .search-pair input[type='search'] {
 	flex: 1;
 	min-width: 0;
 	font: inherit;
 	font-size: 1.05rem;
-	padding: 0.7rem 0.75rem;
+	padding: 0.7rem 0.35rem 0.7rem 0.9rem;
 	border: none;
 	background: transparent;
 	color: var(--text);
@@ -535,40 +536,64 @@ ruby rt {
 	outline: none;
 }
 
+/* Use the app's own clear button instead of the platform cancel glyph, which
+   sits at an inconsistent distance from the submit button. */
 .search-pair input[type='search']::-webkit-search-cancel-button {
-	cursor: pointer;
-	filter: grayscale(1);
-	opacity: 0.6;
+	display: none;
 }
 
-.search-kbd {
+.search-clear {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
 	align-self: center;
-	font-family: var(--font-mono);
-	font-size: 0.72rem;
-	font-weight: 500;
+	flex-shrink: 0;
+	width: 1.5rem;
+	height: 1.5rem;
+	margin-right: 0.15rem;
+	padding: 0;
+	border: 0;
+	border-radius: var(--radius-pill);
+	background: transparent;
 	color: var(--text-faint);
-	background: var(--surface-soft);
-	border: 1px solid var(--border-soft);
-	border-radius: var(--radius-xs);
-	padding: 0.15rem 0.4rem;
-	margin-right: 0.5rem;
-	user-select: none;
-	pointer-events: none;
+	cursor: pointer;
+	transition: color 0.15s ease, background-color 0.15s ease;
 }
 
+.search-clear:hover {
+	color: var(--text);
+	background: var(--hover-bg);
+}
 
-/* Auxiliary controls on the search row */
+/* Auxiliary controls on the search row — shuffle, furigana and JLPT all use
+   the same square footprint so the strip stays visually even. */
 .search-row > .btn-3d,
 .search-row > .popover-wrap {
-	flex-shrink: 0;
+	flex: 0 0 var(--utility-w);
+	width: var(--utility-w);
 }
 
 .search-row > .popover-wrap {
 	display: flex;
 	position: relative;
+}
+
+.search-row > .popover-wrap > .btn {
+	width: 100%;
+}
+
+/* JLPT trigger: just the level code, no icon and no nested badge chrome */
+.search-row .popover-wrap > .btn.jlpt-trigger {
+	--px: 0;
+	gap: 0;
+}
+
+.jlpt-trigger .level-indicator {
+	background: transparent;
+	border: 0;
+	padding: 0;
+	font-size: 0.82rem;
+	color: inherit;
 }
 
 
@@ -607,7 +632,7 @@ ruby rt {
 	border-radius: var(--radius-pill);
 }
 
-.btn svg, .status-dot svg, .stroke-replay svg {
+.btn svg, .status-dot svg, .stroke-replay svg, .search-submit svg {
 	display: block;
 	flex-shrink: 0;
 }
@@ -688,6 +713,17 @@ ruby rt {
 	color: var(--text);
 	font-weight: 500;
 	box-shadow: var(--shadow-sm);
+}
+
+/* Language names are longer than the theme labels — let the popover panel
+   grow instead of wrapping Japanese or the monospace Latin names. */
+.segmented.lang-segmented {
+	width: max-content;
+}
+
+.segmented.lang-segmented button {
+	flex: 0 0 auto;
+	white-space: nowrap;
 }
 
 /* Furigana toggle in the search row — visible one-click switch */
@@ -1036,6 +1072,24 @@ a.kanji-tip {
 	box-shadow: var(--shadow-sm);
 	scroll-margin-top: 6rem;
 	transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+	/* Entrance: a short fade-up softens the skeleton→results handoff. The
+	   search page staggers siblings with an animation-delay; `backwards` fills
+	   only the delay (so a delayed card starts hidden) and never pins
+	   transform after the run — :hover's -1px lift must stay reachable. */
+	animation: card-in 0.3s cubic-bezier(0.2, 0.7, 0.3, 1) backwards;
+}
+
+@keyframes card-in {
+	from {
+		opacity: 0;
+		transform: translateY(8px);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.result-card {
+		animation: none;
+	}
 }
 
 .result-card:hover {
@@ -1585,15 +1639,15 @@ a.kanji-tip {
 
 /* Grade badge — school grade level: warm academic amber / ochre tint */
 .meta-badge-grade {
-	background: rgba(184, 119, 40, 0.09);
-	border-color: rgba(184, 119, 40, 0.30);
-	color: #8c5816;
+	background: rgba(180, 83, 9, 0.13);
+	border-color: rgba(180, 83, 9, 0.45);
+	color: #9a3412;
 }
 
 .meta-badge-grade:hover {
-	background: rgba(184, 119, 40, 0.16);
-	border-color: #b87728;
-	color: #5c3808;
+	background: rgba(180, 83, 9, 0.21);
+	border-color: #b45309;
+	color: #7c2d12;
 }
 
 [data-theme='dark'] .meta-badge-grade {
@@ -2163,9 +2217,10 @@ a.kanji-tip {
 	/* The layout renders <Footer> as a sibling of <main>, so unlike page
 	   content the footer does not inherit main's centered 50rem column —
 	   carry the same metrics here or it stretches edge-to-edge. */
+	flex-shrink: 0;
 	max-width: 50rem;
-	margin: 5rem auto 0;
-	padding: 2rem 1.25rem 0;
+	margin: 3rem auto 0;
+	padding: 1.5rem 1.25rem;
 	border-top: 1px solid var(--border-soft);
 }
 
@@ -2221,7 +2276,22 @@ a.kanji-tip {
 	}
 
 	.hero {
-		margin: clamp(3rem, 14vh, 6rem) 0 1.25rem;
+		margin: clamp(2.25rem, 11vh, 4.5rem) 0 1.25rem;
+	}
+
+	/* Keep the same copy as desktop; shrink the badge/tagline instead of
+	   swapping in different text. */
+	.hero-badge-tag {
+		font-size: 0.68rem;
+		letter-spacing: 0.04em;
+		padding: 0.2rem 0.65rem;
+	}
+
+	.hero .tagline {
+		font-size: 0.9rem;
+		line-height: 1.5;
+		max-width: 22rem;
+		color: var(--text-faint);
 	}
 
 	.kanji-card {
@@ -2246,10 +2316,6 @@ a.kanji-tip {
 		gap: 0.5rem;
 	}
 
-	.search-kbd {
-		display: none;
-	}
-
 	/* Search pair takes the full row; shuffle + furigana + JLPT drop to a
 	   second row at natural width, tucked right — one auto margin on the
 	   FIRST utility button right-aligns the whole strip: spreading it over
@@ -2261,6 +2327,10 @@ a.kanji-tip {
 
 	.search-pair {
 		flex: 1 1 100%;
+	}
+
+	.search-pair input[type='search'] {
+		font-size: 1rem;
 	}
 
 	.search-row > .btn.tertiary,
@@ -2280,6 +2350,27 @@ a.kanji-tip {
 
 	.common-words {
 		grid-template-columns: 1fr;
+	}
+}
+
+/* Touch devices: the floating chrome and kanji browse badges are small
+   secondary targets — give them a comfortable finger size without changing
+   the desktop density. */
+@media (pointer: coarse) {
+	.header-controls .status-dot,
+	.header-controls .btn {
+		width: 2.5rem;
+		height: 2.5rem;
+	}
+
+	/* Taller touch targets centre 4px lower; match that in the compact row. */
+	.header-bar.compact {
+		margin-top: 0.85rem;
+	}
+
+	.meta-badge.clickable {
+		min-height: 2rem;
+		padding-block: 0.3rem;
 	}
 }
 
@@ -2821,6 +2912,8 @@ html {
 
 body {
 	min-height: 100dvh;                       /* mobile browser chrome safe */
+	display: flex;
+	flex-direction: column;
 }
 
 button, a, input, summary {
@@ -2990,8 +3083,9 @@ button, a, input, summary {
 	align-items: center;
 	justify-content: center;
 	gap: 0.45em;
+	min-width: 2.6rem;
 	margin: 0;
-	padding: 0 1.2rem var(--lip);       /* bottom pad keeps the label centred on the glass */
+	padding: 0 0.8rem var(--lip);       /* bottom pad keeps the icon centred on the glass */
 	font: inherit;
 	font-size: 0.92rem;
 	font-weight: 600;
@@ -3047,7 +3141,7 @@ button, a, input, summary {
 /* Press: glass and label sink by one lip */
 .search-submit:active {
 	filter: brightness(0.96);
-	padding: var(--lip) 1.2rem 0;
+	padding: var(--lip) 0.8rem 0;
 }
 .search-submit:active::before { inset: var(--lip) 0 0 0; }
 .search-submit:active::after  { opacity: 0.3; }

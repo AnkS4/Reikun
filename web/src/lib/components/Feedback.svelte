@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { apiFeedback } from '#lib/api.ts';
+	import { t } from '#lib/i18n.svelte.ts';
 	import Icon from './Icon.svelte';
 	let {
 		kind,
@@ -27,13 +28,13 @@
 	}
 </script>
 
-<span class="feedback-row" role="group" aria-label="Rate this {kind}">
+<span class="feedback-row" role="group" aria-label={kind === 'search' ? t('rateSearch') : t('rateExplanation')}>
 	<button
 		type="button"
 		class:sel={rating === 1}
 		aria-pressed={rating === 1}
-		title="Helpful"
-		aria-label="Helpful"
+		title={t('helpful')}
+		aria-label={t('helpful')}
 		onclick={() => pick(1)}
 	>
 		<Icon name="thumbs-up" size={14} />
@@ -43,8 +44,8 @@
 		class:sel={rating === -1}
 		class:down={rating === -1}
 		aria-pressed={rating === -1}
-		title="Not helpful"
-		aria-label="Not helpful"
+		title={t('notHelpful')}
+		aria-label={t('notHelpful')}
 		onclick={() => pick(-1)}
 	>
 		<Icon name="thumbs-down" size={14} />

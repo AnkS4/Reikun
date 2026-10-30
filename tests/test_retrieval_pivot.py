@@ -59,3 +59,44 @@ def test_pivot_falls_back_to_english_when_japanese_candidates_are_empty(monkeypa
     assert calls == [("スーパー", "ja"), ("スーパーマーケット", "ja"), ("supermarket", "en_word")]
     assert resp.meta["route"] == "en_word"
     assert resp.results[0]["kanji_form"] == "supermarket"
+
+
+# ── _infl_indexed: one schema probe, latched ─────────────────────────────────
+
+def test_infl_indexed_checked_once_per_process(monkeypatch):
+    """_exact_filter runs on every search arm, so _infl_indexed must not get
+    a fresh get_collection round-trip per call — the schema lookup latches on
+    first use (either answer)."""
+    calls = 0
+
+    class _FakeCollection:
+        payload_schema = ()  # immutable; only truthiness matters to _infl_indexed
+
+    class _FakeClient:
+        def get_collection(self, *_a, **_k):
+            nonlocal calls
+            calls += 1
+            return _FakeCollection()
+
+    monkeypatch.setattr(retrieval, "qdrant_client", _FakeClient)
+    retrieval._infl_indexed.cache_clear()
+    retrieval._exact_filter("食べる")
+    retrieval._exact_filter("水")
+    assert calls == 1
+    retrieval._infl_indexed.cache_clear()
+
+
+def test_infl_indexed_transport_error_reads_not_indexed(monkeypatch):
+    """A Qdrant blip at first use must degrade (conjugation arm off) rather
+    than error every search — and the degraded answer is cached too, so Qdrant
+    stays out of each query's hot path."""
+
+    class _BlipClient:
+        def get_collection(self, *_a, **_k):
+            raise RuntimeError("qdrant briefly unreachable")
+
+    monkeypatch.setattr(retrieval, "qdrant_client", _BlipClient)
+    retrieval._infl_indexed.cache_clear()
+    assert retrieval._infl_indexed() is False
+    assert retrieval._infl_indexed() is False
+    retrieval._infl_indexed.cache_clear()

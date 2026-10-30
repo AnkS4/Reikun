@@ -1,12 +1,10 @@
 <script lang="ts">
+	import { t } from '#lib/i18n.svelte.ts';
 </script>
 
 <svelte:head>
-	<title>About — Reikun</title>
-	<meta
-		name="description"
-		content="About Reikun (例訓) — a free semantic Japanese dictionary: bilingual search, sentence breakdowns with furigana, kanji stroke order, and JLPT-calibrated grammar explanations."
-	/>
+	<title>{t('aboutTitle')}</title>
+	<meta name="description" content={t('aboutMeta')} />
 </svelte:head>
 
 <nav class="about-nav"><a href="/">← Reikun</a></nav>
@@ -19,71 +17,62 @@
 			class="brand-icon about-brand-icon"
 			aria-hidden="true"
 		/>
-		<h1>About Reikun</h1>
+		<h1>{t('aboutTitle')}</h1>
 	</div>
-	<p class="lede">
-		Reikun (例訓) is a free, open-source Japanese reading assistant — a semantic dictionary that works in
-		both English and Japanese.
-	</p>
+	<p class="lede">{t('aboutLede')}</p>
 
 	<section>
-		<h2>What it does</h2>
+		<h2>{t('whatItDoes')}</h2>
 		<ul>
-			<li>
-				<strong>Search</strong> — look up words in English or Japanese; natural-language questions
-				("how do you say X") are rewritten into dictionary terms automatically.
-			</li>
-			<li>
-				<strong>Sentence breakdown</strong> — paste a Japanese sentence and it is split into word
-				units with furigana, per-word glosses, and hover detail.
-			</li>
-			<li>
-				<strong>Kanji</strong> — readings, meanings, common compounds, JLPT level, and animated
-				stroke-order diagrams.
-			</li>
-			<li>
-				<strong>Grammar explanations</strong> — concise explanations calibrated to a JLPT level
-				(N5–N1), generated on demand by a LLM provider.
-			</li>
+			<li><strong>{t('search')}</strong> — {t('searchText')}</li>
+			<li><strong>{t('breakdownBold')}</strong> — {t('breakdownText')}</li>
+			<li><strong>{t('kanjiBold')}</strong> — {t('kanjiText')}</li>
+			<li><strong>{t('grammarBold')}</strong> — {t('grammarText')}</li>
 		</ul>
 	</section>
 
 	<section>
-		<h2>How it works</h2>
+		<h2>{t('howItWorks')}</h2>
+		<p>{t('howText')}</p>
+	</section>
+
+	<section>
+		<h2>{t('dataSources')}</h2>
 		<p>
-			Search runs hybrid retrieval — dense vector embeddings plus BM25 — fused in Qdrant, with query
-			routing that picks the right plan for English words, English sentences, and Japanese input.
-			Sentence parsing uses the Sudachi morphological analyzer; embeddings are quantized ONNX models
-			running on CPU. The frontend is a static SvelteKit site; the API is a FastAPI service.
+			{t('dataBefore')}<a
+				href="https://www.edrdg.org/wiki/index.php/JMdict-EDICT_Dictionary_Project"
+				target="_blank"
+				rel="noopener noreferrer">JMdict</a
+			>{t('dataAnd')}<a
+				href="https://www.edrdg.org/wiki/index.php/KANJIDIC_Project"
+				target="_blank"
+				rel="noopener noreferrer">KANJIDIC2</a
+			>{t('dataAfter')}<a
+				href="https://www.edrdg.org/wiki/index.php/Tanaka_Corpus"
+				target="_blank"
+				rel="noopener noreferrer">Tanaka Corpus</a
+			>{t('dataAfter2')}<a
+				href="https://kanjivg.tagaini.net/"
+				target="_blank"
+				rel="noopener noreferrer">KanjiVG</a
+			>{t('dataAfter3')}
 		</p>
 	</section>
 
 	<section>
-		<h2>Data and sources</h2>
-		<p>
-			Dictionary data comes from <a href="https://www.edrdg.org/wiki/index.php/JMdict-EDICT_Dictionary_Project" target="_blank" rel="noopener noreferrer">JMdict</a>
-			and <a href="https://www.edrdg.org/wiki/index.php/KANJIDIC_Project" target="_blank" rel="noopener noreferrer">KANJIDIC2</a> (<a href="https://www.edrdg.org/" target="_blank" rel="noopener noreferrer">EDRDG</a>,
-			<a href="https://www.edrdg.org/edrdg/licence.html" target="_blank" rel="noopener noreferrer">CC BY-SA 4.0</a>). Example sentences are from the
-			<a href="https://www.edrdg.org/wiki/index.php/Tanaka_Corpus" target="_blank" rel="noopener noreferrer">Tanaka Corpus</a> (Tatoeba, CC-BY 2.0 FR).
-			Kanji stroke diagrams derive from <a href="https://kanjivg.tagaini.net/" target="_blank" rel="noopener noreferrer">KanjiVG</a> (Ulrich Apel,
-			CC BY-SA 3.0).
-		</p>
+		<h2>{t('privacy')}</h2>
+		<p>{t('privacyText')}</p>
+		<p>{t('llmProviderText')}</p>
 	</section>
 
 	<section>
-		<h2>Privacy</h2>
+		<h2>{t('source')}</h2>
 		<p>
-			No cookies and no cross-site tracking. Queries are logged anonymously — stored only as hashes —
-			to improve search quality.
-		</p>
-	</section>
-
-	<section>
-		<h2>Source</h2>
-		<p>
-			Reikun is built by Aniket Satbhai. The code is
-			<a href="https://github.com/AnkS4/Reikun" target="_blank" rel="noopener noreferrer">on GitHub</a>
-			under the Apache-2.0 license.
+			{t('sourceBefore')}<a
+				href="https://github.com/AnkS4/Reikun"
+				target="_blank"
+				rel="noopener noreferrer">{t('sourceLink')}</a
+			>{t('sourceAfter')}
 		</p>
 	</section>
 </article>

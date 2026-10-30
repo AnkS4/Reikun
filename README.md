@@ -4,10 +4,10 @@
   </a>
 </p>
 
-<h1 align="center">Reikun (例訓) — Semantic Japanese Dictionary</h1>
+<h1 align="center">Reikun (例訓) — Semantic Japanese Dictionary & Reading Assistant</h1>
 
 <p align="center">
-  A Japanese reading assistant — search in English or Japanese, break down sentences word-by-word with furigana and meanings, inspect kanji, and get grammar explanations tuned to your JLPT level.
+  A Semantic Japanese Dictionary & Reading Assistant — search in English or Japanese, break down sentences word-by-word with furigana and meanings, inspect kanji, and get grammar explanations tuned to your JLPT level.
 </p>
 
 <p align="center">
@@ -27,17 +27,17 @@
 
 ## Demo
 
-![Reikun demo — search, grammar explanation, kanji tooltip and card, sentence breakdown](docs/videos/demo_v3.gif)
+![Reikun demo — search, sentence breakdown, grammar explanation, conjugation tables, kanji tooltip and card](docs/videos/demo_v1.0.gif)
 
 ## Features
 
 - **Hybrid Search with query routing**: Dense + BM25 sparse vectors fused server-side in Qdrant (RRF). `mode=auto` routes the query: Japanese → BM25 + exact match, English word → hybrid + commonness prior, English sentence → dense-weighted fusion.
-- **Query Rewriting**: Natural-language questions ("how do you say hospital") are normalised to dictionary glosses before retrieval — free regex heuristics by default, optional LLM pivoting to ranked Japanese headwords for descriptive queries
+- **Query Rewriting**: Natural-language questions ("how do you say hospital") are normalised to dictionary glosses before retrieval — regex heuristics handle common question forms, and the shipped `QUERY_REWRITE=auto` config adds LLM pivoting to ranked Japanese headwords for descriptive queries
 - **Sentence Breakdown**: Paste Japanese text and Sudachi splits it into word units — furigana on top, gloss underneath, full breakdown on hover. Inflection tails merge into single chips and adjacent segments re-resolve into JMdict compounds
 - **Kanji Lookup**: Deterministic kanji information (no LLM) — stroke-order diagrams (KanjiVG), readings, meanings, and common compound words
 - **Grammar Explanations**: AI-generated explanations calibrated to your JLPT level (N5–N1) via a configurable LLM provider, on demand only, with a smaller fallback model if the primary is exhausted
 - **Feedback & Telemetry**: Thumbs-up/down feedback and query telemetry as JSON events (stdout sink, picked up by platform logs) or a local SQLite file; search queries are logged verbatim (feedback/explanation text stays SHA-256-only) and rows are kept indefinitely
-- **Interface**: Search-first landing page, furigana (`<ruby>`) headwords, animated stroke order, light/dark themes, shareable URLs (`?q=猫&level=N3`), one-click level-aware grammar explanations
+- **Interface**: Search-first landing page, furigana (`<ruby>`) headwords, animated stroke order, light/dark themes, English/Japanese UI chrome, shareable URLs (`?q=猫&level=N3`), one-click level-aware grammar explanations
 - **HTTP API**: FastAPI layer (`app/api.py`) over the same pipeline — SSE streaming for explanations and JSON-shaped rendering (ruby parts, kanji card, segment chips, stroke data) for the web frontend
 
 ## Tech Stack
@@ -46,7 +46,7 @@
 - **API**: FastAPI + Uvicorn (the production serving process; one worker)
 - **Vector Database**: Qdrant (named dense + sparse vectors, server-side RRF hybrid)
 - **Embeddings**: FastEmbed — `all-MiniLM-L6-v2` (dense, 384-dim) + `Qdrant/bm25` (sparse), ONNX-quantized for CPU
-- **LLM**: Groq, Gemini, Cohere, or Nebius via `LLM_PROVIDER` — powers grammar explanations, optional query rewriting, and LLM-judged evals (token-budgeted)
+- **LLM**: Nebius (Nemotron-3-Nano-30B, default), Groq, Gemini, or Cohere via `LLM_PROVIDER` — powers grammar explanations, optional query rewriting, and LLM-judged evals (token-budgeted)
 - **Telemetry**: JSON events (`app/telemetry.py`); optional SQLite sink (`scripts/feedback_log.py`)
 - **Containerization**: Docker & Docker Compose
 
@@ -55,7 +55,7 @@
 ### Prerequisites
 
 - **Docker and Docker Compose** (recommended path — runs the app + Qdrant)
-- **LLM API key** — powers grammar explanations and optional query rewriting (see `docs/configuration.md` for provider options); search and kanji lookup work without it
+- **LLM API key** — powers grammar explanations and optional query rewriting (see `docs/configuration.md` for provider options); search and kanji lookup work without it when `QUERY_REWRITE=heuristic` or `off`
 - **Git** (to clone) and ~3 GB free disk (dictionary data + embedding models)
 - Local development only: **Python 3.14+** and **[uv](https://docs.astral.sh/uv/)** (dependency manager — `pip` works too)
 
@@ -91,7 +91,7 @@ docker compose logs -f app  # follow API logs
 docker compose down
 ```
 
-Both the API (`app`) and frontend (`web`) run in Docker; the web container connects to the API via `http://app:8000`.
+Both the API (`app`) and frontend (`web`) run in Docker; the static bundle the web container serves is baked with the API base `http://127.0.0.1:${APP_PORT:-8000}` (the app service's published loopback port — Docker-network hostnames like `app` only resolve inside the Compose network, never from the host browser).
 
 #### Option 2: Local Development
 
@@ -126,7 +126,7 @@ For local development without Docker:
 
 6. **Run the SvelteKit web frontend** (`web/` — needs the API running from step 5):
    ```bash
-   cd web && npm install && npm run dev     # dev server → http://localhost:5173
+   cd web && npm ci && npm run dev          # dev server → http://localhost:5173
    npm run check                            # svelte-check type diagnostics
    npm run build                            # static build → web/build/ (adapter-static)
    ```
@@ -151,7 +151,7 @@ Search state lives in the URL, so results are shareable and the browser back but
 
 ## Project Structure
 
-<!-- Concise overview — full breakdown in local/notes/Architecture.md -->
+<!-- Concise overview of the full structure; see the docs/ and eval/ trees -->
 ```
 Reikun/
 ├── app/         # FastAPI backend (search, kanji, grammar, embeddings)
@@ -168,7 +168,7 @@ Reikun/
 
 ## Evaluation
 
-360-query gold set: 300 ranking + 60 descriptive. The table uses the 218,786-point local collection, `mode=auto`, and default retrieval settings. Methodology: [eval/reports/eval.md](eval/reports/eval.md); per-model roles, rewrite counts, and caveats: [local/notes/Architecture.md](local/notes/Architecture.md).
+360-query gold set: 300 ranking + 60 descriptive. The table uses the 218,786-point local collection, `mode=auto`, and default retrieval settings. Methodology: [eval/reports/eval.md](eval/reports/eval.md).
 
 ### Ranking queries (300)
 

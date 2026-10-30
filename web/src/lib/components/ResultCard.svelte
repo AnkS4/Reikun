@@ -4,13 +4,15 @@
 	import Ruby from './Ruby.svelte';
 	import ExampleRow from './ExampleRow.svelte';
 	import Icon from './Icon.svelte';
+	import { t } from '#lib/i18n.svelte.ts';
 	let {
 		result,
 		level,
 		onPickKanji,
 		onSearchWord,
 		active = false,
-		searched = null
+		searched = null,
+		style = ''
 	}: {
 		result: SearchResult;
 		level: Level;
@@ -18,6 +20,7 @@
 		onSearchWord?: (q: string) => void;
 		active?: boolean;
 		searched?: string | null;
+		style?: string;
 	} = $props();
 
 	let copied = $state(false);
@@ -61,15 +64,15 @@
 	const examples = $derived(result.example_sentences.slice(0, 3));
 </script>
 
-<div class="result-card" class:kbd-active={active}>
+<div class="result-card" {style} class:kbd-active={active}>
 	<div class="result-head">
 		<span class="headword" lang="ja"><Ruby parts={result.ruby} onpick={onPickKanji} /></span>
-		{#if result.is_common}<span class="badge">common</span>{/if}
+		{#if result.is_common}<span class="badge">{t('common')}</span>{/if}
 		<button
 			type="button"
 			class="btn tertiary copy-word"
-			title={copied ? 'Copied' : 'Copy as 高い【たかい】— meaning'}
-			aria-label={copied ? 'Copied' : 'Copy word and meaning'}
+			title={copied ? t('copied') : t('copyAsTitle')}
+			aria-label={copied ? t('copied') : t('copyWordAria')}
 			onclick={copyWord}
 		>
 			<Icon name={copied ? 'check' : 'copy'} size={15} />
@@ -79,7 +82,7 @@
 	{#if searched && result.inflection}
 		<p class="inflection-bar">
 			<span lang="ja">{searched}</span>
-			— {result.inflection.toLowerCase()} form of this word
+			— {t('inflectionForm', { form: result.inflection.toLowerCase() })}
 		</p>
 	{/if}
 	{#if result.inflected_forms?.length}
@@ -88,22 +91,22 @@
 				class="conj-toggle"
 				href={conjHref}
 				onclick={openConj}
-				title="View all conjugations"
+				title={t('conjugationsTitle')}
 			>
 				<Icon name="book-open" size={13} />
-				<span class="conj-label">Conjugations</span>
+				<span class="conj-label">{t('conjugations')}</span>
 				<span class="conj-count">{result.inflected_forms.length}</span>
 				<Icon name="arrow-right" size={11} />
 			</a>
 		</div>
 	{/if}
 	{#if onSearchWord && result.related?.length}
-		<div class="related-row" aria-label="Related words">
+		<div class="related-row" aria-label={t('relatedWords')}>
 			{#each result.related as w, i ((w.kanji_form || w.reading) + (w.reading ?? '') + i)}
 				<button
 					type="button"
 					class="related-pill"
-					title="Search {w.kanji_form || w.reading}"
+					title={t('searchWord', { word: w.kanji_form || w.reading })}
 					onclick={() => onSearchWord(w.kanji_form || w.reading)}
 				>
 					<span lang="ja"><Ruby parts={w.ruby} tips={false} /></span>
@@ -119,6 +122,6 @@
 			{/each}
 		</div>
 	{:else}
-		<p class="no-example">No example sentences.</p>
+		<p class="no-example">{t('noExamples')}</p>
 	{/if}
 </div>

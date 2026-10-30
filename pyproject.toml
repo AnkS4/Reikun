@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "reikun"
-version = "0.9.0"
-description = "Reikun (例訓) — Semantic Japanese Dictionary"
+version = "1.0.0"
+description = "Reikun (例訓) — Semantic Japanese Dictionary & Reading Assistant"
 authors = [{ name = "Aniket Satbhai" }]
 license = "Apache-2.0"
 license-files = ["LICENSE", "NOTICE"]
@@ -13,10 +13,10 @@ requires-python = ">=3.14"
 dependencies = [
     "qdrant-client==1.20.0",
     "fastembed==0.9.1",
-    "openai==3.37.0",
+    "openai==3.41.0",
     "python-dotenv==1.2.4",
     "httpx==0.28.1",
-    "pydantic==2.14.1",
+    "pydantic==2.14.2",
     "fastapi==0.162.0",
     "uvicorn==0.54.0",
     "sudachipy==0.7.0",
