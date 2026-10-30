@@ -27,7 +27,7 @@
 
 ## Demo
 
-![Reikun demo — search, sentence breakdown, grammar explanation, conjugation tables, kanji tooltip and card](docs/videos/demo_v1.0.gif)
+![Reikun demo — search, sentence breakdown, grammar explanation, conjugation tables, kanji tooltip and card](docs/videos/demo_v1.0_tight.gif)
 
 ## Features
 
@@ -165,6 +165,14 @@ Reikun/
 ├── Dockerfile
 └── docker-compose.yml
 ```
+
+## Momentum Guide: Nebius & NVIDIA
+
+Reikun is built for the [Nebius × NVIDIA Global AI Hackathon](https://nebiusglobalaihackathon.devpost.com).
+
+- **Nebius Token Factory** is the default LLM provider (`LLM_PROVIDER=nebius`, `nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B`) — a runtime call to the Token Factory API powers the one-click, JLPT-calibrated grammar explanations and the Japanese-pivot query rewriting.
+- **NVIDIA Nemotron** scores 93.3% Hit@1 on descriptive queries (see [Evaluation](#evaluation)) while reasoning-free inference keeps warm calls under 1s after `chat_template_kwargs: {"enable_thinking": false}` tuned Nemotron-3's default reasoning off for a latency-sensitive UX.
+- Groq/Gemini/Cohere remain one-env-var alternatives, but the shipped default — and the production instance at reikun.app — is Nebius + Nemotron.
 
 ## Evaluation
 

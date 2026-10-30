@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.1] - 2026-10-30
+
+### Documentation
+- Screenshot sheet re-captured on the v1.0 UI (8 shots, `docs/screenshots/`): `03-kanji-hover` now hovers the **食** headword card's kanji from a 食べる word search (meanings, ON/KUN readings, strokes · Grade 2 · JLPT N5 · frequency), giving the sheet two distinct kanji demos — the anchored 国 card from 04's typed kanji search plus this word-result hover — and `01`/`02`/`07`/`08`/`09`/`10` all re-verified against current behavior
+- Demo video gains a compact tight crop for text-dense playback: `demo_v1.0_tight.mp4` (920×1080, the content column cropped symmetrically from the 1920×1080 master — header icons and the back-to-top button fall outside the measured content window at x 528–1367) and `demo_v1.0_tight.gif` (560 px / 2× / 8 fps, under 5 MB); the README hero now embeds the tight GIF, the master `demo_v1.0.mp4/gif` and the vertical/zoom variants stay unchanged
+- README carries a Momentum Guide: Nebius & NVIDIA section: Token Factory as the shipped default LLM provider (`LLM_PROVIDER=nebius`, `nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B`) powering grammar explanations and Japanese-pivot rewrites, Nemotron's 93.3% Hit@1 on descriptive queries with reasoning-free warm calls under 1 s (`chat_template_kwargs: {"enable_thinking": false}`), and Groq/Gemini/Cohere as one-env-var alternates with production on Nebius + Nemotron
+- Devpost submission thumbnail added under versioned assets: `assets/images/devpost-thumbnail.svg` (1200×800, 3:2, the OG lockup recentered for the new frame) + rendered `devpost-thumbnail.png` (65 KB)
+
+- Versions: API 1.0.1 (pyproject + openapi), web 1.0.1
+
 ## [1.0.0] - 2026-10-30
 
 ### Changed
