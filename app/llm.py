@@ -32,7 +32,7 @@ class Provider:
     extra_body: dict | None = None
 
 
-# Defaults match production (nebius / Nemotron-3-Nano-30B-A3B); override
+# Defaults match production (nebius / Nemotron-3_5-Lightning); override
 # per deploy with LLM_MODEL / LLM_MODEL_FALLBACK without changing provider.
 PROVIDERS: dict[str, Provider] = {
     "groq": Provider(
@@ -64,9 +64,9 @@ PROVIDERS: dict[str, Provider] = {
         name="nebius",
         base_url="https://api.tokenfactory.nebius.com/v1/",
         api_key_env="NEBIUS_API_KEY",
-        # Catalog IDs are exact (case-sensitive): Nano uses NVIDIA- prefix; Super is lowercase.
-        default_model="nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
-        default_fallback="nvidia/nemotron-3-super-120b-a12b",
+        # Catalog IDs are exact (case-sensitive).
+        default_model="nvidia/Nemotron-3_5-Lightning",
+        default_fallback="nvidia/Nemotron-3.5-Super-VL",
         # Nemotron reasons by default, and reasoning tokens eat the level token
         # budgets before prose exists (truncation -> fallback handoff, 40-85 s
         # calls). `reasoning_effort` is silently IGNORED by Nebius, but the

@@ -46,7 +46,7 @@
 - **API**: FastAPI + Uvicorn (the production serving process; one worker)
 - **Vector Database**: Qdrant (named dense + sparse vectors, server-side RRF hybrid)
 - **Embeddings**: FastEmbed — `all-MiniLM-L6-v2` (dense, 384-dim) + `Qdrant/bm25` (sparse), ONNX-quantized for CPU
-- **LLM**: Nebius (Nemotron-3-Nano-30B, default), Groq, Gemini, or Cohere via `LLM_PROVIDER` — powers grammar explanations, optional query rewriting, and LLM-judged evals (token-budgeted)
+- **LLM**: Nebius (Nemotron-3_5-Lightning, default), Groq, Gemini, or Cohere via `LLM_PROVIDER` — powers grammar explanations, optional query rewriting, and LLM-judged evals (token-budgeted)
 - **Telemetry**: JSON events (`app/telemetry.py`); optional SQLite sink (`scripts/feedback_log.py`)
 - **Containerization**: Docker & Docker Compose
 
@@ -170,8 +170,8 @@ Reikun/
 
 Reikun is built for the [Nebius × NVIDIA Global AI Hackathon](https://nebiusglobalaihackathon.devpost.com).
 
-- **Nebius Token Factory** is the default LLM provider (`LLM_PROVIDER=nebius`, `nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B`) — a runtime call to the Token Factory API powers the one-click, JLPT-calibrated grammar explanations and the Japanese-pivot query rewriting.
-- **NVIDIA Nemotron** scores 93.3% Hit@1 on descriptive queries (see [Evaluation](#evaluation)) while reasoning-free inference keeps warm calls under 1s after `chat_template_kwargs: {"enable_thinking": false}` tuned Nemotron-3's default reasoning off for a latency-sensitive UX.
+- **Nebius Token Factory** is the default LLM provider (`LLM_PROVIDER=nebius`, `nvidia/Nemotron-3_5-Lightning`) — a runtime call to the Token Factory API powers the one-click, JLPT-calibrated grammar explanations and the Japanese-pivot query rewriting.
+- **NVIDIA Nemotron** scores 93.3% Hit@1 on descriptive queries (see [Evaluation](#evaluation)) while reasoning-free inference keeps warm calls under 1s after `chat_template_kwargs: {"enable_thinking": false}` tuned Nemotron's default reasoning off for a latency-sensitive UX.
 - Groq/Gemini/Cohere remain one-env-var alternatives, but the shipped default — and the production instance at reikun.app — is Nebius + Nemotron.
 
 ## Evaluation
@@ -195,17 +195,21 @@ All 300 queries have a valid answer in the top 5; median ~15 ms per query. Per-q
 
 ### Descriptive queries (60)
 
-All seven models in the shipped provider defaults, tested under the current Japanese-pivot rewrite (`QUERY_REWRITE=auto`), sorted by Hit@1, then Hit@2/Hit@5:
+Every model in the shipped provider defaults, plus the two retired Nebius predecessors (`*`), tested under the current Japanese-pivot rewrite (`QUERY_REWRITE=auto`), sorted by Hit@1, then Hit@2/Hit@5:
 
 | provider | model | Hit@1 | Hit@2 | Hit@5 |
 |---|---|---|---|---|
 | Groq | `openai/gpt-oss-120b` | 57 (95.0%) | 57 | 57 |
-| Nebius | `nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B` | 56 (93.3%) | 56 | 56 |
-| Nebius | `nvidia/nemotron-3-super-120b-a12b` | 54 (90.0%) | 54 | 54 |
+| Nebius | `nvidia/Nemotron-3_5-Lightning` | 56 (93.3%) | 56 | 56 |
+| Nebius* | `nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B` | 56 (93.3%) | 56 | 56 |
+| Nebius | `nvidia/Nemotron-3.5-Super-VL` | 55 (91.7%) | 55 | 55 |
+| Nebius* | `nvidia/nemotron-3-super-120b-a12b` | 54 (90.0%) | 54 | 54 |
 | Cohere | `command-r-plus-08-2024` | 53 (88.3%) | 53 | 54 |
 | Cohere | `command-a-plus-05-2026` | 49 (81.7%) | 51 | 52 |
 | Gemini | `gemini-3.5-flash-lite` | 46 (76.7%) | 46 | 48 |
 | Groq | `openai/gpt-oss-20b` | 21 (35.0%) | 26 | 33 |
+
+*Deprecated by Nebius Token Factory (Nov 9, 2026); migrated to non-deprecated replacements (Nemotron-3_5-Lightning, Nemotron-3.5-Super-VL).
 
 Single-run scores; one-query gaps are within the paraphrase suite's ±1 jitter. Per-model details: [descriptive_models.md](eval/reports/descriptive_models.md).
 

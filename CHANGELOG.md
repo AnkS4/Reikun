@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.2] - 2026-10-30
+
+### Changed
+- Nebius models migrated to non-deprecated replacements: `nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B` → `nvidia/Nemotron-3_5-Lightning` (default), `nvidia/nemotron-3-super-120b-a12b` → `nvidia/Nemotron-3.5-Super-VL` (fallback). This addresses the November 9, 2026 Token Factory Serverless model deprecation notice. The `extra_body` thinking-free configuration remains unchanged for the new models; both replacements were benchmarked on the 60-query descriptive suite under the current Japanese pivot (Lightning 56/60 Hit@1, Super-VL 55/60), and the retired IDs stay in the report for comparison. `.env.example`, `README.md`, `app/llm.py`, and `eval/reports/descriptive_models.{md,json}` follow.
+
+- Versions: API 1.0.2 (pyproject + openapi), web 1.0.2
+
 ## [1.0.1] - 2026-10-30
 
 ### Documentation

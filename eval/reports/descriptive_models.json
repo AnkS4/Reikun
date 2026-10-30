@@ -1,12 +1,13 @@
 {
   "meta": {
-    "generated": "2026-10-23 00:00 UTC",
-    "version": "0.8.0",
+    "generated": "2026-10-30 15:15 UTC",
+    "version": "1.0.2",
     "queries": 60,
     "config": "mode=auto, QUERY_REWRITE=auto, CANONICAL_BOOST=3.0, PREFETCH_MIN=200, COMMON_BOOST=1.0, HEAD_BONUS=1.5",
-    "points": 218786,
+    "points": 218963,
     "rewrite": "Japanese pivot (temperature 0)",
-    "sort": "Hit@1 > Hit@2 > Hit@5"
+    "sort": "Hit@1 > Hit@2 > Hit@5",
+    "note": "Post-2026-10-30: Nebius models migrated to non-deprecated replacements (Token Factory deprecation notice Nov 9, 2026): nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B → nvidia/Nemotron-3_5-Lightning, nvidia/nemotron-3-super-120b-a12b → nvidia/Nemotron-3.5-Super-VL. New models benchmarked on 2026-10-30 with thinking-free configuration. Deprecated models retained in dataset for historical comparison. Rows measured before 2026-10-30 used a 218,786-point collection."
   },
   "models": [
     {
@@ -21,13 +22,34 @@
     },
     {
       "provider": "Nebius",
+      "model": "nvidia/Nemotron-3_5-Lightning",
+      "n": 60,
+      "hit1": 56,
+      "hit2": 56,
+      "hit5": 56,
+      "median_ms": 365.4,
+      "source": "eval_headword_20261030T141157Z_canon3_pool200_common1_head1.5.md"
+    },
+    {
+      "provider": "Nebius",
       "model": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
       "n": 60,
       "hit1": 56,
       "hit2": 56,
       "hit5": 56,
       "median_ms": 2824.6,
-      "source": "eval_headword_20261022T214425Z_canon3_pool200_common1_head1.5.md"
+      "source": "eval_headword_20261022T214425Z_canon3_pool200_common1_head1.5.md",
+      "deprecated": true
+    },
+    {
+      "provider": "Nebius",
+      "model": "nvidia/Nemotron-3.5-Super-VL",
+      "n": 60,
+      "hit1": 55,
+      "hit2": 55,
+      "hit5": 55,
+      "median_ms": 652.7,
+      "source": "eval_headword_20261030T141226Z_canon3_pool200_common1_head1.5.md"
     },
     {
       "provider": "Nebius",
@@ -37,7 +59,8 @@
       "hit2": 54,
       "hit5": 54,
       "median_ms": 2692.5,
-      "source": "eval_headword_20261022T215211Z_canon3_pool200_common1_head1.5.md"
+      "source": "eval_headword_20261022T215211Z_canon3_pool200_common1_head1.5.md",
+      "deprecated": true
     },
     {
       "provider": "Cohere",
