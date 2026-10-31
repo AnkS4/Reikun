@@ -37,8 +37,10 @@ async function flush(): Promise<void> {
 		const data = await apiKanjiBatch(chars.join(''));
 		for (const c of chars) hovers.set(c, data[c] ?? null);
 	} catch {
-		// Tips are best-effort — an unreachable API leaves plain text.
-		for (const c of chars) hovers.set(c, null);
+		// Tips are best-effort — an unreachable API leaves plain text. Don't
+		// cache the failure: re-opening the same chars later (re-render, back
+		// navigation) should retry instead of rendering plain text forever.
+		for (const c of chars) hovers.delete(c);
 	} finally {
 		for (const c of chars) inflight.delete(c);
 	}
