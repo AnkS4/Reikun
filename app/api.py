@@ -58,7 +58,7 @@ from app.render import (
 from app.retrieval import MODES, is_headword, morph_hint, search, warm_headword_index
 from app.telemetry import telemetry
 
-log = logging.getLogger("reikun.api")
+logger = logging.getLogger("reikun.api")
 
 # Standalone `uvicorn app.api:app` doesn't configure the root logger, so do it
 # here unless something else already did (the Streamlit entrypoint, pytest…).
@@ -391,7 +391,7 @@ def search_endpoint(
     except Exception:
         # Full detail goes to the logs; the client gets no backend internals
         # (Qdrant hostnames, stack text) from an exception string.
-        log.exception("search failed")
+        logger.exception("search failed")
         raise HTTPException(502, "Search is temporarily unavailable. Please try again.") from None
     search_id = None
     if log:
@@ -556,7 +556,7 @@ def explain_endpoint(req: ExplainRequest) -> dict:
         text = explain_grammar(sentence, english, req.level, hint=hint)
     except Exception:
         # The provider's error text can carry org/model/quota details — log it, don't relay it.
-        log.exception("explain failed")
+        logger.exception("explain failed")
         ok = False
     latency_ms = int((time.perf_counter() - t0) * 1000)
     expl_id = telemetry().explanation(sentence, req.level, model=last_model(), latency_ms=latency_ms, ok=ok)
@@ -592,7 +592,7 @@ def explain_stream_endpoint(req: ExplainRequest) -> StreamingResponse:
                 # UTF-8 SSE stream: don't \uXXXX-escape the Japanese fragments.
                 yield f"data: {json.dumps({'text': c}, ensure_ascii=False)}\n\n"
         except Exception:
-            log.exception("explain stream failed")
+            logger.exception("explain stream failed")
             ok = False
             yield f"data: {json.dumps({'error': EXPLAIN_UNAVAILABLE})}\n\n"
         latency_ms = int((time.perf_counter() - t0) * 1000)

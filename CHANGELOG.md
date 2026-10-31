@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+- `/search` error handling actually worked again: the endpoint's `log: bool` query parameter (`app/api.py`) shadowed the module logger, so the `except` branch around retrieval called `log.exception(...)` on a boolean — every search failure died with `AttributeError: 'bool' object has no attribute 'exception'` inside the handler, surfacing as a raw 500 instead of the intended clean 502 and losing the full traceback to logs. The module-level logger variable is renamed to `logger`; the public API (`?log=`) is unchanged.
+
 ## [1.0.2] - 2026-10-30
 
 ### Changed
