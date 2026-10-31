@@ -32,12 +32,30 @@
 		const r = req;
 		data = null;
 		error = '';
-		if (!r) return;
+		if (!r) {
+			busy = false;
+			return;
+		}
+		// Stale-response guard: a fast click from page N to N+1 must not let
+		// the slower page-N response overwrite the newer one (the out-of-order
+		// grid used to render under the newer page's pagination state).
+		let dropped = false;
 		busy = true;
 		apiKanjiGroup(r.by, r.value, PAGE_SIZE, r.skip)
-			.then((d) => (data = d))
-			.catch((e) => (error = e instanceof Error ? e.message : t('groupLoadFailed')))
-			.finally(() => (busy = false));
+			.then((d) => {
+				if (dropped) return;
+				data = d;
+			})
+			.catch((e) => {
+				if (dropped) return;
+				error = e instanceof Error ? e.message : t('groupLoadFailed');
+			})
+			.finally(() => {
+				if (!dropped) busy = false;
+			});
+		return () => {
+			dropped = true;
+		};
 	});
 
 	const pageNo = $derived(req ? Math.floor(req.skip / PAGE_SIZE) + 1 : 0);

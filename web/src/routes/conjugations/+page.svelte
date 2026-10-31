@@ -42,10 +42,18 @@
 		fetchedRows = null;
 		fetchedHeadword = '';
 		error = '';
-		if (!w || stateRows) return; // nav state already has data
+		if (!w || stateRows) {
+			busy = false;
+			return; // nav state already has data
+		}
+		// Stale-response guard: navigating to another word must not let the
+		// slowest in-flight fetch overwrite the visible table with older data
+		// (the cleanup flips `dropped` before the next run's response lands).
+		let dropped = false;
 		busy = true;
 		apiSearch(w, 3)
 			.then((resp) => {
+				if (dropped) return;
 				// Find the entry whose dictionary form matches the word param
 				const match = resp.results.find(
 					(r: SearchResult) =>
@@ -60,9 +68,15 @@
 				}
 			})
 			.catch((e) => {
+				if (dropped) return;
 				error = e instanceof Error ? e.message : t('conjLoadFailed');
 			})
-			.finally(() => (busy = false));
+			.finally(() => {
+				if (!dropped) busy = false;
+			});
+		return () => {
+			dropped = true;
+		};
 	});
 
 	const rows = $derived(stateRows ?? fetchedRows ?? []);

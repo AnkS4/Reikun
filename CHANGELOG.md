@@ -14,6 +14,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Web dependency patches (`web/package.json`/lockfile): `@sveltejs/kit` 3.1.0 → 3.1.1, `@sveltejs/adapter-static` 4.0.0 → 4.0.1, `tslib` 2.8.1 → 2.9.1; all in-range, no behavior change. TypeScript stays at 6.0.3 — 7.0.2 (the native compiler) is out but both consumers pin `^6` (`@sveltejs/kit` peer-dependency and `svelte-check`, the latter breaking at `svelte-kit sync` / `npm run check` even before typechecking) and are already at their latest releases, so there is no TS7-compatible stack to move to yet.
 
+### Fixed
+- Stale-response races on two SvelteKit pages (`web/src/routes/`): the conjugations fallback fetch and the kanji-group pagination fetch both adopted the `.then()` result unconditionally, so the *slowest* in-flight request won the render. On the conjugations page a quick word change could show the previous word's table under the new word's heading (a metric card spoof, not a crash), and on kanji-group a fast Next/Prev could land page N's grid under page N+1's controls; the loser's `.finally` also cleared the other request's spinner in both. Both fetch effects now capture a `dropped` flag flipped by the `$effect` cleanup (runs before each re-run), so out-of-order responses and the stray busy-flags are ignored — the same guard the homepage already applies with its `reqSeq` counter and the kanji card with its `char === c` check, now consistent across every fetching page.
+- Failed kanji hover batches no longer poison the cache: `flush()` (`web/src/lib/hover.svelte.ts`) cached `null` for every char of a failed `/kanji` batch call, and `wantKanji`'s `hovers.has(c)` check honored it permanently — one dropped request (e.g. server hiccup) left *all* tips on the session's pages as plain text until reload. Failures now clear the keys instead, so a later re-render (back navigation, new search re-using the chars) retries the lookup; the per-microtask batching still bounds it to one round-trip.
+
 ## [1.0.2] - 2026-10-30
 
 ### Changed
