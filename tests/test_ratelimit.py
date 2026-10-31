@@ -89,3 +89,11 @@ def test_forwarded_for_uses_the_trusted_rightmost_entry() -> None:
     assert c.get("/x", headers={"X-Forwarded-For": "2.2.2.2, 9.9.9.9"}).status_code == 429
     # A different real client gets its own bucket.
     assert c.get("/x", headers={"X-Forwarded-For": "1.1.1.1, 8.8.8.8"}).status_code == 200
+
+
+def test_short_forwarded_for_is_ignored() -> None:
+    # An XFF with fewer entries than trusted hops is insufficient/untrusted →
+    # the socket peer keys the bucket, never a spoofable leftmost entry.
+    c = _app(1)
+    assert c.get("/x", headers={"X-Forwarded-For": "1.1.1.1"}).status_code == 200
+    assert c.get("/x", headers={"X-Forwarded-For": "1.1.1.1"}).status_code == 429

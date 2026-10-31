@@ -69,8 +69,8 @@ def client_ip(request: Request, trusted_hops: int = 1) -> str:
         parts = [p.strip() for p in xff.split(",") if p.strip()]
         if len(parts) >= trusted_hops:
             return parts[-trusted_hops]
-        if parts:
-            return parts[0]
+        # Fewer entries than trusted hops: the header is incomplete/possibly
+        # forged, so don't trust any of it — fall back to the socket peer.
     return request.client.host if request.client else "unknown"
 
 

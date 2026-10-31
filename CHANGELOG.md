@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - `/search` error handling actually worked again: the endpoint's `log: bool` query parameter (`app/api.py`) shadowed the module logger, so the `except` branch around retrieval called `log.exception(...)` on a boolean — every search failure died with `AttributeError: 'bool' object has no attribute 'exception'` inside the handler, surfacing as a raw 500 instead of the intended clean 502 and losing the full traceback to logs. The module-level logger variable is renamed to `logger`; the public API (`?log=`) is unchanged.
+- The rate limiter can no longer be sidestepped with a forged short `X-Forwarded-For`: `client_ip()` (`app/ratelimit.py`) fell back to the header's leftmost entry when it held fewer addresses than `trusted_hops` — the leftmost entry is client-supplied and spoofable, so one header (`X-Forwarded-For: 1.2.3.4`) rotated per request defeated per-client limits entirely (each forged address got a fresh bucket). An incomplete header is now trusted not at all and the socket peer keys the bucket, which is what the module docstring always claimed ("entries further left are client-supplied and spoofable, so they are ignored"); the existing rightmost-entry behavior for fully-populated headers is unchanged, and a regression test covers the shortfall case.
 
 ## [1.0.2] - 2026-10-30
 
