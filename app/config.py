@@ -32,8 +32,6 @@ KANJIVG_DIR = DATA_DIR / "kanjivg"
 MODELS_DIR = Path(_env("MODELS_DIR", str(ROOT / "models" / "fastembed")))
 MONITORING_DB = Path(_env("MONITORING_DB", str(DATA_DIR / "monitoring" / "reikun.db")))
 
-# Release version, read from pyproject.toml so the FastAPI schema (and the
-# generated docs/api/openapi.json) can't drift from the package metadata.
 APP_VERSION = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))["project"]["version"]
 
 # Ensure directories we write to actually exist (first-run safety).
@@ -132,6 +130,9 @@ QDRANT_TIMEOUT = int(_env("QDRANT_TIMEOUT", "30"))
 # /explain* spends the shared LLM quota; /search costs CPU (embedding).
 RATE_LIMIT_EXPLAIN = int(_env("RATE_LIMIT_EXPLAIN", "10"))
 RATE_LIMIT_SEARCH = int(_env("RATE_LIMIT_SEARCH", "120"))
+# /feedback writes a telemetry row per click; the UI sends at most a handful
+# per session, so a generous cap only catches scripted spam.
+RATE_LIMIT_FEEDBACK = int(_env("RATE_LIMIT_FEEDBACK", "60"))
 # Reverse proxies between the internet and the app (Cloud Run: 1). The client
 # address is read from X-Forwarded-For counting this many entries from the right.
 TRUSTED_PROXY_HOPS = int(_env("TRUSTED_PROXY_HOPS", "1"))

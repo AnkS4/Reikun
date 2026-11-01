@@ -42,6 +42,7 @@ Docker maps `127.0.0.1:${APP_PORT:-8000}:8000` — change `APP_PORT` in `.env`, 
 | `CORS_ORIGINS` | Comma-separated allowed browser origins | `*` (development; pin the site origin in production) |
 | `RATE_LIMIT_EXPLAIN` | `/explain*` requests per minute per client; 0 disables | 10 |
 | `RATE_LIMIT_SEARCH` | `/search` requests per minute per client; 0 disables | 120 |
+| `RATE_LIMIT_FEEDBACK` | `/feedback` requests per minute per client; 0 disables | 60 |
 | `TRUSTED_PROXY_HOPS` | Trusted reverse-proxy hops used to select the client from `X-Forwarded-For` | 1 |
 | `PORT` | API listen port injected by non-Compose hosts; leave unset locally | 8000 |
 

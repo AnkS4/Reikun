@@ -33,13 +33,16 @@ from app.config import (
     LLM_MODEL,
     LLM_PROVIDER,
     RATE_LIMIT_EXPLAIN,
+    RATE_LIMIT_FEEDBACK,
     RATE_LIMIT_SEARCH,
     TRUSTED_PROXY_HOPS,
     qdrant_client,
 )
 from app.grammar_explain import (
     JLPT_LEVELS,
+    MAX_ENGLISH_CHARS,
     MAX_HINT_CHARS,
+    MAX_SENTENCE_CHARS,
     explain_grammar,
     explain_grammar_stream,
     last_model,
@@ -97,7 +100,10 @@ _origins = [o.strip() for o in CORS_ORIGINS.split(",") if o.strip()] or ["*"]
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_origins,
-    allow_credentials=_origins != ["*"],  # '*' + credentials is not a valid combo
+    # '*' + credentials is an invalid combo (Starlette would echo the request
+    # origin with credentials allowed). Check for '*' anywhere: a mixed list is
+    # just as unsafe as the bare wildcard.
+    allow_credentials="*" not in _origins,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -106,6 +112,7 @@ app.add_middleware(
 # Per-client request limits (see app/ratelimit.py) — 429 + Retry-After when exceeded.
 _explain_limit = Depends(rate_limited(RATE_LIMIT_EXPLAIN, TRUSTED_PROXY_HOPS))
 _search_limit = Depends(rate_limited(RATE_LIMIT_SEARCH, TRUSTED_PROXY_HOPS))
+_feedback_limit = Depends(rate_limited(RATE_LIMIT_FEEDBACK, TRUSTED_PROXY_HOPS))
 
 # Static dictionary data: safe for browsers/CDNs to reuse for a day.
 _CACHE_STATIC = "public, max-age=86400, stale-while-revalidate=604800"
@@ -297,8 +304,18 @@ class KanjiHover(BaseModel):
 
 
 class ExplainRequest(BaseModel):
-    sentence: str = Field(min_length=1, description="Japanese example sentence")
-    english: str = Field("", description="English translation (improves the explanation)")
+    # Hard transport caps: the handler's validate_input() trims whitespace and
+    # enforces the real 200/400-char limits, but the body has already been
+    # buffered by then — these bounds keep a megabyte payload from ever being
+    # parsed (generous headroom for whitespace that collapses downstream).
+    sentence: str = Field(
+        min_length=1, max_length=MAX_SENTENCE_CHARS * 8, description="Japanese example sentence"
+    )
+    english: str = Field(
+        "",
+        max_length=MAX_ENGLISH_CHARS * 8,
+        description="English translation (improves the explanation)",
+    )
     level: Level = "N5"
 
 
@@ -315,7 +332,9 @@ class FeedbackRequest(BaseModel):
     kind: Literal["search", "explanation"]
     ref_id: int | None = Field(None, description="`search_id` from /search or `explanation_id` from /explain")
     rating: Literal[1, -1]
-    query: str | None = None
+    # Bounded like the explain inputs: the row stores the query, so an
+    # unbounded string is both a body-parse hazard and a storage one.
+    query: str | None = Field(None, max_length=512)
 
 
 class FeedbackResponse(BaseModel):
@@ -466,9 +485,13 @@ def kanji_random_endpoint(
         for _ in range(8):
             if is_headword(c := random_kanji(within=pool)):
                 return {"kanji": c}
+        # Headword check never matched (Qdrant reachable): unchecked pick.
+        return {"kanji": random_kanji(within=pool)}
     except Exception:
-        pass  # Qdrant unreachable → unchecked pick below
-    return {"kanji": random_kanji(within=pool)}
+        # Qdrant unreachable (or the kanji table is missing/empty): answer with
+        # whatever the local table can offer, not a 500.
+        logger.warning("kanji random headword check failed; using unchecked pick", exc_info=True)
+        return {"kanji": random_kanji(within=pool)}
 
 
 GroupKey = Literal["strokes", "grade", "jlpt"]
@@ -615,7 +638,13 @@ def explain_stream_endpoint(req: ExplainRequest) -> StreamingResponse:
     )
 
 
-@app.post("/feedback", tags=["meta"], status_code=201, response_model=FeedbackResponse)
+@app.post(
+    "/feedback",
+    tags=["meta"],
+    status_code=201,
+    response_model=FeedbackResponse,
+    dependencies=[_feedback_limit],
+)
 def feedback_endpoint(req: FeedbackRequest) -> dict:
     """Thumbs up (+1) / down (-1) on a search or an explanation."""
     return {"feedback_id": telemetry().feedback(req.kind, req.ref_id, req.rating, req.query)}

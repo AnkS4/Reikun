@@ -107,6 +107,10 @@ def test_search_too_long_short_circuits() -> None:
 def test_explain_validates() -> None:
     assert client.post("/explain", json={"sentence": "", "level": "N5"}).status_code == 422
     assert client.post("/explain", json={"sentence": "猫", "level": "N9"}).status_code == 422
+    # Transport cap rejects oversized bodies before the handler/LLM sees them
+    # (the 200-char rule is enforced later, on whitespace-normalised text).
+    assert client.post("/explain", json={"sentence": "猫" * 1601}).status_code == 422
+    assert client.post("/explain", json={"sentence": "猫", "english": "x" * 3201}).status_code == 422
 
 
 def test_feedback_records_and_validates() -> None:
@@ -114,6 +118,7 @@ def test_feedback_records_and_validates() -> None:
     assert r.status_code == 201
     assert client.post("/feedback", json={"kind": "search", "rating": 0}).status_code == 422
     assert client.post("/feedback", json={"kind": "bogus", "rating": 1}).status_code == 422
+    assert client.post("/feedback", json={"kind": "search", "rating": 1, "query": "x" * 513}).status_code == 422
 
 
 def test_cache_headers() -> None:
