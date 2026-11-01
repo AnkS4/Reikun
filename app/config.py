@@ -32,7 +32,23 @@ KANJIVG_DIR = DATA_DIR / "kanjivg"
 MODELS_DIR = Path(_env("MODELS_DIR", str(ROOT / "models" / "fastembed")))
 MONITORING_DB = Path(_env("MONITORING_DB", str(DATA_DIR / "monitoring" / "reikun.db")))
 
-APP_VERSION = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))["project"]["version"]
+# Release version, read from pyproject.toml so the FastAPI schema (and the
+# generated docs/api/openapi.json) can't drift from the package metadata.
+# A non-editable (wheel) install ships no pyproject.toml, so fall back to the
+# installed distribution metadata rather than failing at import.
+def _read_version() -> str:
+    pyproject = ROOT / "pyproject.toml"
+    if pyproject.is_file():
+        return tomllib.loads(pyproject.read_text(encoding="utf-8"))["project"]["version"]
+    from importlib.metadata import PackageNotFoundError, version
+
+    try:
+        return version("reikun")
+    except PackageNotFoundError:  # source tree without metadata at all
+        return "0.0.0"
+
+
+APP_VERSION = _read_version()
 
 # Ensure directories we write to actually exist (first-run safety).
 for _dir in (RAW_DIR, PROC_DIR, KANJIVG_DIR, MODELS_DIR, MONITORING_DB.parent):
