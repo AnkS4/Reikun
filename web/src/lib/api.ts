@@ -287,7 +287,18 @@ export async function explainStream(
 			}
 		}
 	} catch (e) {
+		// Release the socket instead of leaving the stream to GC — an error
+		// frame aborts the read loop mid-body.
+		await reader.cancel().catch(() => {});
 		throw normalize(e);
+	} finally {
+		// cancel() already released the lock on the error path; release it on
+		// the success path (a double release is harmless but throws).
+		try {
+			reader.releaseLock();
+		} catch {
+			/* already released */
+		}
 	}
 	if (!done && !gotText) throw new ApiError(502, t('errorStreamEnded'));
 	return done ?? { explanation_id: null, latency_ms: 0 };
