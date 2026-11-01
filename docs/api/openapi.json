@@ -3,7 +3,7 @@
   "info": {
     "title": "Reikun API",
     "description": "Semantic Japanese Dictionary & Reading Assistant — hybrid dense + BM25 search, kanji details and JLPT-calibrated grammar explanations.",
-    "version": "1.0.2"
+    "version": "1.0.3"
   },
   "paths": {
     "/health": {
@@ -637,12 +637,14 @@
         "properties": {
           "sentence": {
             "type": "string",
+            "maxLength": 1600,
             "minLength": 1,
             "title": "Sentence",
             "description": "Japanese example sentence"
           },
           "english": {
             "type": "string",
+            "maxLength": 3200,
             "title": "English",
             "description": "English translation (improves the explanation)",
             "default": ""
@@ -743,7 +745,8 @@
           "query": {
             "anyOf": [
               {
-                "type": "string"
+                "type": "string",
+                "maxLength": 512
               },
               {
                 "type": "null"
