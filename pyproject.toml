@@ -13,7 +13,7 @@ requires-python = ">=3.14"
 dependencies = [
     "qdrant-client==1.20.0",
     "fastembed==0.9.1",
-    "openai==3.41.0",
+    "openai==3.42.0",
     "python-dotenv==1.2.4",
     "httpx==0.28.1",
     "pydantic==2.14.2",
