@@ -17,11 +17,17 @@
 	let req = $derived.by((): { by: GroupKey; value: number; skip: number } | null => {
 		const params = page.url.searchParams;
 		const raw = params.get('by');
-		const value = Number(params.get('value'));
 		const by: GroupKey | null =
 			raw === 'strokes' || raw === 'grade' || raw === 'jlpt' ? raw : null;
 		if (!by) return null;
-		return { by, value, skip: Math.max(0, Math.round(Number(params.get('page') ?? 0))) * PAGE_SIZE };
+		// The API accepts value 1–50 and a non-negative integer offset; a
+		// garbage param (?value=abc, no value) must show the "unknown group"
+		// notice, not fire a request that 422s into the failure banner.
+		const value = Number(params.get('value') ?? NaN);
+		if (!Number.isInteger(value) || value < 1 || value > 50) return null;
+		const pageNo = Number(params.get('page') ?? 0);
+		if (!Number.isInteger(pageNo) || pageNo < 0) return null;
+		return { by, value, skip: pageNo * PAGE_SIZE };
 	});
 
 	let data = $state.raw<KanjiGroupResponse | null>(null);
