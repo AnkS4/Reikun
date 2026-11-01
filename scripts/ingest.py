@@ -395,6 +395,7 @@ def run(
 
     stale: list[int] = []
     fresh_sigs: dict[int, str] = {}
+    recreated = False
     if update and client.collection_exists(COLLECTION):
         have = _point_sigs(client)
         fresh = {int(c["id"]) for c in chunks}
@@ -420,6 +421,7 @@ def run(
     else:
         recreate_collection(client)
         todo = chunks
+        recreated = True  # its HNSW indexing is off; the bulk-load switch must run
 
     if update and client.collection_exists(COLLECTION):
         # A fresh --update may ship payload fields the live collection has no
@@ -486,9 +488,12 @@ def run(
         client.delete(COLLECTION, points_selector=PointIdsList(points=stale))
         log.info("  Removed %s points for entries that left JMdict.", f"{len(stale):,}")
 
-    if not update:
-        # Bulk-load only: indexing was disabled for the upload. Update mode
-        # touches a small delta — the live index handles it fine.
+    if not update or recreated:
+        # Bulk-load path: indexing was disabled for the upload. This also
+        # covers `--update` against a missing/vanished collection — the fresh
+        # branch above recreates it with indexing off, so without this switch
+        # a recovery update would leave it fully populated but unindexed
+        # (correct results, full scans).
         log.info("  Re-enabling HNSW indexing (threshold %d KB) …", INDEXING_THRESHOLD_KB)
         client.update_collection(
             COLLECTION, optimizers_config=OptimizersConfigDiff(indexing_threshold=INDEXING_THRESHOLD_KB)
