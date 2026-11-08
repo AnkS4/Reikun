@@ -1379,6 +1379,7 @@ def search(
     if mode not in _SEARCHERS and mode != "auto":
         raise ValueError(f"mode must be one of {MODES}, got {mode!r}")
     t0 = time.perf_counter()
+    original = query.strip()
     normalized = " ".join(query.split()).lower()
     too_long = None
     if len(normalized) > MAX_QUERY_CHARS:
@@ -1389,7 +1390,7 @@ def search(
     elif is_japanese(normalized) and len(normalise(normalized)) > MAX_JA_QUERY_CHARS:
         too_long = MAX_JA_QUERY_CHARS
     if too_long:
-        return SearchResponse(results=(), rewrite=Rewrite(normalized, normalized, "none"), mode=mode,
+        return SearchResponse(results=(), rewrite=Rewrite(original, normalized, "none"), mode=mode,
                               latency_ms=_ms_since(t0), meta=MappingProxyType({"too_long": too_long}))
 
     # None and the configured default are the same setting — resolve before
@@ -1397,6 +1398,12 @@ def search(
     resp, computed_at = _search_cached(normalized, num_results, mode, (rewrite_mode or QUERY_REWRITE).lower())
     if computed_at < t0:  # served from cache: computed before this call began
         resp = replace(resp, latency_ms=_ms_since(t0), meta=MappingProxyType({**resp.meta, "cached": True}))
+    # The cache is keyed on the normalised query, so response.rewrite's
+    # `original` comes back normalised (lowercase, collapsed whitespace);
+    # surface the user's exact input instead. `query` — the rewritten value —
+    # is unchanged: that is what the pipeline actually searched.
+    if resp.rewrite.original != original:
+        resp = replace(resp, rewrite=replace(resp.rewrite, original=original))
     return resp
 
 
