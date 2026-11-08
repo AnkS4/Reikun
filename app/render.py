@@ -148,8 +148,9 @@ def kanji_card(char: str, *, strokes: bool = False) -> dict | None:
     if not d:
         return None
     # JMdict order is roughly by reading, so the word that *is* this kanji can
-    # land anywhere — pull it to the top; the rest keep their order.
-    words = sorted((d.get("common_words") or ())[:8], key=lambda w: w.get("kanji_form") != char)
+    # land anywhere — scan the whole common-word pool for it (not just the
+    # first 8) and pull it to the top; the rest keep their order.
+    words = sorted(d.get("common_words") or (), key=lambda w: w.get("kanji_form") != char)[:8]
     on_yomi = d.get("on_yomi") or []
     kun_yomi = d.get("kun_yomi") or []
     card = {
