@@ -32,6 +32,7 @@ const en = {
 	languageTitle: 'Interface language',
 
 	backToSearch: 'Back to search',
+	liteSwitch: 'Switch to the JavaScript-free lite interface',
 	statusTitle: 'Dictionary status',
 	statusConnecting: 'Connecting…',
 	statusWaking: 'Waking up the dictionary',
@@ -249,6 +250,7 @@ const ja: Record<MessageKey, string> = {
 	languageTitle: '表示言語',
 
 	backToSearch: '検索に戻る',
+	liteSwitch: 'JavaScript不要のLite版へ切り替え',
 	statusTitle: '辞書の状態',
 	statusConnecting: '接続中…',
 	statusWaking: '辞書を起動しています',

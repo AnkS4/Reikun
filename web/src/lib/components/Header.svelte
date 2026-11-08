@@ -4,11 +4,16 @@
 	import { theme } from '#lib/theme.svelte.ts';
 	import { i18n, t, LOCALES, LOCALE_NAMES, LOCALE_TAGS } from '#lib/i18n.svelte.ts';
 	import { BRAND_SUBTEXT } from '#lib/brand.ts';
+	import { PUBLIC_API_BASE } from '$app/env/public';
 	import KanjiText from './KanjiText.svelte';
 	import Popover from './Popover.svelte';
 	import Icon from './Icon.svelte';
 
 	let { hero = false, tagline = '' }: { hero?: boolean; tagline?: string } = $props();
+
+	// The lite counterpart lives on the API origin (server-rendered), not this
+	// static site — same top-right cluster, mirrored by lite's "Full version".
+	const LITE_URL = `${PUBLIC_API_BASE}/lite`;
 
 	// Only reassigned as a whole — raw state avoids proxying the response object.
 	let status = $state.raw<{ ok: boolean; entries: number | null; error?: string } | null>(null);
@@ -37,6 +42,13 @@
 </script>
 
 <div class="header-controls">
+	<!-- Variant switch, drawn like the popover triggers: a plain 2rem round
+	     icon button — a quill for the lightweight variant (the hero tag already
+	     uses the book glyph), matched in height and form with the status dot /
+	     appearance / language controls. -->
+	<a class="btn tertiary header-lite" href={LITE_URL} title={t('liteSwitch')} aria-label={t('liteSwitch')} rel="noopener">
+		<Icon name="feather" size={15} />
+	</a>
 	<!-- svelte-ignore a11y_no_noninteractive_tabindex — focusable so keyboard users can open the status tooltip -->
 	<span
 		class="status-dot"
