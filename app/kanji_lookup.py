@@ -83,7 +83,7 @@ def lookup_kanji(char: str) -> dict | None:
     return _load_kanji_table().get(char)
 
 
-def kanji_group(by: str, value: str, n: int = 40, offset: int = 0) -> tuple[list[dict], int] | None:
+def kanji_group(by: str, value: str, n: int = 40, offset: int = 0) -> tuple[tuple[dict, ...], int] | None:
     """
     The KANJI of a "same metadata" group: every kanji whose `by`-field
     (strokes / grade / jlpt) equals `value`, ordered by KANJIDIC2 frequency

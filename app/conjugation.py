@@ -63,7 +63,9 @@ _YOI_ADJ = "adjective (keiyoushi) - yoi/ii class"  # いい/かっこいい fami
 # godan ending kana → (i-row [ます/etc], a-row [ない/passive/causative],
 #                      ta-form, te-form, e-row [potential/ば/ imperative],
 #                      o-row [volitional])
-_V5_ROWS = {
+# Annotated since dicts are invariant: the literals infer a 6-tuple,
+# which doesn't assign to _inflect/_godan's dict[str, tuple[str, ...]].
+_V5_ROWS: dict[str, tuple[str, ...]] = {
     "う": ("い", "わ", "った", "って", "え", "お"),
     "く": ("き", "か", "いた", "いて", "け", "こ"),
     "ぐ": ("ぎ", "が", "いだ", "いで", "げ", "ご"),

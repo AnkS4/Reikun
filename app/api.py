@@ -17,7 +17,7 @@ import json
 import logging
 import time
 from contextlib import asynccontextmanager
-from typing import Annotated, Literal, get_args
+from typing import Annotated, Literal, cast, get_args
 
 from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException, Query, Response
 from fastapi.middleware.cors import CORSMiddleware
@@ -70,7 +70,13 @@ if not logging.root.handlers:
 
 Mode = Literal["auto", "hybrid", "vector", "text"]
 Level = Literal["N5", "N4", "N3", "N2", "N1"]
-assert set(get_args(Mode)) == set(MODES) and set(get_args(Level)) == set(JLPT_LEVELS)
+# Kept as an explicit check (not `assert`) so optimized (`-O`) deploys still
+# catch the literal types drifting from retrieval/grammar_explain.
+if set(get_args(Mode)) != set(MODES) or set(get_args(Level)) != set(JLPT_LEVELS):
+    raise RuntimeError(
+        "Mode/Level literals drifted: sync them with app.retrieval.MODES "
+        "and app.grammar_explain.JLPT_LEVELS"
+    )
 
 
 @asynccontextmanager
@@ -210,7 +216,7 @@ class SearchMeta(BaseModel):
     retrieve_ms: int | None = None
     segment_ms: int | None = None
     cached: bool = False
-    too_long: int | None = Field(None, description="The character cap the query exceeded")
+    too_long: int | None = Field(default=None, description="The character cap the query exceeded")
 
 
 class SearchResponseModel(BaseModel):
@@ -220,7 +226,7 @@ class SearchResponseModel(BaseModel):
     mode: str
     latency_ms: int
     segments: list[Segment] | None = None
-    meta: SearchMeta = SearchMeta()
+    meta: SearchMeta = Field(default_factory=SearchMeta)
 
 
 class ReadingChip(BaseModel):
@@ -421,13 +427,19 @@ def search_endpoint(
             q, rewritten_query=resp.rewrite.query, rewrite_method=resp.rewrite.method, mode=resp.mode,
             num_results=n, result_count=len(resp.results),
             top_result=top.get("kanji_form") or top.get("reading"), latency_ms=resp.latency_ms,
-            cached=bool(resp.meta.get("cached")), route=resp.meta.get("route"),
-            embed_ms=resp.meta.get("embed_ms"), retrieve_ms=resp.meta.get("retrieve_ms"),
+            cached=bool(resp.meta.get("cached")),
+            # SearchResponse.meta is a read-only Mapping[str, object] by
+            # design; the pipeline writes these exact keys, so cast to the
+            # declared telemetry field types.
+            route=cast("str | None", resp.meta.get("route")),
+            embed_ms=cast("int | None", resp.meta.get("embed_ms")),
+            retrieve_ms=cast("int | None", resp.meta.get("retrieve_ms")),
         )
         if is_kanji(q):
             background.add_task(telemetry().kanji_lookup, q, source="search")
     meta = dict(resp.meta)
-    raw_segments = meta.pop("segments", None)
+    # "segments" is the pipeline's tuple of segment dicts (or absent).
+    raw_segments = cast("tuple[dict, ...] | None", meta.pop("segments", None))
     results = []
     for r in resp.results:
         head = r.get("kanji_form") or r.get("reading") or r.get("text") or ""

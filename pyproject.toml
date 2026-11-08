@@ -13,11 +13,11 @@ requires-python = ">=3.14"
 dependencies = [
     "qdrant-client==1.20.0",
     "fastembed==0.9.1",
-    "openai==3.42.0",
+    "openai==3.46.0",
     "python-dotenv==1.2.4",
     "httpx==0.28.1",
-    "pydantic==2.14.2",
-    "fastapi==0.162.0",
+    "pydantic==2.14.3",
+    "fastapi==0.162.2",
     "uvicorn==0.54.0",
     "sudachipy==0.7.0",
     "sudachidict-small==20261015",
@@ -38,6 +38,7 @@ dev = [
     "pytest==9.1.1",
     "ruff==0.16.10",
     "httpx2==2.13.1",
+    "ty>=0.0.96",
 ]
 
 [tool.uv]
@@ -49,6 +50,25 @@ include = ["app*", "scripts*"]
 [tool.pytest.ini_options]
 pythonpath = ["."]
 testpaths = ["tests"]
+
+[tool.ty]
+# Primary type checker (Astral — same team as uv and ruff, installed in the
+# dev group beside them). Diagnostic names match `ty check app`, so CI and a
+# `ty` editor extension agree. Scope follows the serving half, as before:
+# scripts/ is build-tooling over untyped XML/Tatoeba data and tests/ is
+# exercised by pytest, not by a type checker.
+
+[tool.ty.environment]
+python-version = "3.14"
+
+[tool.ty.src]
+include = ["app"]
+
+[tool.ty.analysis]
+# marisa-trie ships no type stubs, so the import is reported unresolved by
+# every checker; it isn't fixable until upstream publishes py.typed. The
+# module is exercised by tests, so real breakage still surfaces at runtime.
+allowed-unresolved-imports = ["marisa_trie"]
 
 [tool.ruff]
 line-length = 120

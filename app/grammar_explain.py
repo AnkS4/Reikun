@@ -26,6 +26,7 @@ import time
 from collections.abc import Iterator
 from dataclasses import dataclass
 from functools import lru_cache
+from typing import Any
 
 from app.config import LLM_MODEL, LLM_MODEL_FALLBACK
 from app.llm import client as _llm_client
@@ -97,10 +98,13 @@ class _BulletTidier:
         if not lead or _is_punct_run(lead):
             return None  # "。 (。) — punctuation — …" — nothing to keep
         pm = _PAREN.search(body)
+        # `paren` is truthy exactly when `pm` is (the pattern's capture is
+        # never empty), so guarding on `pm` keeps the same rule and narrows
+        # the match for the start()/end() pair below.
         paren = pm.group(1).strip() if pm else ""
         stem = _stem(lead)
         dash = body.find("—")
-        if paren and stem == paren and (dash < 0 or pm.start() < dash):
+        if pm and stem == paren and (dash < 0 or pm.start() < dash):
             # Parenthetical in the pattern segment repeats the pattern
             # (ignoring the tilde) — drop it, preserving exactly one space
             # around the boundary. A matching parenthetical in the
@@ -387,8 +391,13 @@ def _retryable(exc: Exception) -> bool:
 
 def _retry_after(exc: Exception) -> float:
     """The API's own `retry-after` hint in seconds, else a short default."""
+    # Only openai's APIStatusError carries a response; getattr keeps the
+    # signature honest for arbitrary exception types.
+    response = getattr(exc, "response", None)
     try:
-        return float(exc.response.headers["retry-after"])  # type: ignore[attr-defined]
+        if response is None:
+            raise TypeError
+        return float(response.headers["retry-after"])
     except (AttributeError, KeyError, TypeError, ValueError):
         return 3.0
 
@@ -402,12 +411,13 @@ def _complete(model: str, messages: list[dict[str, str]], budget: int, effort: s
     is retried once without the param inside the same attempt.
     """
     p = _llm_provider()
-    args = {"model": model, "messages": messages, "stream": stream, **kw}
+    args: dict[str, Any] = {"model": model, "messages": messages, "stream": stream, **kw}
     args[p.token_param] = budget
     if effort and p.reasoning:
         args["reasoning_effort"] = effort
     if p.extra_body:
-        args["extra_body"] = {**p.extra_body, **args.get("extra_body", {})}
+        extra = args.get("extra_body")
+        args["extra_body"] = {**p.extra_body, **(extra if isinstance(extra, dict) else {})}
     try:
         return _llm_client().chat.completions.create(**args)
     except Exception as exc:

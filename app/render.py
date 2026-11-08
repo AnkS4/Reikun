@@ -31,7 +31,7 @@ def furigana_parts(word: str, reading: str | None) -> list[dict]:
     core_w, core_r = word[i:len(word) - j], reading[i:len(reading) - j]
     if not core_w or not core_r:
         return [{"text": word, "rt": reading}]
-    parts = [{"text": core_w, "rt": core_r}]
+    parts: list[dict[str, str | None]] = [{"text": core_w, "rt": core_r}]
     if j:
         parts.append({"text": word[len(word) - j:], "rt": None})
     if i:

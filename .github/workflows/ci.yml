@@ -29,6 +29,11 @@ jobs:
 
       - run: uv run ruff check .
 
+      # Type gate: ty (Astral, pinned ty==0.0.96 in uv.lock — it's a 0.0.x,
+      # so version moves are deliberate). Scope and suppressions live in
+      # [tool.ty] in pyproject.toml (app/ only; sub-second run).
+      - run: uv run ty check app
+
       # Everything in tests/ runs without Qdrant/Groq — committed data
       # (kanji_table.json, headword_index.marisa, strokes.json) + validation
       # paths only.

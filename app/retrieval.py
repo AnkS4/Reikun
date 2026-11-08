@@ -41,9 +41,11 @@ import time
 from dataclasses import dataclass, replace
 from functools import cache, lru_cache
 from types import MappingProxyType
+from typing import Any
 
 from fastembed.sparse.sparse_embedding_base import SparseEmbedding
 from qdrant_client.models import (
+    Condition,
     Document,
     FieldCondition,
     Filter,
@@ -219,7 +221,7 @@ def _exact_filter(query: str) -> Filter:
     # after the re-ingest that ships the conjugation table);
     # gloss_keys expects the same normalisation used at index time
     # (lowercased, parens stripped).
-    should = [
+    should: list[Condition] = [
         FieldCondition(key="kanji_form", match=MatchValue(value=query)),
         FieldCondition(key="reading", match=MatchValue(value=query)),
         FieldCondition(key="kanji_forms", match=MatchValue(value=query)),
@@ -282,6 +284,18 @@ def _sparse(vec: SparseEmbedding) -> SparseVector:
     return SparseVector(indices=vec.indices.tolist(), values=vec.values.tolist())
 
 
+def _sparse_of(
+    vectors: tuple[list[float] | None, SparseEmbedding | None] | Document,
+) -> SparseEmbedding:
+    """The sparse component of embed_query's result, for the search arms that
+    always request the sparse model. `None` comes back only when a caller
+    passed sparse=False — a plan bug, not a runtime state — so this raises
+    instead of feeding None into a Qdrant query."""
+    if not isinstance(vectors, Document) and vectors[1] is not None:
+        return vectors[1]
+    raise RuntimeError("search arm ran with the sparse embedding disabled")
+
+
 def _pool(num_results: int) -> int:
     return max(PREFETCH_MIN, num_results * PREFETCH_FACTOR)
 
@@ -311,9 +325,8 @@ def text_search(query: str, num_results: int = 5, *, vectors=None) -> list[dict]
         ).points
     else:
         # Local inference: unpack pre-computed vectors
-        _, sparse = vectors
         hits = qdrant_client().query_points(
-            COLLECTION, query=_sparse(sparse), using=SPARSE_VECTOR, limit=num_results
+            COLLECTION, query=_sparse(_sparse_of(vectors)), using=SPARSE_VECTOR, limit=num_results
         ).points
     return [_hit_to_dict(h) for h in hits]
 
@@ -331,12 +344,13 @@ def hybrid_search(query: str, num_results: int = 5, *, vectors=None) -> list[dic
         ).points
     else:
         # Local inference: unpack pre-computed vectors
-        dense, sparse = vectors
+        dense, _ = vectors
+        sparse_vec = _sparse(_sparse_of(vectors))
         hits = qdrant_client().query_points(
             COLLECTION,
             prefetch=[
                 Prefetch(query=dense, using=DENSE_VECTOR, limit=pool),
-                Prefetch(query=_sparse(sparse), using=SPARSE_VECTOR, limit=pool),
+                Prefetch(query=sparse_vec, using=SPARSE_VECTOR, limit=pool),
                 Prefetch(query=dense, using=DENSE_VECTOR, filter=_exact_filter(query), limit=pool),
             ],
         query=FusionQuery(fusion=Fusion.RRF),
@@ -356,7 +370,7 @@ def route_query(query: str) -> str:
     return "en_word" if len(query.split()) <= 3 else "en_sentence"
 
 
-def _rrf(prefetches: list[Prefetch], weights: list[float], limit: int) -> dict:
+def _rrf(prefetches: list[Prefetch], weights: list[float], limit: int) -> dict[str, Any]:
     return {"prefetch": prefetches, "query": RrfQuery(rrf=Rrf(weights=weights)), "limit": limit}
 
 
@@ -367,9 +381,9 @@ def _auto_search(query: str, num_results: int, *, vectors, route: str) -> list[d
         return [_hit_to_dict(h) for h in hits]
 
     # Local inference: unpack pre-computed vectors
-    dense, sparse = vectors
+    dense, _ = vectors
+    sparse_vec = _sparse(_sparse_of(vectors))
     pool = _pool(num_results)
-    sparse_vec = _sparse(sparse)
 
     if route == "ja":
         # Dense embeddings are English-tuned (they score ~0 MRR on kana in
@@ -379,7 +393,7 @@ def _auto_search(query: str, num_results: int, *, vectors, route: str) -> list[d
         # layer the en_word route uses ranks the fused pool, because bare RRF
         # is frequency-blind: a kana query that two entries share (じてんしゃ
         # → 自転車 and 次点者) came back rare-word-first.
-        params = {
+        params: dict[str, Any] = {
             "prefetch": _rrf(
                 [
                     Prefetch(query=sparse_vec, using=SPARSE_VECTOR, limit=pool),
@@ -437,7 +451,7 @@ def _auto_search(query: str, num_results: int, *, vectors, route: str) -> list[d
         # pool. (Nested prefetch → RRF → formula is the documented pattern; a
         # main query can't be both fusion+formula.)
         exact = _exact_filter(query)
-        params = {
+        params: dict[str, Any] = {
             "prefetch": Prefetch(
                 prefetch=[
                     Prefetch(query=dense, using=DENSE_VECTOR, limit=pool),
@@ -1068,9 +1082,9 @@ def _segment_sudachi(query: str, index: TrieIndex) -> list[dict] | None:
         # Whole-word reading = the morphemes' contextual readings joined —
         # 食べ+まし+た → タベマシタ → たべました, so the chip gets furigana.
         reading = "".join(toks[i].reading for i in g)
-        chip = {"text": text, "kanji_form": text, "reading": reading,
-                "meanings": meanings[:4], "options": lines,
-                "_start": g[0], "_end": g[-1]}
+        chip: dict[str, object] = {"text": text, "kanji_form": text, "reading": reading,
+                                   "meanings": meanings[:4], "options": lines,
+                                   "_start": g[0], "_end": g[-1]}
         if stem_entry:
             # `_lemma` carries the entry's canonical reading (走る → はしる) —
             # the `reading` field was overwritten with the token's inflected
@@ -1416,13 +1430,13 @@ def _search_cached(
     pivot = rw.japanese if mode == "auto" else ()
     candidates = tuple(dict.fromkeys((*pivot, rw.query))) if pivot else (rw.query,)
     retrieval_query = rw.query
-    route = None
+    route = ""  # "" = no route (explicit vector/text/hybrid modes); meta omits it
     vectors = None
     results: list[dict] = []
     embed_s = retrieve_s = 0.0
     for candidate in candidates:
         retrieval_query = candidate
-        route = route_query(candidate) if mode == "auto" else None
+        route = route_query(candidate) if mode == "auto" else ""
         # Only embed with the model(s) the plan will read: the Japanese route
         # and explicit `text` mode never read the dense vector (English-tuned,
         # ~useless on kana), explicit `vector` mode never reads the sparse one.
@@ -1443,7 +1457,7 @@ def _search_cached(
     t2 = t1 + embed_s
     t3 = t2 + retrieve_s
 
-    meta = {
+    meta: dict[str, object] = {
         "rewrite_ms": int((t1 - t0) * 1000),
         "embed_ms": int((t2 - t1) * 1000),
         "retrieve_ms": int((t3 - t2) * 1000),
