@@ -223,13 +223,6 @@ const en = {
 	sourceAfter: ' under the Apache-2.0 license.',
 
 
-	footerAbout: 'About',
-	footerDataBefore: 'Dictionary data powered by ',
-	footerDataAnd: ' and ',
-	footerDataAfter: ' (EDRDG, CC BY-SA 4.0). Sentences from ',
-	footerDataAfter2: ' (Tatoeba, CC-BY 2.0 FR). Kanji stroke diagrams from ',
-	footerDataAfter3: ' (Ulrich Apel, CC BY-SA 3.0).',
-
 	errorUnreachable:
 		"Can't reach the dictionary server. It may still be waking up — try again in a few seconds.",
 	errorTimeout:
@@ -438,13 +431,6 @@ const ja: Record<MessageKey, string> = {
 	sourceLink: 'GitHub',
 	sourceAfter: ' で Apache-2.0 ライセンスの下で公開されています。',
 
-
-	footerAbout: '概要',
-	footerDataBefore: '辞書データは ',
-	footerDataAnd: ' と ',
-	footerDataAfter: '（EDRDG、CC BY-SA 4.0）によるものです。例文は ',
-	footerDataAfter2: '（Tatoeba、CC-BY 2.0 FR）、漢字の筆順図は ',
-	footerDataAfter3: '（Ulrich Apel、CC BY-SA 3.0）によるものです。',
 
 	errorUnreachable:
 		'辞書サーバーに接続できません。起動中の可能性があります — 数秒後にもう一度お試しください。',
