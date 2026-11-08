@@ -3,7 +3,7 @@
   "info": {
     "title": "Reikun API",
     "description": "Semantic Japanese Dictionary & Reading Assistant — hybrid dense + BM25 search, kanji details and JLPT-calibrated grammar explanations.",
-    "version": "1.0.3"
+    "version": "1.1.0"
   },
   "paths": {
     "/health": {
@@ -1440,10 +1440,7 @@
             "title": "Segments"
           },
           "meta": {
-            "$ref": "#/components/schemas/SearchMeta",
-            "default": {
-              "cached": false
-            }
+            "$ref": "#/components/schemas/SearchMeta"
           }
         },
         "type": "object",

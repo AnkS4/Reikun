@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-11-08
+
+Lite release: a JavaScript-free, server-rendered UI at `/lite` mirroring the full interface, with the theme choice and the recent-searches list shared across the two variants through cookies. Also lands the ty type gate on the backend pipeline, two search-surface fixes, in-range dependency updates, and a refreshed example-search set.
+
+### Added
+- **The `/lite` variant** (`app/lite.py`): a DuckDuckGo-Lite-style counterpart of the SvelteKit interface served by the FastAPI app — home (hero, example/recent pills, random-kanji button, furigana toggle), search with the full auto pipeline (single-kanji queries pin a compact two-column kanji card in the SPA's structure; sentences render a Sentence Breakdown card of word-over-gloss tiles), kanji card/group browse pages, verb conjugations and an about page. Plain f-string HTML with inline-Lucide SVG icons: every interaction is a link or a `GET` form, so it works with JavaScript disabled, in text browsers and on slow connections, and reuses the same retrieval/render layer the JSON API wraps (schema-hidden, so the HTTP surface is unchanged). Tests cover pages, cookies, toggles and error/empty-page chrome from committed data — no Qdrant or LLM required.
+- **Variant switches both ways**: lite's top-right icon controls (theme sun/moon + "open full interface") take `WEB_BASE_URL` (docker-compose sets it; empty hides the switch for lite-only deployments), and the full version's header gains a matching feather icon button linking to the lite URL. Titles/aria-labels carry the meaning the icons substitute.
+- **Cross-variant theme sync**: the shared `lite_theme` cookie is authoritative in both directions (cookies are not port-scoped), so switching the theme in either variant applies to both on the next load. lite's single dark maps onto the SPA's dark/oled flavour, preserving an existing dark/oled choice; system mode deletes the cookie so both ends follow the OS. The SPA's pre-paint inline script performs the same cookie-first resolution before first paint.
+- **Cross-variant recent searches**: one shared `lite_recent` cookie holds both variants' recent-search pills (8 entries, 150 chars each, and a ~2.4KB percent-encoded budget under the browser's 4KB per-cookie cap on both writers). The SPA reads the cookie first and mirrors it to localStorage (kept as the fallback for blocked-cookie browsers); an absent cookie with local history seeds the shared list once, and an explicit empty list is the "cleared" tombstone every reader honours — a *deleted* cookie would read as "no shared state", resurrecting a lite-cleared list from the local fallback.
+
+### Fixed
+- The kanji card pulled the entry that *is* the kanji to the top of its common-word list after sorting only the first 8 pool entries, so on a frequent kanji the exact word could sit past the cut and be missing from the card entirely while a rarer compound took its slot (`app/render.py`); the whole frequency-ranked pool is scanned before cutting to 8.
+- Cached search responses carried the cache key's normalized text in `rewrite.original` (lowercase, collapsed whitespace — not what the user typed; the rewritten `query`, the value the pipeline actually searched, was unaffected) (`app/retrieval.py`); cache-served responses re-stamp the user's exact input.
+- Invalid integer env values (`QDRANT_TIMEOUT`, the rate limits) died at import time with a bare unattributed `ValueError`; `_env_int` names the offending variable and value (`app/config.py`).
+
+### Changed
+- The backend's type gate is now `ty` (Astral's checker, same toolchain as uv/ruff): pinned `ty==0.0.96` in the dev group, scoped to `app/` via `[tool.ty]`, and run by CI (`uv run ty check app`) after ruff and before pytest. The one real finding it exposed (dict invariance in `conjugation._V5_ROWS`) came with an accompanying behavior-neutral annotation sweep across `app/`, and `app/api.py`'s use-`assert` drift checks are explicit `RuntimeError`s now so optimized (`-O`) deploys keep the gate. The marisa-trie unresolved import (upstream ships no stubs) is the only allowed suppression.
+- In-range dependency updates: `openai` 3.42.0 → 3.46.0, `pydantic` 2.14.2 → 2.14.3, `fastapi` 0.162.0 → 0.162.2. As a side effect of the pydantic update's Pydantic v2 idiom (a `default_factory` instead of a shared default instance), the `SearchResponse.meta` schema field drops its stale inline default and is properly optional.
+- The footer is intentionally English-only: copyright, license and the EDRDG/Tatoeba/KanjiVG attributions are legal/credit lines and left the i18n dictionaries, rendered verbatim by both the full version's footer component and lite's.
+- Example-search pills are refreshed to a shared seven-query set, identical in both variants and strictly alternating Japanese/English (single kanji, English noun, kanji+okurigana verb, English infinitive, two-kanji compound, natural-language question, Japanese sentence) — `app/lite.py`'s `_EXAMPLES` and the web app's `EXAMPLES` cross-reference each other.
+
+- Versions: API 1.1.0 (pyproject + openapi), web 1.1.0
+
 ## [1.0.3] - 2026-11-01
 
 Hardening release: two critical backend fixes (search error path, rate-limit identity), the SvelteKit stale-response/hover-cache fixes, a second bug sweep's findings (recovery-ingest indexing, wheel-safe version read, bounded request bodies, CORS wildcard guard, SSE reader release), and in-range web dependency patches.

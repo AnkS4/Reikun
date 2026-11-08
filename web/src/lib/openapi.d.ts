@@ -591,12 +591,7 @@ export interface components {
             latency_ms: number;
             /** Segments */
             segments?: components["schemas"]["Segment"][] | null;
-            /**
-             * @default {
-             *       "cached": false
-             *     }
-             */
-            meta: components["schemas"]["SearchMeta"];
+            meta?: components["schemas"]["SearchMeta"];
         };
         /** SearchResult */
         SearchResult: {
