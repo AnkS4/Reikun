@@ -23,7 +23,11 @@
 	// Floating button state
 	let showBackToTop = $state(false);
 
-	const EXAMPLES = ['water', '日', '食べる', 'How do you say front door in Japanese', 'あの店のケーキはとても美味しいです。'];
+	// Example-search pills below the search bar. Same list as app/lite.py's
+	// _EXAMPLES (update both together), strictly alternating Japanese/English:
+	// single kanji, English noun, verb, English infinitive, two-kanji
+	// compound, natural-language question, Japanese sentence.
+	const EXAMPLES = ['光', 'courage', '咲く', 'to walk', '大君', 'How do you say rain in Japanese', 'あの山の頂上は雪で覆われています。'];
 	// Retrieval is ~25 ms — a page of ten costs the same as five; "Show more" refetches.
 	const DEFAULT_RESULTS = 10;
 	const PAGE_RESULTS = 10;
