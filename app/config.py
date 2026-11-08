@@ -24,6 +24,16 @@ def _env(name: str, default: str) -> str:
     return os.getenv(name, default).strip()
 
 
+def _env_int(name: str, default: int) -> int:
+    """Integer-valued env override with a named error message — a bare
+    `int(_env(...))` at import time dies with an unattributed ValueError."""
+    raw = _env(name, str(default))
+    try:
+        return int(raw)
+    except ValueError:
+        raise ValueError(f"{name}={raw!r} invalid; expected an integer") from None
+
+
 ROOT = Path(__file__).resolve().parent.parent
 DATA_DIR = ROOT / "data"
 RAW_DIR = DATA_DIR / "raw"
@@ -31,6 +41,12 @@ PROC_DIR = DATA_DIR / "processed"
 KANJIVG_DIR = DATA_DIR / "kanjivg"
 MODELS_DIR = Path(_env("MODELS_DIR", str(ROOT / "models" / "fastembed")))
 MONITORING_DB = Path(_env("MONITORING_DB", str(DATA_DIR / "monitoring" / "reikun.db")))
+
+# Origin of the full JavaScript UI, used only by the Lite UI's variant-switch
+# link — in development the SPA (web) and API (lite) run on separate ports.
+# Empty string hides the switch (e.g. Lite-only deployments); docker-compose
+# sets it to the web service's published loopback port.
+WEB_BASE_URL = _env("WEB_BASE_URL", "")
 
 # Release version, read from pyproject.toml so the FastAPI schema (and the
 # generated docs/api/openapi.json) can't drift from the package metadata.
@@ -139,19 +155,19 @@ TELEMETRY = _env("TELEMETRY", "stdout").lower()
 CORS_ORIGINS = _env("CORS_ORIGINS", "*")
 
 
-QDRANT_TIMEOUT = int(_env("QDRANT_TIMEOUT", "30"))
+QDRANT_TIMEOUT = _env_int("QDRANT_TIMEOUT", 30)
 
 # ── Abuse protection ─────────────────────────────────────────────────────────
 # Requests per minute per client, enforced in memory per instance (0 disables).
 # /explain* spends the shared LLM quota; /search costs CPU (embedding).
-RATE_LIMIT_EXPLAIN = int(_env("RATE_LIMIT_EXPLAIN", "10"))
-RATE_LIMIT_SEARCH = int(_env("RATE_LIMIT_SEARCH", "120"))
+RATE_LIMIT_EXPLAIN = _env_int("RATE_LIMIT_EXPLAIN", 10)
+RATE_LIMIT_SEARCH = _env_int("RATE_LIMIT_SEARCH", 120)
 # /feedback writes a telemetry row per click; the UI sends at most a handful
 # per session, so a generous cap only catches scripted spam.
-RATE_LIMIT_FEEDBACK = int(_env("RATE_LIMIT_FEEDBACK", "60"))
+RATE_LIMIT_FEEDBACK = _env_int("RATE_LIMIT_FEEDBACK", 60)
 # Reverse proxies between the internet and the app (Cloud Run: 1). The client
 # address is read from X-Forwarded-For counting this many entries from the right.
-TRUSTED_PROXY_HOPS = int(_env("TRUSTED_PROXY_HOPS", "1"))
+TRUSTED_PROXY_HOPS = _env_int("TRUSTED_PROXY_HOPS", 1)
 
 
 @cache
