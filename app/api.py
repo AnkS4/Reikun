@@ -10,6 +10,8 @@ Rendering is JSON, not HTML: results carry furigana `ruby` parts, the kanji
 card carries badge/readings/common-word structure, and stroke order ships as
 sanitized path data — see app/render.py.
 
+A JavaScript-free, server-rendered UI is mounted at /lite (see app/lite.py).
+
 Docs: /docs (Swagger) · /redoc · /openapi.json.
 """
 
@@ -49,6 +51,7 @@ from app.grammar_explain import (
     validate_input,
 )
 from app.kanji_lookup import is_kanji, jlpt_kanji, random_kanji
+from app.lite import router as lite_router
 from app.ratelimit import rate_limited
 from app.render import (
     furigana_parts,
@@ -113,6 +116,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# JavaScript-free, server-rendered UI (/lite, /lite/search, /lite/kanji…).
+app.include_router(lite_router)
 
 
 # Per-client request limits (see app/ratelimit.py) — 429 + Retry-After when exceeded.

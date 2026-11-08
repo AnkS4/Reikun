@@ -29,6 +29,9 @@ services:
         required: false
     environment:
       QDRANT_HOST: qdrant
+      # Origin of the web UI, for the lite page's variant-switch link (the two
+      # variants run on different published ports in development).
+      WEB_BASE_URL: http://127.0.0.1:5173
       # Runtime only — not baked into the image. Default off; enable with
       # `INGEST_VIA_DOCKER=1 docker compose up -d --build` (do not put this in .env).
       INGEST_VIA_DOCKER: ${INGEST_VIA_DOCKER:-0}

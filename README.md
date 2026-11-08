@@ -38,6 +38,7 @@
 - **Grammar Explanations**: AI-generated explanations calibrated to your JLPT level (N5–N1) via a configurable LLM provider, on demand only, with a smaller fallback model if the primary is exhausted
 - **Feedback & Telemetry**: Thumbs-up/down feedback and query telemetry as JSON events (stdout sink, picked up by platform logs) or a local SQLite file; search queries are logged verbatim (feedback/explanation text stays SHA-256-only) and rows are kept indefinitely
 - **Interface**: Search-first landing page, furigana (`<ruby>`) headwords, animated stroke order, light/dark themes, English/Japanese UI chrome, shareable URLs (`?q=猫&level=N3`), one-click level-aware grammar explanations
+- **JavaScript-free UI**: A server-rendered `lite` variant at `/lite` (`app/lite.py`) mirroring the main interface — same hero, example/recent search pills, random-kanji button and furigana toggle (all cookie/form/link based, no scripts), light/dark themes with a system default (the choice is shared with the full version via the `lite_theme` cookie, so switching variants keeps your look), `<ruby>` furigana and static stroke diagrams, no client bundle; usable without JavaScript, in text browsers and on slow connections. Each variant shows a switch link for the other (top-right in both; the lite side needs `WEB_BASE_URL`, which docker-compose sets)
 - **HTTP API**: FastAPI layer (`app/api.py`) over the same pipeline — SSE streaming for explanations and JSON-shaped rendering (ruby parts, kanji card, segment chips, stroke data) for the web frontend
 
 ## Tech Stack
@@ -90,6 +91,9 @@ docker compose up -d        # API at http://localhost:8000, frontend at http://l
 docker compose logs -f app  # follow API logs
 docker compose down
 ```
+
+The JavaScript-free view is served by the API process at
+[http://localhost:8000/lite](http://localhost:8000/lite) (`/lite/search`, `/lite/kanji/家`, `/lite/conjugations?word=走る`).
 
 Both the API (`app`) and frontend (`web`) run in Docker; the static bundle the web container serves is baked with the API base `http://127.0.0.1:${APP_PORT:-8000}` (the app service's published loopback port — Docker-network hostnames like `app` only resolve inside the Compose network, never from the host browser).
 
