@@ -1,8 +1,26 @@
 <script lang="ts">
+	import { page } from '$app/state';
 	import { hovers, wantKanji } from '#lib/hover.svelte.ts';
 	import { clampTip } from '#lib/tooltip.ts';
 	import { t } from '#lib/i18n.svelte.ts';
 	let { char, onpick }: { char: string; onpick?: (char: string) => void } = $props();
+
+	// The back-context this tip's link threads to the kanji page: the searched
+	// word on the home page (`?q=`), the kanji being viewed on a kanji page
+	// (path, so the chain names the page you were just on), else `from`.
+	const ctxFrom = $derived.by(() => {
+		const u = page.url;
+		const q = u.searchParams.get('q');
+		if (q) return q;
+		const m = u.pathname.match(/^\/kanji\/([^/?]+)/);
+		if (m) return decodeURIComponent(m[1]);
+		return u.searchParams.get('from') ?? '';
+	});
+	const kanjiHref = $derived(
+		ctxFrom
+			? `/kanji/${encodeURIComponent(char)}?from=${encodeURIComponent(ctxFrom)}`
+			: `/kanji/${encodeURIComponent(char)}`
+	);
 
 	$effect(() => wantKanji([char]));
 	const d = $derived(hovers.get(char));
@@ -34,19 +52,6 @@
 
 	function keyToggle(e: KeyboardEvent) {
 		if (e.key === 'Enter' || e.key === ' ') toggle(e);
-	}
-
-	function pick(e: MouseEvent) {
-		if (onpick) {
-			e.preventDefault();
-			e.stopPropagation();
-			pinned = false;
-			hovered = false;
-			onpick(char);
-		} else {
-			pinned = false;
-			hovered = false;
-		}
 	}
 
 	function close() {
@@ -91,8 +96,8 @@
 		{#if d?.meta.length}
 			<div class="tip-stroke">{d.meta.map((m) => m.label).join(' · ')}</div>
 		{/if}
-		<a class="tip-go" href="/?q={encodeURIComponent(char)}" onclick={pick}
-			>{t('tipSearch', { char })}</a
+		<a class="tip-go" href={kanjiHref} onclick={() => close()}
+			>{t('tipOpen', { char })}</a
 		>
 	</span>
 {/snippet}
@@ -117,7 +122,7 @@
 	</span>
 {:else if onpick}
 	<!-- hover data still loading/failed — keep plain-link navigation -->
-	<a class="kanji-tip" href="/?q={encodeURIComponent(char)}" onclick={pick} {@attach clampTip}
+	<a class="kanji-tip" href={kanjiHref} onclick={() => close()} {@attach clampTip}
 		>{char}</a
 	>
 {:else}

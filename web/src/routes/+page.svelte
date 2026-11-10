@@ -254,7 +254,8 @@
 		randomBusy = true;
 		error = '';
 		try {
-			commit(await apiRandomKanji(level));
+			const char = await apiRandomKanji(level);
+			goto(`/kanji/${encodeURIComponent(char)}`);
 		} catch (e) {
 			error = e instanceof Error ? e.message : t('randomFailed');
 		} finally {
@@ -335,27 +336,27 @@
 			autocapitalize="none"
 			spellcheck="false"
 		/>
-		{#if qInput}
-			<button
-				type="button"
-				class="search-clear"
-				aria-label={t('clear')}
-				title={t('clear')}
-				onclick={() => {
-					qInput = '';
-					searchInput?.focus();
-				}}
-			>
-				<Icon name="close" size={14} />
-			</button>
-		{/if}
+		<button
+			type="button"
+			class="search-clear"
+			class:visible={!!qInput}
+			aria-label={t('clear')}
+			title={t('clear')}
+			tabindex={qInput ? 0 : -1}
+			onclick={() => {
+				qInput = '';
+				searchInput?.focus();
+			}}
+		>
+			<Icon name="close" size={14} />
+		</button>
 		<button type="submit" class="search-submit" aria-label={t('search')} title={t('search')}>
 			<Icon name="search" size={17} />
 		</button>
 	</div>
 	<button
 		type="button"
-		class="btn-3d"
+		class="btn-3d no-press"
 		title={t('randomKanji', { level })}
 		aria-label={t('randomKanji', { level })}
 		aria-busy={randomBusy}
@@ -447,8 +448,8 @@
 		</p>
 	{/if}
 
-	{#if resp.segments?.length}
-		<SegChips segments={resp.segments} onjump={jumpToSegment} />
+	{#if (resp.segments?.length ?? 0) > 1}
+		<SegChips segments={resp.segments!} onjump={jumpToSegment} />
 	{/if}
 
 	{#if !resp.results.length}

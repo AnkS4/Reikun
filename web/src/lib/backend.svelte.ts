@@ -15,7 +15,7 @@
  */
 export type BackendState = 'idle' | 'waking' | 'ready' | 'down';
 
-const SLOW_MS = 2500;
+const SLOW_MS = 1750;
 // A success this recent means any new slowness is ordinary load, not a cold
 // start. Cloud Run only scales to zero after a few minutes of no traffic.
 const COLD_IDLE_MS = 60_000;

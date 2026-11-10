@@ -25,6 +25,24 @@ export const LOCALE_TAGS: Record<Locale, string> = {
 };
 
 const KEY = 'reikun-locale';
+/**
+ * Shared with the lite UI (app/lite.py's `lite_lang` cookie): cookies are not
+ * port-scoped, so one language choice follows you across both variants. The
+ * cookie is authoritative in both directions, like the furigana preference.
+ */
+const SHARED_COOKIE = 'lite_lang';
+const COOKIE_AGE = 2_592_000; // 30 days — same as lite's _COOKIE_MAX_AGE
+
+function readSharedCookie(): Locale | null {
+	if (!browser) return null;
+	const m = document.cookie.match(/(?:^|;\s*)lite_lang=(en|ja)(?:;|$)/);
+	return m ? (m[1] as Locale) : null;
+}
+
+function syncSharedCookie(next: Locale): void {
+	if (!browser) return;
+	document.cookie = `${SHARED_COOKIE}=${next}; path=/; max-age=${COOKIE_AGE}; samesite=lax`;
+}
 
 const en = {
 	skipToContent: 'Skip to main content',
@@ -150,13 +168,12 @@ const en = {
 	tipMeanings: 'Meanings',
 	tipOn: 'On',
 	tipKun: 'Kun',
-	tipSearch: 'Search {char} →',
+	tipOpen: 'Open {char} →',
 	tipAria: 'Kanji {char} details',
 
 	conjPageTitle: '{word} conjugations',
 	backTo: 'Back to {word}',
 	goBack: 'Go back',
-	reikunHome: 'Reikun home',
 	noWord: 'No word specified — pick a conjugation from any search result card.',
 	conjugationsLabel: 'conjugations',
 	conjSubtitle:
@@ -359,13 +376,12 @@ const ja: Record<MessageKey, string> = {
 	tipMeanings: '意味',
 	tipOn: '音',
 	tipKun: '訓',
-	tipSearch: '「{char}」を検索 →',
+	tipOpen: '「{char}」を開く →',
 	tipAria: '漢字「{char}」の詳細',
 
 	conjPageTitle: '「{word}」の活用',
 	backTo: '「{word}」に戻る',
 	goBack: '戻る',
-	reikunHome: 'Reikun ホーム',
 	noWord: '単語が指定されていません。検索結果カードから活用形を選んでください。',
 	conjugationsLabel: '活用',
 	conjSubtitle:
@@ -473,15 +489,45 @@ export const i18n = {
 	set(next: Locale): void {
 		locale = next;
 		safeStorage.set(KEY, next);
+		syncSharedCookie(next);
 		apply(next);
 	},
-	/** Apply the persisted locale after hydration (SSR starts at English). */
+	/** Apply the persisted choice after hydration (SSR starts at English).
+	 *  The shared cookie wins: the lite UI writes it server-side, and a pick
+	 *  made there must follow into the SPA on the next load. */
 	init(): void {
 		if (initialized || !browser) return;
 		initialized = true;
 		const stored = safeStorage.get(KEY);
-		const next: Locale = LOCALES.includes(stored as Locale) ? (stored as Locale) : 'en';
+		const next: Locale =
+			readSharedCookie() ?? (LOCALES.includes(stored as Locale) ? (stored as Locale) : 'en');
 		locale = next;
+		safeStorage.set(KEY, next);
+		syncSharedCookie(next);
 		apply(next);
 	}
 };
+
+if (browser) {
+	// Cookies have no change event: re-check the shared language on focus so a
+	// pick made in the lite UI lands here without a reload.
+	addEventListener('visibilitychange', () => {
+		if (document.visibilityState !== 'visible') return;
+		const c = readSharedCookie();
+		if (c !== null && c !== locale) {
+			locale = c;
+			safeStorage.set(KEY, c);
+			apply(c);
+		}
+	});
+	// localStorage changes (another SPA tab) propagate to this tab too.
+	addEventListener('storage', (e) => {
+		if (e.key !== KEY) return;
+		const v = safeStorage.get(KEY);
+		if (LOCALES.includes(v as Locale)) {
+			locale = v as Locale;
+			syncSharedCookie(locale);
+			apply(locale);
+		}
+	});
+}

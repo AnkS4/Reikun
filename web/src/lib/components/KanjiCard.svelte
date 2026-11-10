@@ -24,24 +24,39 @@
 	import Icon from './Icon.svelte';
 	import { t } from '#lib/i18n.svelte.ts';
 	import { furigana } from '#lib/furigana.svelte.ts';
-	let { char }: { char: string } = $props();
+	interface InitialData {
+		card: Card | null;
+		missing: boolean;
+		error: string;
+	}
 
-	let card = $state.raw<Card | null>(null);
-	let missing = $state(false);
-	let loadError = $state('');
+	let { char, initialData }: { char: string; initialData?: InitialData } = $props();
+
+	let fetchedCard = $state.raw<Card | null>(null);
+	let fetchedMissing = $state(false);
+	let fetchedError = $state('');
+
+	// When the route's load() already fetched the card (SSR / client
+	// navigation), use it directly — no client fetch, no loading flash.
+	const provided = $derived(initialData !== undefined);
+	const card = $derived(provided ? (initialData?.card ?? null) : fetchedCard);
+	const missing = $derived(provided ? (initialData?.missing ?? false) : fetchedMissing);
+	const loadError = $derived(provided ? (initialData?.error ?? '') : fetchedError);
+
 	$effect(() => {
 		const c = char;
-		card = null;
-		missing = false;
-		loadError = '';
+		if (provided) return;
+		fetchedCard = null;
+		fetchedMissing = false;
+		fetchedError = '';
 		apiKanjiCard(c)
 			.then((d) => {
-				if (char === c) card = d;
+				if (char === c) fetchedCard = d;
 			})
 			.catch((e) => {
 				if (char !== c) return;
-				if (e instanceof ApiError && e.status === 404) missing = true;
-				else loadError = e instanceof Error ? e.message : t('kanjiLoadFailed');
+				if (e instanceof ApiError && e.status === 404) fetchedMissing = true;
+				else fetchedError = e instanceof Error ? e.message : t('kanjiLoadFailed');
 			});
 	});
 </script>

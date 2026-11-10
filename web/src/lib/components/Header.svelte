@@ -4,6 +4,7 @@
 	import { theme } from '#lib/theme.svelte.ts';
 	import { i18n, t, LOCALES, LOCALE_NAMES, LOCALE_TAGS } from '#lib/i18n.svelte.ts';
 	import { BRAND_SUBTEXT } from '#lib/brand.ts';
+	import { page } from '$app/state';
 	import { PUBLIC_API_BASE } from '$app/env/public';
 	import KanjiText from './KanjiText.svelte';
 	import Popover from './Popover.svelte';
@@ -11,9 +12,30 @@
 
 	let { hero = false, tagline = '' }: { hero?: boolean; tagline?: string } = $props();
 
-	// The lite counterpart lives on the API origin (server-rendered), not this
-	// static site — same top-right cluster, mirrored by lite's "Full version".
-	const LITE_URL = `${PUBLIC_API_BASE}/lite`;
+	// Context-aware: land on the equivalent page in the lite UI instead of
+	// always the home page, so switching variants feels continuous.
+	const LITE_URL = $derived.by(() => {
+		const base = (PUBLIC_API_BASE || '').replace(/\/+$/, '');
+		let path = '/';
+		let search = '';
+		let q = '';
+		try {
+			path = page.url.pathname;
+			search = page.url.search;
+			q = page.url.searchParams.get('q') ?? '';
+		} catch {
+			// prerendering — url.search unavailable
+		}
+		if (path === '/') {
+			if (q) return `${base}/lite/search?q=${encodeURIComponent(q)}`;
+			return `${base}/lite`;
+		}
+		if (path === '/about') return `${base}/lite/about`;
+		if (path.startsWith('/kanji/')) return `${base}/lite${path}${search}`;
+		if (path === '/kanji-group') return `${base}/lite/kanji/group${search}`;
+		if (path === '/conjugations') return `${base}/lite/conjugations${search}`;
+		return `${base}/lite`;
+	});
 
 	// Only reassigned as a whole — raw state avoids proxying the response object.
 	let status = $state.raw<{ ok: boolean; entries: number | null; error?: string } | null>(null);

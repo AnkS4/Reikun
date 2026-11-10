@@ -91,10 +91,9 @@
 <Header />
 <div class="conj-page-wrap">
 	<nav class="group-nav-bar">
-		<button type="button" class="group-back-btn" onclick={goBack} title={word ? t('backTo', { word }) : t('goBack')}>
+		<button type="button" class="btn-3d" onclick={goBack} title={word ? t('backTo', { word }) : t('goBack')}>
 			← {#if word}{t('backTo', { word })}{:else}{t('backToSearch')}{/if}
 		</button>
-		<a href="/" class="group-home-link">{t('reikunHome')}</a>
 	</nav>
 	{#if !word}
 		<p class="notice"><Icon name="info" size={16} /> {t('noWord')}</p>

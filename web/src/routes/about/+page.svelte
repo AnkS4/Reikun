@@ -1,11 +1,14 @@
 <script lang="ts">
 	import { t } from '#lib/i18n.svelte.ts';
+	import Header from '#lib/components/Header.svelte';
 </script>
 
 <svelte:head>
 	<title>{t('aboutTitle')}</title>
 	<meta name="description" content={t('aboutMeta')} />
 </svelte:head>
+
+<Header />
 
 <nav class="about-nav"><a href="/">← Reikun</a></nav>
 

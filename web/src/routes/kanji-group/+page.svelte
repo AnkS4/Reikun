@@ -84,6 +84,17 @@
 		}
 	}
 
+	// Cards carry this group page as the next back-context: `from` is the
+	// group's display label, `gq` a copy of this page's params so the kanji
+	// page's back fallback returns here verbatim (pagination included).
+	const gq = $derived.by(() => {
+		if (!req) return '';
+		const p = new URLSearchParams({ by: req.by, value: String(req.value) });
+		if (pageNo > 1) p.set('page', String(pageNo - 1));
+		if (fromWord) p.set('from', fromWord);
+		return encodeURIComponent(p.toString());
+	});
+
 	function groupLabel(by: GroupKey): string {
 		return t(by === 'jlpt' ? 'jlpt' : by);
 	}
@@ -105,12 +116,6 @@
 
 <Header />
 <div class="kgroup-wrap">
-	<nav class="group-nav-bar">
-		<button type="button" class="group-back-btn" onclick={goBack} title={fromWord ? t('backTo', { word: fromWord }) : t('goBack')}>
-			← {#if fromWord}{t('backTo', { word: fromWord })}{:else}{t('backToSearch')}{/if}
-		</button>
-		<a href="/" class="group-home-link">{t('reikunHome')}</a>
-	</nav>
 	{#if !req}
 		<p class="notice"><Icon name="info" size={16} /> {t('unknownGroup')}</p>
 	{:else}
@@ -129,7 +134,11 @@
 		{:else if data}
 			<div class="kg-grid">
 				{#each data.kanjis as k (k.literal)}
-					<a class="kg-card" href="/?q={encodeURIComponent(k.literal)}" title={t('openKanji', { char: k.literal })}>
+					<a
+					class="kg-card"
+					href="/kanji/{encodeURIComponent(k.literal)}?from={encodeURIComponent(data.label)}&gq={gq}"
+					title={t('openKanji', { char: k.literal })}
+				>
 						<span class="kg-glyph" lang="ja">{k.literal}</span>
 						<span class="kg-gloss">{k.meanings[0] ?? '—'}</span>
 						<span class="kg-meta">{metaLine(k)}</span>
