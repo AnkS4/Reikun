@@ -167,6 +167,8 @@ RATE_LIMIT_SEARCH = _env_int("RATE_LIMIT_SEARCH", 120)
 RATE_LIMIT_FEEDBACK = _env_int("RATE_LIMIT_FEEDBACK", 60)
 # Reverse proxies between the internet and the app (Cloud Run: 1). The client
 # address is read from X-Forwarded-For counting this many entries from the right.
+# Set to 0 when the app is directly exposed (no proxy in front): with hops > 0
+# a caller can supply its own X-Forwarded-For and spoof its rate-limit identity.
 TRUSTED_PROXY_HOPS = _env_int("TRUSTED_PROXY_HOPS", 1)
 
 # Shared secret between the app and its own edge proxy (the Cloudflare Worker

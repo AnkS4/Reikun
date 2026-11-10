@@ -43,7 +43,7 @@ Docker maps `127.0.0.1:${APP_PORT:-8000}:8000` — change `APP_PORT` in `.env`, 
 | `RATE_LIMIT_EXPLAIN` | `/explain*` requests per minute per client; 0 disables | 10 |
 | `RATE_LIMIT_SEARCH` | `/search` requests per minute per client; 0 disables | 120 |
 | `RATE_LIMIT_FEEDBACK` | `/feedback` requests per minute per client; 0 disables | 60 |
-| `TRUSTED_PROXY_HOPS` | Trusted reverse-proxy hops used to select the client from `X-Forwarded-For` | 1 |
+| `TRUSTED_PROXY_HOPS` | Trusted reverse-proxy hops used to select the client from `X-Forwarded-For`; set `0` when the app is reachable without a proxy — otherwise clients can spoof their IP and bypass the rate limits | 1 |
 | `PORT` | API listen port injected by non-Compose hosts; leave unset locally | 8000 |
 
 Rate limits are in-memory and per API instance. `INGEST_VIA_DOCKER` is deliberately not an `.env` setting: pass it as a one-shot Compose prefix as shown in the README. The frontend's build-time `PUBLIC_API_BASE` is documented in `web/.env.example`.
