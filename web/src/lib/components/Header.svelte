@@ -15,7 +15,12 @@
 	// Context-aware: land on the equivalent page in the lite UI instead of
 	// always the home page, so switching variants feels continuous.
 	const LITE_URL = $derived.by(() => {
-		const base = (PUBLIC_API_BASE || '').replace(/\/+$/, '');
+		// Lite is served by the API at its own /lite path. An absolute API base
+		// (local dev: http://localhost:8000) is a different origin, so prefix it.
+		// A relative base (production: /api via the Worker proxy) means lite is
+		// same-origin at /lite, not /api/lite.
+		const api = (PUBLIC_API_BASE || '').replace(/\/+$/, '');
+		const base = /^https?:\/\//.test(api) ? api : '';
 		let path = '/';
 		let search = '';
 		let q = '';

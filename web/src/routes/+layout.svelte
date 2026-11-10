@@ -57,8 +57,9 @@
 	<!-- Canonical is per-route (the app is also served on the workers.dev
 	     mirror); prerendered into the HTML since SSR is on. -->
 	<link rel="canonical" href="https://reikun.app{page.url.pathname}" />
-	<!-- The API is on another origin: open the connection while the JS boots. -->
-	{#if API_BASE}<link rel="preconnect" href={API_BASE} crossorigin="anonymous" />{/if}
+	<!-- An API on another origin: open the connection while the JS boots
+	     (a same-origin /api base needs no preconnect). -->
+	{#if /^https?:\/\//.test(API_BASE)}<link rel="preconnect" href={API_BASE} crossorigin="anonymous" />{/if}
 </svelte:head>
 
 <a class="skip-link" href="#main">{t('skipToContent')}</a>

@@ -29,6 +29,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The SPA's Random kanji button no longer dips 3px on press (`:active` `translateY(var(--lip))` removed via a `no-press` class) — the press animation on top of the search-row transition read as a page jitter. The spinner was also resized to match the 17px shuffle icon (was 1.1em) so the button doesn't resize while busy.
 - Re-added `scrollbar-gutter: stable` on `html` (prevents the centered page content from shifting sideways when the scrollbar appears/disappears on search) and compensated the fixed chrome (`header-controls`, `floating-buttons`) with `margin-right: -15px` so they stay 14px / 24px from the viewport edge instead of gaining a phantom 15px gap. Verified: main content at left=153/right=168 on both home and results pages.
 
+### Fixed
+- The full version's lite switch now opens `/lite` on the same site when the API is reached through the same-origin proxy (`PUBLIC_API_BASE=/api`). It used to prefix the API base, which gave `/api/lite`, and a build with `/api` failed prerendering because the crawler followed `/api` and `/lite` links that only the Worker serves. Those proxy paths are now skipped during prerender, and every other broken link still fails the build. The API `preconnect` hint is emitted only for a cross-origin API.
+
 ### Security
 - CI actions are pinned to immutable commit SHAs instead of mutable major tags, and `.github/dependabot.yml` keeps those pins (plus npm and uv dependencies) fresh via weekly update PRs — a compromised upstream action can no longer silently change what CI runs.
 - The web preview image now runs as the unprivileged `node` user (uid 1000) instead of root, matching the backend image's `app` user; `vite preview` needed `node_modules` writable for its temp config bundle, so `/app` is chowned after the build.
