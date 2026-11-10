@@ -31,4 +31,12 @@ RUN npm run build
 # Expose dev port (5173) for local development with `docker compose run --rm web npm run dev`
 EXPOSE 5173
 
+# vite preview writes a temp config bundle under node_modules/.vite-temp, so
+# the tree must be writable by the runtime user.
+RUN chown -R node:node /app
+
+# Run as the image's built-in unprivileged `node` user (uid 1000), matching the
+# backend image's non-root `app` user.
+USER node
+
 CMD ["npm", "run", "preview", "--", "--host", "--port", "5173"]
