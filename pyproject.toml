@@ -47,6 +47,9 @@ default-groups = ["dev"]
 [tool.setuptools.packages.find]
 include = ["app*", "scripts*"]
 
+[tool.setuptools.package-data]
+app = ["static/*"]
+
 [tool.pytest.ini_options]
 pythonpath = ["."]
 testpaths = ["tests"]

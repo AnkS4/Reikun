@@ -16,6 +16,11 @@ from app.api import app
 client = TestClient(app)
 
 
+def _lite_css() -> str:
+    """The Lite stylesheet (palette included) — served once, cached forever."""
+    return client.get("/lite/static/lite.css").text
+
+
 def test_home_is_html_without_javascript() -> None:
     r = client.get("/lite")
     assert r.status_code == 200
@@ -76,14 +81,19 @@ def test_theme_switch_sets_cookie_and_palette() -> None:
         assert "lite_theme=dark" in r.headers.get("set-cookie", "")
         assert r.headers["location"] == "/lite/search?q=%E6%97%A5"  # starlette encodes
         dark = client.get("/lite")  # client keeps the cookie
-        assert "--bg:#000000" in dark.text  # OLED palette rendered
+        # The palette lives in the cached stylesheet; the page only says which
+        # theme to use via data-theme on <html>.
+        assert 'data-theme="dark"' in dark.text
+        assert "--bg:#000000" in _lite_css()  # OLED palette in the stylesheet
         # One-click toggle: a pinned theme shows only the button to the other one.
         assert 'aria-label="Switch to the light theme"' in dark.text
         assert 'aria-label="Switch to the dark theme"' not in dark.text
         assert 'class="theme-toggle"' not in dark.text
         light = client.get("/lite/theme", params={"v": "light"}, follow_redirects=False)
         assert "lite_theme=light" in light.headers.get("set-cookie", "")
-        assert "--bg:#fcfaf6" in client.get("/lite").text
+        light_page = client.get("/lite")
+        assert 'data-theme="light"' in light_page.text
+        assert "--bg:#fcfaf6" in _lite_css()
         # Unknown values leave the current choice alone (system is the default,
         # not a stored choice, so there is nothing to reset to).
         same = client.get("/lite/theme", params={"v": "nope"}, follow_redirects=False)
@@ -96,19 +106,36 @@ def test_theme_switch_sets_cookie_and_palette() -> None:
 def test_legacy_oled_cookie_resolves_to_dark() -> None:
     client.cookies.set("lite_theme", "oled")
     try:
-        assert "--bg:#000000" in client.get("/lite").text
+        page = client.get("/lite")
+        assert 'data-theme="dark"' in page.text
+        assert "--bg:#000000" in _lite_css()
     finally:
         client.cookies.clear()
     # No cookie at all → "system": light base + media-query dark override.
     home = client.get("/lite")
-    assert "--bg:#fcfaf6" in home.text and "prefers-color-scheme:dark" in home.text
+    assert 'data-theme="system"' in home.text
+    css = _lite_css()
+    assert "--bg:#fcfaf6" in css and "prefers-color-scheme:dark" in css
 
 
 def test_stroke_paths_are_outlines_like_the_spa() -> None:
     # KanjiVG `d`s are outlines — lite draws them stroked (fill:none), the way
     # the SPA's StrokeSvg does; filling them yields blobs.
-    r = client.get("/lite/kanji/日")
-    assert "fill:none;stroke:currentColor" in r.text
+    client.get("/lite/kanji/日")
+    css = client.get("/lite/static/lite.css").text
+    assert "fill:none;stroke:currentColor" in css
+
+
+def test_status_chip_is_a_minimal_native_tooltip() -> None:
+    # The Lite status chip is a database glyph (green/red) whose detail rides on
+    # the native title attribute — no hover popup, no extra CSS.
+    client.cookies.clear()
+    home = client.get("/lite")
+    assert 'class="status-dot' in home.text
+    assert 'title="' in home.text
+    assert 'class="status-pop"' not in home.text
+    controls = home.text.split('class="controls"')[1]
+    assert controls.index("status-dot") < controls.index("theme-toggle") < controls.index("Switch to")
 
 
 def test_recent_pills_from_cookie_replace_examples() -> None:
@@ -230,7 +257,7 @@ def test_error_and_empty_pages_carry_the_controls_row() -> None:
     client.cookies.set("lite_theme", "dark")
     try:
         pinned = client.get("/lite/search", params={"q": ""})
-        assert "--bg:#000000" in pinned.text and 'class="controls"' in pinned.text
+        assert 'data-theme="dark"' in pinned.text and 'class="controls"' in pinned.text
     finally:
         client.cookies.clear()
     bad = client.get("/lite/kanji/x")
@@ -264,3 +291,32 @@ def test_about_page() -> None:
     # SPA-parity sections and type treatment (mono labels, muted body).
     assert 'class="about"' in r.text
     assert "Data and sources" in r.text and "Privacy" in r.text and "Source" in r.text
+
+
+def test_language_toggle_flips_cookie_and_translates_the_page() -> None:
+    client.cookies.clear()
+    try:
+        r = client.get("/lite/lang", params={"v": "ja", "next": "/lite/search?q=家"}, follow_redirects=False)
+        assert r.status_code == 303
+        assert "lite_lang=ja" in r.headers.get("set-cookie", "")
+        assert r.headers["location"] == "/lite/search?q=%E5%AE%B6"  # starlette encodes
+        home = client.get("/lite")  # client keeps the cookie
+        assert '<html lang="ja"' in home.text
+        assert ">検索</button>" in home.text  # search button
+        assert 'aria-label="Switch to English"' in home.text  # toggle offers the other language
+        assert 'aria-label="表示言語"' not in home.text
+        # The About page is English in every language (like the footer), so it
+        # stays shared-cacheable even with a language cookie set.
+        about = client.get("/lite/about")
+        assert "Reikun について" not in about.text and "About Reikun" in about.text
+        assert "public" in about.headers["cache-control"]
+        # Unknown values leave the current choice alone (same as /lite/theme).
+        same = client.get("/lite/lang", params={"v": "nope"}, follow_redirects=False)
+        assert "lite_lang" not in same.headers.get("set-cookie", "")
+        assert next(c for c in client.cookies.jar if c.name == "lite_lang").value == "ja"
+        # Redirect target stays on /lite paths.
+        bad = client.get("/lite/lang", params={"v": "en", "next": "https://evil.example"}, follow_redirects=False)
+        assert bad.headers["location"] == "/lite"
+    finally:  # restore the default even on failure — later tests depend on it
+        client.cookies.clear()
+

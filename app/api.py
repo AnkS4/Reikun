@@ -15,6 +15,7 @@ A JavaScript-free, server-rendered UI is mounted at /lite (see app/lite.py).
 Docs: /docs (Swagger) · /redoc · /openapi.json.
 """
 
+import hashlib
 import json
 import logging
 import time
@@ -103,6 +104,37 @@ app = FastAPI(
 # Added before CORS so CORS stays outermost (error responses keep their CORS
 # headers). Starlette's GZip skips text/event-stream, so /explain/stream is
 # unaffected; small payloads (< 1 KB) aren't worth compressing.
+@app.middleware("http")
+async def _lite_etag(request, call_next):
+    response = await call_next(request)
+    if request.url.path.startswith("/lite") and response.status_code == 200:
+        content_type = response.headers.get("content-type", "")
+        if "text/html" in content_type:
+            body = b""
+            async for chunk in response.body_iterator:
+                body += chunk
+            etag = '"' + hashlib.sha256(body).hexdigest()[:16] + '"'
+            # The homepage's HTML depends on the recent-searches cookie, so a
+            # 304 there could serve a stale "Example searches" copy to a user
+            # who has since searched (some browsers/proxies mishandle Vary:Cookie).
+            # Always return the fresh body for /lite and /lite/.
+            is_home = request.url.path in ("/lite", "/lite/")
+            if (not is_home) and request.headers.get("if-none-match") == etag:
+                return Response(status_code=304, headers={"ETag": etag, "Vary": "Cookie"})
+            new_response = Response(content=body, status_code=200, media_type="text/html")
+            for key, value in response.headers.items():
+                if key.lower() not in ("content-length", "content-type"):
+                    new_response.headers[key] = value
+            new_response.headers["ETag"] = etag
+            # Legacy no-cache directives for older browsers/proxies.
+            if is_home:
+                new_response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+                new_response.headers["Pragma"] = "no-cache"
+                new_response.headers["Expires"] = "0"
+            return new_response
+    return response
+
+
 app.add_middleware(GZipMiddleware, minimum_size=1024)
 
 _origins = [o.strip() for o in CORS_ORIGINS.split(",") if o.strip()] or ["*"]
@@ -119,6 +151,7 @@ app.add_middleware(
 
 # JavaScript-free, server-rendered UI (/lite, /lite/search, /lite/kanji…).
 app.include_router(lite_router)
+
 
 
 # Per-client request limits (see app/ratelimit.py) — 429 + Retry-After when exceeded.
