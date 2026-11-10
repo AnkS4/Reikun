@@ -29,6 +29,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The SPA's Random kanji button no longer dips 3px on press (`:active` `translateY(var(--lip))` removed via a `no-press` class) — the press animation on top of the search-row transition read as a page jitter. The spinner was also resized to match the 17px shuffle icon (was 1.1em) so the button doesn't resize while busy.
 - Re-added `scrollbar-gutter: stable` on `html` (prevents the centered page content from shifting sideways when the scrollbar appears/disappears on search) and compensated the fixed chrome (`header-controls`, `floating-buttons`) with `margin-right: -15px` so they stay 14px / 24px from the viewport edge instead of gaining a phantom 15px gap. Verified: main content at left=153/right=168 on both home and results pages.
 
+### Security
+- CI actions are pinned to immutable commit SHAs instead of mutable major tags, and `.github/dependabot.yml` keeps those pins (plus npm and uv dependencies) fresh via weekly update PRs — a compromised upstream action can no longer silently change what CI runs.
+- The web preview image now runs as the unprivileged `node` user (uid 1000) instead of root, matching the backend image's `app` user; `vite preview` needed `node_modules` writable for its temp config bundle, so `/app` is chowned after the build.
+- `TRUSTED_PROXY_HOPS` documentation now states that directly-exposed deployments must set it to `0` — with hops > 0 and no proxy in front, a caller-supplied `X-Forwarded-For` is trusted and can spoof the rate-limit identity.
+
 ## [1.1.0] - 2026-11-08
 
 Lite release: a JavaScript-free, server-rendered UI at `/lite` mirroring the full interface, with the theme choice and the recent-searches list shared across the two variants through cookies. Also lands the ty type gate on the backend pipeline, two search-surface fixes, in-range dependency updates, and a refreshed example-search set.
