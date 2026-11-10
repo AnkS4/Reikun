@@ -169,6 +169,15 @@ RATE_LIMIT_FEEDBACK = _env_int("RATE_LIMIT_FEEDBACK", 60)
 # address is read from X-Forwarded-For counting this many entries from the right.
 TRUSTED_PROXY_HOPS = _env_int("TRUSTED_PROXY_HOPS", 1)
 
+# Shared secret between the app and its own edge proxy (the Cloudflare Worker
+# that fronts it, setting X-Reikun-Client to the exact client IP). Every hop
+# between proxy and app *appends* to X-Forwarded-For, so once traffic flows
+# through the Worker the XFF chain ends with the shared egress address the
+# proxy connects from, not the client — XFF alone can no longer name the caller.
+# The proxy signs its identity header with this token, and client identity
+# falls back to X-Forwarded-For when unset (empty value keeps the legacy path).
+PROXY_IDENTITY_TOKEN = _env("PROXY_IDENTITY_TOKEN", "")
+
 
 @cache
 def qdrant_client() -> QdrantClient:

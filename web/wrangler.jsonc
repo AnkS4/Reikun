@@ -1,9 +1,14 @@
 {
-	// Static-assets Worker: serve web/build/ as-is — no SSR request handler
-	// (this app is fully client-side; the API lives elsewhere). The `main`
-	// script below runs only for cron triggers; HTTP traffic never reaches it
-	// (matching paths are served by the assets router, the rest get the SPA
-	// shell via not_found_handling before any worker invocation).
+	// Same-origin Worker for reikun.app: static SPA assets from web/build/ +
+	// a reverse proxy for the API and the lite UI (web/worker.js). Serving
+	// /api and /lite from reikun.app instead of the raw Cloud Run origin is
+	// what makes the cross-variant theme/recent-searches cookies work —
+	// cookies are host-scoped, and run.app vs reikun.app are different
+	// registrable domains. `main` handles:
+	//   /api/*  → proxy to API_URL, /api prefix stripped (the SPA bakes
+	//             PUBLIC_API_BASE=/api at build time)
+	//   /lite*  → proxy to API_URL, path as-is (the server-rendered no-JS variant)
+	//   (other) → assets; unmatched → the neutral SPA shell (200.html)
 	// Committed config also stops `wrangler deploy`'s SvelteKit auto-config
 	// from trying to convert the project to adapter-cloudflare.
 	"name": "reikun",
@@ -11,9 +16,13 @@
 	"main": "./worker.js",
 	"assets": {
 		"directory": "./build",
-		// The ASSETS binding lets the fetch handler below read the neutral
-		// SPA shell (200.html) for paths the router cannot match.
+		// The ASSETS binding lets the fetch handler read the neutral SPA shell
+		// (200.html) for paths the router cannot match.
 		"binding": "ASSETS",
+		// The proxy paths must reach the Worker FIRST — the assets router
+		// otherwise answers (or claims) them before any fetch-handler logic.
+		// Patterns, not plain prefixes: "/api/*" does not match "/api" itself.
+		"run_worker_first": ["/api", "/api/*", "/lite", "/lite/*"],
 		// Unmatched paths are handled by the Worker's fetch handler, which
 		// serves the neutral SPA shell (200.html). NOT
 		// "single-page-application": that mode serves index.html, and
@@ -31,6 +40,10 @@
 	"vars": {
 		"API_URL": "https://reikun-api-cmudl7elbq-no.a.run.app"
 	},
+	// PROXY_TOKEN (shared secret with the API's PROXY_IDENTITY_TOKEN, signing
+	// the client-IP header for the rate limiter) intentionally has no value
+	// here: it is a per-environment secret (dashboard / `wrangler secret put`
+	// PROXY_TOKEN), not a committed var.
 	"observability": {
 		"enabled": true
 	}

@@ -4,6 +4,7 @@ Pure-Python — builds its own tiny app, so no Qdrant/LLM and no shared state
 with the real endpoints' limiters.
 """
 
+import pytest
 from fastapi import Depends, FastAPI
 from fastapi.testclient import TestClient
 
@@ -97,3 +98,42 @@ def test_short_forwarded_for_is_ignored() -> None:
     c = _app(1)
     assert c.get("/x", headers={"X-Forwarded-For": "1.1.1.1"}).status_code == 200
     assert c.get("/x", headers={"X-Forwarded-For": "1.1.1.1"}).status_code == 429
+
+
+def test_proxy_identity_header_is_ignored_without_a_token() -> None:
+    # Default configuration (no PROXY_IDENTITY_TOKEN): a caller can set our
+    # proxy's headers directly; they must not change client identity — the
+    # XFF rightmost entry (or the socket peer) rules as before.
+    c = _app(1)
+    h = {"X-Reikun-Client": "1.1.1.1", "X-Reikun-Proxy": "secret"}
+    assert c.get("/x", headers=h).status_code == 200
+    assert c.get("/x", headers=h).status_code == 429
+    assert c.get("/x", headers={**h, "X-Forwarded-For": "9.9.9.9"}).status_code == 200
+
+
+def test_signed_proxy_identity_header_names_the_client(monkeypatch: pytest.MonkeyPatch) -> None:
+    import app.ratelimit as rl
+
+    monkeypatch.setattr(rl, "PROXY_IDENTITY_TOKEN", "secret")
+    c = _app(1)
+    h = {"X-Reikun-Client": "1.1.1.1", "X-Reikun-Proxy": "secret", "X-Forwarded-For": "1.1.1.1, 8.8.8.8"}
+    # The signed header wins over XFF entirely (its rightmost entry is the
+    # proxy's own egress address, shared by every visitor behind the proxy).
+    assert c.get("/x", headers=h).status_code == 200
+    assert c.get("/x", headers=h).status_code == 429
+    # A different stated client gets its own bucket — XFF can't fake it.
+    other = {**h, "X-Reikun-Client": "2.2.2.2"}
+    assert c.get("/x", headers=other).status_code == 200
+
+
+def test_wrong_proxy_token_falls_back_to_xff(monkeypatch: pytest.MonkeyPatch) -> None:
+    import app.ratelimit as rl
+
+    monkeypatch.setattr(rl, "PROXY_IDENTITY_TOKEN", "secret")
+    c = _app(1)
+    good = {"X-Reikun-Client": "1.1.1.1", "X-Reikun-Proxy": "secret"}
+    assert c.get("/x", headers=good).status_code == 200
+    assert c.get("/x", headers=good).status_code == 429
+    # Wrong token: unsigned path — identity reads XFF rightmost (8.8.8.8), a separate bucket.
+    bad = {**good, "X-Reikun-Proxy": "wrong", "X-Forwarded-For": "8.8.8.8"}
+    assert c.get("/x", headers=bad).status_code == 200

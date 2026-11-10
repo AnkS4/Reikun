@@ -11,6 +11,13 @@ real client comes from `X-Forwarded-For`. Each proxy *appends* the address it
 saw, so the only trustworthy entry is the one added by our own proxy — counted
 from the right (`trusted_hops`). Entries further left are client-supplied and
 spoofable, so they are ignored.
+
+When traffic flows through our own edge proxy (the Cloudflare Worker), XFF
+ends with the proxy's *egress* address — shared by every visitor — so that can
+no longer name the caller. Our proxy instead states the client IP directly in
+`X-Reikun-Client` and signs it with `X-Reikun-Proxy` (the shared
+PROXY_IDENTITY_TOKEN); the header is accepted only with a matching token, so
+a caller without the secret gets the XFF path as before.
 """
 
 from __future__ import annotations
@@ -20,8 +27,28 @@ import threading
 import time
 from collections import deque
 from collections.abc import Callable
+from hmac import compare_digest
 
 from fastapi import HTTPException, Request
+
+from app.config import PROXY_IDENTITY_TOKEN
+
+
+def _signed_client_ip(request: Request) -> str:
+    """The IP our edge proxy states for this request, if it signed it and the
+    secret is configured. The token check is what makes the header safe: a
+    caller reaching the API directly can set any header it likes, but not ours.
+    """
+    stated = request.headers.get("x-reikun-client", "").strip()
+    if not stated or not PROXY_IDENTITY_TOKEN:
+        return ""
+    # compare_digest on str requires ASCII-only text; header values are
+    # attacker-controlled, so compare bytes (never raises, only ever differs).
+    signed = request.headers.get("x-reikun-proxy", "").encode("utf-8", "replace")
+    token = PROXY_IDENTITY_TOKEN.encode("utf-8")
+    if compare_digest(signed, token):
+        return stated
+    return ""
 
 
 class SlidingWindowLimiter:
@@ -64,6 +91,9 @@ class SlidingWindowLimiter:
 
 
 def client_ip(request: Request, trusted_hops: int = 1) -> str:
+    forwarded = _signed_client_ip(request)
+    if forwarded:
+        return forwarded
     xff = request.headers.get("x-forwarded-for")
     if xff and trusted_hops > 0:
         parts = [p.strip() for p in xff.split(",") if p.strip()]

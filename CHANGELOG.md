@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **One origin for everything in production**: the reikun.app Cloudflare Worker now reverse-proxies the API (`/api/*`, prefix stripped — the SPA bakes `PUBLIC_API_BASE=/api`) and the lite UI (`/lite*`) to Cloud Run instead of the SPA calling run.app cross-origin. Serving both variants from `reikun.app` is what makes the shared cookies actually work in the cloud deployment: the theme choice and recent searches now follow a visitor across variants on the web too, and lite's full-version switch points at the same site rather than redirecting to a different domain. The Worker passes 303 cookie-setting redirects through untouched (`redirect: manual` — following them would swallow the `Set-Cookie`), and it signs the real client IP (`X-Reikun-Client` + a shared `PROXY_IDENTITY_TOKEN` secret) that the API's rate limiter trusts ahead of `X-Forwarded-For`, because behind the proxy the XFF chain ends with one Cloudflare egress address shared by every visitor.
+
 ## [1.1.0] - 2026-11-08
 
 Lite release: a JavaScript-free, server-rendered UI at `/lite` mirroring the full interface, with the theme choice and the recent-searches list shared across the two variants through cookies. Also lands the ty type gate on the backend pipeline, two search-surface fixes, in-range dependency updates, and a refreshed example-search set.
