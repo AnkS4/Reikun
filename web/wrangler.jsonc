@@ -42,8 +42,14 @@
 	},
 	// PROXY_TOKEN (shared secret with the API's PROXY_IDENTITY_TOKEN, signing
 	// the client-IP header for the rate limiter) intentionally has no value
-	// here: it is a per-environment secret (dashboard / `wrangler secret put`
-	// PROXY_TOKEN), not a committed var.
+	// here: it is a dashboard/secret-store managed value — plaintext `vars`
+	// entries would overwrite it on deploy, and secrets are never deleted by
+	// one (Wrangler treats the config as the vars source of truth only).
+	// Declaring it required makes every build fail loudly when it is missing
+	// instead of silently falling back to the shared-egress XFF identity.
+	"secrets": {
+		"required": ["PROXY_TOKEN"]
+	},
 	"observability": {
 		"enabled": true
 	}
