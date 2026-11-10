@@ -591,6 +591,7 @@ def kanji_batch_endpoint(
 
 @app.get("/kanji/{char}", tags=["kanji"], response_model=KanjiCard)
 def kanji_endpoint(
+    response: Response,
     char: str,
     background: BackgroundTasks,
     strokes: Annotated[
@@ -606,6 +607,8 @@ def kanji_endpoint(
     card = kanji_card(char, strokes=strokes)
     if not card:
         raise HTTPException(404, f"No KANJIDIC2 entry for {char!r}")
+    # Kanji details are static data — let browsers/CDNs reuse them.
+    response.headers["Cache-Control"] = _CACHE_STATIC
     if log:
         background.add_task(telemetry().kanji_lookup, char, source="api")
     return card

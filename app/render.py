@@ -7,6 +7,8 @@ Deliberately dependency-light (kanji_lookup + config only) so it is importable
 in the lean API image — no Streamlit, no pandas.
 """
 
+from functools import lru_cache
+
 from app.kanji_lookup import has_kanji, is_kanji, kanji_group, kanji_in, lookup_kanji, stroke_data
 
 
@@ -134,6 +136,7 @@ def related_words(forms: tuple[str | None, ...], exclude: tuple[str | None, ...]
     return out
 
 
+@lru_cache(maxsize=1024)
 def kanji_card(char: str, *, strokes: bool = False) -> dict | None:
     """
     Full kanji-card JSON for /kanji/{char}, or None when KANJIDIC2 has no entry.
@@ -190,6 +193,7 @@ def kanji_hover(char: str) -> dict | None:
     }
 
 
+@lru_cache(maxsize=512)
 def kanji_group_cards(by: str, value: str, n: int = 40, offset: int = 0) -> dict | None:
     """
     One page of a kanji group for the /kanji-group browse page — the kanji
