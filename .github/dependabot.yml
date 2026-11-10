@@ -1,20 +1,37 @@
 version: 2
 updates:
+  # Updates are grouped so each ecosystem opens one PR per week instead of one
+  # per package: every Dependabot branch push also queues a Cloudflare Workers
+  # build, and the free plan runs one build at a time, so a burst of
+  # single-package PRs stalls the production deploy behind them.
+
   # Keep the SHA-pinned GitHub Actions in .github/workflows/ci.yml fresh:
   # Dependabot opens a PR bumping each pin when upstream tags a new release.
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "weekly"
+    groups:
+      actions:
+        patterns: ["*"]
 
   # Frontend deps (web/package-lock.json).
   - package-ecosystem: "npm"
     directory: "/web"
     schedule:
       interval: "weekly"
+    groups:
+      web-deps:
+        patterns: ["*"]
 
-  # Python deps managed by uv (pyproject.toml + uv.lock).
+  # Python deps managed by uv (pyproject.toml + uv.lock). ruff and ty stay out
+  # of the group: a linter or type-checker bump can surface new diagnostics,
+  # so each gets its own PR to review on its own.
   - package-ecosystem: "uv"
     directory: "/"
     schedule:
       interval: "weekly"
+    groups:
+      python-deps:
+        patterns: ["*"]
+        exclude-patterns: ["ruff", "ty"]
