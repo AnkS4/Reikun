@@ -7,10 +7,13 @@ hero are verified without them).
 """
 
 import json
+import time
 from urllib.parse import quote, unquote
 
+import pytest
 from fastapi.testclient import TestClient
 
+from app import lite
 from app.api import app
 
 client = TestClient(app)
@@ -293,7 +296,7 @@ def test_about_page() -> None:
     assert "Data and sources" in r.text and "Privacy" in r.text and "Source" in r.text
 
 
-def test_language_toggle_flips_cookie_and_translates_the_page() -> None:
+def test_language_toggle_flips_cookie_and_translates_the_page(monkeypatch: pytest.MonkeyPatch) -> None:
     client.cookies.clear()
     try:
         r = client.get("/lite/lang", params={"v": "ja", "next": "/lite/search?q=家"}, follow_redirects=False)
@@ -306,7 +309,12 @@ def test_language_toggle_flips_cookie_and_translates_the_page() -> None:
         assert 'aria-label="Switch to English"' in home.text  # toggle offers the other language
         assert 'aria-label="表示言語"' not in home.text
         # The About page is English in every language (like the footer), so it
-        # stays shared-cacheable even with a language cookie set.
+        # stays shared-cacheable even with a language cookie set. Pages are only
+        # shared once the status chip says "Ready", so pin a fresh ready probe:
+        # CI has no Qdrant, and a local one would make the result depend on it.
+        monkeypatch.setitem(lite._status_snapshot, "ok", True)
+        monkeypatch.setitem(lite._status_snapshot, "count", 1)
+        monkeypatch.setitem(lite._status_snapshot, "at", time.monotonic())
         about = client.get("/lite/about")
         assert "Reikun について" not in about.text and "About Reikun" in about.text
         assert "public" in about.headers["cache-control"]
