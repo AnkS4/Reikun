@@ -175,6 +175,8 @@ const en = {
 	backTo: 'Back to {word}',
 	goBack: 'Go back',
 	noWord: 'No word specified — pick a conjugation from any search result card.',
+	notAKanji: '“{char}” is not a kanji.',
+	noKanjiGiven: 'No kanji given.',
 	conjugationsLabel: 'conjugations',
 	conjSubtitle:
 		"All inflected forms of {word}. Click the back arrow or use your browser's back button to return.",
@@ -220,6 +222,9 @@ const en = {
 	grammarBold: 'Grammar explanations',
 	grammarText:
 		'concise explanations calibrated to a JLPT level (N5–N1), generated on demand by a LLM provider.',
+	liteVsFull: 'Lite version',
+	liteVsFullText:
+		'Lite is a plain, JavaScript-free version of the same dictionary: no popups, animations or grammar explanations, so it also works in text browsers and on slow connections. Theme, language and recent searches carry over between the two.',
 	howItWorks: 'How it works',
 	howText:
 		'Search runs hybrid retrieval — dense vector embeddings plus BM25 — fused in Qdrant, with query routing that picks the right plan for English words, English sentences, and Japanese input. Sentence parsing uses the Sudachi morphological analyzer; embeddings are quantized ONNX models running on CPU. The frontend is a static SvelteKit site; the API is a FastAPI service.',
@@ -231,12 +236,13 @@ const en = {
 	dataAfter3: ' (Ulrich Apel, CC BY-SA 3.0).',
 	privacy: 'Privacy',
 	privacyText:
-		'No cookies, no accounts, no cross-site tracking. Search queries are logged to improve the dictionary; feedback and explanation text is stored only as one-way hashes.',
+		'No accounts and no cross-site tracking. Search queries are logged to improve the dictionary; feedback and explanation text is stored only as one-way hashes. Theme, language, furigana and recent searches stay on your device.',
 	privacyMore: 'Full privacy policy →',
 	source: 'Source',
 	sourceBefore: 'Reikun is built by Aniket Satbhai. The code is ',
 	sourceLink: 'on GitHub',
 	sourceAfter: ' under the Apache-2.0 license.',
+	version: 'Version',
 
 
 	errorUnreachable:
@@ -382,6 +388,8 @@ const ja: Record<MessageKey, string> = {
 	backTo: '「{word}」に戻る',
 	goBack: '戻る',
 	noWord: '単語が指定されていません。検索結果カードから活用形を選んでください。',
+	notAKanji: '「{char}」は漢字ではありません。',
+	noKanjiGiven: '漢字が指定されていません。',
 	conjugationsLabel: '活用',
 	conjSubtitle:
 		'「{word}」のすべての活用形です。戻る矢印かブラウザの戻るボタンで戻れます。',
@@ -427,6 +435,9 @@ const ja: Record<MessageKey, string> = {
 	grammarBold: '文法解説',
 	grammarText:
 		'JLPTレベル（N5〜N1）に合わせた簡潔な解説を、LLMプロバイダーがオンデマンドで生成します。',
+	liteVsFull: 'Lite版',
+	liteVsFullText:
+		'Lite版は同じ辞書を、JavaScriptなしの簡素なページで提供します。ポップアップ・アニメーション・文法解説はなく、テキストブラウザや低速な回線でも動作します。テーマ・言語・最近の検索は両方で共有されます。',
 	howItWorks: '仕組み',
 	howText:
 		'検索はハイブリッド検索（密ベクトル埋め込み＋BM25）をQdrantで統合し、英語の単語・英語の文・日本語入力に応じてルートを切り替えます。文の解析にはSudachi形態素解析器を使い、埋め込みはCPU上の量子化ONNXモデルで実行します。フロントエンドは静的SvelteKitサイト、APIはFastAPIサービスです。',
@@ -438,12 +449,13 @@ const ja: Record<MessageKey, string> = {
 	dataAfter3: '（Ulrich Apel、CC BY-SA 3.0）によるものです。',
 	privacy: 'プライバシー',
 	privacyText:
-		'Cookie もアカウントも不要で、クロスサイトトラッキングも行いません。検索クエリは辞書改善のために記録され、フィードバックと解説の文は一方向ハッシュのみで保存されます。',
+		'アカウントは不要で、クロスサイトトラッキングも行いません。検索クエリは辞書改善のために記録され、フィードバックと解説の文は一方向ハッシュのみで保存されます。テーマ・言語・ふりがな・最近の検索はお使いの端末内にのみ保存されます。',
 	privacyMore: 'プライバシーポリシー全文 →',
 	source: 'ソース',
 	sourceBefore: 'Reikun は Aniket Satbhai が開発しています。コードは ',
 	sourceLink: 'GitHub',
 	sourceAfter: ' で Apache-2.0 ライセンスの下で公開されています。',
+	version: 'バージョン',
 
 
 	errorUnreachable:

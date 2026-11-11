@@ -93,10 +93,10 @@
 				onclick={openConj}
 				title={t('conjugationsTitle')}
 			>
-				<Icon name="book-open" size={13} />
+				<Icon name="book-open" size={12} />
 				<span class="conj-label">{t('conjugations')}</span>
 				<span class="conj-count">{result.inflected_forms.length}</span>
-				<Icon name="arrow-right" size={11} />
+				<Icon name="arrow-right" size={12} />
 			</a>
 		</div>
 	{/if}

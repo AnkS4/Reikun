@@ -86,7 +86,7 @@
 				onclick={explain}
 				title={t('explainTitle')}
 			>
-				<Icon name="sparkles" size={14} />
+				<Icon name="sparkles" size={12} />
 				<span>{expl ? t('explainAgain') : t('explain')}</span>
 				<span class="level-indicator">{level}</span>
 			</button>

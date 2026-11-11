@@ -80,14 +80,14 @@
 								title={m.tip}
 							>
 								{#if m.group.by === 'strokes'}
-									<Icon name="pencil" size={11} />
+									<Icon name="pencil" size={12} />
 								{:else if m.group.by === 'grade'}
-									<Icon name="school" size={11} />
+									<Icon name="school" size={12} />
 								{:else if m.group.by === 'jlpt'}
-									<Icon name="sparkles" size={11} />
+									<Icon name="sparkles" size={12} />
 								{/if}
 								<span>{m.label}</span>
-								<Icon name="arrow-right" size={10} />
+								<Icon name="arrow-right" size={12} />
 							</a>
 						{:else}
 							<span class="meta-badge" title={m.tip}>{m.label}</span>

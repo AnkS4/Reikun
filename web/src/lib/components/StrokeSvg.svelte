@@ -49,7 +49,7 @@
 		aria-label={t('replayStroke')}
 		onclick={() => replay++}
 	>
-		<Icon name="replay" size={14} />
+		<Icon name="replay" size={15} />
 	</button>
 	<svg viewBox={stroke.view_box} xmlns="http://www.w3.org/2000/svg" role="img" aria-label={t('strokeDiagram')}>
 		{#each stroke.strokes as d, i (i)}

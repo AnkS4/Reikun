@@ -97,10 +97,10 @@
 				searchInput?.focus();
 			}}
 		>
-			<Icon name="close" size={14} />
+			<Icon name="close" size={15} />
 		</button>
 		<button type="submit" class="search-submit" aria-label={t('search')} title={t('search')}>
-			<Icon name="search" size={17} />
+			<Icon name="search" size={15} />
 		</button>
 	</div>
 	<button
@@ -112,7 +112,7 @@
 		disabled={randomBusy}
 		onclick={randomKanji}
 	>
-		{#if randomBusy}<span class="spinner" aria-hidden="true"></span>{:else}<Icon name="shuffle" size={17} />{/if}
+		{#if randomBusy}<span class="spinner" aria-hidden="true"></span>{:else}<Icon name="shuffle" size={15} />{/if}
 	</button>
 	<!-- Furigana toggle: visible one-click control (the Appearance popover in
 	     the Header is the secondary location). Reads are on by default; the あ
@@ -144,7 +144,7 @@
 </form>
 <div class="kanji-detail-wrap">
 	{#if !char || !isKanji(char)}
-		<p class="notice"><Icon name="info" size={16} /> {char ? `"${char}" is not a kanji.` : 'No kanji given.'}</p>
+		<p class="notice"><Icon name="info" size={16} /> {char ? t('notAKanji', { char }) : t('noKanjiGiven')}</p>
 	{:else}
 		<KanjiCard char={char} />
 

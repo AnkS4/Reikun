@@ -351,10 +351,10 @@
 				searchInput?.focus();
 			}}
 		>
-			<Icon name="close" size={14} />
+			<Icon name="close" size={15} />
 		</button>
 		<button type="submit" class="search-submit" aria-label={t('search')} title={t('search')}>
-			<Icon name="search" size={17} />
+			<Icon name="search" size={15} />
 		</button>
 	</div>
 	<button
@@ -366,7 +366,7 @@
 		disabled={randomBusy}
 		onclick={randomKanji}
 	>
-		{#if randomBusy}<span class="spinner" aria-hidden="true"></span>{:else}<Icon name="shuffle" size={17} />{/if}
+		{#if randomBusy}<span class="spinner" aria-hidden="true"></span>{:else}<Icon name="shuffle" size={15} />{/if}
 	</button>
 	<!-- Furigana toggle: visible one-click control (the Appearance popover in
 	     the Header is the secondary location). Reads are on by default; the あ
@@ -426,7 +426,7 @@
 				aria-label={t('statsInfo')}
 				aria-describedby={infoId}
 			>
-				<Icon name="info" size={14} />
+				<Icon name="info" size={15} />
 			</span>
 			<span class="stats-pop" role="tooltip" id={infoId}>
 				<span class="popover-title">{t('technicalInfo')}</span>
@@ -496,7 +496,7 @@
 			onclick={showMore}
 			title={t('showMoreTitle', { max: MAX_RESULTS })}
 		>
-			<Icon name="expand-more" size={15} /> {t('showMore', { count: PAGE_RESULTS })}
+			<Icon name="expand-more" size={12} /> {t('showMore', { count: PAGE_RESULTS })}
 		</button>
 	{/if}
 {:else if !searching && !error}
@@ -504,7 +504,7 @@
 	<div class="pills" aria-label={t('exampleSearches')}>
 		{#each EXAMPLES as ex (ex)}
 			<button type="button" class="pill" onclick={() => commit(ex)}>
-				<Icon name="search" size={14} />
+				<Icon name="search" size={12} />
 				<span>{ex}</span>
 			</button>
 		{/each}
@@ -526,7 +526,7 @@
 			<div class="pills" aria-label={t('recentSearches')}>
 				{#each recent as q (q)}
 					<button type="button" class="pill" onclick={() => commit(q)}>
-						<Icon name="search" size={14} />
+						<Icon name="search" size={12} />
 						<span lang="ja">{q}</span>
 					</button>
 				{/each}
@@ -545,7 +545,7 @@
 			title={t('scrollTop')}
 			aria-label={t('scrollTop')}
 		>
-			<Icon name="arrow-up" size={16} />
+			<Icon name="arrow-up" size={15} />
 		</button>
 	</div>
 {/if}
