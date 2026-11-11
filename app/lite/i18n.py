@@ -18,8 +18,7 @@ _I18N: dict[str, dict[str, str]] = {
         "statusChecking": "Checking",
         "taglineLite": "Search in English or Japanese, break down sentences word-by-word with "
         "furigana and meanings, inspect kanji.",
-        "liteNote": "Lite mode: the same dictionary as the full version, served as plain "
-        "pages — no interactive popups, no animations, no grammar explanations.",
+        "liteNote": "Lite mode: plain pages, no scripts.",
         "liteNoteLink": "What's different →",
         "searchPlaceholder": "Search English or Japanese…",
         "search": "Search",
@@ -88,8 +87,6 @@ _I18N: dict[str, dict[str, str]] = {
         "aboutTitle": "About Reikun",
         "aboutLede": "Reikun (例訓) is a free, open-source Japanese reading assistant — a semantic "
         "dictionary that works in both English and Japanese.",
-        "ledeLite": "This Lite view is rendered entirely on the server, so it works without "
-        "scripts, in text browsers and on slow connections.",
         "whatItDoes": "What it does",
         "searchText": "look up words in English or Japanese; natural-language questions "
         '("how do you say X") are rewritten into dictionary terms automatically.',
@@ -99,9 +96,10 @@ _I18N: dict[str, dict[str, str]] = {
         "kanjiBold": "Kanji",
         "kanjiText": "readings, meanings, common compounds, JLPT level, and animated "
         "stroke-order diagrams.",
-        "notInLiteBold": "Not in Lite",
-        "notInLiteText": "grammar explanations calibrated to a JLPT level are only in the full "
-        "interface; Lite keeps every page small and off the LLM path.",
+        "liteVsFull": "Lite version",
+        "liteVsFullText": "Lite is a plain, JavaScript-free version of the same dictionary: no popups, animations "
+        "or grammar explanations, so it also works in text browsers and on slow connections. "
+        "Theme, language and recent searches carry over between the two.",
         "howItWorks": "How it works",
         "howTextLite": "Search runs hybrid retrieval — dense vector embeddings plus BM25 — "
         "fused in Qdrant, with query routing that picks the right plan for English words, "
@@ -115,17 +113,15 @@ _I18N: dict[str, dict[str, str]] = {
         "dataAfter2": " (Tatoeba, CC-BY 2.0 FR). Kanji stroke diagrams derive from ",
         "dataAfter3": " (Ulrich Apel, CC BY-SA 3.0).",
         "privacy": "Privacy",
-        "privacyTextLite": "No cross-site tracking. Search query text is logged to improve "
-        "embeddings and ranking; feedback query text is stored only as SHA-256 hashes. Lite "
-        "keeps four small cookies on this device only: your recent searches, your furigana "
-        "preference, your language, and your theme choice. No analytics, no third-party requests.",
+        "privacyText": "No accounts and no cross-site tracking. Search queries are logged to improve the dictionary; "
+        "feedback and explanation text is stored only as one-way hashes. Theme, language, furigana and recent "
+        "searches stay on your device.",
+        "privacyMore": "Full privacy policy →",
         "source": "Source",
         "sourceBefore": "Reikun is built by Aniket Satbhai. The code is ",
         "sourceLink": "on GitHub",
         "sourceAfter": " under the Apache-2.0 license.",
-        "sourceTailBefore": "The full interface lives at ",
-        "sourceTailMid": "; the JSON API is documented at ",
-        "sourceTailAfter": ".",
+        "version": "Version",
     },
     "ja": {
         "statusTitle": "辞書の状態",
@@ -143,8 +139,7 @@ _I18N: dict[str, dict[str, str]] = {
         "themeToDark": "ダークテーマへ切り替え",
         "statusChecking": "確認中",
         "taglineLite": "英語または日本語で検索し、文をふりがなと意味付きで語ごとに分解。漢字を調べられます。",
-        "liteNote": "Lite版： フル版と同じ辞書を、プレーンなページとして提供 — "  # noqa: RUF001
-        "対話型ポップアップ・アニメーション・文法解説はありません。",
+        "liteNote": "Lite版：スクリプトなしのシンプルなページ",  # noqa: RUF001
         "liteNoteLink": "違いを見る →",
         "searchPlaceholder": "英語または日本語で検索…",
         "search": "検索",
@@ -213,8 +208,6 @@ _I18N: dict[str, dict[str, str]] = {
         "aboutTitle": "Reikun について",
         "aboutLede": "Reikun（例訓）は、無料のオープンソース日本語読解アシスタントです。"  # noqa: RUF001
         "英語と日本語の両方で使える意味検索型の辞書です。",
-        "ledeLite": "このLite版はすべてサーバー側で描画されるため、スクリプトなしでも、"
-        "テキストブラウザでも、低速な回線でも動作します。",
         "whatItDoes": "できること",
         "searchText": "英語または日本語で単語を調べられます。「〜は日本語で何と言いますか」の"
         "ような自然な質問は、自動的に辞書の見出し語に書き換えられます。",
@@ -223,9 +216,9 @@ _I18N: dict[str, dict[str, str]] = {
         "分解します。",
         "kanjiBold": "漢字",
         "kanjiText": "読み、意味、よく使う熟語、JLPTレベル、筆順アニメーションを表示します。",
-        "notInLiteBold": "Lite版にない機能",
-        "notInLiteText": "JLPTレベルに合わせた文法解説はフル版だけの機能です。Lite版は"
-        "すべてのページを軽量に保ち、LLMの経路を使いません。",
+        "liteVsFull": "Lite版",
+        "liteVsFullText": "Lite版は同じ辞書を、JavaScriptなしの簡素なページで提供します。"
+        "ポップアップ・アニメーション・文法解説はなく、テキストブラウザや低速な回線でも動作します。テーマ・言語・最近の検索は両方で共有されます。",
         "howItWorks": "仕組み",
         "howTextLite": "検索はハイブリッド検索（密ベクトル埋め込み＋BM25）をQdrantで統合し、"  # noqa: RUF001
         "英語の単語・英語の文・日本語入力に応じてルートを切り替えます。文の解析にはSudachi"
@@ -238,18 +231,16 @@ _I18N: dict[str, dict[str, str]] = {
         "dataAfter2": "（Tatoeba、CC-BY 2.0 FR）、漢字の筆順図は ",  # noqa: RUF001
         "dataAfter3": "（Ulrich Apel、CC BY-SA 3.0）によるものです。",  # noqa: RUF001
         "privacy": "プライバシー",
-        "privacyTextLite": "クロスサイトトラッキングは行いません。検索クエリの本文は、"
-        "埋め込みとランキングの改善のために記録されます。フィードバックのクエリ本文は"
-        "SHA-256ハッシュのみで保存されます。Lite版はこの端末内にのみ4つの小さなCookie"
-        "（最近の検索、ふりがなの設定、表示言語、テーマ）を保存します。アナリティクスや"  # noqa: RUF001
-        "第三者へのリクエストはありません。",
+        "privacyText": "アカウントは不要で、クロスサイトトラッキングも行いません。"
+        "検索クエリは辞書改善のために記録され、"
+        "フィードバックと解説の文は一方向ハッシュのみで保存されます。"
+        "テーマ・言語・ふりがな・最近の検索はお使いの端末内にのみ保存されます。",
+        "privacyMore": "プライバシーポリシー全文 →",
         "source": "ソース",
         "sourceBefore": "Reikun は Aniket Satbhai が開発しています。コードは ",
         "sourceLink": "GitHub",
         "sourceAfter": " で Apache-2.0 ライセンスの下で公開されています。",
-        "sourceTailBefore": "フル版は ",
-        "sourceTailMid": " にあります。JSON APIのドキュメントは ",
-        "sourceTailAfter": " です。",
+        "version": "バージョン",
     },
 }
 

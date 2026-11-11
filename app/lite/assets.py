@@ -29,3 +29,11 @@ def _minify(css: str) -> str:
 _LITE_CSS_TEXT = _minify(_LITE_CSS_SOURCE)
 _LITE_CSS_HASH = hashlib.sha256(_LITE_CSS_TEXT.encode("utf-8")).hexdigest()[:12]
 _LITE_CSS_URL = f"/lite/static/lite.css?v={_LITE_CSS_HASH}"
+
+# The brand emblem on the About page: a copy of web/static/icons/emblem.svg
+# (tests/test_lite.py keeps the two identical). It is decorative, so an
+# svg-disabled browser simply shows nothing; the page does not depend on it.
+_EMBLEM_PATH = _LITE_CSS_PATH.parent / "emblem.svg"
+_EMBLEM_SVG = _EMBLEM_PATH.read_bytes()
+_EMBLEM_HASH = hashlib.sha256(_EMBLEM_SVG).hexdigest()[:12]
+_EMBLEM_URL = f"/lite/static/emblem.svg?v={_EMBLEM_HASH}"

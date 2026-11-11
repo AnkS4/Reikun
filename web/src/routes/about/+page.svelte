@@ -38,6 +38,11 @@
 		</ul>
 	</section>
 
+	<section id="lite">
+		<h2>{t('liteVsFull')}</h2>
+		<p>{t('liteVsFullText')}</p>
+	</section>
+
 	<section>
 		<h2>{t('howItWorks')}</h2>
 		<p>{t('howText')}</p>
@@ -81,9 +86,11 @@
 				rel="noopener noreferrer">{t('sourceLink')}</a
 			>{t('sourceAfter')}
 		</p>
-		{#if version}
-			<p class="version">Reikun v{version}</p>
-		{/if}
+	</section>
+
+	<section>
+		<h2>{t('version')}</h2>
+		<p class="version">Reikun v{version}</p>
 	</section>
 </article>
 
@@ -94,7 +101,7 @@
 
 	.about-nav a {
 		font-family: var(--font-mono);
-		font-size: 0.8rem;
+		font-size: var(--fs-xs);
 		color: var(--text-muted);
 		text-decoration: none;
 	}
@@ -130,7 +137,7 @@
 	}
 
 	.lede {
-		font-size: 1.05rem;
+		font-size: var(--fs-lg);
 		line-height: 1.7;
 		color: var(--text);
 	}
@@ -141,7 +148,7 @@
 
 	.about h2 {
 		font-family: var(--font-mono);
-		font-size: 0.75rem;
+		font-size: var(--fs-xs);
 		font-weight: 500;
 		letter-spacing: 0.08em;
 		text-transform: uppercase;
@@ -151,7 +158,7 @@
 
 	.about p,
 	.about li {
-		font-size: 0.95rem;
+		font-size: var(--fs-base);
 		line-height: 1.7;
 		color: var(--text-muted);
 	}
@@ -177,7 +184,7 @@
 
 	.version {
 		font-family: var(--font-mono);
-		font-size: 0.78rem;
+		font-size: var(--fs-xs);
 		color: var(--text-faint);
 	}
 </style>

@@ -13,9 +13,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **App version shown on the website**: the About page of both variants now displays the release version. The SvelteKit page reads it from a build-time `__APP_VERSION__` global (Vite `define` from `web/package.json`, kept equal to `pyproject.toml` by the release checklist) — inlined into the bundle, so rendering the version costs no API call and works offline. The lite About page server-renders `Reikun v{APP_VERSION}` under its Source section the same way. The API's `/health` response also gained a `version` field (`APP_VERSION`) as ops metadata for API consumers; the OpenAPI schema and `openapi.d.ts` mirrors were regenerated for it.
 
 ### Changed
+- **One design system across both variants**: the SPA and Lite now share the same type scale (nine `--fs-*` steps replacing ~25 ad-hoc sizes), the same radius tokens (Lite's hard-coded radii, including a stray 10px on inputs, now use `--radius-*`), a `--font-display` name, the same warning tokens (`--warn`, `--warn-soft`, `--warn-border`), and the same conjugation-chip tokens. The SPA's conjugation chip and kanji meta badges moved from per-theme hard-coded colours into theme tokens; this also fixes their hover state in the OLED theme, which fell back to light-theme colours. Unused palette tokens were removed.
+- Lite's dark accent now matches the SPA's OLED theme (the palette Lite's dark maps to), so links and the Search button keep their shade when switching variants.
+- SPA icons use three sizes (12px beside text, 15px icon-only controls, 16px notices) instead of seven.
+- Touch-sized targets follow the pointer, not the window width: the SPA's search-row tools grow on any touch screen, and Lite's clickable kanji badges grow like the SPA's.
+- Lite's About page follows the interface language like the SPA's, shows the emblem beside the title, and its *Lite version* section is the target of the home page's "What's different" link (also anchored on the SPA). The status pill no longer reacts to hover, since it reports state rather than acting as a button.
+- Lite's high-contrast borders are static values (no `color-mix()`), and now also apply under a dark OS preference.
+
 - **Lite's top-right controls render without SVG**: hardened browser profiles (Tor Browser / LibreWolf "Safest") set `svg.disabled=true`, which blanks inline SVG too — so the icon cluster vanished exactly for the no-JS visitors lite serves. The cluster is now one uniform `.control` text pill repeated: status word (Checking/Ready/Offline), Light/Dark, the target language code (JA/EN), and Full — same 2rem round pill, muted until hover, titles/aria-labels carrying the full meaning. No CSS-drawn dot, no glyph spans, no mixed styles; the kanji stroke diagrams remain SVG (inherent to KanjiVG).
 - **Lite's search row right-aligns every wrapped line**: the buttons previously right-aligned only via an auto margin on the first button inside the ≤680px media query, so any wrapped line that didn't start with Search sat at the left edge — on mid widths Random kanji/Furigana dropped to a left-aligned line, and with Android's larger font scales Furigana stranded alone. `justify-content: flex-end` on the form right-aligns every line; the input's flex-grow keeps full lines unchanged, so desktop is pixel-identical.
 - **About page privacy section condensed**: the two-paragraph copy shrank to a two-sentence summary with a link to the new full privacy policy (`/privacy`), and the LLM-provider paragraph moved to that page, so the About page stays a short overview with the detail one click away.
+
+### Fixed
+- The SPA kanji page's "not a kanji" / "no kanji given" notices are translated.
 
 ## [1.2.0] - 2026-11-11
 

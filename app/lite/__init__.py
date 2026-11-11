@@ -64,7 +64,7 @@ from app.render import furigana_parts, kanji_card, kanji_group_cards, related_wo
 from app.retrieval import MAX_JA_QUERY_CHARS, SearchResponse, is_headword, search
 from app.telemetry import telemetry
 
-from .assets import _LITE_CSS_HASH, _LITE_CSS_TEXT, _LITE_CSS_URL
+from .assets import _EMBLEM_HASH, _EMBLEM_SVG, _EMBLEM_URL, _LITE_CSS_HASH, _LITE_CSS_TEXT, _LITE_CSS_URL
 from .i18n import _t
 
 logger = logging.getLogger("reikun.lite")
@@ -154,6 +154,18 @@ def lite_static_css() -> Response:
         },
     )
 
+
+@router.get("/lite/static/emblem.svg", include_in_schema=False)
+def lite_static_emblem() -> Response:
+    return Response(
+        content=_EMBLEM_SVG,
+        media_type="image/svg+xml",
+        headers={
+            "Cache-Control": "public, max-age=31536000, immutable",
+            "ETag": f'"{_EMBLEM_HASH}"',
+        },
+    )
+
 # The footer stays in English even when the rest of the site is Japanese: the
 # copyright, licence name and data attributions are legal/credit lines and are
 # intentionally not localised. Keep it that way (see the note in
@@ -222,7 +234,7 @@ def _header(hero: bool, lang: str = "en") -> str:
             '<span class="tag">lite</span></h1>'
             f'<p class="tagline">{esc(_t(lang, "taglineLite"))}</p>'
             f'<p class="lite-note">{esc(_t(lang, "liteNote"))} '
-            f'<a href="/lite/about">{esc(_t(lang, "liteNoteLink"))}</a></p>'
+            f'<a href="/lite/about#lite">{esc(_t(lang, "liteNoteLink"))}</a></p>'
             "</header>"
         )
     return (
@@ -1303,10 +1315,10 @@ def lite_kanji(request: Request, char: str, log: bool = Query(True, include_in_s
 
 @router.get("/lite/about", response_class=HTMLResponse)
 def lite_about(request: Request) -> HTMLResponse:
-    lang = "en"  # The About page stays English in every language, like the footer:
-    # copyright, licence and data-source attributions are legal/credit lines and
-    # are intentionally not localised (see web/src/lib/components/Footer.svelte).
-    joiner = " "  # English spacing between the two sentences
+    # Follows the interface language like the SPA's About page (same i18n
+    # keys). The footer and /lite/privacy stay English: those are the
+    # legal/credit lines (see web/src/lib/components/Footer.svelte).
+    lang = _read_lang(request)
     data_para = (
         f'{esc(_t(lang, "dataBefore"))}'
         '<a href="https://www.edrdg.org/wiki/index.php/JMdict-EDICT_Dictionary_Project"'
@@ -1325,41 +1337,30 @@ def lite_about(request: Request) -> HTMLResponse:
         f'{esc(_t(lang, "sourceBefore"))}'
         '<a href="https://github.com/AnkS4/Reikun" target="_blank" rel="noopener noreferrer">'
         f'{esc(_t(lang, "sourceLink"))}</a>'
-        f'{esc(_t(lang, "sourceAfter"))} '
-        f'{esc(_t(lang, "sourceTailBefore"))}'
-        '<a href="https://reikun.app" target="_blank" rel="noopener noreferrer">reikun.app</a>'
-        f'{esc(_t(lang, "sourceTailMid"))}<a href="/docs">/docs</a>'
-        f'{esc(_t(lang, "sourceTailAfter"))}'
+        f'{esc(_t(lang, "sourceAfter"))}'
     )
     body = f"""<article class="about">
-<h1>{esc(_t(lang, "aboutTitle"))}</h1>
-<p class="lede">{esc(_t(lang, "aboutLede"))}{joiner}{esc(_t(lang, "ledeLite"))}</p>
+<div class="about-title"><img src="{_EMBLEM_URL}" alt="" width="40" height="40">
+<h1>{esc(_t(lang, "aboutTitle"))}</h1></div>
+<p class="lede">{esc(_t(lang, "aboutLede"))}</p>
 <h2>{esc(_t(lang, "whatItDoes"))}</h2>
 <ul>
 <li><b>{esc(_t(lang, "search"))}</b> — {esc(_t(lang, "searchText"))}</li>
 <li><b>{esc(_t(lang, "breakdownBold"))}</b> — {esc(_t(lang, "breakdownText"))}</li>
 <li><b>{esc(_t(lang, "kanjiBold"))}</b> — {esc(_t(lang, "kanjiText"))}</li>
-<li><b>{esc(_t(lang, "notInLiteBold"))}</b> — {esc(_t(lang, "notInLiteText"))}</li>
 </ul>
-<h2>Lite vs full</h2>
-<ul>
-<li><b>Lite</b> — static, server-rendered pages; works without JavaScript,
-in text browsers and on slow connections.</li>
-<li><b>Full</b> — hover kanji tips, animated stroke-order replay, JLPT-level
-grammar explanations, AI-assisted query understanding, feedback and sharing.</li>
-<li>Both share the same dictionary and search pipeline — sentence breakdown,
-kanji cards, conjugations, kanji browsing and random kanji — and sync recent
-searches, theme and language through shared cookies.</li>
-</ul>
+<h2 id="lite">{esc(_t(lang, "liteVsFull"))}</h2>
+<p>{esc(_t(lang, "liteVsFullText"))}</p>
 <h2>{esc(_t(lang, "howItWorks"))}</h2>
 <p>{esc(_t(lang, "howTextLite"))}</p>
 <h2>{esc(_t(lang, "dataSources"))}</h2>
 <p>{data_para}</p>
 <h2>{esc(_t(lang, "privacy"))}</h2>
-<p>{esc(_t(lang, "privacyTextLite"))}</p>
-<p><a href="/lite/privacy">Full privacy policy →</a></p>
+<p>{esc(_t(lang, "privacyText"))}</p>
+<p><a href="/lite/privacy">{esc(_t(lang, "privacyMore"))}</a></p>
 <h2>{esc(_t(lang, "source"))}</h2>
 <p>{source_para}</p>
+<h2>{esc(_t(lang, "version"))}</h2>
 <p class="muted">Reikun v{esc(APP_VERSION)}</p>
 </article>"""
     return _page(
@@ -1380,13 +1381,13 @@ searches, theme and language through shared cookies.</li>
 
 _PRIVACY_BODY = """<article class="about">
 <h1>Privacy Policy</h1>
-<p class="lede">Reikun is free, needs no account, and works without cookies.
-This page describes exactly what the service records, what it never records,
-and how long it is kept. Last updated: November 2026.</p>
+<p class="lede">Reikun is free and needs no account. This page describes exactly what
+the service records, what it never records, and how long it is kept. Last updated: November 2026.</p>
 <h2>What is never collected</h2>
 <ul>
-<li>No cookies, no accounts, no sign-in — the dictionary works fully
-anonymously.</li>
+<li>No accounts and no sign-in — the dictionary works fully anonymously.
+The only cookies are first-party preference cookies (theme, language,
+furigana, recent searches).</li>
 <li>No cross-site tracking and no advertising: telemetry never records IP
 addresses or user-agent strings, and no third-party ad or analytics cookies
 are set.</li>
@@ -1402,9 +1403,10 @@ views are logged the same way.</p>
 never its raw text. Grammar-explanation requests store the sentence only as a
 SHA-256 hash, alongside the JLPT level and latency.</p>
 <h2>What is stored in your browser</h2>
-<p>Recent searches and your interface-language choice are kept in your
-browser's local storage. They never leave your device and are not part of the
-server-side logs above.</p>
+<p>Recent searches, theme, language and furigana preference are kept in your
+browser's local storage and in small first-party cookies, so the full and Lite
+versions stay in sync. They are used only to render pages and are not part of
+the server-side logs above.</p>
 <h2>Third-party LLM providers</h2>
 <p>Grammar explanations and English descriptive query rewrites are generated
 on demand by an external LLM provider. When you request an explanation, the
@@ -1412,8 +1414,7 @@ Japanese sentence, its English translation and the selected JLPT level are
 sent to the provider; long English descriptive queries may also be sent for
 rewriting. Provider-side retention is governed by the provider's own terms.</p>
 <h2>Where data lives and how long it is kept</h2>
-<p>On the hosted deployment, telemetry goes to the platform's log store
-(Google Cloud Logging, which retains entries for 30 days by default).
+<p>On the hosted deployment, telemetry goes to the platform's log store.
 Self-hosted instances can persist events to a local SQLite database instead;
 there, rows are kept indefinitely by default — setting
 <code>TELEMETRY_RETENTION_DAYS</code> turns on an automatic purge of rows

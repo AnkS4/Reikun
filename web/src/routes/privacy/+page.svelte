@@ -22,7 +22,7 @@
 <article class="policy">
 	<h1>Privacy Policy</h1>
 	<p class="lede">
-		Reikun is free, needs no account, and works without cookies. This page describes exactly what
+		Reikun is free and needs no account. This page describes exactly what
 		the service records, what it never records, and how long it is kept. Last updated: November
 		2026.
 	</p>
@@ -30,7 +30,7 @@
 	<section>
 		<h2>What is never collected</h2>
 		<ul>
-			<li>No cookies, no accounts, no sign-in — the dictionary works fully anonymously.</li>
+			<li>No accounts and no sign-in — the dictionary works fully anonymously. The only cookies are first-party preference cookies (theme, language, furigana, recent searches).</li>
 			<li>No cross-site tracking and no advertising: telemetry never records IP addresses or
 				user-agent strings, and no third-party ad or analytics cookies are set.</li>
 			<li>Cloudflare Web Analytics, when enabled, is a cookieless beacon that reports aggregate
@@ -55,8 +55,9 @@
 	<section>
 		<h2>What is stored in your browser</h2>
 		<p>
-			Recent searches and your interface-language choice are kept in your browser's local
-			storage. They never leave your device and are not part of the server-side logs above.
+			Recent searches, theme, language and furigana preference are kept in your browser's local
+			storage and in small first-party cookies, so the full and Lite versions stay in sync. They
+			are used only to render pages and are not part of the server-side logs above.
 		</p>
 	</section>
 
@@ -74,9 +75,7 @@
 	<section>
 		<h2>Where data lives and how long it is kept</h2>
 		<p>
-			On the hosted deployment, telemetry goes to the platform's log store (Google Cloud
-			Logging, which retains entries for 30 days by default). Self-hosted instances can persist
-			events to a local SQLite database instead; there, rows are kept indefinitely by default —
+			On the hosted deployment, telemetry goes to the platform's log store. Self-hosted instances can persist events to a local SQLite database instead; there, rows are kept indefinitely by default —
 			setting <code>TELEMETRY_RETENTION_DAYS</code> turns on an automatic purge of rows older
 			than that window. Hashes cannot be reversed.
 		</p>
@@ -100,7 +99,7 @@
 
 	.policy-nav a {
 		font-family: var(--font-mono);
-		font-size: 0.8rem;
+		font-size: var(--fs-xs);
 		color: var(--text-muted);
 		text-decoration: none;
 	}
@@ -122,7 +121,7 @@
 	}
 
 	.lede {
-		font-size: 1.05rem;
+		font-size: var(--fs-lg);
 		line-height: 1.7;
 		color: var(--text);
 	}
@@ -133,7 +132,7 @@
 
 	.policy h2 {
 		font-family: var(--font-mono);
-		font-size: 0.75rem;
+		font-size: var(--fs-xs);
 		font-weight: 500;
 		letter-spacing: 0.08em;
 		text-transform: uppercase;
@@ -143,7 +142,7 @@
 
 	.policy p,
 	.policy li {
-		font-size: 0.95rem;
+		font-size: var(--fs-base);
 		line-height: 1.7;
 		color: var(--text-muted);
 	}
