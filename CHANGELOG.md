@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.1] - 2026-11-12
+
+Patch release: the SPA and Lite now share one set of UI string tables (`i18n/*.json`, with a CI parity check), the web Docker image builds again (the JSON is committed inside `web/` since the build context excludes the repo root), and mixed queries that start with Latin but are mostly Japanese get the sentence breakdown again. Also ships the privacy-policy pages, telemetry retention purge, on-site version display, and the cross-variant design-system alignment accumulated since 1.2.0.
+
 ### Added
 - **Privacy policy page**: a dedicated `/privacy` page on the full site and a mirrored `/lite/privacy` page, both English-only (legal text is not localised, like the footer) and linked from both footers, both About pages and the sitemap. The policy states what the service never collects (no cookies, no accounts, no IP/user-agent logging), what it records to improve the dictionary (search queries verbatim, feedback and explanation text as one-way hashes), what stays in the browser (recent searches, interface language), what reaches the third-party LLM provider when explanations or descriptive rewrites are requested, and how long data is kept.
 - **Telemetry retention**: self-hosted SQLite telemetry gains a purge for rows older than `TELEMETRY_RETENTION_DAYS` — off by default (rows are kept forever: dictionary queries and hashed feedback are low-sensitivity data), and setting the variable to a positive number purges rows past that window once at sink init, then daily on a daemon thread. The purge reuses the sink's own connection and compares ISO-8601 `ts` strings lexicographically, so it costs no extra index and can never deadlock a first write. The stdout sink keeps nothing locally; server-log retention is the platform's (Cloud Logging's default is 30 days).
@@ -28,6 +32,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - The SPA kanji page's "not a kanji" / "no kanji given" notices are translated.
 - **Sentence breakdown for mixed queries**: a query like "JavaScript不要のLite版へ切り替え" starts with Latin, so `is_japanese` routed it `en_*` and the word-by-word decomposition (gated on the `ja` route) never ran. The gate now also fires when the query merely *contains* Japanese (`contains_japanese`), so mostly-Japanese mixed queries still get segmented.
+
+- Versions: API 1.2.1 (pyproject + openapi), web 1.2.1
 
 ## [1.2.0] - 2026-11-11
 
