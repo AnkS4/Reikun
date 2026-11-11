@@ -109,7 +109,11 @@ h1{font-size:1.5rem;margin:0 0 .6rem}
 h2{font-size:1.2rem;margin:.4rem 0 .35rem}
 .entry h2{font-family:var(--font-japanese);font-size:1.65rem;font-weight:500;letter-spacing:.02em}
 form.search{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center;margin:0;padding:.75rem 0;
-position:sticky;top:0;z-index:80;background:var(--bg)}
+position:sticky;top:0;z-index:80;background:var(--bg);
+/* Right-align every row, SPA-style: the input has flex-grow so full lines
+   keep their layout, while wrapped button rows (small screens, large Android
+   font scales) hug the right edge instead of stranding at the left. */
+justify-content:flex-end}
 input,textarea,select,button{font:inherit;color:inherit;background:var(--surface);
 border:1px solid var(--line-soft);border-radius:10px;padding:.5rem .7rem;
 }
@@ -300,7 +304,6 @@ header.hero{margin:calc(clamp(2.25rem,11vh,4.5rem) - 1.25rem) 0 1.25rem}
 .tagline{font-size:.9rem;line-height:1.5;max-width:22rem;color:var(--faint)}
 input[name=q]{font-size:1rem}
 form.search button[type=submit],form.search .btn{min-height:2.75rem}
-form.search button[type=submit]:first-of-type{margin-left:auto}
 .kanji-card{flex-direction:column;gap:1.25rem;padding:1.25rem}
 .kanji-left{width:11rem;margin:0 auto}
 .kanji-glyph{font-size:4rem}
