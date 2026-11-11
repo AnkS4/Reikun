@@ -89,9 +89,18 @@ align-items:center;gap:.15rem;font-size:.85rem}
 .controls .icon-link{display:inline-flex;align-items:center;justify-content:center;
 width:2rem;height:2rem;border-radius:999px;color:var(--muted)}
 .controls .icon-link:hover{color:var(--fg)}
-.controls svg{display:block}
+/* Text labels inside the round buttons (no SVG — hardened browsers with
+   svg.disabled blank it). The short words run small and semi-bold to hold
+   the cluster's width; the two-char 文A pair mirrors the SPA's languages
+   glyph. */
+.controls .glyph{display:block;line-height:1;text-align:center}
+.controls .glyph-text{font-size:.72rem;font-weight:600}
+.controls .glyph-lang{font-size:.78rem;letter-spacing:.02em}
 .controls .status-dot{display:inline-flex;align-items:center;justify-content:center;
 width:2rem;height:2rem;border-radius:999px;color:var(--faint);cursor:default}
+/* The status dot is drawn in CSS for the same no-SVG reason as above. */
+.controls .status-dot::before{content:"";display:block;width:.55rem;height:.55rem;
+border-radius:999px;background:currentColor}
 .controls .status-dot.ok{color:var(--ok)}
 .controls .status-dot.err{color:var(--err)}
 /* Not probed yet: the SPA's idle --text-faint, a step quieter than the

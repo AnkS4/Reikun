@@ -69,7 +69,13 @@ def test_theme_toggle_is_one_click_and_variant_switch(monkeypatch) -> None:
     assert 'aria-label="Switch to the dark theme"' in home  # moon
     assert "aria-hidden" in home  # decorative glyphs: meaning lives in labels
     controls = home.split("<main>")[0].split('class="controls"')[1]
-    assert "<svg" in controls and 'aria-label="Switch to the full interface"' in controls
+    # Controls must render without SVG: hardened browsers (Tor/LibreWolf
+    # "Safest") set svg.disabled=true, which blanks inline SVG — the cluster
+    # is font glyphs, plain text and a CSS dot instead (see the note in
+    # app/lite/__init__.py above the glyph constants).
+    assert "<svg" not in controls
+    assert 'aria-label="Switch to the full interface"' in controls and ">Full<" in controls
+    assert "glyph-text" in controls and "glyph-lang" in controls and "status-dot" in controls
     assert "http://127.0.0.1:5173" in controls
     monkeypatch.undo()
     assert 'Switch to the full interface' not in client.get("/lite").text  # unset → button hidden

@@ -269,12 +269,13 @@ def _refresh_status() -> None:
 
 
 def _status_chip(lang: str) -> str:
-    """The SPA's database status dot, rendered server-side: green/red glyph
+    """The SPA's database status dot, rendered server-side: green/red CSS dot
     plus a hover/focus tooltip with the state and live entry count. The page
     was rendered by the process that owns the Qdrant client, so unlike the SPA
     there is no "connecting" phase -- it is either connected or not. The state
     comes from the last cached snapshot (refreshed in the background), so a
-    page view never waits on Qdrant."""
+    page view never waits on Qdrant. The dot is drawn in CSS (no SVG), so it
+    survives hardened browsers with svg.disabled (Tor/LibreWolf Safest)."""
     ok, count, _ = _status_state()
     if ok is None:
         state = "checking"
@@ -294,43 +295,18 @@ def _status_chip(lang: str) -> str:
     # popup panel, no extra CSS).
     return (
         f'<span class="status-dot {state}" role="img" tabindex="0" '
-        f'aria-label="{esc(aria)}" title="{esc(title)}">{_icon(_ICON_DB)}</span>'
+        f'aria-label="{esc(aria)}" title="{esc(title)}"></span>'
     )
 
 
-# Lucide-style inline SVG bodies (24x24, stroke-based) for the top-right
-# controls — the same visual language as the SPA's header cluster (which uses
-# this icon set). Inline markup needs no JavaScript to render.
-_ICON_SUN = (
-    '<circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/>'
-    '<path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/>'
-    '<path d="M2 12h2"/><path d="M20 12h2"/>'
-    '<path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/>'
-)
-_ICON_MOON = '<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>'
-# layout-dashboard: the full interface's panel layout
-_ICON_FULL = (
-    '<rect width="7" height="9" x="3" y="3" rx="1"/>'
-    '<rect width="7" height="5" x="14" y="3" rx="1"/>'
-    '<rect width="7" height="9" x="14" y="12" rx="1"/>'
-    '<rect width="7" height="5" x="3" y="16" rx="1"/>'
-)
-# languages: the SPA's language-popover glyph
-_ICON_LANG = (
-    '<path d="m5 8 6 6"/><path d="m4 14 6-6 2-3"/><path d="M2 5h12"/>'
-    '<path d="M7 2h1"/><path d="m22 22-5-10-5 10"/><path d="M14 18h6"/>'
-)
-# database: the SPA's status-dot glyph
-_ICON_DB = (
-    '<ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>'
-    '<path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3"/>'
-)
-def _icon(body: str) -> str:
-    return (
-        '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"'
-        ' stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
-        f"{body}</svg>"
-    )
+# Top-right controls are deliberately NOT SVG. Hardened browsers (Tor
+# Browser / LibreWolf "Safest") set svg.disabled=true, which blanks inline
+# SVG too — the icons would vanish exactly for the no-JS visitors lite
+# serves. Controls are therefore plain text and a CSS dot: everything
+# renders without JavaScript or SVG, and no symbol-font gamble (☀ can hit
+# the color-emoji font and ignore the muted/hover colors).
+_FULL_GLYPH = '<span class="glyph glyph-text" aria-hidden="true">Full</span>'
+_LANG_GLYPH = '<span class="glyph glyph-lang" aria-hidden="true">文A</span>'
 
 
 def _theme_toggle(theme: str, next_url: str, lang: str) -> str:
@@ -341,6 +317,7 @@ def _theme_toggle(theme: str, next_url: str, lang: str) -> str:
     pinned theme shows just the button back to the other one."""
     light_label = _t(lang, "themeToLight")
     dark_label = _t(lang, "themeToDark")
+    # The word names the theme the click switches TO (same as the title).
     if theme == "system":
         href_light = f"/lite/theme?v=light&next={quote(next_url, safe='')}"
         href_dark = f"/lite/theme?v=dark&next={quote(next_url, safe='')}"
@@ -348,30 +325,35 @@ def _theme_toggle(theme: str, next_url: str, lang: str) -> str:
         moon = f'<a class="icon-link to-dark" href="{href_dark}" title="{esc(dark_label)}"'
         return (
             '<span class="theme-toggle">'
-            f'{sun} aria-label="{esc(light_label)}">{_icon(_ICON_SUN)}</a>'
-            f'{moon} aria-label="{esc(dark_label)}">{_icon(_ICON_MOON)}</a>'
+            f'{sun} aria-label="{esc(light_label)}">'
+            f'<span class="glyph glyph-text" aria-hidden="true">Light</span></a>'
+            f'{moon} aria-label="{esc(dark_label)}">'
+            f'<span class="glyph glyph-text" aria-hidden="true">Dark</span></a>'
             "</span>"
         )
     other = "dark" if theme == "light" else "light"
     href = f"/lite/theme?v={other}&next={quote(next_url, safe='')}"
     label = dark_label if other == "dark" else light_label
-    glyph = _ICON_MOON if other == "dark" else _ICON_SUN
-    return f'<a class="icon-link" href="{href}" title="{esc(label)}" aria-label="{esc(label)}">{_icon(glyph)}</a>'
+    word = "Dark" if other == "dark" else "Light"
+    return (
+        f'<a class="icon-link" href="{href}" title="{esc(label)}" aria-label="{esc(label)}">'
+        f'<span class="glyph glyph-text" aria-hidden="true">{word}</span></a>'
+    )
 
 
 def _lang_toggle(lang: str, next_url: str) -> str:
-    """No-JS language switch: an icon-only button (mirroring the SPA's
-    language popover trigger) that flips the shared lite_lang cookie via a
-    redirect. The target language's own name lives in the title/aria-label
-    (icon-only keeps the cluster compact; the page content itself already
-    tells the reader which language is active)."""
+    """No-JS language switch: a compact button (mirroring the SPA's language
+    popover trigger) that flips the shared lite_lang cookie via a redirect.
+    The glyph is the SPA's 文A pair rendered as plain text (not SVG, so it
+    survives svg-disabled hardened browsers); the target language's own name
+    lives in the title/aria-label."""
     other = "ja" if lang == "en" else "en"
     name = "日本語" if other == "ja" else "English"
     href = f"/lite/lang?v={other}&next={quote(next_url, safe='')}"
     label = f"Switch to {name}"
     return (
         f'<a class="icon-link" href="{href}" title="{esc(label)}" aria-label="{esc(label)}" lang="{other}">'
-        f'{_icon(_ICON_LANG)}</a>'
+        f'{_LANG_GLYPH}</a>'
     )
 
 
@@ -429,7 +411,7 @@ def _controls(request: Request) -> str:
         label = _t(lang, "fullSwitch")
         parts.append(
             '<a class="icon-link" href="' + esc(full_url) + '" rel="noopener"'
-            f' title="{esc(label)}" aria-label="{esc(label)}">{_icon(_ICON_FULL)}</a>'
+            f' title="{esc(label)}" aria-label="{esc(label)}">{_FULL_GLYPH}</a>'
         )
     parts.append(_status_chip(lang))
     parts.append(_theme_toggle(theme, next_url, lang))
