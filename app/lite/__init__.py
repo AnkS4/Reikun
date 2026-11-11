@@ -28,6 +28,7 @@ Routes (mounted by ``app/api.py``):
     GET /lite/kanji/random     redirect to a random kanji card
     GET /lite/kanji/group      browse kanji sharing strokes/grade/JLPT
     GET /lite/about            project + data-licence note
+    GET /lite/privacy          privacy policy (English, like the footer)
 
 No templating dependency is used on purpose: pages are plain f-strings with
 ``html.escape`` on every piece of dynamic text, so the lite layer stays as
@@ -160,6 +161,7 @@ def lite_static_css() -> Response:
 _FOOTER = """<footer>
 <p>Reikun © 2026 Aniket Satbhai ·
 <a href="/lite/about">About</a> ·
+<a href="/lite/privacy">Privacy</a> ·
 <a href="https://github.com/AnkS4/Reikun" target="_blank" rel="noopener noreferrer">GitHub</a> ·
 <a href="https://github.com/AnkS4/Reikun/blob/main/LICENSE" target="_blank"
 rel="noopener noreferrer">Apache-2.0</a></p>
@@ -408,6 +410,8 @@ def _full_switch_url(request: Request) -> str:
         return url
     if path == "/lite/about":
         return f"{base}/about"
+    if path == "/lite/privacy":
+        return f"{base}/privacy"
     return base
 
 
@@ -1362,6 +1366,7 @@ searches, theme and language through shared cookies.</li>
 <p>{data_para}</p>
 <h2>{esc(_t(lang, "privacy"))}</h2>
 <p>{esc(_t(lang, "privacyTextLite"))}</p>
+<p><a href="/lite/privacy">Full privacy policy →</a></p>
 <h2>{esc(_t(lang, "source"))}</h2>
 <p>{source_para}</p>
 <p class="muted">Reikun v{esc(APP_VERSION)}</p>
@@ -1373,4 +1378,72 @@ searches, theme and language through shared cookies.</li>
         controls=_controls(request),
         theme=_read_theme(request),
         lang=lang,
+    )
+
+
+# ── Privacy ──────────────────────────────────────────────────────────────────
+# English in every language and static copy, mirroring
+# web/src/routes/privacy/+page.svelte — legal text is not localised (see the
+# note in web/src/lib/components/Footer.svelte). Keep the two documents in
+# sync when either changes.
+
+_PRIVACY_BODY = """<article class="about">
+<h1>Privacy Policy</h1>
+<p class="lede">Reikun is free, needs no account, and works without cookies.
+This page describes exactly what the service records, what it never records,
+and how long it is kept. Last updated: November 2026.</p>
+<h2>What is never collected</h2>
+<ul>
+<li>No cookies, no accounts, no sign-in — the dictionary works fully
+anonymously.</li>
+<li>No cross-site tracking and no advertising: telemetry never records IP
+addresses or user-agent strings, and no third-party ad or analytics cookies
+are set.</li>
+<li>Cloudflare Web Analytics, when enabled, is a cookieless beacon that
+reports aggregate page-view metrics only.</li>
+</ul>
+<h2>What is recorded to improve the dictionary</h2>
+<p>Search requests are logged: the query text as you typed it, the
+rewritten/translated form used for retrieval, the search mode, result counts
+and latency. These logs train better embeddings and ranking. Kanji-detail
+views are logged the same way.</p>
+<p>Feedback (thumbs up/down) is tied to a one-way SHA-256 hash of the query,
+never its raw text. Grammar-explanation requests store the sentence only as a
+SHA-256 hash, alongside the JLPT level and latency.</p>
+<h2>What is stored in your browser</h2>
+<p>Recent searches and your interface-language choice are kept in your
+browser's local storage. They never leave your device and are not part of the
+server-side logs above.</p>
+<h2>Third-party LLM providers</h2>
+<p>Grammar explanations and English descriptive query rewrites are generated
+on demand by an external LLM provider. When you request an explanation, the
+Japanese sentence, its English translation and the selected JLPT level are
+sent to the provider; long English descriptive queries may also be sent for
+rewriting. Provider-side retention is governed by the provider's own terms.</p>
+<h2>Where data lives and how long it is kept</h2>
+<p>On the hosted deployment, telemetry goes to the platform's log store
+(Google Cloud Logging, which retains entries for 30 days by default).
+Self-hosted instances can persist events to a local SQLite database instead;
+there, rows older than <code>TELEMETRY_RETENTION_DAYS</code> (default 90; set
+0 to keep them indefinitely) are purged automatically. Hashes cannot be
+reversed; raw query text is deleted when the window passes.</p>
+<h2>Questions</h2>
+<p>Open an issue or discussion at
+<a href="https://github.com/AnkS4/Reikun" target="_blank"
+rel="noopener noreferrer">github.com/AnkS4/Reikun</a>.</p>
+</article>"""
+
+
+@router.get("/lite/privacy", response_class=HTMLResponse, include_in_schema=False)
+def lite_privacy(request: Request) -> HTMLResponse:
+    # English in every language, like the About page and the footer — the
+    # policy is legal text, not UI copy. English-only keeps the page
+    # shared-cacheable regardless of language cookies.
+    return _page(
+        "Privacy Policy",
+        _PRIVACY_BODY,
+        cache=_CACHE_STATIC,
+        controls=_controls(request),
+        theme=_read_theme(request),
+        lang="en",
     )

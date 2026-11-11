@@ -3,6 +3,7 @@
 import hashlib
 import json
 import sqlite3
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import pytest
@@ -75,15 +76,19 @@ def test_feedback_and_explanation_hash_too(db: Path) -> None:
 
 def test_migration_readds_raw_search_columns(db: Path) -> None:
     # A pre-hash DB has raw query/rewritten_query and no *_hash columns.
+    # The seeded row is recent so the init-time retention purge doesn't
+    # remove it before the migration runs (that path is tested below).
     con = sqlite3.connect(db)
     con.execute(
         "CREATE TABLE searches (id INTEGER PRIMARY KEY AUTOINCREMENT, ts TEXT NOT NULL,"
         " query TEXT, rewritten_query TEXT, rewrite_method TEXT, mode TEXT,"
         " num_results INTEGER, result_count INTEGER, top_result TEXT, latency_ms INTEGER)"
     )
+    seeded_ts = (datetime.now(UTC) - timedelta(days=1)).isoformat(timespec="seconds")
     con.execute(
         "INSERT INTO searches (ts, query, rewritten_query, latency_ms)"
-        " VALUES ('2026-01-01T00:00:00+00:00', 'raw', 'gloss', 5)"
+        " VALUES (?, 'raw', 'gloss', 5)",
+        (seeded_ts,),
     )
     con.commit()
     con.close()
@@ -104,7 +109,11 @@ def test_migration_readds_raw_search_columns(db: Path) -> None:
     ).fetchone() == (None, _h("raw"))
 
 
-def test_rows_kept_forever(db: Path) -> None:
+def test_retention_purge_removes_expired_rows_only(db: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    # Retention: rows older than TELEMETRY_RETENTION_DAYS are deleted by
+    # purge_expired() — writes themselves never purge (the daily/init cadence
+    # owns that), so a stale row survives between writes until the reaper runs.
+    monkeypatch.setattr(fl, "TELEMETRY_RETENTION_DAYS", 90)
     fl.log_search("old", rewritten_query="o", rewrite_method="none", mode="auto",
                   num_results=1, result_count=1, top_result=None, latency_ms=1)
     con = sqlite3.connect(db)
@@ -113,7 +122,24 @@ def test_rows_kept_forever(db: Path) -> None:
     con.close()
     fl.log_search("new", rewritten_query="n", rewrite_method="none", mode="auto",
                   num_results=1, result_count=1, top_result=None, latency_ms=1)
-    assert len(_rows(db)) == 2
+    assert len(_rows(db)) == 2  # writes don't prune
+
+    assert fl.purge_expired() == 1  # the 2000 row is gone, the fresh one stays
+    rows = sqlite3.connect(db).execute("SELECT query FROM searches").fetchall()
+    assert rows == [("new",)]
+
+
+def test_retention_zero_keeps_forever(db: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    # 0 days disables the purge entirely — the solo-debug "keep forever" posture.
+    monkeypatch.setattr(fl, "TELEMETRY_RETENTION_DAYS", 0)
+    fl.log_search("old", rewritten_query="o", rewrite_method="none", mode="auto",
+                  num_results=1, result_count=1, top_result=None, latency_ms=1)
+    con = sqlite3.connect(db)
+    con.execute("UPDATE searches SET ts = '2000-01-01T00:00:00+00:00'")
+    con.commit()
+    con.close()
+    assert fl.purge_expired() == 0
+    assert len(_rows(db)) == 1
 
 
 def _broken_db(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:

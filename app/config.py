@@ -149,6 +149,12 @@ SPARSE_VECTOR = "bm25"
 # stateless-instance default) or "sqlite" (the feedback_log monitoring DB).
 TELEMETRY = _env("TELEMETRY", "stdout").lower()
 
+# Rows older than this many days are purged from the SQLite monitoring DB
+# (purged at sink init and then once a day). The stdout sink keeps nothing
+# locally — server-log retention is the platform's (Cloud Logging's default
+# is 30 days). 0 disables the purge and keeps rows forever.
+TELEMETRY_RETENTION_DAYS = _env_int("TELEMETRY_RETENTION_DAYS", 90)
+
 # Comma-separated allowed origins for CORS (the standalone API serves a
 # different-origin frontend). "*" is the permissive dev default; deployment
 # pins it to the site origin.

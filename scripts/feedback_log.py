@@ -9,17 +9,18 @@ Tables
 
 Search queries are stored raw (query / rewritten_query) alongside their
 12-hex-char SHA-256 prefixes; feedback and explanation text stays hash-only.
-Rows are kept forever. SQLite in WAL mode is plenty for a single-instance
-deployment.
+Rows older than `TELEMETRY_RETENTION_DAYS` (default 90; 0 = keep forever) are
+purged — once when the sink initialises, then daily on a daemon thread.
+SQLite in WAL mode is plenty for a single-instance deployment.
 """
 
 import sqlite3
 import threading
 from collections.abc import Iterator
 from contextlib import contextmanager
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 
-from app.config import MONITORING_DB
+from app.config import MONITORING_DB, TELEMETRY_RETENTION_DAYS
 from app.telemetry import _h  # one hash for both sinks, so stdout and SQLite rows agree
 
 _SCHEMA = """
@@ -95,6 +96,12 @@ def _conn() -> Iterator[sqlite3.Connection]:
                     conn.executescript(_SCHEMA)
                     _migrate(conn)
                     _initialised = True
+                    # Retention starts with the first write of the process:
+                    # expire the backlog once, then keep a daily schedule.
+                    # Uses this connection — opening a second one here would
+                    # collide with this transaction's write lock.
+                    _purge_on(conn, TELEMETRY_RETENTION_DAYS)
+                    _start_purge_scheduler()
         yield conn
         conn.commit()
     finally:
@@ -142,6 +149,46 @@ def _insert(table: str, **values) -> int:
     with _conn() as conn:
         cur = conn.execute(f"INSERT INTO {table} ({cols}) VALUES ({marks})", tuple(values.values()))
         return int(cur.lastrowid)
+
+
+# ── Retention ────────────────────────────────────────────────────────────────
+
+def purge_expired(days: int | None = None) -> int:
+    """Delete rows older than `days` (default: the TELEMETRY_RETENTION_DAYS
+    config) from every event table. The `ts` values are ISO-8601 UTC strings
+    written by `_now()`, so a lexicographic comparison against the cutoff is
+    exact. Returns the number of rows removed; 0 days is "keep forever"."""
+    keep = TELEMETRY_RETENTION_DAYS if days is None else days
+    with _conn() as conn:
+        return _purge_on(conn, keep)
+
+
+def _purge_on(conn: sqlite3.Connection, days: int) -> int:
+    if days <= 0:
+        return 0
+    cutoff = (datetime.now(UTC) - timedelta(days=days)).isoformat(timespec="seconds")
+    removed = 0
+    for table in ("searches", "feedback", "kanji_lookups", "explanations"):
+        cur = conn.execute(f"DELETE FROM {table} WHERE ts < ?", (cutoff,))
+        removed += cur.rowcount
+    return removed
+
+
+def _purge_loop(stop: threading.Event) -> None:
+    while not stop.wait(24 * 3600):  # once a day is plenty for log pruning
+        purge_expired()
+
+
+_purge_thread: threading.Thread | None = None
+
+
+def _start_purge_scheduler() -> None:
+    """One daemon reaper per process, started from the sink's first write."""
+    global _purge_thread
+    if _purge_thread is None or not _purge_thread.is_alive():
+        _purge_thread = threading.Thread(target=_purge_loop, args=(threading.Event(),),
+                                         name="telemetry-purge", daemon=True)
+        _purge_thread.start()
 
 
 # ── Writers ──────────────────────────────────────────────────────────────────

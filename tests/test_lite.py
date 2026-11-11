@@ -303,6 +303,20 @@ def test_about_page() -> None:
     assert "Data and sources" in r.text and "Privacy" in r.text and "Source" in r.text
     # Release version, server-rendered from pyproject.toml (no extra request).
     assert f"Reikun v{APP_VERSION}" in r.text
+    # The privacy section links the dedicated policy page.
+    assert 'href="/lite/privacy"' in r.text
+
+
+def test_privacy_page() -> None:
+    # English in every language (legal text, like the footer), and
+    # shared-cacheable like the About page.
+    r = client.get("/lite/privacy")
+    assert r.status_code == 200
+    assert "Privacy Policy" in r.text
+    assert "TELEMETRY_RETENTION_DAYS" in r.text
+    assert "public" in r.headers["cache-control"]
+    # The footer links it from every lite page.
+    assert 'href="/lite/privacy"' in client.get("/lite").text
 
 
 def test_language_toggle_flips_cookie_and_translates_the_page(monkeypatch: pytest.MonkeyPatch) -> None:

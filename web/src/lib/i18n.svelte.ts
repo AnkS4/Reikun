@@ -231,9 +231,8 @@ const en = {
 	dataAfter3: ' (Ulrich Apel, CC BY-SA 3.0).',
 	privacy: 'Privacy',
 	privacyText:
-		'No cookies and no cross-site tracking. Search query text is logged to improve embeddings and ranking; feedback query text and explanation sentences are stored only as SHA-256 hashes. Recent searches are stored locally in your browser.',
-	llmProviderText:
-		'Grammar explanations and English descriptive query rewrites are generated on demand by a LLM provider. When you request an explanation, the Japanese sentence, its English translation, and the selected JLPT level are sent to the provider. Long English descriptive queries may also be sent for rewriting.',
+		'No cookies, no accounts, no cross-site tracking. Search queries are logged to improve the dictionary; feedback and explanation text is stored only as one-way hashes.',
+	privacyMore: 'Full privacy policy →',
 	source: 'Source',
 	sourceBefore: 'Reikun is built by Aniket Satbhai. The code is ',
 	sourceLink: 'on GitHub',
@@ -439,9 +438,8 @@ const ja: Record<MessageKey, string> = {
 	dataAfter3: '（Ulrich Apel、CC BY-SA 3.0）によるものです。',
 	privacy: 'プライバシー',
 	privacyText:
-		'Cookie を使用せず、クロスサイトトラッキングも行いません。検索クエリの本文は、埋め込みとランキングの改善のために記録されます。フィードバックのクエリ本文と解説の文は SHA-256 ハッシュのみで保存されます。最近の検索はブラウザ内に保存されます。',
-	llmProviderText:
-		'文法解説と英語の説明的クエリの書き換えは、LLMプロバイダーがオンデマンドで生成します。解説をリクエストすると、日本語の文・その英訳・選択したJLPTレベルがプロバイダーに送信されます。長い英語の説明的クエリも書き換えのために送信される場合があります。',
+		'Cookie もアカウントも不要で、クロスサイトトラッキングも行いません。検索クエリは辞書改善のために記録され、フィードバックと解説の文は一方向ハッシュのみで保存されます。',
+	privacyMore: 'プライバシーポリシー全文 →',
 	source: 'ソース',
 	sourceBefore: 'Reikun は Aniket Satbhai が開発しています。コードは ',
 	sourceLink: 'GitHub',

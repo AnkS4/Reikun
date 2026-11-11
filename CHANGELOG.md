@@ -8,7 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Privacy policy page**: a dedicated `/privacy` page on the full site and a mirrored `/lite/privacy` page, both English-only (legal text is not localised, like the footer) and linked from both footers, both About pages and the sitemap. The policy states what the service never collects (no cookies, no accounts, no IP/user-agent logging), what it records to improve the dictionary (search queries verbatim, feedback and explanation text as one-way hashes), what stays in the browser (recent searches, interface language), what reaches the third-party LLM provider when explanations or descriptive rewrites are requested, and how long data is kept.
+- **Telemetry retention**: self-hosted SQLite telemetry now purges rows older than `TELEMETRY_RETENTION_DAYS` (default 90; `0` keeps them indefinitely) — once when the sink initialises, then daily on a daemon thread. The purge reuses the sink's own connection and compares ISO-8601 `ts` strings lexicographically, so it costs no extra index and can never deadlock a first write. The stdout sink keeps nothing locally; server-log retention is the platform's (Cloud Logging's default is 30 days).
 - **App version shown on the website**: the About page of both variants now displays the release version. The SvelteKit page reads it from a build-time `__APP_VERSION__` global (Vite `define` from `web/package.json`, kept equal to `pyproject.toml` by the release checklist) — inlined into the bundle, so rendering the version costs no API call and works offline. The lite About page server-renders `Reikun v{APP_VERSION}` under its Source section the same way. The API's `/health` response also gained a `version` field (`APP_VERSION`) as ops metadata for API consumers; the OpenAPI schema and `openapi.d.ts` mirrors were regenerated for it.
+
+### Changed
+- **About page privacy section condensed**: the two-paragraph copy shrank to a two-sentence summary with a link to the new full privacy policy (`/privacy`), and the LLM-provider paragraph moved to that page, so the About page stays a short overview with the detail one click away.
 
 ## [1.2.0] - 2026-11-11
 
