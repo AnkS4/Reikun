@@ -29,7 +29,7 @@ jobs:
 
       - run: uv run ruff check .
 
-      # Type gate: ty (Astral, pinned ty==0.0.96 in uv.lock — it's a 0.0.x,
+      # Type gate: ty (Astral, pinned via uv.lock; pyproject says ty>=0.0.96 — it's a 0.0.x,
       # so version moves are deliberate). Scope and suppressions live in
       # [tool.ty] in pyproject.toml (app/ only; sub-second run).
       - run: uv run ty check app
