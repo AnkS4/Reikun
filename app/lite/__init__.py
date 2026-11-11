@@ -305,6 +305,18 @@ def _status_chip(lang: str) -> str:
 # serves. Controls are therefore plain text and a CSS dot: everything
 # renders without JavaScript or SVG, and no symbol-font gamble (☀ can hit
 # the color-emoji font and ignore the muted/hover colors).
+#
+# This is lite's whole icon language, kept uniform on purpose:
+#   - controls: text labels (_FULL_GLYPH/_LANG_GLYPH, the Light/Dark words)
+#     and a CSS-drawn status dot (see _status_chip);
+#   - wayfinding: typographic arrows in link text (←, →, from lite/i18n.py);
+#   - badges/pills/buttons: words, never glyphs.
+# Lite has fewer chrome icons than the SPA by design — no AI explanations,
+# no thumbs feedback, no hover tips — so the cluster mirrors the SPA's
+# ORDER, not its SVG set. The one remaining SVG on any lite page is the
+# kanji stroke diagram (KanjiVG stroke data — content shared with the SPA,
+# not an icon); in svg-disabled browsers that box is blank while the card
+# still shows glyph, readings, meanings and badges.
 _FULL_GLYPH = '<span class="glyph glyph-text" aria-hidden="true">Full</span>'
 _LANG_GLYPH = '<span class="glyph glyph-lang" aria-hidden="true">文A</span>'
 

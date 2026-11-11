@@ -2,6 +2,19 @@
  * Inline SVG icon bodies (24×24, stroke-based, Lucide-style). Static data
  * rendered via {@html} in Icon.svelte; safe because the strings are
  * compile-time constants.
+ *
+ * This dict is the SPA's single icon language: every icon in the web UI
+ * renders through `Icon.svelte` from this dict — same 24×24 grid, 2px
+ * strokes, `currentColor`, `aria-hidden` (meaning lives in title/aria-label).
+ * Do not add icon SVGs anywhere else, and don't mix in emoji or
+ * unicode-symbol "icons"; the deliberate exceptions are typographic arrows
+ * in link text (←, →) and the あ furigana button (a language character, not
+ * an icon — Lucide has none). Spinners and status marks are CSS-drawn.
+ * (The stroke-order diagram is StrokeSvg.svelte — KanjiVG data, not an
+ * icon.) Lite keeps its own uniform language instead — text labels, a CSS
+ * dot and typographic arrows — because hardened browsers with
+ * svg.disabled (Tor/LibreWolf "Safest") blank inline SVG; see the note
+ * above the glyph constants in app/lite/__init__.py.
  */
 export const icons = {
 	search: '<circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/>',
