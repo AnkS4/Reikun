@@ -1,14 +1,16 @@
 /* Reikun Lite — the JavaScript-free UI's stylesheet.
    One cached file (/lite/static/lite.css, immutable Cache-Control), so a page
-   costs a single request the browser keeps. The palette lives here too rather
-   than inlined per page: light is the default, dark applies on a dark OS
-   preference or an explicit data-theme="dark" on <html> — the SPA's three
-   states. */
+   costs a single request the browser keeps. Lite's palette is deliberately
+   the pure extremes — pure white light, pure black dark — rather than the
+   SPA's warm washi/charcoal, since lite is the high-contrast, minimal
+   variant with only two modes. Light is the default; dark applies on a
+   dark OS preference or an explicit data-theme="dark" on <html> (the
+   SPA's three states). */
 :root{color-scheme:light;
---bg:#fcfaf6;--fg:#161514;--muted:#665f56;--faint:#6b635a;
+--bg:#ffffff;--fg:#161514;--muted:#665f56;--faint:#6b635a;
 --line:rgba(45,38,30,.12);--link:#1f4874;--warn-soft:rgba(184,119,40,.10);
 --ok:#26734f;--err:#b83232;
---surface:#ffffff;--surface-soft:#f6f1e8;
+--surface:#ffffff;--surface-soft:#f3f3f3;
 --line-soft:rgba(45,38,30,.07);--line-hover:rgba(45,38,30,.22);
 --btn-primary-bg:#1f4874;--btn-primary-fg:#ffffff;
 --conj:#4338ca;--conj-hover:#312e81;--conj-border:rgba(99,102,241,.28);
@@ -19,29 +21,29 @@
 /* Dark canvas: a dark OS preference, or an explicit choice. */
 @media (prefers-color-scheme:dark){
 :root:not([data-theme="light"]){color-scheme:dark;
---bg:#0f1620;--fg:#eef3fa;--muted:#9fb0c4;--faint:#8fa1b7;
---line:rgba(160,195,240,.12);--link:#7cb3f0;--warn-soft:rgba(240,178,78,.15);
---ok:#4fd6a0;--err:#fb8a8a;
---surface:#1b2636;--surface-soft:#233248;
---line-soft:rgba(160,195,240,.06);--line-hover:rgba(160,195,240,.22);
---btn-primary-bg:#223b5c;--btn-primary-fg:#eef6ff;
+--bg:#000000;--fg:#ffffff;--muted:#b5b5b5;--faint:#949494;
+--line:rgba(255,255,255,.14);--link:#85b8ea;--warn-soft:rgba(251,146,60,.16);
+--ok:#4ade80;--err:#f87171;
+--surface:#111111;--surface-soft:#1a1a1a;
+--line-soft:rgba(255,255,255,.08);--line-hover:rgba(255,255,255,.28);
+--btn-primary-bg:#1c2633;--btn-primary-fg:#ffffff;
 --conj:#c7d2fe;--conj-hover:#e0e7ff;--conj-border:rgba(165,180,252,.35);
 --conj-bg:rgba(165,180,252,.12);
---selection:rgba(124,179,240,.22);--glass:rgba(27,38,54,.7);
---underline:rgba(238,243,250,.45);--warn-border:rgba(240,178,78,.25);--ok-soft:rgba(79,214,160,.15);
---line-guide:rgba(160,195,240,.098)}}
+--selection:rgba(133,184,234,.22);--glass:rgba(17,17,17,.7);
+--underline:rgba(255,255,255,.45);--warn-border:rgba(251,146,60,.25);--ok-soft:rgba(74,222,128,.16);
+--line-guide:rgba(255,255,255,.098)}}
 :root[data-theme="dark"]{color-scheme:dark;
---bg:#0f1620;--fg:#eef3fa;--muted:#9fb0c4;--faint:#8fa1b7;
---line:rgba(160,195,240,.12);--link:#7cb3f0;--warn-soft:rgba(240,178,78,.15);
---ok:#4fd6a0;--err:#fb8a8a;
---surface:#1b2636;--surface-soft:#233248;
---line-soft:rgba(160,195,240,.06);--line-hover:rgba(160,195,240,.22);
---btn-primary-bg:#223b5c;--btn-primary-fg:#eef6ff;
+--bg:#000000;--fg:#ffffff;--muted:#b5b5b5;--faint:#949494;
+--line:rgba(255,255,255,.14);--link:#85b8ea;--warn-soft:rgba(251,146,60,.16);
+--ok:#4ade80;--err:#f87171;
+--surface:#111111;--surface-soft:#1a1a1a;
+--line-soft:rgba(255,255,255,.08);--line-hover:rgba(255,255,255,.28);
+--btn-primary-bg:#1c2633;--btn-primary-fg:#ffffff;
 --conj:#c7d2fe;--conj-hover:#e0e7ff;--conj-border:rgba(165,180,252,.35);
 --conj-bg:rgba(165,180,252,.12);
---selection:rgba(124,179,240,.22);--glass:rgba(27,38,54,.7);
---underline:rgba(238,243,250,.45);--warn-border:rgba(240,178,78,.25);--ok-soft:rgba(79,214,160,.15);
---line-guide:rgba(160,195,240,.098)}
+--selection:rgba(133,184,234,.22);--glass:rgba(17,17,17,.7);
+--underline:rgba(255,255,255,.45);--warn-border:rgba(251,146,60,.25);--ok-soft:rgba(74,222,128,.16);
+--line-guide:rgba(255,255,255,.098)}
 *{box-sizing:border-box}
 /* System font stacks — no webfonts, no font requests: the page renders on
    the first paint with whatever the OS already has (terminal weight). Sizes

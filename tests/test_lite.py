@@ -87,8 +87,7 @@ def test_theme_toggle_is_one_click_and_variant_switch(monkeypatch) -> None:
 def test_theme_switch_sets_cookie_and_palette() -> None:
     client.cookies.clear()
     try:
-        # Dark = the warm-charcoal palette (parity with the SPA); system (no
-        # cookie) uses the media query.
+        # Dark = the pure-black palette; system (no cookie) uses the media query.
         r = client.get("/lite/theme", params={"v": "dark", "next": "/lite/search?q=日"}, follow_redirects=False)
         assert r.status_code == 303
         assert "lite_theme=dark" in r.headers.get("set-cookie", "")
@@ -97,7 +96,7 @@ def test_theme_switch_sets_cookie_and_palette() -> None:
         # The palette lives in the cached stylesheet; the page only says which
         # theme to use via data-theme on <html>.
         assert 'data-theme="dark"' in dark.text
-        assert "--bg:#0f1620" in _lite_css()  # dark palette in the stylesheet
+        assert "--bg:#000000" in _lite_css()  # dark palette in the stylesheet
         # One-click toggle: a pinned theme shows only the button to the other one.
         assert 'aria-label="Switch to the light theme"' in dark.text
         assert 'aria-label="Switch to the dark theme"' not in dark.text
@@ -106,7 +105,7 @@ def test_theme_switch_sets_cookie_and_palette() -> None:
         assert "lite_theme=light" in light.headers.get("set-cookie", "")
         light_page = client.get("/lite")
         assert 'data-theme="light"' in light_page.text
-        assert "--bg:#fcfaf6" in _lite_css()
+        assert "--bg:#ffffff" in _lite_css()
         # Unknown values leave the current choice alone (system is the default,
         # not a stored choice, so there is nothing to reset to).
         same = client.get("/lite/theme", params={"v": "nope"}, follow_redirects=False)
@@ -121,14 +120,14 @@ def test_legacy_oled_cookie_resolves_to_dark() -> None:
     try:
         page = client.get("/lite")
         assert 'data-theme="dark"' in page.text
-        assert "--bg:#0f1620" in _lite_css()
+        assert "--bg:#000000" in _lite_css()
     finally:
         client.cookies.clear()
     # No cookie at all → "system": light base + media-query dark override.
     home = client.get("/lite")
     assert 'data-theme="system"' in home.text
     css = _lite_css()
-    assert "--bg:#fcfaf6" in css and "prefers-color-scheme:dark" in css
+    assert "--bg:#ffffff" in css and "prefers-color-scheme:dark" in css
 
 
 def test_stroke_paths_are_outlines_like_the_spa() -> None:
