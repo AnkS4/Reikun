@@ -149,6 +149,16 @@ def test_copula_is_its_own_chip(sentence: str, chips: list[str] | None) -> None:
         assert texts == chips, texts
 
 
+def test_mixed_query_leading_english_still_segments() -> None:
+    """"JavaScript不要のLite版へ切り替え" starts with Latin, so is_japanese
+    routes it en_* — but it is mostly Japanese content and must still
+    decompose (regression: the breakdown was gated on route == "ja")."""
+    segments = segment_japanese("javascript不要のlite版へ切り替え")
+    assert segments
+    texts = [s["text"] for s in segments]
+    assert "不要" in texts and "切り替え" in texts, texts
+
+
 @pytest.mark.parametrize(
     "n,kanji",
     [

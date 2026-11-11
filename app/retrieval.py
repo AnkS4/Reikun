@@ -69,7 +69,7 @@ from app.config import COLLECTION, DENSE_VECTOR, PROC_DIR, QUERY_REWRITE, SPARSE
 from app.embedder import embed_query, warm_models
 from app.headword_index import PAYLOAD_FIELDS, TrieIndex, add_entry, build_trie
 from app.kanji_lookup import has_kanji, is_kanji
-from app.query_rewrite import Rewrite, gloss_key, is_japanese, normalise, rewrite_query
+from app.query_rewrite import Rewrite, contains_japanese, gloss_key, is_japanese, normalise, rewrite_query
 
 # SplitMode.B — middle word units (図書館 one token, 位置+し+て+い+ます still
 # separate): the granularity that matches dictionary headwords.
@@ -1472,8 +1472,11 @@ def _search_cached(
     if route:
         meta["route"] = route
         # A Japanese query with no exact headword hit may be a compound
-        # expression — decompose it so the UI can show the parts.
-        if route == "ja" and not any(retrieval_query in entry_forms(r) for r in results):
+        # expression — decompose it so the UI can show the parts. Mixed
+        # queries that merely *contain* Japanese ("JavaScript不要の…") route
+        # en_* but still deserve the breakdown.
+        if (route == "ja" or contains_japanese(retrieval_query)) and not any(
+                retrieval_query in entry_forms(r) for r in results):
             t4 = time.perf_counter()
             try:
                 if segments := segment_japanese(retrieval_query):

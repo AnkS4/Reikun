@@ -96,6 +96,13 @@ def is_japanese(text: str) -> bool:
     return bool(_JAPANESE.match(text))
 
 
+def contains_japanese(text: str) -> bool:
+    """Check if text has Japanese anywhere — unlike is_japanese, which only
+    looks at the first character. Mixed queries like "JavaScript不要の…"
+    start with Latin but are still mostly Japanese content."""
+    return bool(_JAPANESE.search(text))
+
+
 _PAREN_TAIL = re.compile(r"\s*\(.*")
 _TRAILING_PUNCT = re.compile(r"[,;:.!\s]+$")
 
