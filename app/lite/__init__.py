@@ -442,6 +442,7 @@ def _page(
     controls: str = "",
     theme: str = "system",
     lang: str = "en",
+    furi: bool = True,
 ) -> HTMLResponse:
     document = f"""<!doctype html>
 <html lang="{esc(lang)}" data-theme="{esc(theme)}">
@@ -461,9 +462,10 @@ def _page(
 {_FOOTER}
 </body>
 </html>"""
-    if cache and (theme != "system" or lang != "en"):
-        # Cookie-specific CSS/copy: shared/CDN caches could serve one user's
-        # theme or language to another, so keep it to the request.
+    if cache and (theme != "system" or lang != "en" or not furi):
+        # Cookie-specific markup (theme, language, hidden readings): shared
+        # caches may ignore Vary: Cookie (Cloudflare does) and serve one
+        # visitor's copy to another, so keep it to the browser.
         cache = cache.replace("public,", "private,", 1)
     ok, _, stale = _status_state()
     if cache and ok is not True:
@@ -1285,6 +1287,7 @@ def lite_kanji(request: Request, char: str, log: bool = Query(True, include_in_s
         controls=_controls(request),
         theme=theme,
         lang=lang,
+        furi=furi,
     )
 
 
