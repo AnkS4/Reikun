@@ -7,12 +7,12 @@
    dark OS preference or an explicit data-theme="dark" on <html> (the
    SPA's three states). */
 :root{color-scheme:light;
---bg:#ffffff;--fg:#161514;--muted:#665f56;--faint:#6b635a;
---line:rgba(45,38,30,.12);--link:#1f4874;--warn-soft:rgba(184,119,40,.10);
+--bg:#ffffff;--text:#161514;--text-muted:#665f56;--text-faint:#6b635a;
+--border:rgba(45,38,30,.12);--primary:#1f4874;--primary-light:rgba(31,72,116,.08);--warn-soft:rgba(184,119,40,.10);
 --ok:#26734f;--err:#b83232;
 --surface:#ffffff;--surface-soft:#f3f3f3;
---line-soft:rgba(45,38,30,.07);--line-hover:rgba(45,38,30,.22);
---btn-primary-bg:#1f4874;--btn-primary-fg:#ffffff;
+--border-soft:rgba(45,38,30,.07);--border-hover:rgba(45,38,30,.22);
+--btn-primary-bg:#1f4874;--btn-primary-text:#ffffff;
 --conj:#4338ca;--conj-hover:#312e81;--conj-border:rgba(99,102,241,.28);
 --conj-bg:rgba(99,102,241,.06);
 --selection:rgba(31,72,116,.22);--glass:rgba(255,255,255,.7);
@@ -21,24 +21,24 @@
 /* Dark canvas: a dark OS preference, or an explicit choice. */
 @media (prefers-color-scheme:dark){
 :root:not([data-theme="light"]){color-scheme:dark;
---bg:#000000;--fg:#ffffff;--muted:#b5b5b5;--faint:#949494;
---line:rgba(255,255,255,.14);--link:#85b8ea;--warn-soft:rgba(251,146,60,.16);
+--bg:#000000;--text:#ffffff;--text-muted:#b5b5b5;--text-faint:#949494;
+--border:rgba(255,255,255,.14);--primary:#7cb3f0;--primary-light:rgba(124,179,240,.15);--warn-soft:rgba(251,146,60,.16);
 --ok:#4ade80;--err:#f87171;
 --surface:#111111;--surface-soft:#1a1a1a;
---line-soft:rgba(255,255,255,.08);--line-hover:rgba(255,255,255,.28);
---btn-primary-bg:#1c2633;--btn-primary-fg:#ffffff;
+--border-soft:rgba(255,255,255,.08);--border-hover:rgba(255,255,255,.28);
+--btn-primary-bg:#1c2633;--btn-primary-text:#ffffff;
 --conj:#c7d2fe;--conj-hover:#e0e7ff;--conj-border:rgba(165,180,252,.35);
 --conj-bg:rgba(165,180,252,.12);
 --selection:rgba(133,184,234,.22);--glass:rgba(17,17,17,.7);
 --underline:rgba(255,255,255,.45);--warn-border:rgba(251,146,60,.25);--ok-soft:rgba(74,222,128,.16);
 --line-guide:rgba(255,255,255,.098)}}
 :root[data-theme="dark"]{color-scheme:dark;
---bg:#000000;--fg:#ffffff;--muted:#b5b5b5;--faint:#949494;
---line:rgba(255,255,255,.14);--link:#85b8ea;--warn-soft:rgba(251,146,60,.16);
+--bg:#000000;--text:#ffffff;--text-muted:#b5b5b5;--text-faint:#949494;
+--border:rgba(255,255,255,.14);--primary:#7cb3f0;--primary-light:rgba(124,179,240,.15);--warn-soft:rgba(251,146,60,.16);
 --ok:#4ade80;--err:#f87171;
 --surface:#111111;--surface-soft:#1a1a1a;
---line-soft:rgba(255,255,255,.08);--line-hover:rgba(255,255,255,.28);
---btn-primary-bg:#1c2633;--btn-primary-fg:#ffffff;
+--border-soft:rgba(255,255,255,.08);--border-hover:rgba(255,255,255,.28);
+--btn-primary-bg:#1c2633;--btn-primary-text:#ffffff;
 --conj:#c7d2fe;--conj-hover:#e0e7ff;--conj-border:rgba(165,180,252,.35);
 --conj-bg:rgba(165,180,252,.12);
 --selection:rgba(133,184,234,.22);--glass:rgba(17,17,17,.7);
@@ -56,32 +56,32 @@
    column, same side padding and bottom scroll room — more air, same rhythm. */
 html{font-family:var(--font);-webkit-text-size-adjust:100%;scroll-behavior:smooth;
 scrollbar-gutter:stable}
-body{margin:0 auto;padding:1.25rem 1.25rem 4rem;max-width:50rem;background:var(--bg);color:var(--fg);
+body{margin:0 auto;padding:1.25rem 1.25rem 4rem;max-width:50rem;background:var(--bg);color:var(--text);
 font:16px/1.6 var(--font);-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;
 text-rendering:optimizeLegibility}
 [lang=ja],ruby rt{font-family:var(--font-japanese)}
 ::selection{background:var(--selection)}
-:focus-visible{outline:2px solid var(--link);outline-offset:2px}
+:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
 a{color:inherit;text-decoration:none}
 header{display:flex;align-items:baseline;gap:.5rem;margin-bottom:.35rem}
 header.hero{display:block;text-align:center;margin:calc(clamp(3rem,12vh,6rem) - 1.25rem) 0 1.5rem}
 .hero-tag{display:inline-block;font-family:var(--font-mono);font-size:.75rem;font-weight:500;
-letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:var(--surface-soft);
-border:1px solid var(--line-soft);border-radius:999px;padding:.25rem .75rem;margin:0 0 1rem}
+letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted);background:var(--surface-soft);
+border:1px solid var(--border-soft);border-radius:999px;padding:.25rem .75rem;margin:0 0 1rem}
 .hero-title{margin:0}
 .hero .brand{font-family:var(--font);font-size:clamp(2.5rem,7vw,3.8rem);font-weight:500;
 letter-spacing:-.025em;line-height:1.08}
-.tagline{color:var(--muted);font-size:1.05rem;max-width:38rem;margin:.75rem auto 0;line-height:1.55;
+.tagline{color:var(--text-muted);font-size:1.05rem;max-width:38rem;margin:.75rem auto 0;line-height:1.55;
 font-weight:400;text-wrap:balance}
-.lite-note{font-size:.8rem;color:var(--muted);margin:.5rem auto 0;max-width:38rem;text-align:center}
-.lite-note a{color:var(--link)}
+.lite-note{font-size:.8rem;color:var(--text-muted);margin:.5rem auto 0;max-width:38rem;text-align:center}
+.lite-note a{color:var(--primary)}
 .brand{font-family:var(--font);font-size:1.25rem;font-weight:500;letter-spacing:-.015em;
-text-decoration:none;color:var(--fg);}
+text-decoration:none;color:var(--text);}
 .brand:hover{opacity:.8}
-.brand span{font-family:var(--font-japanese);font-size:.85em;font-weight:400;color:var(--muted)}
+.brand span{font-family:var(--font-japanese);font-size:.85em;font-weight:400;color:var(--text-muted)}
 .hero .brand span{font-size:.72em;margin-left:.25rem}
-.tag{font-family:var(--font-mono);font-size:.68rem;font-weight:500;color:var(--muted);
-background:var(--surface-soft);border:1px solid var(--line-soft);border-radius:999px;
+.tag{font-family:var(--font-mono);font-size:.68rem;font-weight:500;color:var(--text-muted);
+background:var(--surface-soft);border:1px solid var(--border-soft);border-radius:999px;
 padding:.1rem .5rem;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap}
 .controls{position:fixed;top:.6rem;right:.85rem;margin-right:-15px;z-index:200;display:flex;
 align-items:center;gap:.4rem}
@@ -90,19 +90,19 @@ align-items:center;gap:.4rem}
    the full meaning the short labels abbreviate. Plain text, no SVG: hardened
    browsers with svg.disabled blank inline SVG (Tor/LibreWolf "Safest"). */
 .controls .control{display:inline-flex;align-items:center;justify-content:center;
-min-height:2rem;padding:0 .7rem;border-radius:999px;color:var(--muted);
+min-height:2rem;padding:0 .7rem;border-radius:999px;color:var(--text-muted);
 font-size:.8rem;font-weight:500;line-height:1;white-space:nowrap}
-.controls .control:hover{color:var(--fg);background:var(--surface-soft)}
+.controls .control:hover{color:var(--text);background:var(--surface-soft)}
 /* Dictionary status is the same pill, tinted by state; it is a <span>, not a
    link, so it keeps its state colour on hover instead of going foreground. */
 .controls .status{cursor:default}
 .controls .status.ok{color:var(--ok)}
 .controls .status.err{color:var(--err)}
-/* Not probed yet: a step quieter than the other pills' --muted. */
-.controls .status.checking{color:var(--faint)}
+/* Not probed yet: a step quieter than the other pills' --text-muted. */
+.controls .status.checking{color:var(--text-faint)}
 .controls .status.ok:hover{color:var(--ok)}
 .controls .status.err:hover{color:var(--err)}
-.controls .status.checking:hover{color:var(--faint)}
+.controls .status.checking:hover{color:var(--text-faint)}
 /* System mode renders both directions and this hides the one matching the OS
    scheme — a first visit shows exactly one pill, e.g. Dark on a light OS.
    Specificity note: these selectors must outrank `.controls .control`. */
@@ -119,46 +119,46 @@ position:sticky;top:0;z-index:80;background:var(--bg);
    font scales) hug the right edge instead of stranding at the left. */
 justify-content:flex-end}
 input,textarea,select,button{font:inherit;color:inherit;background:var(--surface);
-border:1px solid var(--line-soft);border-radius:10px;padding:.5rem .7rem;
+border:1px solid var(--border-soft);border-radius:10px;padding:.5rem .7rem;
 }
 input[name=q]{flex:1 1 18rem;font-size:1.05rem;padding:.7rem .9rem;border-radius:12px;
-border-color:var(--line);background:var(--glass);
+border-color:var(--border);background:var(--glass);
 }
-input[name=q]:focus{outline:2px solid var(--fg);outline-offset:2px}
+input[name=q]:focus{outline:none;box-shadow:0 0 0 3px var(--primary-light)}
 button{cursor:pointer}
 button[type=submit]{padding:.55rem .95rem;font-size:.9rem;font-weight:600;background:var(--surface-soft);
 }
-form.search button[type=submit]:first-of-type{background:var(--btn-primary-bg);color:var(--btn-primary-fg);
+form.search button[type=submit]:first-of-type{background:var(--btn-primary-bg);color:var(--btn-primary-text);
 border-color:transparent}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:.45em;
-border:1px solid var(--line-soft);border-radius:12px;
+border:1px solid var(--border-soft);border-radius:12px;
 /* Same metrics as button[type=submit] — the search row's three controls
    (Search / Random kanji / Furigana) must look identical, and the Furigana
    toggle is the one rendered as a link (cookie flip, no JS). */
 padding:.55rem .95rem;font-size:.9rem;font-weight:500;background:var(--surface-soft);
-;text-decoration:none;white-space:nowrap;color:var(--fg);
+;text-decoration:none;white-space:nowrap;color:var(--text);
 }
-.furi.off{opacity:.55;text-decoration:line-through;text-decoration-thickness:2px;color:var(--muted)}
+.furi.off{opacity:.55;text-decoration:line-through;text-decoration-thickness:2px;color:var(--text-muted)}
 .pills{display:flex;flex-wrap:wrap;gap:.45rem;margin:1.125rem 0 0;padding:0;justify-content:center}
-.pill{display:inline-flex;align-items:center;gap:.35rem;border:1px solid var(--line-soft);
+.pill{display:inline-flex;align-items:center;gap:.35rem;border:1px solid var(--border-soft);
 border-radius:9999px;padding:.375rem .85rem;text-decoration:none;font-size:.9rem;
-background:var(--surface);color:var(--muted);
+background:var(--surface);color:var(--text-muted);
 }
 @media (pointer:coarse){.pill{min-height:2.75rem}}
 .pill:active{transform:translateY(0)}
 .pills-label{font-family:var(--font-mono);font-size:.72rem;
-font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);
+font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);
 margin:1.4rem 0 .6rem;text-align:center}
 .pills-label a{margin-left:.6rem}
-.entry{border:1px solid var(--line-soft);border-radius:16px;background:var(--surface);
+.entry{border:1px solid var(--border-soft);border-radius:16px;background:var(--surface);
 padding:1.35rem 1.5rem;margin:1.15rem 0;
 }
-.entry:hover{border-color:var(--line-hover)}
-ruby rt{font-size:.6em;font-weight:500;letter-spacing:0;color:var(--muted)}
-.gloss{margin:.5rem 0 .85rem;font-size:1.02rem;line-height:1.5;color:var(--muted)}
-.reading-note,.muted{color:var(--muted);font-size:.9rem}
-.inflection-bar{font-size:.85rem;color:var(--muted);margin:-.2rem 0 .35rem}
-.inflection-bar [lang=ja]{color:var(--fg);font-size:.95rem}
+.entry:hover{border-color:var(--border-hover)}
+ruby rt{font-size:.6em;font-weight:500;letter-spacing:0;color:var(--text-muted)}
+.gloss{margin:.5rem 0 .85rem;font-size:1.02rem;line-height:1.5;color:var(--text-muted)}
+.reading-note,.muted{color:var(--text-muted);font-size:.9rem}
+.inflection-bar{font-size:.85rem;color:var(--text-muted);margin:-.2rem 0 .35rem}
+.inflection-bar [lang=ja]{color:var(--text);font-size:.95rem}
 .conj-link{margin:.75rem 0}
 .conj-link a{display:inline-flex;align-items:center;gap:.45rem;border:1px solid var(--conj-border);
 background:var(--conj-bg);color:var(--conj);border-radius:4px;padding:.24rem .65rem;
@@ -167,55 +167,55 @@ font-size:.8rem;font-weight:500;
 .conj-link a:hover{border-color:var(--conj);color:var(--conj-hover)}
 .kanji-link{text-decoration:none;
 border-bottom:1.5px dashed var(--underline);padding-bottom:1px}
-.kanji-link:hover{border-bottom-color:var(--fg)}
-.warn{background:var(--warn-soft);color:var(--fg);font-size:.95rem;
+.kanji-link:hover{border-bottom-color:var(--text)}
+.warn{background:var(--warn-soft);color:var(--text);font-size:.95rem;
 border:1px solid var(--warn-border);
 border-radius:12px;padding:.9rem 1.15rem;margin:1.25rem 0}
 .badge{display:inline-block;font-family:var(--font-mono);font-size:.7rem;font-weight:500;
 text-transform:uppercase;letter-spacing:.05em;padding:.18rem .6rem;border-radius:999px;
-background:var(--surface-soft);border:1px solid var(--line-soft);color:var(--muted);
+background:var(--surface-soft);border:1px solid var(--border-soft);color:var(--text-muted);
 margin:0 .25rem .25rem 0;text-decoration:none}
-.badge:hover{border-color:var(--line-hover);color:var(--fg)}
+.badge:hover{border-color:var(--border-hover);color:var(--text)}
 .entry h2 .badge{background:var(--ok-soft);border-color:transparent;color:var(--ok)}
-.example-section{margin-top:.85rem;border-top:1px solid var(--line-soft);padding-top:.85rem}
+.example-section{margin-top:.85rem;border-top:1px solid var(--border-soft);padding-top:.85rem}
 .example{margin:.75rem 0;padding:.5rem 0;font-size:1.08rem}
 .example p{margin:0;font-weight:500;line-height:1.6}
-.example p+p{margin:.25rem 0 0;font-size:.9rem;font-weight:400;line-height:1.45;color:var(--muted)}
+.example p+p{margin:.25rem 0 0;font-size:.9rem;font-weight:400;line-height:1.45;color:var(--text-muted)}
 /* Related words — mono-micro-label chips sharing kanji with the headword,
    mirroring the SPA's .related-row / .related-pill (rendered as links in Lite). */
 .related-row{display:flex;flex-wrap:wrap;gap:.4rem;margin:.35rem 0 .75rem}
-.chip{display:inline-flex;align-items:baseline;gap:.45rem;border:1px solid var(--line-soft);
+.chip{display:inline-flex;align-items:baseline;gap:.45rem;border:1px solid var(--border-soft);
 background:var(--surface-soft);border-radius:4px;padding:.22rem .55rem;text-decoration:none;
 font-size:.95rem;}
-.chip:hover{border-color:var(--line-hover)}
-.chip [lang=ja]{color:var(--fg)}
-.chip .muted{font-size:.78rem;color:var(--muted);max-width:14rem;overflow:hidden;
+.chip:hover{border-color:var(--border-hover)}
+.chip [lang=ja]{color:var(--text)}
+.chip .muted{font-size:.78rem;color:var(--text-muted);max-width:14rem;overflow:hidden;
 text-overflow:ellipsis;white-space:nowrap}
 /* Sentence Breakdown card — the SPA's SegChips: mono header with hint, then
    vertical tiles (word over gloss). approx tiles get dashed borders. */
-.seg-card{border:1px solid var(--line-soft);border-radius:16px;background:var(--surface);
+.seg-card{border:1px solid var(--border-soft);border-radius:16px;background:var(--surface);
 padding:.9rem 1.1rem;margin:1rem 0 1.5rem}
 .seg-header{display:flex;align-items:center;justify-content:space-between;gap:.75rem;
 flex-wrap:wrap;margin-bottom:.65rem}
 .seg-title{font-family:var(--font-mono);font-size:.72rem;
-font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);margin:0;
+font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-faint);margin:0;
 display:flex;align-items:center;gap:.35rem}
 .seg-title .badge{margin:0}
-.stats-meta{font-size:.78rem;color:var(--faint)}
+.stats-meta{font-size:.78rem;color:var(--text-faint)}
 .stats-line{display:flex;align-items:center;gap:.75rem;flex-wrap:wrap;font-family:var(--font-mono);
-font-size:.82rem;color:var(--muted);margin:1.5rem 0 1rem;padding-bottom:.75rem;
-border-bottom:1px solid var(--line-soft)}
-.stats-count{font-weight:500;color:var(--fg)}
+font-size:.82rem;color:var(--text-muted);margin:1.5rem 0 1rem;padding-bottom:.75rem;
+border-bottom:1px solid var(--border-soft)}
+.stats-count{font-weight:500;color:var(--text)}
 .seg-row{display:flex;flex-wrap:wrap;gap:.5rem;align-items:stretch}
 .seg{display:flex;flex-direction:column;text-decoration:none;padding:.4rem .65rem;
-border:1px solid var(--line-soft);border-radius:8px;background:var(--surface-soft);
+border:1px solid var(--border-soft);border-radius:8px;background:var(--surface-soft);
 text-align:center;}
-.seg:hover{border-color:var(--line-hover)}
+.seg:hover{border-color:var(--border-hover)}
 .seg.approx{border-style:dashed}
 .seg-word{display:flex;align-items:flex-end;justify-content:center;font-size:1.25rem;
-min-height:2.2rem;font-weight:500;color:var(--fg)}
+min-height:2.2rem;font-weight:500;color:var(--text)}
 .seg-word rt{font-size:.6em}
-.seg-mean{display:block;font-size:.72rem;color:var(--muted);margin-top:auto;padding-top:.2rem;
+.seg-mean{display:block;font-size:.72rem;color:var(--text-muted);margin-top:auto;padding-top:.2rem;
 line-height:1.3;max-width:9.5em}
 /* Conjugations page — spacing mirrors the SPA's conj-page-wrap / conj-page-title /
    conj-page-sub / group-nav-bar (see web/src/app.css). */
@@ -224,28 +224,28 @@ line-height:1.3;max-width:9.5em}
 .conj-page-back{margin-top:1.5rem}
 .conj-title{display:flex;align-items:baseline;gap:.5rem;flex-wrap:wrap;
 margin:.75rem 0 .25rem;font-size:2rem;font-weight:700}
-.conj-reading{font-weight:400;font-size:1.1rem;color:var(--muted)}
-.conj-label{font-family:var(--font-mono);font-size:1rem;font-weight:400;color:var(--muted)}
-.conj-sub{margin:0 0 1.25rem;color:var(--muted);font-size:.95rem}
+.conj-reading{font-weight:400;font-size:1.1rem;color:var(--text-muted)}
+.conj-label{font-family:var(--font-mono);font-size:1rem;font-weight:400;color:var(--text-muted)}
+.conj-sub{margin:0 0 1.25rem;color:var(--text-muted);font-size:.95rem}
 table.conj{width:100%;border-collapse:collapse;margin:.75rem 0;font-size:.95rem}
-table.conj th,table.conj td{border:0;border-bottom:1px solid var(--line-soft);
+table.conj th,table.conj td{border:0;border-bottom:1px solid var(--border-soft);
 padding:.4rem .6rem .4rem 0;text-align:left;vertical-align:baseline}
 table.conj thead th{font-family:var(--font-mono);font-size:.75rem;font-weight:500;
-text-transform:uppercase;letter-spacing:.06em;color:var(--faint)}
-table.conj tbody th{font-size:.82rem;font-weight:500;color:var(--muted);width:12em}
-table.conj td{color:var(--fg);font-size:1.05rem}
-table.conj td.muted{color:var(--faint);font-size:.88rem}
+text-transform:uppercase;letter-spacing:.06em;color:var(--text-faint)}
+table.conj tbody th{font-size:.82rem;font-weight:500;color:var(--text-muted);width:12em}
+table.conj td{color:var(--text);font-size:1.05rem}
+table.conj td.muted{color:var(--text-faint);font-size:.88rem}
 /* Kanji card — two-column like the SPA's KanjiCard: glyph + stroke diagram +
    badges on the left, meanings/readings/common-words on the right. */
-.kanji-card{display:flex;gap:1.75rem;border:1px solid var(--line-soft);border-radius:22px;
+.kanji-card{display:flex;gap:1.75rem;border:1px solid var(--border-soft);border-radius:22px;
 background:var(--surface);padding:1.5rem;margin:1.25rem 0 1.75rem}
 .kanji-left{width:10.5rem;flex-shrink:0;display:flex;flex-direction:column;align-items:center}
 .kanji-right{flex:1;min-width:0}
 .kanji-glyph{font-size:4.25rem;font-weight:400;line-height:1;margin:0 0 .75rem;text-align:center;
-color:var(--fg);letter-spacing:.02em}
+color:var(--text);letter-spacing:.02em}
 /* Stroke diagram in the SPA's boxed style, with its dashed practice-sheet
    quadrant guides drawn as pseudo-elements. */
-.stroke-box{position:relative;width:100%;border:1px solid var(--line-soft);border-radius:12px;
+.stroke-box{position:relative;width:100%;border:1px solid var(--border-soft);border-radius:12px;
 background:var(--surface-soft);padding:.5rem}
 .stroke-box::before,.stroke-box::after{content:"";position:absolute;pointer-events:none}
 .stroke-box::before{left:.5rem;right:.5rem;top:50%;
@@ -256,50 +256,50 @@ border-left:1px dashed var(--line-guide)}
 /* KanjiVG `d`s are stroke outlines — draw them as thin lines like the SPA's
    StrokeSvg (fill:none + stroke), not filled shapes. */
 .strokes path{fill:none;stroke:currentColor;stroke-width:3.2;stroke-linecap:round;stroke-linejoin:round}
-.strokes text{fill:var(--muted);font-size:9px;text-anchor:middle}
+.strokes text{fill:var(--text-muted);font-size:9px;text-anchor:middle}
 .kbadges{display:flex;flex-wrap:wrap;gap:.35rem;margin-top:.85rem;justify-content:center}
 .kbadges .badge{margin:0;font-size:.72rem;padding:.15rem .55rem}
 .ksection{margin-bottom:1rem}
 .ksection-title{font-family:var(--font-mono);font-size:.72rem;
-font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);margin:0 0 .35rem}
+font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-faint);margin:0 0 .35rem}
 .meanings{margin:.1rem 0 .75rem;font-size:1.35rem;line-height:1.35}
 .meanings .first{font-weight:500}
-.meanings .rest{color:var(--muted)}
+.meanings .rest{color:var(--text-muted)}
 .rrow{display:flex;align-items:baseline;gap:.75rem;flex-wrap:wrap;margin:.4rem 0}
 .rlabel{font-size:.95rem;min-width:4.5rem;flex-shrink:0}
 .rlist{display:inline-flex;flex-wrap:wrap;gap:.35rem}
-.rchip{font-size:.95rem;padding:.2rem .65rem;border:1px solid var(--line-soft);
+.rchip{font-size:.95rem;padding:.2rem .65rem;border:1px solid var(--border-soft);
 border-radius:8px;background:var(--surface-soft)}
-.rchip .oku{color:var(--muted);opacity:.7;margin-left:1px}
+.rchip .oku{color:var(--text-muted);opacity:.7;margin-left:1px}
 .kwords{list-style:none;padding:0;margin:.4rem 0 0;display:grid;
 grid-template-columns:repeat(auto-fill,minmax(12.5rem,1fr));gap:.4rem}
 .kword{display:flex;flex-direction:column;text-decoration:none;min-width:0;
-padding:.4rem .65rem;border:1px solid var(--line-soft);border-radius:8px;
+padding:.4rem .65rem;border:1px solid var(--border-soft);border-radius:8px;
 background:var(--surface-soft);}
-.kword:hover{border-color:var(--line-hover)}
-.kword .kw-head{font-size:1.15rem;font-weight:500;color:var(--fg)}
-.kword .kw-gloss{font-size:.82rem;color:var(--muted);white-space:nowrap;overflow:hidden;
+.kword:hover{border-color:var(--border-hover)}
+.kword .kw-head{font-size:1.15rem;font-weight:500;color:var(--text)}
+.kword .kw-gloss{font-size:.82rem;color:var(--text-muted);white-space:nowrap;overflow:hidden;
 text-overflow:ellipsis;margin-top:.1rem}
 /* Kanji group browse page — mirrors SPA's kgroup-wrap/kgroup-title/kg-grid/kg-card. */
 .kgroup-title{display:flex;align-items:baseline;gap:.6rem;margin:.75rem 0 .25rem;font-size:2rem;font-weight:700}
-.kgroup-total{font-family:var(--font-mono);font-size:1rem;font-weight:500;color:var(--faint)}
-.kgroup-sub{margin:0 0 1.25rem;color:var(--muted);font-size:.95rem}
+.kgroup-total{font-family:var(--font-mono);font-size:1rem;font-weight:500;color:var(--text-faint)}
+.kgroup-sub{margin:0 0 1.25rem;color:var(--text-muted);font-size:.95rem}
 .kg-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(8.5rem,1fr));gap:.75rem;
 margin:0;padding:0;list-style:none}
-.kg-card{border:1px solid var(--line-soft);border-radius:12px;background:var(--surface);text-align:center;
+.kg-card{border:1px solid var(--border-soft);border-radius:12px;background:var(--surface);text-align:center;
 display:flex;flex-direction:column;align-items:center;gap:.2rem;padding:.8rem .6rem .6rem;
 }
 /* The SPA's card is the <a>; Lite keeps a list item for semantics, so the
    anchor carries the same column layout as the original .kg-card. */
 .kg-card>a{display:flex;flex-direction:column;align-items:center;gap:.2rem;width:100%;
 text-decoration:none;color:inherit}
-.kg-card:hover{border-color:var(--line-hover)}
-.kg-glyph{font-family:var(--font-japanese);color:var(--fg);font-size:2.6rem;line-height:1.15}
-.kg-gloss{color:var(--muted);font-size:.82rem;min-height:2em;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.kg-meta{display:block;font-family:var(--font-mono);color:var(--faint);font-size:.68rem;
+.kg-card:hover{border-color:var(--border-hover)}
+.kg-glyph{font-family:var(--font-japanese);color:var(--text);font-size:2.6rem;line-height:1.15}
+.kg-gloss{color:var(--text-muted);font-size:.82rem;min-height:2em;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.kg-meta{display:block;font-family:var(--font-mono);color:var(--text-faint);font-size:.68rem;
 line-height:1.15;white-space:normal;word-break:break-word}
 .kg-pager{display:flex;justify-content:center;align-items:center;gap:1rem;margin-top:1.5rem}
-.kg-pager-label{font-family:var(--font-mono);font-size:.85rem;color:var(--muted)}
+.kg-pager-label{font-family:var(--font-mono);font-size:.85rem;color:var(--text-muted)}
 .kgroup-bottom-actions{margin-top:2rem;display:flex;justify-content:flex-start}
 @media (max-width:680px){
 body{padding:1.25rem 1rem 3rem}
@@ -307,7 +307,7 @@ body{padding:1.25rem 1rem 3rem}
 .controls .control{padding:0 .55rem;font-size:.75rem}
 header.hero{margin:calc(clamp(2.25rem,11vh,4.5rem) - 1.25rem) 0 1.25rem}
 .hero-tag{font-size:.68rem;letter-spacing:.04em;padding:.2rem .65rem}
-.tagline{font-size:.9rem;line-height:1.5;max-width:22rem;color:var(--faint)}
+.tagline{font-size:.9rem;line-height:1.5;max-width:22rem;color:var(--text-faint)}
 input[name=q]{font-size:1rem}
 form.search button[type=submit],form.search .btn{min-height:2.75rem}
 .kanji-card{flex-direction:column;gap:1.25rem;padding:1.25rem}
@@ -319,23 +319,23 @@ form.search button[type=submit],form.search .btn{min-height:2.75rem}
 .about{max-width:38rem;margin:2.5rem auto 0}
 .about h1{font-family:var(--font);font-size:clamp(1.8rem,5vw,2.4rem);
 font-weight:500;margin:0 0 1rem}
-.about .lede{font-size:1.05rem;line-height:1.7;color:var(--fg)}
-.about p,.about li{font-size:.95rem;line-height:1.7;color:var(--muted)}
+.about .lede{font-size:1.05rem;line-height:1.7;color:var(--text)}
+.about p,.about li{font-size:.95rem;line-height:1.7;color:var(--text-muted)}
 .about h2{font-family:var(--font-mono);font-size:.75rem;
-font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);
+font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-faint);
 margin:2.25rem 0 .75rem}
 .about ul{padding-left:1.25rem;margin:0}
 .about li+li{margin-top:.4rem}
-footer{margin-top:3rem;border-top:1px solid var(--line-soft);padding-top:1.5rem;
-font-size:.9rem;color:var(--fg);max-width:50rem;margin-left:auto;margin-right:auto}
+footer{margin-top:3rem;border-top:1px solid var(--border-soft);padding-top:1.5rem;
+font-size:.9rem;color:var(--text);max-width:50rem;margin-left:auto;margin-right:auto}
 @media (min-width:1024px){body{max-width:60rem}footer{max-width:60rem}}
 footer p:first-of-type{font-weight:500}
-footer p:last-of-type{font-size:.78rem;line-height:1.55;color:var(--faint)}
+footer p:last-of-type{font-size:.78rem;line-height:1.55;color:var(--text-faint)}
 footer p{margin:.35rem 0}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important;animation:none!important}}
 /* Accessibility utilities — parity with the SPA (web/src/app.css). */
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0}
-.skip-link{position:absolute;left:1rem;top:-4rem;z-index:1000;padding:.6rem 1rem;background:var(--surface);color:var(--fg);border:1px solid var(--line-hover);border-radius:12px;font-weight:500;transition:top .15s ease}
+.skip-link{position:absolute;left:1rem;top:-4rem;z-index:1000;padding:.6rem 1rem;background:var(--surface);color:var(--text);border:1px solid var(--border-hover);border-radius:12px;font-weight:500;transition:top .15s ease}
 .skip-link:focus{top:1rem}
 main:focus{outline:none}
 @media (forced-colors:active){
@@ -344,7 +344,7 @@ main:focus{outline:none}
 button[type=submit],.btn{border:1px solid ButtonText}
 }
 @media (prefers-contrast:more){
-:root,:root[data-theme="dark"]{--line:color-mix(in srgb,var(--fg) 45%,transparent);--line-hover:var(--fg);--line-soft:color-mix(in srgb,var(--fg) 25%,transparent)}
+:root,:root[data-theme="dark"]{--border:color-mix(in srgb,var(--text) 45%,transparent);--border-hover:var(--text);--border-soft:color-mix(in srgb,var(--text) 25%,transparent)}
 }
 @media (pointer:coarse){
 .controls .control{min-height:2.75rem}
