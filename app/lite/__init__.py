@@ -451,7 +451,8 @@ def _page(
 <body>
 {_header(hero, lang)}
 {controls}
-<main>
+<a class="skip-link" href="#main">Skip to content</a>
+<main id="main">
 {body}
 </main>
 {_FOOTER}

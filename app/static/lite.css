@@ -19,29 +19,29 @@
 /* Dark canvas: a dark OS preference, or an explicit choice. */
 @media (prefers-color-scheme:dark){
 :root:not([data-theme="light"]){color-scheme:dark;
---bg:#000000;--fg:#ffffff;--muted:#b5b5b5;--faint:#949494;
---line:rgba(255,255,255,.14);--link:#85b8ea;--warn-soft:rgba(251,146,60,.16);
---ok:#4ade80;--err:#f87171;
---surface:#111111;--surface-soft:#1a1a1a;
---line-soft:rgba(255,255,255,.08);--line-hover:rgba(255,255,255,.28);
---btn-primary-bg:#1c2633;--btn-primary-fg:#ffffff;
+--bg:#0f1620;--fg:#eef3fa;--muted:#9fb0c4;--faint:#8fa1b7;
+--line:rgba(160,195,240,.12);--link:#7cb3f0;--warn-soft:rgba(240,178,78,.15);
+--ok:#4fd6a0;--err:#fb8a8a;
+--surface:#1b2636;--surface-soft:#233248;
+--line-soft:rgba(160,195,240,.06);--line-hover:rgba(160,195,240,.22);
+--btn-primary-bg:#223b5c;--btn-primary-fg:#eef6ff;
 --conj:#c7d2fe;--conj-hover:#e0e7ff;--conj-border:rgba(165,180,252,.35);
 --conj-bg:rgba(165,180,252,.12);
---selection:rgba(133,184,234,.22);--glass:rgba(17,17,17,.7);
---underline:rgba(255,255,255,.45);--warn-border:rgba(251,146,60,.25);--ok-soft:rgba(74,222,128,.16);
---line-guide:rgba(255,255,255,.098)}}
+--selection:rgba(124,179,240,.22);--glass:rgba(27,38,54,.7);
+--underline:rgba(238,243,250,.45);--warn-border:rgba(240,178,78,.25);--ok-soft:rgba(79,214,160,.15);
+--line-guide:rgba(160,195,240,.098)}}
 :root[data-theme="dark"]{color-scheme:dark;
---bg:#000000;--fg:#ffffff;--muted:#b5b5b5;--faint:#949494;
---line:rgba(255,255,255,.14);--link:#85b8ea;--warn-soft:rgba(251,146,60,.16);
---ok:#4ade80;--err:#f87171;
---surface:#111111;--surface-soft:#1a1a1a;
---line-soft:rgba(255,255,255,.08);--line-hover:rgba(255,255,255,.28);
---btn-primary-bg:#1c2633;--btn-primary-fg:#ffffff;
+--bg:#0f1620;--fg:#eef3fa;--muted:#9fb0c4;--faint:#8fa1b7;
+--line:rgba(160,195,240,.12);--link:#7cb3f0;--warn-soft:rgba(240,178,78,.15);
+--ok:#4fd6a0;--err:#fb8a8a;
+--surface:#1b2636;--surface-soft:#233248;
+--line-soft:rgba(160,195,240,.06);--line-hover:rgba(160,195,240,.22);
+--btn-primary-bg:#223b5c;--btn-primary-fg:#eef6ff;
 --conj:#c7d2fe;--conj-hover:#e0e7ff;--conj-border:rgba(165,180,252,.35);
 --conj-bg:rgba(165,180,252,.12);
---selection:rgba(133,184,234,.22);--glass:rgba(17,17,17,.7);
---underline:rgba(255,255,255,.45);--warn-border:rgba(251,146,60,.25);--ok-soft:rgba(74,222,128,.16);
---line-guide:rgba(255,255,255,.098)}
+--selection:rgba(124,179,240,.22);--glass:rgba(27,38,54,.7);
+--underline:rgba(238,243,250,.45);--warn-border:rgba(240,178,78,.25);--ok-soft:rgba(79,214,160,.15);
+--line-guide:rgba(160,195,240,.098)}
 *{box-sizing:border-box}
 /* System font stacks — no webfonts, no font requests: the page renders on
    the first paint with whatever the OS already has (terminal weight). Sizes
@@ -330,4 +330,22 @@ font-size:.9rem;color:var(--fg);max-width:50rem;margin-left:auto;margin-right:au
 footer p:first-of-type{font-weight:500}
 footer p:last-of-type{font-size:.78rem;line-height:1.55;color:var(--faint)}
 footer p{margin:.35rem 0}
-@media (prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important;animation:none!important}}>
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important;animation:none!important}}
+/* Accessibility utilities — parity with the SPA (web/src/app.css). */
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0}
+.skip-link{position:absolute;left:1rem;top:-4rem;z-index:1000;padding:.6rem 1rem;background:var(--surface);color:var(--fg);border:1px solid var(--line-hover);border-radius:12px;font-weight:500;transition:top .15s ease}
+.skip-link:focus{top:1rem}
+main:focus{outline:none}
+@media (forced-colors:active){
+.controls .control{border:1px solid ButtonText}
+.controls .control:hover{background:transparent}
+button[type=submit],.btn{border:1px solid ButtonText}
+}
+@media (prefers-contrast:more){
+:root,:root[data-theme="dark"]{--line:color-mix(in srgb,var(--fg) 45%,transparent);--line-hover:var(--fg);--line-soft:color-mix(in srgb,var(--fg) 25%,transparent)}
+}
+@media (pointer:coarse){
+.controls .control{min-height:2.75rem}
+form.search button[type=submit],form.search .btn{min-height:2.75rem}
+.pill{min-height:2.75rem}
+}>

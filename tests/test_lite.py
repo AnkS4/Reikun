@@ -87,7 +87,8 @@ def test_theme_toggle_is_one_click_and_variant_switch(monkeypatch) -> None:
 def test_theme_switch_sets_cookie_and_palette() -> None:
     client.cookies.clear()
     try:
-        # Dark = the OLED-black palette; system (no cookie) uses the media query.
+        # Dark = the warm-charcoal palette (parity with the SPA); system (no
+        # cookie) uses the media query.
         r = client.get("/lite/theme", params={"v": "dark", "next": "/lite/search?q=日"}, follow_redirects=False)
         assert r.status_code == 303
         assert "lite_theme=dark" in r.headers.get("set-cookie", "")
@@ -96,7 +97,7 @@ def test_theme_switch_sets_cookie_and_palette() -> None:
         # The palette lives in the cached stylesheet; the page only says which
         # theme to use via data-theme on <html>.
         assert 'data-theme="dark"' in dark.text
-        assert "--bg:#000000" in _lite_css()  # OLED palette in the stylesheet
+        assert "--bg:#0f1620" in _lite_css()  # dark palette in the stylesheet
         # One-click toggle: a pinned theme shows only the button to the other one.
         assert 'aria-label="Switch to the light theme"' in dark.text
         assert 'aria-label="Switch to the dark theme"' not in dark.text
@@ -120,7 +121,7 @@ def test_legacy_oled_cookie_resolves_to_dark() -> None:
     try:
         page = client.get("/lite")
         assert 'data-theme="dark"' in page.text
-        assert "--bg:#000000" in _lite_css()
+        assert "--bg:#0f1620" in _lite_css()
     finally:
         client.cookies.clear()
     # No cookie at all → "system": light base + media-query dark override.
