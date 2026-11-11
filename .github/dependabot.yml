@@ -1,6 +1,6 @@
 version: 2
 updates:
-  # Updates are grouped so each ecosystem opens one PR per week instead of one
+  # Updates are grouped so each ecosystem opens one PR per month instead of one
   # per package: every Dependabot branch push also queues a Cloudflare Workers
   # build, and the free plan runs one build at a time, so a burst of
   # single-package PRs stalls the production deploy behind them.
@@ -10,19 +10,25 @@ updates:
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "weekly"
+      interval: "monthly"
     groups:
       actions:
         patterns: ["*"]
 
   # Frontend deps (web/package-lock.json).
+  # TypeScript 7 is ignored: svelte-check only accepts TypeScript 5 or 6 as a
+  # peer, so the upgrade breaks `npm ci` until the SvelteKit toolchain supports
+  # it (see local/notes/Issues.md W5). Remove the ignore when that lands.
   - package-ecosystem: "npm"
     directory: "/web"
     schedule:
-      interval: "weekly"
+      interval: "monthly"
     groups:
       web-deps:
         patterns: ["*"]
+    ignore:
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
 
   # Python deps managed by uv (pyproject.toml + uv.lock). ruff and ty stay out
   # of the group: a linter or type-checker bump can surface new diagnostics,
@@ -30,7 +36,7 @@ updates:
   - package-ecosystem: "uv"
     directory: "/"
     schedule:
-      interval: "weekly"
+      interval: "monthly"
     groups:
       python-deps:
         patterns: ["*"]

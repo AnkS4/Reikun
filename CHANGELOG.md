@@ -36,7 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The full version's lite switch now opens `/lite` on the same site when the API is reached through the same-origin proxy (`PUBLIC_API_BASE=/api`). It used to prefix the API base, which gave `/api/lite`, and a build with `/api` failed prerendering because the crawler followed `/api` and `/lite` links that only the Worker serves. Those proxy paths are now skipped during prerender, and every other broken link still fails the build. The API `preconnect` hint is emitted only for a cross-origin API.
 
 ### Security
-- CI actions are pinned to immutable commit SHAs instead of mutable major tags, and `.github/dependabot.yml` keeps those pins (plus npm and uv dependencies) fresh via weekly update PRs — a compromised upstream action can no longer silently change what CI runs.
+- CI actions are pinned to immutable commit SHAs instead of mutable major tags, and `.github/dependabot.yml` keeps those pins (plus npm and uv dependencies) fresh via monthly update PRs — a compromised upstream action can no longer silently change what CI runs.
 - The web preview image now runs as the unprivileged `node` user (uid 1000) instead of root, matching the backend image's `app` user; `vite preview` needed `node_modules` writable for its temp config bundle, so `/app` is chowned after the build.
 - `TRUSTED_PROXY_HOPS` documentation now states that directly-exposed deployments must set it to `0` — with hops > 0 and no proxy in front, a caller-supplied `X-Forwarded-For` is trusted and can spoof the rate-limit identity.
 
