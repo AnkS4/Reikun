@@ -2396,8 +2396,8 @@ a.kanji-tip {
 @media (pointer: coarse) {
 	.header-controls .status-dot,
 	.header-controls .btn {
-		width: 2.5rem;
-		height: 2.5rem;
+		width: 2.75rem;
+		height: 2.75rem;
 	}
 
 	/* Taller touch targets centre 4px lower; match that in the compact row. */
@@ -2898,6 +2898,10 @@ a.kanji-tip {
 /* Windows high-contrast: layers vanish, keep a visible edge */
 @media (forced-colors: active) {
 	.btn-3d, .btn-3d-primary, .btn.primary, .btn.secondary, .floating-btn, .search-row .btn, .search-row .btn-3d, .search-row .btn-3d-primary, .search-row .popover-wrap > .btn {
+		border: 1px solid ButtonText;
+	}
+
+	.search-pair {
 		border: 1px solid ButtonText;
 	}
 	.btn-3d::before, .btn-3d-primary::before, .btn.primary::before, .btn.secondary::before, .floating-btn::before, .search-row .btn::before, .search-row .btn-3d::before, .search-row .btn-3d-primary::before, .search-row .popover-wrap > .btn::before,
