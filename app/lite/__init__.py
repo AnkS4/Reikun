@@ -34,16 +34,19 @@ No templating dependency is used on purpose: pages are plain f-strings with
 small and dependency-free as the promise it makes.
 """
 
+import hashlib
 import html
 import json
 import logging
 import threading
 import time
-from typing import cast
+from collections.abc import Callable, Coroutine
+from typing import Any, cast
 from urllib.parse import quote, unquote, urlencode
 
 from fastapi import APIRouter, BackgroundTasks, Depends, Query, Request
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
+from fastapi.routing import APIRoute
 from starlette.background import BackgroundTask
 
 from app.config import (
@@ -64,9 +67,55 @@ from .i18n import _t
 
 logger = logging.getLogger("reikun.lite")
 
+_NO_STORE_HOME = {
+    "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
+    # Legacy no-cache directives for older browsers/proxies.
+    "Pragma": "no-cache",
+    "Expires": "0",
+}
+
+
+def _with_etag(request: Request, response: Response) -> Response:
+    """ETag + 304 for lite HTML. Lite pages are built as one string, so the
+    hash is taken from the finished body — no re-buffering of a stream, and
+    only lite routes pay for it (the JSON API never runs this)."""
+    body = getattr(response, "body", None)
+    if response.status_code != 200 or not isinstance(body, bytes):
+        return response
+    if not response.headers.get("content-type", "").startswith("text/html"):
+        return response
+    etag = '"' + hashlib.sha256(body).hexdigest()[:16] + '"'
+    if request.url.path in ("/lite", "/lite/"):
+        # The home page depends on the recent-searches cookie, so a 304 could
+        # serve a stale "Example searches" copy to someone who has searched
+        # since (some browsers/proxies mishandle Vary: Cookie). Always fresh.
+        response.headers.update({**_NO_STORE_HOME, "ETag": etag})
+        return response
+    if request.headers.get("if-none-match") == etag:
+        headers = {"ETag": etag, "Vary": response.headers.get("vary", "Cookie")}
+        if "cache-control" in response.headers:
+            headers["Cache-Control"] = response.headers["cache-control"]
+        # Keep the status-probe task: a 304 still counts as a page view.
+        return Response(status_code=304, headers=headers, background=response.background)
+    response.headers["ETag"] = etag
+    return response
+
+
+class _LiteRoute(APIRoute):
+    """Route class for the lite router: adds the ETag/304 step to its HTML."""
+
+    def get_route_handler(self) -> Callable[[Request], Coroutine[Any, Any, Response]]:
+        handler = super().get_route_handler()
+
+        async def route(request: Request) -> Response:
+            return _with_etag(request, await handler(request))
+
+        return route
+
+
 # HTML pages, not JSON API surface — keep them out of /docs and the generated
 # frontend types.
-router = APIRouter(tags=["lite"], include_in_schema=False)
+router = APIRouter(tags=["lite"], include_in_schema=False, route_class=_LiteRoute)
 
 _search_limit = Depends(rate_limited(RATE_LIMIT_SEARCH, TRUSTED_PROXY_HOPS))
 
