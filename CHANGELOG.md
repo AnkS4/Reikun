@@ -7,8 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.2] - 2026-11-12
+
+Patch release: fixes the CI backend job — the lite privacy-page test no longer depends on a reachable Qdrant.
+
 ### Fixed
 - **CI backend job**: `test_privacy_page` asserted the lite privacy page is shared-cacheable (`public`) without pinning the status snapshot — it passed locally only because the dev Qdrant on `:6333` reported "Ready", and failed in CI where no Qdrant exists. The test now pins a fresh ready snapshot like its siblings, so the suite passes with or without a reachable Qdrant.
+
+- Versions: API 1.2.2 (pyproject + openapi), web 1.2.2
 
 ## [1.2.1] - 2026-11-12
 
