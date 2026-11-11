@@ -14,7 +14,7 @@ _I18N: dict[str, dict[str, str]] = {
         "taglineLite": "Search in English or Japanese, break down sentences word-by-word with "
         "furigana and meanings, inspect kanji.",
         "liteNote": "Lite mode: the same dictionary as the full version, served as plain "
-        "pages — no AI, no animations, no interactive popups.",
+        "pages — no interactive popups, no animations, no grammar explanations.",
         "liteNoteLink": "What's different →",
         "searchPlaceholder": "Search English or Japanese…",
         "search": "Search",
@@ -134,7 +134,7 @@ _I18N: dict[str, dict[str, str]] = {
         "themeToDark": "ダークテーマへ切り替え",
         "taglineLite": "英語または日本語で検索し、文をふりがなと意味付きで語ごとに分解。漢字を調べられます。",
         "liteNote": "Lite版： フル版と同じ辞書を、プレーンなページとして提供 — "  # noqa: RUF001
-        "AI・アニメーション・ポップアップはありません。",
+        "対話型ポップアップ・アニメーション・文法解説はありません。",
         "liteNoteLink": "違いを見る →",
         "searchPlaceholder": "英語または日本語で検索…",
         "search": "検索",
