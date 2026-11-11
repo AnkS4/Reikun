@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **CI backend job**: `test_privacy_page` asserted the lite privacy page is shared-cacheable (`public`) without pinning the status snapshot — it passed locally only because the dev Qdrant on `:6333` reported "Ready", and failed in CI where no Qdrant exists. The test now pins a fresh ready snapshot like its siblings, so the suite passes with or without a reachable Qdrant.
+
 ## [1.2.1] - 2026-11-12
 
 Patch release: the SPA and Lite now share one set of UI string tables (`i18n/*.json`, with a CI parity check), the web Docker image builds again (the JSON is committed inside `web/` since the build context excludes the repo root), and mixed queries that start with Latin but are mostly Japanese get the sentence breakdown again. Also ships the privacy-policy pages, telemetry retention purge, on-site version display, and the cross-variant design-system alignment accumulated since 1.2.0.

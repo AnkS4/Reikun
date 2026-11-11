@@ -333,9 +333,14 @@ def test_emblem_matches_the_spa_copy() -> None:
     assert "immutable" in r.headers["cache-control"]
 
 
-def test_privacy_page() -> None:
+def test_privacy_page(monkeypatch: pytest.MonkeyPatch) -> None:
     # English in every language (legal text, like the footer), and
-    # shared-cacheable like the About page.
+    # shared-cacheable like the About page. Pages are only shared once the
+    # status chip says "Ready", so pin a fresh ready probe: CI has no Qdrant,
+    # and a local one would make the result depend on it.
+    monkeypatch.setitem(lite._status_snapshot, "ok", True)
+    monkeypatch.setitem(lite._status_snapshot, "count", 1)
+    monkeypatch.setitem(lite._status_snapshot, "at", time.monotonic())
     r = client.get("/lite/privacy")
     assert r.status_code == 200
     assert "Privacy Policy" in r.text
