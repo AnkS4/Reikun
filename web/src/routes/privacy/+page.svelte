@@ -76,10 +76,9 @@
 		<p>
 			On the hosted deployment, telemetry goes to the platform's log store (Google Cloud
 			Logging, which retains entries for 30 days by default). Self-hosted instances can persist
-			events to a local SQLite database instead; there, rows older than
-			<code>TELEMETRY_RETENTION_DAYS</code> (default 90; set 0 to keep them indefinitely) are
-			purged automatically. Hashes cannot be reversed; raw query text is deleted when the window
-			passes.
+			events to a local SQLite database instead; there, rows are kept indefinitely by default —
+			setting <code>TELEMETRY_RETENTION_DAYS</code> turns on an automatic purge of rows older
+			than that window. Hashes cannot be reversed.
 		</p>
 	</section>
 

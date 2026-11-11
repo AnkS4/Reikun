@@ -152,8 +152,10 @@ TELEMETRY = _env("TELEMETRY", "stdout").lower()
 # Rows older than this many days are purged from the SQLite monitoring DB
 # (purged at sink init and then once a day). The stdout sink keeps nothing
 # locally — server-log retention is the platform's (Cloud Logging's default
-# is 30 days). 0 disables the purge and keeps rows forever.
-TELEMETRY_RETENTION_DAYS = _env_int("TELEMETRY_RETENTION_DAYS", 90)
+# is 30 days). Default 0 keeps rows forever: dictionary queries and hashed
+# feedback are low-sensitivity data, and the knob exists for operators who
+# want an automatic window.
+TELEMETRY_RETENTION_DAYS = _env_int("TELEMETRY_RETENTION_DAYS", 0)
 
 # Comma-separated allowed origins for CORS (the standalone API serves a
 # different-origin frontend). "*" is the permissive dev default; deployment

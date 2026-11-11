@@ -10,7 +10,13 @@ import pytest
 
 import app.telemetry as telemetry
 import scripts.feedback_log as fl
+from app.config import TELEMETRY_RETENTION_DAYS
 from app.telemetry import _h, _SqliteTelemetry, _StdoutTelemetry
+
+
+def test_retention_defaults_to_keep_forever() -> None:
+    # The shipped posture: no purge window unless an operator sets one.
+    assert TELEMETRY_RETENTION_DAYS == 0
 
 
 def test_h_is_sha256_prefix() -> None:
@@ -130,7 +136,9 @@ def test_retention_purge_removes_expired_rows_only(db: Path, monkeypatch: pytest
 
 
 def test_retention_zero_keeps_forever(db: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    # 0 days disables the purge entirely — the solo-debug "keep forever" posture.
+    # 0 days disables the purge entirely — and 0 is the shipped default:
+    # dictionary queries and hashed feedback are low-sensitivity, so rows are
+    # kept forever unless an operator opts into a window via the env var.
     monkeypatch.setattr(fl, "TELEMETRY_RETENTION_DAYS", 0)
     fl.log_search("old", rewritten_query="o", rewrite_method="none", mode="auto",
                   num_results=1, result_count=1, top_result=None, latency_ms=1)

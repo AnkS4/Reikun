@@ -9,7 +9,8 @@ Tables
 
 Search queries are stored raw (query / rewritten_query) alongside their
 12-hex-char SHA-256 prefixes; feedback and explanation text stays hash-only.
-Rows older than `TELEMETRY_RETENTION_DAYS` (default 90; 0 = keep forever) are
+Rows older than `TELEMETRY_RETENTION_DAYS` (default 0 = keep forever; set a
+positive number for a purge window) are
 purged — once when the sink initialises, then daily on a daemon thread.
 SQLite in WAL mode is plenty for a single-instance deployment.
 """
