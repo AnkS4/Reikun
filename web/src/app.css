@@ -70,6 +70,14 @@
 	--font-japanese: 'Noto Sans JP', 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Yu Gothic', sans-serif;
 	--font-mono: 'JetBrains Mono', 'DM Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
+	/* Motion: one easing for all transitions (was a mix of ease / two cubics). */
+	--ease: cubic-bezier(0.16, 1, 0.3, 1);
+
+	/* Z-index ladder (documented; values used as-is across the app):
+	   1 base inline, 2 raised inline, 10 dropdowns/popovers, 40 sticky
+	   search row, 50 result cards hover, 60 tooltips, 80 sticky header,
+	   90 modal backdrop, 95 modal, 100 skip link, 200 top-right controls. */
+
 	color-scheme: light;
 }
 
@@ -202,7 +210,7 @@ body {
 	-webkit-font-smoothing: antialiased;
 	-moz-osx-font-smoothing: grayscale;
 	text-rendering: optimizeLegibility;
-	transition: background-color 0.2s ease, color 0.2s ease;
+	transition: background-color 0.2s var(--ease), color 0.2s var(--ease);
 	min-height: 100vh;
 }
 
@@ -420,7 +428,7 @@ ruby rt {
 	background: transparent;
 	border: none;
 	cursor: help;
-	transition: all 0.15s ease;
+	transition: all 0.15s var(--ease);
 }
 
 /* Friendly status tooltip — plain-language connection info on hover */
@@ -516,7 +524,7 @@ ruby rt {
 	background: transparent;
 	/* Above hovered cards (z-60) — their tooltips stay behind the bar */
 	z-index: 80;
-	transition: padding 0.2s ease;
+	transition: padding 0.2s var(--ease);
 }
 
 .search-pair {
@@ -530,7 +538,7 @@ ruby rt {
 	border: 1px solid var(--border);
 	border-radius: var(--radius-md);
 	box-shadow: var(--shadow-sm);
-	transition: border-color 0.15s ease, box-shadow 0.15s ease;
+	transition: border-color 0.15s var(--ease), box-shadow 0.15s var(--ease);
 }
 
 .search-pair:hover {
@@ -576,12 +584,12 @@ ruby rt {
 	border: 0;
 	opacity: 0;
 	pointer-events: none;
-	transition: opacity 0.12s ease, color 0.15s ease, background-color 0.15s ease;
+	transition: opacity 0.12s var(--ease), color 0.15s var(--ease), background-color 0.15s var(--ease);
 	border-radius: var(--radius-pill);
 	background: transparent;
 	color: var(--text-faint);
 	cursor: pointer;
-	transition: color 0.15s ease, background-color 0.15s ease;
+	transition: color 0.15s var(--ease), background-color 0.15s var(--ease);
 }
 
 .search-clear:hover {
@@ -640,7 +648,7 @@ ruby rt {
 	justify-content: center;
 	gap: 0.45rem;
 	white-space: nowrap;
-	transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease, transform 150ms cubic-bezier(0, 0, 0.58, 1), box-shadow 150ms cubic-bezier(0, 0, 0.58, 1);
+	transition: background-color 0.15s var(--ease), color 0.15s var(--ease), border-color 0.15s var(--ease), transform 150ms var(--ease), box-shadow 150ms var(--ease);
 	user-select: none;
 }
 
@@ -682,7 +690,7 @@ ruby rt {
 	padding: 0.9rem;
 	z-index: 40;
 	min-width: 17rem;
-	animation: pop-in 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+	animation: pop-in 0.15s var(--ease);
 }
 
 @keyframes pop-in {
@@ -730,7 +738,7 @@ ruby rt {
 	border-radius: calc(var(--radius-sm) - 3px);
 	cursor: pointer;
 	text-align: center;
-	transition: all 0.15s ease;
+	transition: all 0.15s var(--ease);
 }
 
 .segmented button:hover:not(.sel) {
@@ -780,7 +788,7 @@ ruby rt {
 	border: 1px solid var(--border-soft);
 	color: var(--text-muted);
 	letter-spacing: 0.02em;
-	transition: all 0.15s ease;
+	transition: all 0.15s var(--ease);
 }
 
 .btn:hover .level-indicator {
@@ -807,7 +815,7 @@ ruby rt {
 	color: var(--text-muted);
 	cursor: pointer;
 	box-shadow: var(--shadow-sm);
-	transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+	transition: all 0.15s var(--ease);
 	display: inline-flex;
 	align-items: center;
 	gap: 0.35rem;
@@ -875,7 +883,7 @@ ruby rt {
 	border-radius: var(--radius-sm);
 	cursor: pointer;
 	text-align: center;
-	transition: all 0.15s ease;
+	transition: all 0.15s var(--ease);
 }
 
 .seg:hover,
@@ -933,7 +941,7 @@ ruby rt {
 	cursor: pointer;
 	text-decoration: none;
 	border-bottom: none;
-	transition: border-color 0.15s ease, background-color 0.15s ease;
+	transition: border-color 0.15s var(--ease), background-color 0.15s var(--ease);
 }
 
 a.kanji-tip {
@@ -1036,7 +1044,7 @@ a.kanji-tip {
 	border: 1px solid var(--border-soft);
 	border-radius: var(--radius-xs);
 	text-decoration: none;
-	transition: all 0.15s ease;
+	transition: all 0.15s var(--ease);
 }
 
 .tip-go:hover {
@@ -1098,7 +1106,7 @@ a.kanji-tip {
 	background: var(--surface);
 	box-shadow: var(--shadow-sm);
 	scroll-margin-top: 6rem;
-	transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+	transition: border-color 0.15s var(--ease), box-shadow 0.15s var(--ease), transform 0.15s var(--ease);
 	/* Entrance: a short fade-up softens the skeleton→results handoff. The
 	   search page staggers siblings with an animation-delay; `backwards` fills
 	   only the delay (so a delayed card starts hidden) and never pins
@@ -1220,7 +1228,7 @@ a.kanji-tip {
 	font-weight: 500;
 	cursor: pointer;
 	text-decoration: none;
-	transition: all 0.15s ease;
+	transition: all 0.15s var(--ease);
 }
 
 .conj-toggle:hover {
@@ -1235,7 +1243,7 @@ a.kanji-tip {
 
 .conj-toggle svg:last-child {
 	opacity: 0.6;
-	transition: transform 0.15s ease;
+	transition: transform 0.15s var(--ease);
 }
 
 .conj-toggle:hover svg:last-child {
@@ -1299,8 +1307,8 @@ a.kanji-tip {
 	cursor: pointer;
 	text-align: left;
 	transition:
-		border-color 0.15s ease,
-		background 0.15s ease;
+		border-color 0.15s var(--ease),
+		background 0.15s var(--ease);
 }
 
 .related-pill:hover {
@@ -1422,7 +1430,7 @@ a.kanji-tip {
 	color: var(--text-faint);
 	border-radius: var(--radius-xs);
 	display: inline-flex;
-	transition: all 0.15s ease;
+	transition: all 0.15s var(--ease);
 }
 
 .feedback-row button:hover {
@@ -1474,7 +1482,7 @@ a.kanji-tip {
 	background: transparent;
 	color: var(--text-faint);
 	cursor: help;
-	transition: all 0.15s ease;
+	transition: all 0.15s var(--ease);
 }
 
 .stats-info:hover {
@@ -1543,7 +1551,7 @@ a.kanji-tip {
 	padding: 1.5rem;
 	margin: 1.25rem 0 1.75rem;
 	box-shadow: var(--shadow-md);
-	animation: fade-in 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+	animation: fade-in 0.2s var(--ease);
 	/* Reserve approximate height while the card data loads, so the page does
 	   not jump when the readings/meanings/common-words arrive (reduces CLS
 	   on the /kanji/{char} route, including Lite→SPA switches). */
@@ -1615,7 +1623,7 @@ a.kanji-tip {
 	background: var(--surface-soft);
 	color: var(--text-muted);
 	cursor: help;
-	transition: all 0.15s ease;
+	transition: all 0.15s var(--ease);
 }
 
 .meta-badge:hover {
@@ -1637,7 +1645,7 @@ a.kanji-tip {
 
 .meta-badge.clickable svg {
 	opacity: 0.7;
-	transition: transform 0.15s ease;
+	transition: transform 0.15s var(--ease);
 }
 
 .meta-badge.clickable:hover svg:last-child {
@@ -1758,7 +1766,7 @@ a.kanji-tip {
 	color: var(--text-muted);
 	cursor: pointer;
 	text-decoration: none;
-	transition: color 0.15s ease;
+	transition: color 0.15s var(--ease);
 }
 
 .group-back-btn:hover {
@@ -1827,9 +1835,9 @@ a.kanji-tip {
 	text-align: center;
 	text-decoration: none;
 	transition:
-		border-color 0.15s ease,
-		transform 0.15s ease,
-		box-shadow 0.15s ease;
+		border-color 0.15s var(--ease),
+		transform 0.15s var(--ease),
+		box-shadow 0.15s var(--ease);
 }
 
 .kg-card:hover {
@@ -1960,7 +1968,7 @@ a.kanji-tip {
 	border-radius: var(--radius-sm);
 	background: var(--surface-soft);
 	border: 1px solid var(--border-soft);
-	transition: all 0.15s ease;
+	transition: all 0.15s var(--ease);
 }
 
 .kanji-word-row:hover {
@@ -2165,7 +2173,7 @@ a.kanji-tip {
 	display: inline-flex;
 	z-index: 10;
 	box-shadow: var(--shadow-sm);
-	transition: all 0.15s ease;
+	transition: all 0.15s var(--ease);
 }
 
 .stroke-replay:hover {
@@ -2687,7 +2695,7 @@ a.kanji-tip {
 	cursor: pointer;
 	user-select: none;
 	-webkit-tap-highlight-color: transparent;
-	transition: transform 120ms ease, box-shadow 120ms ease, color 120ms ease;
+	transition: transform 120ms var(--ease), box-shadow 120ms var(--ease), color 120ms var(--ease);
 }
 
 /* Glass face — same width & border-radius as back plate, but its bottom
@@ -2714,7 +2722,7 @@ a.kanji-tip {
 	border: 1px solid var(--glass-border);
 	box-shadow: inset 0 1px 2px var(--glass-edge), inset 0 -1px 2px var(--glass-shade);
 	pointer-events: none;
-	transition: background 120ms ease, border-color 120ms ease, box-shadow 120ms ease, inset 120ms ease;
+	transition: background 120ms var(--ease), border-color 120ms var(--ease), box-shadow 120ms var(--ease), inset 120ms var(--ease);
 }
 
 /* Sheen effect — diagonal highlight on the glass */
@@ -2734,7 +2742,7 @@ a.kanji-tip {
 	border-radius: inherit;
 	background: linear-gradient(135deg, rgba(255, 255, 255, 0.4) 0%, transparent 30%, transparent 100%);
 	pointer-events: none;
-	transition: opacity 120ms ease;
+	transition: opacity 120ms var(--ease);
 	opacity: 0.6;
 }
 
@@ -2883,7 +2891,7 @@ a.kanji-tip {
 	font-size: 0.85rem;
 	opacity: 0;
 	pointer-events: none;
-	transition: transform 120ms ease, box-shadow 120ms ease, color 120ms ease, opacity 200ms ease;
+	transition: transform 120ms var(--ease), box-shadow 120ms var(--ease), color 120ms var(--ease), opacity 200ms var(--ease);
 }
 
 .floating-btn:hover {
@@ -2944,7 +2952,7 @@ a.kanji-tip {
 	border-radius: var(--radius-md);
 	box-shadow: var(--shadow-lg);
 	font-weight: 500;
-	transition: top 0.15s ease;
+	transition: top 0.15s var(--ease);
 }
 
 .skip-link:focus {
@@ -2993,6 +3001,8 @@ button, a, input, summary {
 	:root, [data-theme] {
 		--border: color-mix(in srgb, var(--text) 45%, transparent);
 		--border-hover: var(--text);
+		--text-muted: color-mix(in srgb, var(--text) 50%, var(--text-muted));
+		--text-faint: color-mix(in srgb, var(--text) 60%, var(--text-faint));
 	}
 }
 
@@ -3158,7 +3168,7 @@ button, a, input, summary {
 	cursor: pointer;
 	user-select: none;
 	-webkit-tap-highlight-color: transparent;
-	transition: filter 120ms ease, box-shadow 120ms ease;
+	transition: filter 120ms var(--ease), box-shadow 120ms var(--ease);
 }
 
 .search-submit::before,
@@ -3177,14 +3187,14 @@ button, a, input, summary {
 	background: linear-gradient(180deg, var(--cta-glass-hi), var(--cta-glass-lo));
 	border: 1px solid var(--cta-glass-border);
 	box-shadow: inset 0 1px 1px var(--cta-glass-edge), inset 0 -1px 2px var(--cta-glass-shade);
-	transition: inset 120ms ease;
+	transition: inset 120ms var(--ease);
 }
 
 /* Sheen */
 .search-submit::after {
 	background: linear-gradient(135deg, rgba(255, 255, 255, 0.4) 0%, transparent 32%);
 	opacity: 0.6;
-	transition: opacity 120ms ease;
+	transition: opacity 120ms var(--ease);
 }
 
 /* Hover: brighten and let the glass settle 1px. The button itself never moves. */
