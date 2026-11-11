@@ -32,6 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Lite kanji pages rendered with furigana hidden (`lite_furi=0`) were sent as `public`, so a shared cache that ignores `Vary: Cookie` could serve that copy to other visitors; they are `private` now, like pages with a pinned theme or Japanese chrome.
+- The lite status icon now uses the full version's colours: the idle colour is the quieter faint tone, and in dark mode Ready/Offline use the OLED theme's green and red (the "common" badge follows the same green).
 - The full version's lite switch now opens `/lite` on the same site when the API is reached through the same-origin proxy (`PUBLIC_API_BASE=/api`). It used to prefix the API base, which gave `/api/lite`, and a build with `/api` failed prerendering because the crawler followed `/api` and `/lite` links that only the Worker serves. Those proxy paths are now skipped during prerender, and every other broken link still fails the build. The API `preconnect` hint is emitted only for a cross-origin API.
 
 ### Security

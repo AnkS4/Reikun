@@ -21,26 +21,26 @@
 :root:not([data-theme="light"]){color-scheme:dark;
 --bg:#000000;--fg:#ffffff;--muted:#b5b5b5;--faint:#949494;
 --line:rgba(255,255,255,.14);--link:#85b8ea;--warn-soft:rgba(251,146,60,.16);
---ok:#4fd6a0;--err:#fb8a8a;
+--ok:#4ade80;--err:#f87171;
 --surface:#111111;--surface-soft:#1a1a1a;
 --line-soft:rgba(255,255,255,.08);--line-hover:rgba(255,255,255,.28);
 --btn-primary-bg:#1c2633;--btn-primary-fg:#ffffff;
 --conj:#c7d2fe;--conj-hover:#e0e7ff;--conj-border:rgba(165,180,252,.35);
 --conj-bg:rgba(165,180,252,.12);
 --selection:rgba(133,184,234,.22);--glass:rgba(17,17,17,.7);
---underline:rgba(255,255,255,.45);--warn-border:rgba(251,146,60,.25);--ok-soft:rgba(79,214,160,.12);
+--underline:rgba(255,255,255,.45);--warn-border:rgba(251,146,60,.25);--ok-soft:rgba(74,222,128,.16);
 --line-guide:rgba(255,255,255,.098)}}
 :root[data-theme="dark"]{color-scheme:dark;
 --bg:#000000;--fg:#ffffff;--muted:#b5b5b5;--faint:#949494;
 --line:rgba(255,255,255,.14);--link:#85b8ea;--warn-soft:rgba(251,146,60,.16);
---ok:#4fd6a0;--err:#fb8a8a;
+--ok:#4ade80;--err:#f87171;
 --surface:#111111;--surface-soft:#1a1a1a;
 --line-soft:rgba(255,255,255,.08);--line-hover:rgba(255,255,255,.28);
 --btn-primary-bg:#1c2633;--btn-primary-fg:#ffffff;
 --conj:#c7d2fe;--conj-hover:#e0e7ff;--conj-border:rgba(165,180,252,.35);
 --conj-bg:rgba(165,180,252,.12);
 --selection:rgba(133,184,234,.22);--glass:rgba(17,17,17,.7);
---underline:rgba(255,255,255,.45);--warn-border:rgba(251,146,60,.25);--ok-soft:rgba(79,214,160,.12);
+--underline:rgba(255,255,255,.45);--warn-border:rgba(251,146,60,.25);--ok-soft:rgba(74,222,128,.16);
 --line-guide:rgba(255,255,255,.098)}
 *{box-sizing:border-box}
 /* System font stacks — no webfonts, no font requests: the page renders on
@@ -91,10 +91,12 @@ width:2rem;height:2rem;border-radius:999px;color:var(--muted)}
 .controls .icon-link:hover{color:var(--fg)}
 .controls svg{display:block}
 .controls .status-dot{display:inline-flex;align-items:center;justify-content:center;
-width:2rem;height:2rem;border-radius:999px;color:var(--muted);cursor:default}
+width:2rem;height:2rem;border-radius:999px;color:var(--faint);cursor:default}
 .controls .status-dot.ok{color:var(--ok)}
 .controls .status-dot.err{color:var(--err)}
-.controls .status-dot.checking{color:var(--muted)}
+/* Not probed yet: the SPA's idle --text-faint, a step quieter than the
+   other icons' --muted. */
+.controls .status-dot.checking{color:var(--faint)}
 /* Dictionary status — a minimal chip (dot + word), no popup: the detail sits
    in the native title tooltip, so nothing has to be drawn or animated. */
 /* System mode renders both directions and this hides the one matching the OS
