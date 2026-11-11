@@ -13,6 +13,9 @@ _I18N: dict[str, dict[str, str]] = {
         "themeToDark": "Switch to the dark theme",
         "taglineLite": "Search in English or Japanese, break down sentences word-by-word with "
         "furigana and meanings, inspect kanji.",
+        "liteNote": "Lite mode: the same dictionary as the full version, served as plain "
+        "pages — no AI, no animations, no interactive popups.",
+        "liteNoteLink": "What's different →",
         "searchPlaceholder": "Search English or Japanese…",
         "search": "Search",
         "randomKanjiLabel": "Random kanji",
@@ -130,6 +133,9 @@ _I18N: dict[str, dict[str, str]] = {
         "themeToLight": "ライトテーマへ切り替え",
         "themeToDark": "ダークテーマへ切り替え",
         "taglineLite": "英語または日本語で検索し、文をふりがなと意味付きで語ごとに分解。漢字を調べられます。",
+        "liteNote": "Lite版： フル版と同じ辞書を、プレーンなページとして提供 — "  # noqa: RUF001
+        "AI・アニメーション・ポップアップはありません。",
+        "liteNoteLink": "違いを見る →",
         "searchPlaceholder": "英語または日本語で検索…",
         "search": "検索",
         "randomKanjiLabel": "ランダム漢字",

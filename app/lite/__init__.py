@@ -218,8 +218,8 @@ def _header(hero: bool, lang: str = "en") -> str:
             '<h1 class="hero-title"><a class="brand" href="/lite">Reikun <span lang="ja">(例訓)</span></a>'
             '<span class="tag">lite</span></h1>'
             f'<p class="tagline">{esc(_t(lang, "taglineLite"))}</p>'
-            '<p class="lite-note">Lite mode: fast and lightweight — no AI, no animations, no interactive popups. '
-            "<a href=\"/lite/about\">What's different →</a></p>"
+            f'<p class="lite-note">{esc(_t(lang, "liteNote"))} '
+            f'<a href="/lite/about">{esc(_t(lang, "liteNoteLink"))}</a></p>'
             "</header>"
         )
     return (
@@ -1337,9 +1337,13 @@ def lite_about(request: Request) -> HTMLResponse:
 </ul>
 <h2>Lite vs full</h2>
 <ul>
-<li><b>Lite</b> — static, server-rendered pages; works without JavaScript.</li>
-<li><b>Full</b> — interactive kanji tips, animated stroke order, grammar explanations, feedback and sharing.</li>
-<li>Both share search, kanji cards, conjugations and kanji browsing.</li>
+<li><b>Lite</b> — static, server-rendered pages; works without JavaScript,
+in text browsers and on slow connections.</li>
+<li><b>Full</b> — hover kanji tips, animated stroke-order replay, JLPT-level
+grammar explanations, AI-assisted query understanding, feedback and sharing.</li>
+<li>Both share the same dictionary and search pipeline — sentence breakdown,
+kanji cards, conjugations, kanji browsing and random kanji — and sync recent
+searches, theme and language through shared cookies.</li>
 </ul>
 <h2>{esc(_t(lang, "howItWorks"))}</h2>
 <p>{esc(_t(lang, "howTextLite"))}</p>
