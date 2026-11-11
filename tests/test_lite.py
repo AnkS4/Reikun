@@ -60,22 +60,25 @@ def test_theme_toggle_is_one_click_and_variant_switch(monkeypatch) -> None:
 
     monkeypatch.setattr(lite_module, "WEB_BASE_URL", "http://127.0.0.1:5173")
     home = client.get("/lite").text
-    # System default: both directions are rendered as icon buttons but the CSS
+    # System default: both directions are rendered as text pills but the CSS
     # hides the one matching the OS scheme — exactly one clickable toggle on
     # first visit, no explicit "system" option (as the SPA's popover would need).
     assert 'class="theme-toggle"' in home and "to-light" in home and "to-dark" in home
     assert home.count("/lite/theme") >= 2  # both directions present
-    assert 'aria-label="Switch to the light theme"' in home  # sun
-    assert 'aria-label="Switch to the dark theme"' in home  # moon
-    assert "aria-hidden" in home  # decorative glyphs: meaning lives in labels
+    assert 'aria-label="Switch to the light theme"' in home
+    assert 'aria-label="Switch to the dark theme"' in home
     controls = home.split("<main>")[0].split('class="controls"')[1]
     # Controls must render without SVG: hardened browsers (Tor/LibreWolf
     # "Safest") set svg.disabled=true, which blanks inline SVG — the cluster
-    # is font glyphs, plain text and a CSS dot instead (see the note in
-    # app/lite/__init__.py above the glyph constants).
+    # is plain text pills instead (see the note in app/lite/__init__.py above
+    # _controls).
     assert "<svg" not in controls
     assert 'aria-label="Switch to the full interface"' in controls and ">Full<" in controls
-    assert "glyph-text" in controls and "glyph-lang" in controls and "status-dot" in controls
+    # Every control is the same .control pill: the status word, the theme
+    # words and the target language code — no mixed glyph styles.
+    assert controls.count('class="control') >= 4
+    assert "control status" in controls
+    assert ">Light</a>" in controls and ">Dark</a>" in controls and ">JA</a>" in controls
     assert "http://127.0.0.1:5173" in controls
     monkeypatch.undo()
     assert 'Switch to the full interface' not in client.get("/lite").text  # unset → button hidden
@@ -136,15 +139,15 @@ def test_stroke_paths_are_outlines_like_the_spa() -> None:
 
 
 def test_status_chip_is_a_minimal_native_tooltip() -> None:
-    # The Lite status chip is a database glyph (green/red) whose detail rides on
-    # the native title attribute — no hover popup, no extra CSS.
+    # The Lite status chip is the same text pill as the other controls; its
+    # detail rides on the native title attribute — no hover popup, no extra CSS.
     client.cookies.clear()
     home = client.get("/lite")
-    assert 'class="status-dot' in home.text
+    assert 'class="control status' in home.text
     assert 'title="' in home.text
     assert 'class="status-pop"' not in home.text
     controls = home.text.split('class="controls"')[1]
-    assert controls.index("status-dot") < controls.index("theme-toggle") < controls.index("Switch to")
+    assert controls.index("control status") < controls.index("theme-toggle") < controls.index("Switch to")
 
 
 def test_recent_pills_from_cookie_replace_examples() -> None:
@@ -335,7 +338,7 @@ def test_language_toggle_flips_cookie_and_translates_the_page(monkeypatch: pytes
         home = client.get("/lite")  # client keeps the cookie
         assert '<html lang="ja"' in home.text
         assert ">検索</button>" in home.text  # search button
-        assert 'aria-label="Switch to English"' in home.text  # toggle offers the other language
+        assert 'aria-label="Englishに切り替え"' in home.text  # toggle offers the other language
         assert 'aria-label="表示言語"' not in home.text
         # The About page is English in every language (like the footer), so it
         # stays shared-cacheable even with a language cookie set. Pages are only

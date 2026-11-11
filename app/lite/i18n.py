@@ -9,8 +9,13 @@ _I18N: dict[str, dict[str, str]] = {
         "statusAriaReady": "Dictionary ready — {count} entries",
         "statusAriaOffline": "Dictionary offline — {msg}",
         "fullSwitch": "Switch to the full interface",
+        "fullShort": "Full",
+        "langSwitch": "Switch to {name}",
+        "themeLight": "Light",
+        "themeDark": "Dark",
         "themeToLight": "Switch to the light theme",
         "themeToDark": "Switch to the dark theme",
+        "statusChecking": "Checking",
         "taglineLite": "Search in English or Japanese, break down sentences word-by-word with "
         "furigana and meanings, inspect kanji.",
         "liteNote": "Lite mode: the same dictionary as the full version, served as plain "
@@ -130,8 +135,13 @@ _I18N: dict[str, dict[str, str]] = {
         "statusAriaReady": "辞書の準備完了 — {count} 項目",
         "statusAriaOffline": "辞書はオフライン — {msg}",
         "fullSwitch": "フル版へ切り替え",
+        "fullShort": "フル",
+        "langSwitch": "{name}に切り替え",
+        "themeLight": "ライト",
+        "themeDark": "ダーク",
         "themeToLight": "ライトテーマへ切り替え",
         "themeToDark": "ダークテーマへ切り替え",
+        "statusChecking": "確認中",
         "taglineLite": "英語または日本語で検索し、文をふりがなと意味付きで語ごとに分解。漢字を調べられます。",
         "liteNote": "Lite版： フル版と同じ辞書を、プレーンなページとして提供 — "  # noqa: RUF001
         "対話型ポップアップ・アニメーション・文法解説はありません。",

@@ -82,38 +82,31 @@ text-decoration:none;color:var(--fg);}
 background:var(--surface-soft);border:1px solid var(--line-soft);border-radius:999px;
 padding:.1rem .5rem;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap}
 .controls{position:fixed;top:.6rem;right:.85rem;margin-right:-15px;z-index:200;display:flex;
-align-items:center;gap:.15rem;font-size:.85rem}
-/* Top-right icon buttons, mirroring the SPA's header cluster: same 2rem round
-   hit area, muted until hover. Titles + aria-labels carry the meaning text
-   once did. */
-.controls .icon-link{display:inline-flex;align-items:center;justify-content:center;
-width:2rem;height:2rem;border-radius:999px;color:var(--muted)}
-.controls .icon-link:hover{color:var(--fg)}
-/* Text labels inside the round buttons (no SVG — hardened browsers with
-   svg.disabled blank it). The short words run small and semi-bold to hold
-   the cluster's width; the two-char 文A pair mirrors the SPA's languages
-   glyph. */
-.controls .glyph{display:block;line-height:1;text-align:center}
-.controls .glyph-text{font-size:.72rem;font-weight:600}
-.controls .glyph-lang{font-size:.78rem;letter-spacing:.02em}
-.controls .status-dot{display:inline-flex;align-items:center;justify-content:center;
-width:2rem;height:2rem;border-radius:999px;color:var(--faint);cursor:default}
-/* The status dot is drawn in CSS for the same no-SVG reason as above. */
-.controls .status-dot::before{content:"";display:block;width:.55rem;height:.55rem;
-border-radius:999px;background:currentColor}
-.controls .status-dot.ok{color:var(--ok)}
-.controls .status-dot.err{color:var(--err)}
-/* Not probed yet: the SPA's idle --text-faint, a step quieter than the
-   other icons' --muted. */
-.controls .status-dot.checking{color:var(--faint)}
-/* Dictionary status — a minimal chip (dot + word), no popup: the detail sits
-   in the native title tooltip, so nothing has to be drawn or animated. */
+align-items:center;gap:.4rem}
+/* Top-right controls, mirroring the SPA's header cluster order: every control
+   is the same small text pill — muted until hover, titles + aria-labels carry
+   the full meaning the short labels abbreviate. Plain text, no SVG: hardened
+   browsers with svg.disabled blank inline SVG (Tor/LibreWolf "Safest"). */
+.controls .control{display:inline-flex;align-items:center;justify-content:center;
+min-height:2rem;padding:0 .7rem;border-radius:999px;color:var(--muted);
+font-size:.8rem;font-weight:500;line-height:1;white-space:nowrap}
+.controls .control:hover{color:var(--fg);background:var(--surface-soft)}
+/* Dictionary status is the same pill, tinted by state; it is a <span>, not a
+   link, so it keeps its state colour on hover instead of going foreground. */
+.controls .status{cursor:default}
+.controls .status.ok{color:var(--ok)}
+.controls .status.err{color:var(--err)}
+/* Not probed yet: a step quieter than the other pills' --muted. */
+.controls .status.checking{color:var(--faint)}
+.controls .status.ok:hover{color:var(--ok)}
+.controls .status.err:hover{color:var(--err)}
+.controls .status.checking:hover{color:var(--faint)}
 /* System mode renders both directions and this hides the one matching the OS
-   scheme — a first visit shows exactly one button, e.g. the moon on a light OS.
-   Specificity note: these selectors must outrank `.controls .icon-link`. */
-.controls .theme-toggle a{display:none}
-@media (prefers-color-scheme:light){.controls .theme-toggle a.to-dark{display:inline-flex}}
-@media (prefers-color-scheme:dark){.controls .theme-toggle a.to-light{display:inline-flex}}
+   scheme — a first visit shows exactly one pill, e.g. Dark on a light OS.
+   Specificity note: these selectors must outrank `.controls .control`. */
+.controls .theme-toggle .control{display:none}
+@media (prefers-color-scheme:light){.controls .theme-toggle .to-dark{display:inline-flex}}
+@media (prefers-color-scheme:dark){.controls .theme-toggle .to-light{display:inline-flex}}
 h1{font-size:1.5rem;margin:0 0 .6rem}
 h2{font-size:1.2rem;margin:.4rem 0 .35rem}
 .entry h2{font-family:var(--font-japanese);font-size:1.65rem;font-weight:500;letter-spacing:.02em}
@@ -308,6 +301,8 @@ line-height:1.15;white-space:normal;word-break:break-word}
 .kgroup-bottom-actions{margin-top:2rem;display:flex;justify-content:flex-start}
 @media (max-width:680px){
 body{padding:1.25rem 1rem 3rem}
+.controls{gap:.25rem}
+.controls .control{padding:0 .55rem;font-size:.75rem}
 header.hero{margin:calc(clamp(2.25rem,11vh,4.5rem) - 1.25rem) 0 1.25rem}
 .hero-tag{font-size:.68rem;letter-spacing:.04em;padding:.2rem .65rem}
 .tagline{font-size:.9rem;line-height:1.5;max-width:22rem;color:var(--faint)}

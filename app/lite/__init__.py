@@ -269,17 +269,18 @@ def _refresh_status() -> None:
 
 
 def _status_chip(lang: str) -> str:
-    """The SPA's database status dot, rendered server-side: green/red CSS dot
-    plus a hover/focus tooltip with the state and live entry count. The page
-    was rendered by the process that owns the Qdrant client, so unlike the SPA
-    there is no "connecting" phase -- it is either connected or not. The state
-    comes from the last cached snapshot (refreshed in the background), so a
-    page view never waits on Qdrant. The dot is drawn in CSS (no SVG), so it
-    survives hardened browsers with svg.disabled (Tor/LibreWolf Safest)."""
+    """The dictionary status, rendered server-side as the same text pill the
+    other controls use: the state word plus a native title tooltip carrying
+    the detail. The page was rendered by the process that owns the Qdrant
+    client, so unlike the SPA there is no "connecting" phase -- it is either
+    connected or not. The state comes from the last cached snapshot (refreshed
+    in the background), so a page view never waits on Qdrant. The word is
+    plain text (no SVG), so it survives hardened browsers with svg.disabled
+    (Tor/LibreWolf Safest)."""
     ok, count, _ = _status_state()
     if ok is None:
         state = "checking"
-        label = _t(lang, "statusTitle")
+        label = _t(lang, "statusChecking")
         aria = _t(lang, "statusTitle")
     elif ok:
         state = "ok"
@@ -289,26 +290,23 @@ def _status_chip(lang: str) -> str:
         state = "err"
         label = _t(lang, "statusOffline")
         aria = _t(lang, "statusAriaOffline", msg=_t(lang, "statusUnavailable"))
-    # Minimal tooltip like the other chips: a short title, nothing more.
     title = label
-    # Minimal like the other chips: a dot with a native title tooltip (no
-    # popup panel, no extra CSS).
     return (
-        f'<span class="status-dot {state}" role="img" tabindex="0" '
-        f'aria-label="{esc(aria)}" title="{esc(title)}"></span>'
+        f'<span class="control status {state}" role="status" tabindex="0" '
+        f'aria-label="{esc(aria)}" title="{esc(title)}">{esc(label)}</span>'
     )
 
 
 # Top-right controls are deliberately NOT SVG. Hardened browsers (Tor
 # Browser / LibreWolf "Safest") set svg.disabled=true, which blanks inline
-# SVG too — the icons would vanish exactly for the no-JS visitors lite
-# serves. Controls are therefore plain text and a CSS dot: everything
-# renders without JavaScript or SVG, and no symbol-font gamble (☀ can hit
-# the color-emoji font and ignore the muted/hover colors).
+# SVG too — the controls would vanish exactly for the no-JS visitors lite
+# serves. Controls are therefore plain text: every chrome control is the same
+# small labelled pill (.control), so the cluster reads uniformly without
+# JavaScript, SVG, emoji or a symbol-font gamble (☀ can hit the color-emoji
+# font and ignore the muted/hover colors).
 #
 # This is lite's whole icon language, kept uniform on purpose:
-#   - controls: text labels (_FULL_GLYPH/_LANG_GLYPH, the Light/Dark words)
-#     and a CSS-drawn status dot (see _status_chip);
+#   - controls: text labels in .control pills (see _controls);
 #   - wayfinding: typographic arrows in link text (←, →, from lite/i18n.py);
 #   - badges/pills/buttons: words, never glyphs.
 # Lite has fewer chrome icons than the SPA by design — no AI explanations,
@@ -317,55 +315,53 @@ def _status_chip(lang: str) -> str:
 # kanji stroke diagram (KanjiVG stroke data — content shared with the SPA,
 # not an icon); in svg-disabled browsers that box is blank while the card
 # still shows glyph, readings, meanings and badges.
-_FULL_GLYPH = '<span class="glyph glyph-text" aria-hidden="true">Full</span>'
-_LANG_GLYPH = '<span class="glyph glyph-lang" aria-hidden="true">文A</span>'
 
 
 def _theme_toggle(theme: str, next_url: str, lang: str) -> str:
-    """A single-click theme switch, drawn as icon buttons. With no stored
-    choice the OS preference decides the palette, so the toggle pointing the
-    opposite way is the only thing a first-time visitor can click — both a sun
-    and a moon are rendered and CSS hides the one matching the OS scheme. A
-    pinned theme shows just the button back to the other one."""
+    """A single-click theme switch rendered as the same text pills as the
+    other controls. With no stored choice the OS preference decides the
+    palette, so the toggle pointing the opposite way is the only thing a
+    first-time visitor can click — both directions are rendered and CSS hides
+    the one matching the OS scheme. A pinned theme shows just the pill back to
+    the other one."""
     light_label = _t(lang, "themeToLight")
     dark_label = _t(lang, "themeToDark")
-    # The word names the theme the click switches TO (same as the title).
+    light_word = _t(lang, "themeLight")
+    dark_word = _t(lang, "themeDark")
     if theme == "system":
         href_light = f"/lite/theme?v=light&next={quote(next_url, safe='')}"
         href_dark = f"/lite/theme?v=dark&next={quote(next_url, safe='')}"
-        sun = f'<a class="icon-link to-light" href="{href_light}" title="{esc(light_label)}"'
-        moon = f'<a class="icon-link to-dark" href="{href_dark}" title="{esc(dark_label)}"'
         return (
             '<span class="theme-toggle">'
-            f'{sun} aria-label="{esc(light_label)}">'
-            f'<span class="glyph glyph-text" aria-hidden="true">Light</span></a>'
-            f'{moon} aria-label="{esc(dark_label)}">'
-            f'<span class="glyph glyph-text" aria-hidden="true">Dark</span></a>'
+            f'<a class="control to-light" href="{href_light}" title="{esc(light_label)}"'
+            f' aria-label="{esc(light_label)}">{esc(light_word)}</a>'
+            f'<a class="control to-dark" href="{href_dark}" title="{esc(dark_label)}"'
+            f' aria-label="{esc(dark_label)}">{esc(dark_word)}</a>'
             "</span>"
         )
     other = "dark" if theme == "light" else "light"
     href = f"/lite/theme?v={other}&next={quote(next_url, safe='')}"
     label = dark_label if other == "dark" else light_label
-    word = "Dark" if other == "dark" else "Light"
+    word = dark_word if other == "dark" else light_word
     return (
-        f'<a class="icon-link" href="{href}" title="{esc(label)}" aria-label="{esc(label)}">'
-        f'<span class="glyph glyph-text" aria-hidden="true">{word}</span></a>'
+        f'<a class="control" href="{href}" title="{esc(label)}" aria-label="{esc(label)}">'
+        f"{esc(word)}</a>"
     )
 
 
 def _lang_toggle(lang: str, next_url: str) -> str:
-    """No-JS language switch: a compact button (mirroring the SPA's language
-    popover trigger) that flips the shared lite_lang cookie via a redirect.
-    The glyph is the SPA's 文A pair rendered as plain text (not SVG, so it
-    survives svg-disabled hardened browsers); the target language's own name
-    lives in the title/aria-label."""
+    """No-JS language switch: a text pill (the same .control as the rest of
+    the cluster) showing the target language's code, that flips the shared
+    lite_lang cookie via a redirect. The target language's own name lives in
+    the title/aria-label."""
     other = "ja" if lang == "en" else "en"
     name = "日本語" if other == "ja" else "English"
+    code = "JA" if other == "ja" else "EN"
     href = f"/lite/lang?v={other}&next={quote(next_url, safe='')}"
-    label = f"Switch to {name}"
+    label = _t(lang, "langSwitch", name=name)
     return (
-        f'<a class="icon-link" href="{href}" title="{esc(label)}" aria-label="{esc(label)}" lang="{other}">'
-        f'{_LANG_GLYPH}</a>'
+        f'<a class="control" href="{href}" title="{esc(label)}" aria-label="{esc(label)}" lang="{other}">'
+        f"{code}</a>"
     )
 
 
@@ -412,8 +408,8 @@ def _full_switch_url(request: Request) -> str:
 def _controls(request: Request) -> str:
     """Top-right chrome row on every page — mirrors the SPA's header-cluster
     order: full-version switch, dictionary status, theme switch, language
-    switch. Icon buttons mirror the SPA's cluster; the titles and aria-labels
-    carry the meaning text does not."""
+    switch. Every control is the same .control text pill; the titles and
+    aria-labels carry the full meaning the short labels abbreviate."""
     lang = _read_lang(request)
     theme = _read_theme(request)
     next_url = _current_path(request)
@@ -422,8 +418,8 @@ def _controls(request: Request) -> str:
     if full_url:
         label = _t(lang, "fullSwitch")
         parts.append(
-            '<a class="icon-link" href="' + esc(full_url) + '" rel="noopener"'
-            f' title="{esc(label)}" aria-label="{esc(label)}">{_FULL_GLYPH}</a>'
+            '<a class="control" href="' + esc(full_url) + '" rel="noopener"'
+            f' title="{esc(label)}" aria-label="{esc(label)}">{esc(_t(lang, "fullShort"))}</a>'
         )
     parts.append(_status_chip(lang))
     parts.append(_theme_toggle(theme, next_url, lang))
