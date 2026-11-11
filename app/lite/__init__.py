@@ -50,6 +50,7 @@ from fastapi.routing import APIRoute
 from starlette.background import BackgroundTask
 
 from app.config import (
+    APP_VERSION,
     COLLECTION,
     RATE_LIMIT_SEARCH,
     TRUSTED_PROXY_HOPS,
@@ -1363,6 +1364,7 @@ searches, theme and language through shared cookies.</li>
 <p>{esc(_t(lang, "privacyTextLite"))}</p>
 <h2>{esc(_t(lang, "source"))}</h2>
 <p>{source_para}</p>
+<p class="muted">Reikun v{esc(APP_VERSION)}</p>
 </article>"""
     return _page(
         _t(lang, "aboutTitle"),

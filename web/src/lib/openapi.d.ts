@@ -334,6 +334,8 @@ export interface components {
              * @constant
              */
             status: "ok";
+            /** Version */
+            version: string;
         };
         /**
          * InflectionRow

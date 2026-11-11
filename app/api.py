@@ -140,6 +140,9 @@ class ErrorResponse(BaseModel):
 
 class HealthResponse(BaseModel):
     status: Literal["ok"] = "ok"
+    # Release version (pyproject.toml) — the web About page reads it here, so
+    # the UI never carries a hand-written version string.
+    version: str
 
 
 class ReadyResponse(BaseModel):
@@ -360,7 +363,7 @@ class FeedbackResponse(BaseModel):
 def health(response: Response) -> dict:
     """Liveness only — the process is up. Dependencies are checked by /ready."""
     response.headers["Cache-Control"] = "no-store"
-    return {"status": "ok"}
+    return {"status": "ok", "version": APP_VERSION}
 
 
 @app.get(

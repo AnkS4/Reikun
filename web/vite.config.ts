@@ -2,8 +2,14 @@ import adapter from '@sveltejs/adapter-static';
 import { sveltekit } from '@sveltejs/kit/vite';
 import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 import { defineConfig } from 'vite';
+import pkg from './package.json' with { type: 'json' };
 
 export default defineConfig({
+	// Build-time app version for the About page (`__APP_VERSION__` global,
+	// declared in src/app.d.ts). The release checklist keeps web/package.json
+	// equal to pyproject.toml, so this is the same version the API reports —
+	// inlined into the bundle, no runtime request.
+	define: { __APP_VERSION__: JSON.stringify(pkg.version) },
 	plugins: [
 		sveltekit({
 			adapter: adapter({ fallback: '200.html' }),

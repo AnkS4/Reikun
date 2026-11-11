@@ -799,9 +799,16 @@
             "const": "ok",
             "title": "Status",
             "default": "ok"
+          },
+          "version": {
+            "type": "string",
+            "title": "Version"
           }
         },
         "type": "object",
+        "required": [
+          "version"
+        ],
         "title": "HealthResponse"
       },
       "InflectionRow": {

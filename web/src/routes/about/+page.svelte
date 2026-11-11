@@ -1,6 +1,10 @@
 <script lang="ts">
 	import { t } from '#lib/i18n.svelte.ts';
 	import Header from '#lib/components/Header.svelte';
+
+	// Build-time version, inlined by Vite from web/package.json (vite.config.ts
+	// `define`, declared in src/app.d.ts) — no runtime API call, works offline.
+	const version = __APP_VERSION__;
 </script>
 
 <svelte:head>
@@ -77,6 +81,9 @@
 				rel="noopener noreferrer">{t('sourceLink')}</a
 			>{t('sourceAfter')}
 		</p>
+		{#if version}
+			<p class="version">Reikun v{version}</p>
+		{/if}
 	</section>
 </article>
 
@@ -166,5 +173,11 @@
 
 	.about a:hover {
 		text-decoration-color: var(--text);
+	}
+
+	.version {
+		font-family: var(--font-mono);
+		font-size: 0.78rem;
+		color: var(--text-faint);
 	}
 </style>

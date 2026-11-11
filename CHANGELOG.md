@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **App version shown on the website**: the About page of both variants now displays the release version. The SvelteKit page reads it from a build-time `__APP_VERSION__` global (Vite `define` from `web/package.json`, kept equal to `pyproject.toml` by the release checklist) — inlined into the bundle, so rendering the version costs no API call and works offline. The lite About page server-renders `Reikun v{APP_VERSION}` under its Source section the same way. The API's `/health` response also gained a `version` field (`APP_VERSION`) as ops metadata for API consumers; the OpenAPI schema and `openapi.d.ts` mirrors were regenerated for it.
+
 ## [1.2.0] - 2026-11-11
 
 Lite-depth release: the lite UI becomes a first-class citizen — served from the same origin as the SPA behind the reikun.app Worker so the shared theme/language/recents cookies finally sync in production, shipped as one small HTML document plus an immutable hashed stylesheet with system fonts only, mirroring the SPA's design system and fully bilingual chrome. Random-kanji picks now land in Recent searches on both variants, and CI actions are pinned to immutable SHAs.

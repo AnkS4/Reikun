@@ -14,7 +14,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app import lite
-from app.api import app
+from app.api import APP_VERSION, app
 
 client = TestClient(app)
 
@@ -301,6 +301,8 @@ def test_about_page() -> None:
     # SPA-parity sections and type treatment (mono labels, muted body).
     assert 'class="about"' in r.text
     assert "Data and sources" in r.text and "Privacy" in r.text and "Source" in r.text
+    # Release version, server-rendered from pyproject.toml (no extra request).
+    assert f"Reikun v{APP_VERSION}" in r.text
 
 
 def test_language_toggle_flips_cookie_and_translates_the_page(monkeypatch: pytest.MonkeyPatch) -> None:

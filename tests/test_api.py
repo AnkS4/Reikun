@@ -9,7 +9,7 @@ machine with a local Qdrant sees 200 instead).
 
 from fastapi.testclient import TestClient
 
-from app.api import app
+from app.api import APP_VERSION, app
 
 # Plain instantiation — no `with`, so the lifespan never runs and the
 # Qdrant/embedder warm-up threads (which could only fail in CI) stay out of
@@ -19,7 +19,8 @@ client = TestClient(app)
 
 def test_health() -> None:
     r = client.get("/health")
-    assert r.status_code == 200 and r.json() == {"status": "ok"}
+    # version rides along for the web About page (pyproject.toml is the truth).
+    assert r.status_code == 200 and r.json() == {"status": "ok", "version": APP_VERSION}
 
 
 def test_ready_responds() -> None:
