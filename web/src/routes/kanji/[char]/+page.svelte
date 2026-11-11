@@ -8,6 +8,7 @@
 	import { t } from '#lib/i18n.svelte.ts';
 	import { isKanji } from '#lib/kanji.ts';
 	import { apiRandomKanji, LEVELS, type Level } from '#lib/api.ts';
+	import { pushRecent } from '#lib/recent.ts';
 	import { furigana } from '#lib/furigana.svelte.ts';
 
 	const char = $derived(page.params.char ?? '');
@@ -37,6 +38,8 @@
 		randomBusy = true;
 		try {
 			const c = await apiRandomKanji(level);
+			// Same as the homepage shuffle: a random pick lands in recents.
+			pushRecent(c);
 			goto(`/kanji/${encodeURIComponent(c)}?from=${encodeURIComponent(char)}`);
 		} catch {
 			// ignore

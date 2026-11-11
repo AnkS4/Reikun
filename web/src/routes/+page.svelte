@@ -255,6 +255,9 @@
 		error = '';
 		try {
 			const char = await apiRandomKanji(level);
+			// A random pick is a lookup too — keep it in the shared recents so
+			// the homepage pills (and the lite variant, via the cookie) show it.
+			pushRecent(char);
 			goto(`/kanji/${encodeURIComponent(char)}`);
 		} catch (e) {
 			error = e instanceof Error ? e.message : t('randomFailed');
