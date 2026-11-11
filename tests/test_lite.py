@@ -271,6 +271,13 @@ def test_random_kanji_redirects_to_card() -> None:
     r = client.get("/lite/kanji/random", follow_redirects=False)
     assert r.status_code == 303
     assert r.headers["location"].startswith("/lite/kanji/")
+    # The pick joins the shared recents cookie — the same channel the SPA
+    # reads — so the homepage pills show it after the redirect.
+    set_cookie = r.headers.get("set-cookie", "")
+    assert "lite_recent=" in set_cookie
+    char = unquote(r.headers["location"].rsplit("/", 1)[-1].split("?")[0])
+    encoded = set_cookie.split("lite_recent=")[1].split(";")[0].strip('"')
+    assert json.loads(unquote(encoded))[0] == char
 
 
 def test_conjugations_without_word_shows_notice() -> None:

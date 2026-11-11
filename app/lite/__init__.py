@@ -1011,7 +1011,9 @@ def lite_conjugations(request: Request, word: str = "", reading: str = "") -> Re
 
 @router.get("/lite/kanji/random")
 def lite_kanji_random(
-    frm: str = Query("", alias="from"), chn: str = Query("", alias="chain")
+    request: Request,
+    frm: str = Query("", alias="from"),
+    chn: str = Query("", alias="chain"),
 ) -> RedirectResponse:
     """Redirect to a random kanji card. Lite has no JLPT-level picker, so the
     pool is the whole kanji table. ``frm`` (the page the click came from) and
@@ -1035,9 +1037,17 @@ def lite_kanji_random(
         params.append(f"chain={quote(new_chain, safe='')}")
     if params:
         target += "?" + "&".join(params)
-    return RedirectResponse(
-        target, status_code=303, headers={"Cache-Control": "no-store"}
+    response = RedirectResponse(target, status_code=303, headers={"Cache-Control": "no-store"})
+    # A random pick is a lookup too — record it in the shared recent-searches
+    # cookie so the homepage pills (and the SPA, which reads the same cookie)
+    # show it, matching the full version's pushRecent on shuffle.
+    response.set_cookie(
+        _RECENT_COOKIE,
+        _recent_cookie_value(request.cookies.get(_RECENT_COOKIE, ""), char),
+        max_age=_COOKIE_MAX_AGE,
+        samesite="lax",
     )
+    return response
 
 
 def _kg_meta(card: dict, lang: str) -> str:
