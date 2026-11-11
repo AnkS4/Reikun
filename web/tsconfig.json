@@ -3,6 +3,7 @@
 	"include": ["src", "vite.config.ts"],
 	"exclude": ["src/service-worker"],
 	"compilerOptions": {
-		"strict": true
+		"strict": true,
+		"resolveJsonModule": true
 	}
 }

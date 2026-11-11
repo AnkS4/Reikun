@@ -367,7 +367,7 @@ def test_language_toggle_flips_cookie_and_translates_the_page(monkeypatch: pytes
         monkeypatch.setitem(lite._status_snapshot, "count", 1)
         monkeypatch.setitem(lite._status_snapshot, "at", time.monotonic())
         about = client.get("/lite/about")
-        assert "Reikun について" in about.text and "バージョン" in about.text
+        assert "Reikunについて" in about.text and "バージョン" in about.text
         assert "private" in about.headers["cache-control"]
         privacy = client.get("/lite/privacy")
         assert "Privacy Policy" in privacy.text

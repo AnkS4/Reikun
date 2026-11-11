@@ -39,6 +39,9 @@ jobs:
       # paths only.
       - run: uv run pytest -q
 
+      # Shared SPA/Lite string tables: key + placeholder parity.
+      - run: uv run python scripts/check_i18n.py
+
       - name: OpenAPI schema is up to date
         run: |
           uv run python scripts/export_openapi.py

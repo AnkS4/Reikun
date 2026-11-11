@@ -232,9 +232,9 @@ def _header(hero: bool, lang: str = "en") -> str:
             f'<p class="hero-tag">{esc(_BRAND_SUBTEXT)}</p>'
             '<h1 class="hero-title"><a class="brand" href="/lite">Reikun <span lang="ja">(例訓)</span></a>'
             '<span class="tag">lite</span></h1>'
-            f'<p class="tagline">{esc(_t(lang, "taglineLite"))}</p>'
-            f'<p class="lite-note">{esc(_t(lang, "liteNote"))} '
-            f'<a href="/lite/about#lite">{esc(_t(lang, "liteNoteLink"))}</a></p>'
+            f'<p class="tagline">{esc(_t(lang, "lite_tagline"))}</p>'
+            f'<p class="lite-note">{esc(_t(lang, "lite_note"))} '
+            f'<a href="/lite/about#lite">{esc(_t(lang, "lite_noteLink"))}</a></p>'
             "</header>"
         )
     return (
@@ -292,7 +292,7 @@ def _status_chip(lang: str) -> str:
     ok, count, _ = _status_state()
     if ok is None:
         state = "checking"
-        label = _t(lang, "statusChecking")
+        label = _t(lang, "lite_statusChecking")
         aria = _t(lang, "statusTitle")
     elif ok:
         state = "ok"
@@ -301,7 +301,7 @@ def _status_chip(lang: str) -> str:
     else:
         state = "err"
         label = _t(lang, "statusOffline")
-        aria = _t(lang, "statusAriaOffline", msg=_t(lang, "statusUnavailable"))
+        aria = _t(lang, "statusAriaOffline", msg=_t(lang, "lite_statusUnavailable"))
     title = label
     return (
         f'<span class="control status {state}" role="status" tabindex="0" '
@@ -336,8 +336,8 @@ def _theme_toggle(theme: str, next_url: str, lang: str) -> str:
     first-time visitor can click — both directions are rendered and CSS hides
     the one matching the OS scheme. A pinned theme shows just the pill back to
     the other one."""
-    light_label = _t(lang, "themeToLight")
-    dark_label = _t(lang, "themeToDark")
+    light_label = _t(lang, "lite_themeToLight")
+    dark_label = _t(lang, "lite_themeToDark")
     light_word = _t(lang, "themeLight")
     dark_word = _t(lang, "themeDark")
     if theme == "system":
@@ -370,7 +370,7 @@ def _lang_toggle(lang: str, next_url: str) -> str:
     name = "日本語" if other == "ja" else "English"
     code = "JA" if other == "ja" else "EN"
     href = f"/lite/lang?v={other}&next={quote(next_url, safe='')}"
-    label = _t(lang, "langSwitch", name=name)
+    label = _t(lang, "lite_langSwitch", name=name)
     return (
         f'<a class="control" href="{href}" title="{esc(label)}" aria-label="{esc(label)}" lang="{other}">'
         f"{code}</a>"
@@ -428,10 +428,10 @@ def _controls(request: Request) -> str:
     parts = []
     full_url = _full_switch_url(request)
     if full_url:
-        label = _t(lang, "fullSwitch")
+        label = _t(lang, "lite_fullSwitch")
         parts.append(
             '<a class="control" href="' + esc(full_url) + '" rel="noopener"'
-            f' title="{esc(label)}" aria-label="{esc(label)}">{esc(_t(lang, "fullShort"))}</a>'
+            f' title="{esc(label)}" aria-label="{esc(label)}">{esc(_t(lang, "lite_fullShort"))}</a>'
         )
     parts.append(_status_chip(lang))
     parts.append(_theme_toggle(theme, next_url, lang))
@@ -528,11 +528,11 @@ def _search_form(
     toggle = f"/lite/furigana?next={quote(next_url, safe='')}"
     kana_link = (
         f'<a class="btn furi{" off" if not furi else ""}" href="{toggle}"'
-        f' title="{esc(toggle_title)}">{esc(_t(lang, "furiganaLabel"))}</a>'
+        f' title="{esc(toggle_title)}">{esc(_t(lang, "lite_furiganaLabel"))}</a>'
     )
     search_btn = esc(_t(lang, "search"))
-    random_title = esc(_t(lang, "randomKanjiLabel"))
-    random_label = esc(_t(lang, "randomKanjiLabel"))
+    random_title = esc(_t(lang, "lite_randomKanjiLabel"))
+    random_label = esc(_t(lang, "lite_randomKanjiLabel"))
     from_input = f'<input type="hidden" name="from" value="{esc(from_word)}">' if from_word else ""
     chain_val = (frm + ("|" + chain if chain else "")) if frm else chain
     chain_input = f'<input type="hidden" name="chain" value="{esc(chain_val)}">' if chain_val else ""
@@ -631,10 +631,10 @@ def lite_search(
         logger.exception("lite search failed")
         return _finish(
             502,
-            f'<p class="warn">{esc(_t(lang, "searchUnavailable"))}</p>'
+            f'<p class="warn">{esc(_t(lang, "lite_searchUnavailable"))}</p>'
             f'<p><a href="/lite/search">{esc(_t(lang, "retry"))}</a> · '
             f'<a href="/lite">{esc(_t(lang, "backToSearch"))}</a></p>',
-            _t(lang, "searchUnavailable"),
+            _t(lang, "lite_searchUnavailable"),
         )
 
     if log:
@@ -660,7 +660,7 @@ def lite_search(
         _search_form(query, lang=lang, furi=furi, next_url=current, from_word=query)
         + _results_html(request, query, resp, lang)
     )
-    return _finish(200, body, _t(lang, "resultsTitle", query=query))
+    return _finish(200, body, _t(lang, "lite_resultsTitle", query=query))
 
 
 @router.get("/lite/furigana")
@@ -843,7 +843,7 @@ def _results_html(request: Request, query: str, resp: SearchResponse, lang: str)
         parts.extend(_result_card(query, result, furi, lang) for result in results)
     elif not too_long:
         if char:
-            parts.append(f'<p class="warn">{esc(_t(lang, "notAWord", char=char))}</p>')
+            parts.append(f'<p class="warn">{esc(_t(lang, "lite_notAWord", char=char))}</p>')
         else:
             parts.append(f'<p>{esc(_t(lang, "nothingFound"))}</p>')
 
@@ -869,7 +869,7 @@ def _result_card(query: str, result: dict, furi: bool, lang: str) -> str:
     if inflection:
         inflection_note = (
             f'<p class="inflection-bar">'
-            f'{_t(lang, "inflectionNote", query=esc(query), form=esc(inflection), head=esc(head))}</p>'
+            f'{_t(lang, "lite_inflectionNote", query=esc(query), form=esc(inflection), head=esc(head))}</p>'
         )
 
     parts = [f'<article class="entry"{anchor}><h2>{head_html} {common}</h2>']
@@ -882,7 +882,7 @@ def _result_card(query: str, result: dict, furi: bool, lang: str) -> str:
     if inflections and head:
         conj = _href("/lite/conjugations", word=head, reading=result.get("reading"))
         parts.append(
-            f'<p class="conj-link"><a href="{conj}">{esc(_t(lang, "conjLink", count=len(inflections)))}</a></p>'
+            f'<p class="conj-link"><a href="{conj}">{esc(_t(lang, "lite_conjLink", count=len(inflections)))}</a></p>'
         )
 
     kanji_chars = kanji_in(head)
@@ -892,7 +892,7 @@ def _result_card(query: str, result: dict, furi: bool, lang: str) -> str:
             f"{esc(char)}</a>"
             for char in kanji_chars
         )
-        parts.append(f'<p class="reading-note">{esc(_t(lang, "kanjiLabel"))}: {links}</p>')
+        parts.append(f'<p class="reading-note">{esc(_t(lang, "lite_kanjiLabel"))}: {links}</p>')
 
     # Related words sit directly under the headword (no collapse), as in the web UI.
     forms = (head, *kanji_forms, *readings)
@@ -941,7 +941,7 @@ def lite_conjugations(request: Request, word: str = "", reading: str = "") -> Re
         return _page(
             _t(lang, "conjugations"),
             f'<div class="conj-page"><h1>{esc(_t(lang, "conjugations"))}</h1>'
-            f'<p class="muted">{esc(_t(lang, "conjNoWord"))}</p>'
+            f'<p class="muted">{esc(_t(lang, "lite_conjNoWord"))}</p>'
             f'<p><a class="btn" href="/lite">← {esc(_t(lang, "backToSearch"))}</a></p></div>',
             controls=_controls(request),
             theme=theme,
@@ -952,8 +952,8 @@ def lite_conjugations(request: Request, word: str = "", reading: str = "") -> Re
     except Exception:
         logger.exception("lite conjugations failed")
         return _error_page(
-            _t(lang, "lookupUnavailable"),
-            _t(lang, "searchUnavailable"),
+            _t(lang, "lite_lookupUnavailable"),
+            _t(lang, "lite_searchUnavailable"),
             502,
             theme,
             _controls(request),
@@ -975,7 +975,7 @@ def lite_conjugations(request: Request, word: str = "", reading: str = "") -> Re
         return _page(
             _t(lang, "conjugations"),
             f'<div class="conj-page"><h1 lang="ja">{esc(headword)}</h1>'
-            f'<p class="conj-sub">{_t(lang, "noConjData", word=esc(headword))}</p>'
+            f'<p class="conj-sub">{_t(lang, "lite_noConjData", word=esc(headword))}</p>'
             f'<p><a class="btn" href="{_href("/lite/search", q=headword)}">← '
             f'{esc(_t(lang, "backTo", word=headword))}</a></p></div>',
             controls=_controls(request),
@@ -1004,7 +1004,7 @@ def lite_conjugations(request: Request, word: str = "", reading: str = "") -> Re
 <h1 lang="ja" class="conj-title">{shown_reading}
 <span class="conj-label">{esc(_t(lang, "conjugations"))}</span>
 <span class="kgroup-total">{len(rows)}</span></h1>
-<p class="conj-sub">{_t(lang, "conjSub", word=f'<span lang="ja">{esc(headword)}</span>')}</p>
+<p class="conj-sub">{_t(lang, "lite_conjSub", word=f'<span lang="ja">{esc(headword)}</span>')}</p>
 <table class="conj">
 {table_head}
 <tbody>{table_rows}</tbody>
@@ -1082,8 +1082,8 @@ def lite_kanji_group(request: Request, by: str, value: str = "", n: str = "60", 
     _int_value = _int(value, 0)
     if by not in ("strokes", "grade", "jlpt"):
         return _error_page(
-            _t(lang, "unknownGroup"),
-            _t(lang, "unknownGroupMsg"),
+            _t(lang, "lite_unknownGroup"),
+            _t(lang, "lite_unknownGroupMsg"),
             404,
             theme,
             _controls(request),
@@ -1094,8 +1094,8 @@ def lite_kanji_group(request: Request, by: str, value: str = "", n: str = "60", 
     cards = kanji_group_cards(by, str(_int_value), size, start)
     if cards is None or cards["total"] == 0:
         return _error_page(
-            _t(lang, "noKanjiInGroup"),
-            _t(lang, "noGroupMsg", by=by, value=value),
+            _t(lang, "lite_noKanjiInGroup"),
+            _t(lang, "lite_noGroupMsg", by=by, value=value),
             404,
             theme,
             _controls(request),
@@ -1148,7 +1148,7 @@ def lite_kanji_group(request: Request, by: str, value: str = "", n: str = "60", 
     )
     group_label = esc(cards["label"])
     suffix = esc(_t(lang, "kanjiSuffix"))
-    subtitle = esc(_t(lang, "groupSubtitle", group=group_label.lower() if lang == "en" else group_label))
+    subtitle = esc(_t(lang, "lite_groupSubtitle", group=group_label.lower() if lang == "en" else group_label))
     body = f"""<h1 class="kgroup-title">{group_label} {suffix}
 <span class="kgroup-total">{cards["total"]}</span></h1>
 <p class="kgroup-sub">{subtitle}</p>
@@ -1223,7 +1223,7 @@ def _kanji_body(request: Request, card: dict, from_word: str = "") -> str:
         stroke_html = (
             '<div class="stroke-box">'
             f'<svg class="strokes" viewBox="{esc(stroke.get("view_box"))}" xmlns="http://www.w3.org/2000/svg" '
-            f'role="img" aria-label="{esc(_t(lang, "strokeAria", char=char))}">{paths}{numbers}</svg></div>'
+            f'role="img" aria-label="{esc(_t(lang, "lite_strokeAria", char=char))}">{paths}{numbers}</svg></div>'
         )
 
     meanings_title = esc(_t(lang, "meanings"))
@@ -1249,12 +1249,12 @@ def lite_kanji(request: Request, char: str, log: bool = Query(True, include_in_s
     lang = _read_lang(request)
     if not is_kanji(char):
         return _error_page(
-            _t(lang, "notKanji"), _t(lang, "notKanjiMsg"), 400, theme, _controls(request), lang
+            _t(lang, "lite_notKanji"), _t(lang, "lite_notKanjiMsg"), 400, theme, _controls(request), lang
         )
     card = kanji_card(char, strokes=True)
     if not card:
         return _error_page(
-            _t(lang, "kanjiNotFound"),
+            _t(lang, "lite_kanjiNotFound"),
             _t(lang, "noKanjiEntry", char=char),
             404,
             theme,
@@ -1287,7 +1287,7 @@ def lite_kanji(request: Request, char: str, log: bool = Query(True, include_in_s
         # (esc()ed so a crafted gq can't break out of the href attribute).
         back_href = f"/lite/kanji/group?{esc(gq)}"
         back_label = (
-            f"← {esc(_t(lang, 'backTo', word=frm))}" if frm else f"← {esc(_t(lang, 'backToGroup'))}"
+            f"← {esc(_t(lang, 'backTo', word=frm))}" if frm else f"← {esc(_t(lang, 'lite_backToGroup'))}"
         )
     else:
         back_href, back_label = "/lite", f"← {esc(_t(lang, 'backToSearch'))}"
@@ -1295,7 +1295,7 @@ def lite_kanji(request: Request, char: str, log: bool = Query(True, include_in_s
     current = _current_path(request)
     search_form = _search_form(lang=lang, furi=furi, next_url=current, from_word=char, frm=frm, chain=chn)
     return _page(
-        _t(lang, "kanjiPageTitle", char=char),
+        _t(lang, "lite_kanjiPageTitle", char=char),
         # Badges thread this kanji (not the inherited word) as the next
         # back-context — the chain always names the page you were just on.
         search_form
@@ -1352,7 +1352,7 @@ def lite_about(request: Request) -> HTMLResponse:
 <h2 id="lite">{esc(_t(lang, "liteVsFull"))}</h2>
 <p>{esc(_t(lang, "liteVsFullText"))}</p>
 <h2>{esc(_t(lang, "howItWorks"))}</h2>
-<p>{esc(_t(lang, "howTextLite"))}</p>
+<p>{esc(_t(lang, "lite_howTextLite"))}</p>
 <h2>{esc(_t(lang, "dataSources"))}</h2>
 <p>{data_para}</p>
 <h2>{esc(_t(lang, "privacy"))}</h2>

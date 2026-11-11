@@ -49,6 +49,9 @@ COPY --chown=app:app \
     data/processed/strokes.json \
     data/processed/
 
+# shared UI strings — app/lite/i18n.py resolves i18n/ two levels above itself
+COPY --chown=app:app i18n/ i18n/
+
 RUN python -m compileall -q app scripts
 
 EXPOSE 8000
