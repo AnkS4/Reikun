@@ -548,6 +548,7 @@ def _search_form(
     frm: str = "",
     chain: str = "",
     autofocus: bool = False,
+    placeholder: str | None = None,
 ) -> str:
     """The search row, mirroring the SPA: input, then three text buttons —
     Search, random kanji (a plain ``formaction`` redirect target, no JS) and
@@ -566,9 +567,10 @@ def _search_form(
     from_input = f'<input type="hidden" name="from" value="{esc(from_word)}">' if from_word else ""
     chain_val = (frm + ("|" + chain if chain else "")) if frm else chain
     chain_input = f'<input type="hidden" name="chain" value="{esc(chain_val)}">' if chain_val else ""
+    ph = esc(placeholder or _t(lang, "searchPlaceholder"))
     return f"""<form class="search" action="/lite/search" method="get" role="search">
 <input type="search" name="q" value="{esc(q)}"
-placeholder="{esc(_t(lang, "searchPlaceholder"))}" aria-label="{search_btn}"{focus}>
+placeholder="{ph}" aria-label="{search_btn}"{focus}>
 {from_input}
 {chain_input}
 <button type="submit">{search_btn}</button>
@@ -589,12 +591,14 @@ def lite_home(request: Request) -> HTMLResponse:
     lang = _read_lang(request)
     furi = _read_furi(request)
     recent = _read_recent(request)
-    form = _search_form(furi=furi, lang=lang, next_url=_current_path(request), autofocus=True)
 
     # The SPA shows recent searches when they exist and the example pills
-    # otherwise; a cookie makes both possible without JavaScript.
-    hint = ""
+    # otherwise; a cookie makes both possible without JavaScript. The home
+    # page's input placeholder carries the shared hint (the no-JS stand-in
+    # for the SPA's typewriter) — but only in the examples branch, where
+    # "tap an example below" is actually true.
     if recent:
+        form = _search_form(furi=furi, lang=lang, next_url=_current_path(request), autofocus=True)
         label = (
             f'<p class="pills-label">{esc(_t(lang, "recentSearches"))} '
             f'<a href="/lite/recent/clear">{esc(_t(lang, "clear"))}</a></p>'
@@ -604,15 +608,17 @@ def lite_home(request: Request) -> HTMLResponse:
             for query in recent
         )
     else:
-        # Static stand-in for the SPA's typewriter placeholder hint.
-        hint = f'<p class="hint">{esc(_t(lang, "hint"))}</p>'
+        form = _search_form(
+            furi=furi, lang=lang, next_url=_current_path(request), autofocus=True,
+            placeholder=_t(lang, "hint"),
+        )
         label = f'<p class="pills-label">{esc(_t(lang, "exampleSearches"))}</p>'
         pills = "".join(
             f'<a class="pill" href="{_href("/lite/search", q=entry)}">{esc(entry)}</a>' for entry in _EXAMPLES
         )
 
     body = f"""{form}
-{hint}{label}
+{label}
 <div class="pills">{pills}</div>"""
     return _page(
         _t(lang, "search"),
