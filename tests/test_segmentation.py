@@ -159,6 +159,17 @@ def test_mixed_query_leading_english_still_segments() -> None:
     assert "不要" in texts and "切り替え" in texts, texts
 
 
+def test_arrow_separated_japanese_phrase_segments() -> None:
+    """A →-separated suffix is another Japanese phrase, not an English gloss:
+    the whole query must reach Sudachi so 語を検索できます decomposes too."""
+    segments = segment_japanese("検索可能な単語やフレーズ → 語を検索できます")
+    assert segments
+    texts = [s["text"] for s in segments]
+    assert "フレーズ" in texts
+    assert "語" in texts and "を" in texts and "できます" in texts
+    assert not any("→" in text for text in texts)
+
+
 @pytest.mark.parametrize(
     "n,kanji",
     [

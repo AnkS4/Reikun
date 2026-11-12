@@ -1254,6 +1254,19 @@ def _segment_bare(query: str) -> list[dict] | None:
 _JA_RUN = re.compile(r"[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff]+")  # mixed text: the Japanese prefix
 
 
+def _has_separate_japanese(text: str) -> bool:
+    """True when `text` has a Japanese run that starts a separate phrase —
+    after whitespace/punctuation (→ 語…, 「語」) or at the start — rather than
+    glued to Latin (Lite版, test語)."""
+    for m in _JA_RUN.finditer(text):
+        if m.start() == 0:
+            return True
+        prev = text[m.start() - 1]
+        if prev.isspace() or not prev.isalnum():
+            return True
+    return False
+
+
 def segment_japanese(query: str, max_len: int = MAX_JA_QUERY_CHARS) -> list[dict] | None:
     """
     Split a Japanese sentence/compound into dictionary segments for the
@@ -1263,7 +1276,9 @@ def segment_japanese(query: str, max_len: int = MAX_JA_QUERY_CHARS) -> list[dict
     fails does the greedy longest-match `_segment_greedy` run.
 
     For mixed text (Japanese + English), segments the Japanese prefix and
-    appends the English suffix as-is.
+    appends the English suffix as-is. A suffix with a separately delimited
+    Japanese run (→ 語…, 「語」) is another phrase, not an English gloss, so
+    the whole query goes through the normal Sudachi parse instead.
 
     Returns [{"text", "kanji_form", "reading", "meanings"}, …] when the query
     decomposes into ≥2 parts. None when the query is itself a headword, is
@@ -1276,9 +1291,12 @@ def segment_japanese(query: str, max_len: int = MAX_JA_QUERY_CHARS) -> list[dict
 
     # Handle mixed text: find where Japanese ends and English begins
     match = _JA_RUN.match(query)
+    suffix = query[match.end():].strip() if match else ""
+    if match and suffix and _has_separate_japanese(suffix):
+        match = None
     if match:
         ja_part = match.group()
-        en_part = query[len(ja_part):].strip()
+        en_part = suffix
         # Only segment if there's non-trivial English after Japanese
         if en_part and len(en_part) > 0:
             # Segment the Japanese part

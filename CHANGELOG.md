@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Kanji-card section titles are larger**: `Meanings`, `Common words` and the other section labels step up from `--fs-2xs` to `--fs-sm` in both variants — still uppercase mono micro-labels, just readable.
 
 ### Fixed
+- **Arrow-separated Japanese phrases**: a query like "検索可能な単語やフレーズ → 語を検索できます" no longer treats everything after `→` as one English suffix; the full Sudachi parse now decomposes both sides of the separator.
 - **Firefox clipped the focus ring on edge icons**: both variants' fixed control clusters used `margin-right:-15px`, pushing the border box ~1.4px past the viewport — enough for Firefox's `:focus-visible` outline (which Chrome doesn't paint on click) to clip on the rightmost icon. Now `-8px`, leaving ~5.6px of clearance; applied to the SPA's `.header-controls` and `.floating-buttons` and lite's `.controls`.
 - **Web Docker image builds on Alpine again**: `npm ci` on `node:22-alpine` dropped `@rolldown/binding-linux-x64-musl` (the known npm optional-deps bug), failing the Vite build inside Docker. The Dockerfile now installs the matching binding right after `npm ci`, deriving the version from rolldown's own `optionalDependencies` so it cannot drift from the lockfile.
 
