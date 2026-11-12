@@ -61,25 +61,25 @@ def test_theme_toggle_is_one_click_and_variant_switch(monkeypatch) -> None:
 
     monkeypatch.setattr(lite_module, "WEB_BASE_URL", "http://127.0.0.1:5173")
     home = client.get("/lite").text
-    # System default: both directions are rendered as text pills but the CSS
+    # System default: both directions are rendered as icon buttons but the CSS
     # hides the one matching the OS scheme — exactly one clickable toggle on
     # first visit, no explicit "system" option (as the SPA's popover would need).
     assert 'class="theme-toggle"' in home and "to-light" in home and "to-dark" in home
     assert home.count("/lite/theme") >= 2  # both directions present
     assert 'aria-label="Switch to the light theme"' in home
     assert 'aria-label="Switch to the dark theme"' in home
-    controls = home.split("<main>")[0].split('class="controls"')[1]
-    # Controls must render without SVG: hardened browsers (Tor/LibreWolf
-    # "Safest") set svg.disabled=true, which blanks inline SVG — the cluster
-    # is plain text pills instead (see the note in app/lite/__init__.py above
-    # _controls).
+    controls = home.split("<main>")[0].split('class="controls"')[1].split("</div>")[0]
+    # Controls mirror the SPA's header cluster order and icon set — full
+    # switch, status dot, theme sun/moon and the languages menu trigger — but
+    # the glyphs are pure CSS (.icon-*), never SVG: hardened browsers
+    # (svg.disabled) blank inline SVG for the no-JS visitors lite serves.
     assert "<svg" not in controls
-    assert 'aria-label="Switch to the full interface"' in controls and ">Full<" in controls
-    # Every control is the same .control pill: the status word, the theme
-    # words and the target language code — no mixed glyph styles.
-    assert controls.count('class="control') >= 4
-    assert "control status" in controls
-    assert ">Light</a>" in controls and ">Dark</a>" in controls and ">JA</a>" in controls
+    assert 'class="icon icon-full"' in controls and 'class="icon icon-db"' in controls
+    assert 'class="icon icon-sun"' in controls and 'class="icon icon-moon"' in controls
+    assert 'class="icon icon-lang"' in controls
+    assert 'aria-label="Switch to the full interface"' in controls
+    assert 'class="icon-link"' in controls and 'class="status-dot' in controls
+    assert 'class="theme-toggle"' in controls and 'class="lang-menu"' in controls
     assert "http://127.0.0.1:5173" in controls
     monkeypatch.undo()
     assert 'Switch to the full interface' not in client.get("/lite").text  # unset → button hidden
@@ -140,15 +140,16 @@ def test_stroke_paths_are_outlines_like_the_spa() -> None:
 
 
 def test_status_chip_is_a_minimal_native_tooltip() -> None:
-    # The Lite status chip is the same text pill as the other controls; its
-    # detail rides on the native title attribute — no hover popup, no extra CSS.
+    # The Lite status chip mirrors the SPA's status dot: an SVG glyph whose
+    # state and detail ride on the native title/aria attributes.
     client.cookies.clear()
     home = client.get("/lite")
-    assert 'class="control status' in home.text
+    assert 'class="status-dot' in home.text
+    assert 'role="img"' in home.text
     assert 'title="' in home.text
     assert 'class="status-pop"' not in home.text
     controls = home.text.split('class="controls"')[1]
-    assert controls.index("control status") < controls.index("theme-toggle") < controls.index("Switch to")
+    assert controls.index("status-dot") < controls.index("theme-toggle") < controls.index("lang-menu")
 
 
 def test_recent_pills_from_cookie_replace_examples() -> None:
@@ -360,8 +361,9 @@ def test_language_toggle_flips_cookie_and_translates_the_page(monkeypatch: pytes
         home = client.get("/lite")  # client keeps the cookie
         assert '<html lang="ja"' in home.text
         assert ">検索</button>" in home.text  # search button
-        assert 'aria-label="Englishに切り替え"' in home.text  # toggle offers the other language
-        assert 'aria-label="表示言語"' not in home.text
+        assert 'class="lang-menu"' in home.text  # <details> disclosure menu
+        assert 'aria-label="インターフェースの言語: 日本語"' in home.text  # menu labelled in-page language
+        assert 'href="/lite/lang?v=en&next=' in home.text  # English entry in the list
         # The About page follows the language (like the SPA's), so with a
         # language cookie it is private. The privacy policy stays English in
         # every language (legal text, like the footer) and stays shared. Pages

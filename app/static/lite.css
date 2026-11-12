@@ -51,6 +51,10 @@
 :root{--font:system-ui,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
 --font-japanese:'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic','Meiryo',
 'Noto Sans CJK JP','Noto Sans JP',sans-serif;
+/* Devanagari (Hindi/Marathi): system stacks already fall back, but name the
+   common faces first so the script renders cleanly everywhere. */
+--font-devanagari:'Nirmala UI','Noto Sans Devanagari','Mangal','Lohit Devanagari',
+'system-ui',sans-serif;
 --font-mono:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;
 /* Same name as the SPA's display face; lite maps it to the system stack. */
 --font-display:var(--font);
@@ -66,6 +70,7 @@ body{margin:0 auto;padding:1.25rem 1.25rem 4rem;max-width:50rem;background:var(-
 font:16px/1.6 var(--font);-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;
 text-rendering:optimizeLegibility}
 [lang=ja],ruby rt{font-family:var(--font-japanese)}
+[lang=mr],[lang=hi]{font-family:var(--font-devanagari)}
 ::selection{background:var(--selection)}
 :focus-visible{outline:2px solid var(--primary);outline-offset:2px}
 a{color:inherit;text-decoration:none}
@@ -90,29 +95,55 @@ text-decoration:none;color:var(--text);}
 background:var(--surface-soft);border:1px solid var(--border-soft);border-radius:var(--radius-pill);
 padding:.1rem .5rem;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap}
 .controls{position:fixed;top:.6rem;right:.85rem;margin-right:-15px;z-index:200;display:flex;
-align-items:center;gap:.4rem}
-/* Top-right controls, mirroring the SPA's header cluster order: every control
-   is the same small text pill — muted until hover, titles + aria-labels carry
-   the full meaning the short labels abbreviate. Plain text, no SVG: hardened
-   browsers with svg.disabled blank inline SVG (Tor/LibreWolf "Safest"). */
-.controls .control{display:inline-flex;align-items:center;justify-content:center;
-min-height:2rem;padding:0 .7rem;border-radius:var(--radius-pill);color:var(--text-muted);
-font-size:var(--fs-xs);font-weight:500;line-height:1;white-space:nowrap}
-.controls .control:hover{color:var(--text);background:var(--surface-soft)}
-/* Dictionary status is the same pill, tinted by state, but it reports the
-   CURRENT state while the theme/language pills name the TARGET of a click.
-   It is a <span>, so it gets no hover background: it reads as a label. */
-.controls .status,.controls .status:hover{cursor:default;background:transparent}
-.controls .status.ok,.controls .status.ok:hover{color:var(--ok)}
-.controls .status.err,.controls .status.err:hover{color:var(--err)}
-/* Not probed yet: a step quieter than the other pills' --text-muted. */
-.controls .status.checking,.controls .status.checking:hover{color:var(--text-faint)}
+align-items:center;gap:.15rem}
+/* Top-right icon buttons, mirroring the SPA's header cluster: same 2rem round
+   hit area, muted until hover. Titles + aria-labels carry the meaning. */
+.controls .icon-link{display:inline-flex;align-items:center;justify-content:center;
+width:2rem;height:2rem;border-radius:999px;color:var(--text-muted)}
+.controls .icon-link:hover{color:var(--text)}
+/* Control glyphs come from a tiny icon font (5 glyphs, <1 kB, embedded as
+   a data URI so it ships inside the cached stylesheet) — the SPA's own
+   Lucide icons (sun, moon, layout-dashboard, languages, database) traced
+   to outlines by scripts/build_lite_icons.py; source woff2 lives in
+   app/static/lite-icons.woff2 (Lucide is ISC-licensed). A font renders
+   everywhere SVG is disabled (svg.disabled blanks inline SVG for exactly
+   the no-JS visitors lite serves), and currentColor keeps state tinting
+   and hover colors working. */
+@font-face{font-family:'reikun-icons';font-display:block;src:url(data:font/woff2;base64,d09GMgABAAAAAAOkAAoAAAAABxwAAANZAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAABmAAVAqHJIYjATYCJAMOCw4ABCAFgh0HWxvWBUAeB9XtTNPtTCavyYfq9PN51vtJWg+E/IXd/BFQpHtLVjwNdV1jyPOSYwLbfS3qskILrZEMyAvZ+b+fz4u0RwN6vvSdGe945L2rbhtHg02s4lf4J6zjf1GvnhQOOvVXgY737QJIMHqaOcDs4BfAr+n/z4DqDlAWQwPrTIkghLHzf9TkKMyf/n39T/Xf4P/PFhfBv3cpVWnKKEWrbBcgPVXqsBqAM0AXABVPzUCHFChyUvSRuzxrc7VcrShscrlpsJnL7UkvSzKIvAAGAfEj4pBhUBhGvBgWhBBBypl6qqkXa5oHCjgzVaJBqRR4C874k439S7iWvqSvKxs0DIlBLexVMAyeGT49ohLBEMiCMGgcOjuCVOygMMyXqUSg9GsQzQcgCqmsHgVRcYBBeuDjKoSCRXmki8PTowKaenFg80BwELs5qGNoKbliTRr7Q01EE1YLfNDK3l8SumVTcOvwirDrdneXhbQNJnJ2lxkChs4GjfCBw2fI4A5puWi8gHgRmMqIJBi8AKkpojBAg5Sv8Jd2pu/QYg4HlpS0ZsWBmKsvJGxQ20H+1UnNndY/1bxiRQGmkGFnxoXMP1bzzL9/S78KPPbxnbtuG423d+3s6npr0fbrV+hoZxvGFvuXdWLhyRNr8zIBdwaHLC6aebWXI16E6yVFnAMvvQlOU3xajvRmN7REw4EW9IJWj6egkihpNOLGmxoncXpO40ShBj7fmp7ubO6c+Lpu7reNWyd9NeU5e5fFcuWWnqyN9hW/MYd/s9x0OdsJx8/w47Q9Fbs1vRU2h328eyrDnu/2Cm/sKZvlM5jgGZaAMu1tTzomeuKW7qTjkpNOiR5YAAAbgcb63cd2N7CEPZiJGQ5H24MUQQPqocFjXiivaEhOTKA3IsWndlX50yizrX/kiH4PAN45vgqC7mE5R2c8BAAaRU8sKZku3xc1l554Tn0UFgBShGIEpU8r6SBptxpgKEVGjdIsWGEYgrdTSs1H0FC47a2zKMXUMZTmKQzDELRQqlH4ElLSCjKX3WTVeY9kkxJ7/z5EwpGQsO449wuQK0GKNAUyLYOROFkCh9GApLQuXYxcOZCegXxan0afDMmd230CSn9FClBHNGKQBEnl66dbttLKQOIq4mriGrgWAAA=) format('woff2')}
+.controls .icon{display:inline-flex;align-items:center;justify-content:center;
+width:1rem;height:1rem;flex:none;font:.94rem/1 'reikun-icons',sans-serif}
+.icon-sun::before{content:"\f5a2"}
+.icon-moon::before{content:"\f497"}
+.icon-full::before{content:"\f3f9"}
+.icon-lang::before{content:"\f658"}
+.icon-db::before{content:"\f8c4"}
+.controls .status-dot{display:inline-flex;align-items:center;justify-content:center;
+width:2rem;height:2rem;border-radius:999px;color:var(--text-faint);cursor:default}
+.controls .status-dot.ok{color:var(--ok)}
+.controls .status-dot.err{color:var(--err)}
+/* Not probed yet: a step quieter than the other icons' --text-muted. */
+.controls .status-dot.checking{color:var(--text-faint)}
 /* System mode renders both directions and this hides the one matching the OS
-   scheme — a first visit shows exactly one pill, e.g. Dark on a light OS.
-   Specificity note: these selectors must outrank `.controls .control`. */
-.controls .theme-toggle .control{display:none}
-@media (prefers-color-scheme:light){.controls .theme-toggle .to-dark{display:inline-flex}}
-@media (prefers-color-scheme:dark){.controls .theme-toggle .to-light{display:inline-flex}}
+   scheme — a first visit shows exactly one button, e.g. the moon on a light OS.
+   Specificity note: these selectors must outrank `.controls .icon-link`. */
+.controls .theme-toggle a{display:none}
+@media (prefers-color-scheme:light){.controls .theme-toggle a.to-dark{display:inline-flex}}
+@media (prefers-color-scheme:dark){.controls .theme-toggle a.to-light{display:inline-flex}}
+/* Language menu: <details> disclosure, no JS. The summary is the same
+   languages icon the SPA's popover trigger uses; the list drops below it,
+   right-aligned to the icon. */
+.controls .lang-menu{position:relative;display:inline-flex}
+.controls .lang-menu summary{list-style:none;cursor:pointer}
+.controls .lang-menu summary::-webkit-details-marker{display:none}
+.controls .lang-menu[open] summary{color:var(--text);background:var(--surface-soft)}
+.lang-list{position:absolute;top:calc(100% + .35rem);right:0;z-index:90;margin:0;
+padding:.3rem;list-style:none;background:var(--surface);border:1px solid var(--border);
+border-radius:var(--radius-md);box-shadow:0 .5rem 1.5rem rgb(0 0 0 / .18)}
+.lang-list{display:flex;flex-wrap:wrap;max-width:24rem}
+.lang-list a{display:inline-flex;align-items:center;padding:.35rem .6rem;border-radius:var(--radius-sm);
+color:var(--text);font-size:var(--fs-sm);text-decoration:none;white-space:nowrap}
+.lang-list a:hover{background:var(--surface-soft)}
+.lang-list a[aria-current]{color:var(--primary);font-weight:600;background:var(--surface-soft)}
 h1{font-size:1.5rem;margin:0 0 .6rem}
 h2{font-size:var(--fs-2xl);margin:.4rem 0 .35rem}
 .entry h2{font-family:var(--font-japanese);font-size:1.65rem;font-weight:500;letter-spacing:.02em}
@@ -153,6 +184,9 @@ background:var(--surface);color:var(--text-muted);
 font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);
 margin:1.4rem 0 .6rem;text-align:center}
 .pills-label a{margin-left:.6rem}
+/* Static stand-in for the SPA's typewriter placeholder hint on the home page. */
+.hint{color:var(--text-muted);font-size:var(--fs-sm);text-align:center;
+margin:.7rem 0 0;line-height:1.5}
 .entry{border:1px solid var(--border-soft);border-radius:var(--radius-lg);background:var(--surface);
 padding:1.35rem 1.5rem;margin:1.15rem 0;
 }
@@ -307,7 +341,6 @@ line-height:1.15;white-space:normal;word-break:break-word}
 @media (max-width:680px){
 body{padding:1.25rem 1rem 3rem}
 .controls{gap:.25rem}
-.controls .control{padding:0 .55rem;font-size:var(--fs-xs)}
 header.hero{margin:calc(clamp(2.25rem,11vh,4.5rem) - 1.25rem) 0 1.25rem}
 .hero-tag{font-size:var(--fs-2xs);letter-spacing:.04em;padding:.2rem .65rem}
 .tagline{font-size:var(--fs-md);line-height:1.5;max-width:22rem;color:var(--text-faint)}
@@ -345,8 +378,8 @@ footer p{margin:.35rem 0}
 .skip-link:focus{top:1rem}
 main:focus{outline:none}
 @media (forced-colors:active){
-.controls .control{border:1px solid ButtonText}
-.controls .control:hover{background:transparent}
+.controls .icon-link,.controls .status-dot,.controls .lang-menu summary{border:1px solid ButtonText}
+.controls .icon-link:hover{background:transparent}
 button[type=submit],.btn{border:1px solid ButtonText}
 }
 /* High contrast: borders at 45%/25% of the text colour, as static values
@@ -359,7 +392,7 @@ button[type=submit],.btn{border:1px solid ButtonText}
 :root:not([data-theme="light"]){--border:rgba(255,255,255,.45);--border-soft:rgba(255,255,255,.25)}
 }
 @media (pointer:coarse){
-.controls .control{min-height:2.75rem}
+.controls .icon-link,.controls .status-dot{min-height:2.75rem;min-width:2.75rem}
 form.search button[type=submit],form.search .btn{min-height:2.75rem}
 .pill{min-height:2.75rem}
 .kbadges a.badge{display:inline-flex;align-items:center;min-height:2.75rem;padding-block:.3rem}

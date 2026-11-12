@@ -285,15 +285,26 @@ def _refresh_status() -> None:
         _status_snapshot.update(ok=ok, count=count, at=time.monotonic())
 
 
+# Top-right controls mirror the SPA's header cluster order and icon set —
+# but drawn in pure CSS (.icon-* classes in lite.css), NOT inline SVG:
+# hardened browsers (Tor/LibreWolf "Safest") set svg.disabled=true, which
+# blanks inline SVG exactly for the no-JS visitors lite serves. CSS gradients
+# render everywhere, keep currentColor tinting, and need no assets or JS.
+# The glyphs are CSS approximations of the SPA's Lucide icons: sun, moon,
+# layout-dashboard (full), languages and database.
+
+
+def _icon(name: str) -> str:
+    return f'<span class="icon icon-{name}" aria-hidden="true"></span>'
+
+
 def _status_chip(lang: str) -> str:
-    """The dictionary status, rendered server-side as the same text pill the
-    other controls use: the state word plus a native title tooltip carrying
-    the detail. The page was rendered by the process that owns the Qdrant
-    client, so unlike the SPA there is no "connecting" phase -- it is either
-    connected or not. The state comes from the last cached snapshot (refreshed
-    in the background), so a page view never waits on Qdrant. The word is
-    plain text (no SVG), so it survives hardened browsers with svg.disabled
-    (Tor/LibreWolf Safest)."""
+    """The SPA's database status dot, rendered server-side: green/red glyph
+    plus a hover/focus tooltip with the state and live entry count. The page
+    was rendered by the process that owns the Qdrant client, so unlike the SPA
+    there is no "connecting" phase -- it is either connected or not. The state
+    comes from the last cached snapshot (refreshed in the background), so a
+    page view never waits on Qdrant."""
     ok, count, _ = _status_state()
     if ok is None:
         state = "checking"
@@ -309,76 +320,71 @@ def _status_chip(lang: str) -> str:
         aria = _t(lang, "statusAriaOffline", msg=_t(lang, "lite_statusUnavailable"))
     title = label
     return (
-        f'<span class="control status {state}" role="status" tabindex="0" '
-        f'aria-label="{esc(aria)}" title="{esc(title)}">{esc(label)}</span>'
+        f'<span class="status-dot {state}" role="img" tabindex="0" '
+        f'aria-label="{esc(aria)}" title="{esc(title)}">{_icon("db")}</span>'
     )
 
 
-# Top-right controls are deliberately NOT SVG. Hardened browsers (Tor
-# Browser / LibreWolf "Safest") set svg.disabled=true, which blanks inline
-# SVG too — the controls would vanish exactly for the no-JS visitors lite
-# serves. Controls are therefore plain text: every chrome control is the same
-# small labelled pill (.control), so the cluster reads uniformly without
-# JavaScript, SVG, emoji or a symbol-font gamble (☀ can hit the color-emoji
-# font and ignore the muted/hover colors).
+# Top-right controls mirror the SPA's header cluster: the same Lucide-style
+# inline SVG icons in the same order (full-version switch, dictionary status,
+# theme, language). Inline markup needs no JavaScript. Note: hardened browsers
+# with svg.disabled (Tor/LibreWolf "Safest") blank these icons — the trade-off
+# accepted for visual parity with the SPA.
 #
-# This is lite's whole icon language, kept uniform on purpose:
-#   - controls: text labels in .control pills (see _controls);
+# Lite's icon language otherwise stays minimal:
 #   - wayfinding: typographic arrows in link text (←, →, from lite/i18n.py);
 #   - badges/pills/buttons: words, never glyphs.
 # Lite has fewer chrome icons than the SPA by design — no AI explanations,
-# no thumbs feedback, no hover tips — so the cluster mirrors the SPA's
-# ORDER, not its SVG set. The one remaining SVG on any lite page is the
-# kanji stroke diagram (KanjiVG stroke data — content shared with the SPA,
-# not an icon); in svg-disabled browsers that box is blank while the card
-# still shows glyph, readings, meanings and badges.
+# no thumbs feedback, no hover tips.
 
 
 def _theme_toggle(theme: str, next_url: str, lang: str) -> str:
-    """A single-click theme switch rendered as the same text pills as the
-    other controls. With no stored choice the OS preference decides the
+    """A single-click theme switch, drawn as icon buttons like the SPA's
+    appearance control. With no stored choice the OS preference decides the
     palette, so the toggle pointing the opposite way is the only thing a
     first-time visitor can click — both directions are rendered and CSS hides
-    the one matching the OS scheme. A pinned theme shows just the pill back to
-    the other one."""
+    the one matching the OS scheme. A pinned theme shows just the button back
+    to the other one."""
     light_label = _t(lang, "lite_themeToLight")
     dark_label = _t(lang, "lite_themeToDark")
-    light_word = _t(lang, "themeLight")
-    dark_word = _t(lang, "themeDark")
     if theme == "system":
         href_light = f"/lite/theme?v=light&next={quote(next_url, safe='')}"
         href_dark = f"/lite/theme?v=dark&next={quote(next_url, safe='')}"
+        sun = f'<a class="icon-link to-light" href="{href_light}" title="{esc(light_label)}"'
+        moon = f'<a class="icon-link to-dark" href="{href_dark}" title="{esc(dark_label)}"'
         return (
             '<span class="theme-toggle">'
-            f'<a class="control to-light" href="{href_light}" title="{esc(light_label)}"'
-            f' aria-label="{esc(light_label)}">{esc(light_word)}</a>'
-            f'<a class="control to-dark" href="{href_dark}" title="{esc(dark_label)}"'
-            f' aria-label="{esc(dark_label)}">{esc(dark_word)}</a>'
+            f'{sun} aria-label="{esc(light_label)}">{_icon("sun")}</a>'
+            f'{moon} aria-label="{esc(dark_label)}">{_icon("moon")}</a>'
             "</span>"
         )
     other = "dark" if theme == "light" else "light"
     href = f"/lite/theme?v={other}&next={quote(next_url, safe='')}"
     label = dark_label if other == "dark" else light_label
-    word = dark_word if other == "dark" else light_word
-    return (
-        f'<a class="control" href="{href}" title="{esc(label)}" aria-label="{esc(label)}">'
-        f"{esc(word)}</a>"
-    )
+    glyph = "moon" if other == "dark" else "sun"
+    return f'<a class="icon-link" href="{href}" title="{esc(label)}" aria-label="{esc(label)}">{_icon(glyph)}</a>'
 
 
 def _lang_toggle(lang: str, next_url: str) -> str:
-    """No-JS language switch: a text pill (the same .control as the rest of
-    the cluster) showing the target language's code, that flips the shared
-    lite_lang cookie via a redirect. The target language's own name lives in
-    the title/aria-label."""
-    other = "ja" if lang == "en" else "en"
-    name = "日本語" if other == "ja" else "English"
-    code = "JA" if other == "ja" else "EN"
-    href = f"/lite/lang?v={other}&next={quote(next_url, safe='')}"
-    label = _t(lang, "lite_langSwitch", name=name)
+    """No-JS language menu: a <details> disclosure — the summary is the same
+    languages icon the SPA's popover trigger uses, and each item links through
+    /lite/lang to set the shared lite_lang cookie and redirect back. Works
+    without JavaScript and scales to any number of locales; the items carry
+    each language's endonym."""
+    items = []
+    for code in _LANGS:
+        name = _LANG_NAMES[code]
+        href = f"/lite/lang?v={code}&next={quote(next_url, safe='')}"
+        current = ' aria-current="true"' if code == lang else ""
+        items.append(
+            f'<li><a href="{href}" lang="{code}"{current}>{esc(name)}</a></li>'
+        )
+    label = _t(lang, "languageTitle")
     return (
-        f'<a class="control" href="{href}" title="{esc(label)}" aria-label="{esc(label)}" lang="{other}">'
-        f"{code}</a>"
+        f'<details class="lang-menu"><summary class="icon-link"'
+        f' title="{esc(label)}: {_LANG_NAMES[lang]}"'
+        f' aria-label="{esc(label)}: {_LANG_NAMES[lang]}">{_icon("lang")}</summary>'
+        f'<ul class="lang-list">{"".join(items)}</ul></details>'
     )
 
 
@@ -425,8 +431,8 @@ def _full_switch_url(request: Request) -> str:
 def _controls(request: Request) -> str:
     """Top-right chrome row on every page — mirrors the SPA's header-cluster
     order: full-version switch, dictionary status, theme switch, language
-    switch. Every control is the same .control text pill; the titles and
-    aria-labels carry the full meaning the short labels abbreviate."""
+    switch. Icon buttons mirror the SPA's cluster; the titles and
+    aria-labels carry the full meaning the icons abbreviate."""
     lang = _read_lang(request)
     theme = _read_theme(request)
     next_url = _current_path(request)
@@ -435,8 +441,8 @@ def _controls(request: Request) -> str:
     if full_url:
         label = _t(lang, "lite_fullSwitch")
         parts.append(
-            '<a class="control" href="' + esc(full_url) + '" rel="noopener"'
-            f' title="{esc(label)}" aria-label="{esc(label)}">{esc(_t(lang, "lite_fullShort"))}</a>'
+            '<a class="icon-link" href="' + esc(full_url) + '" rel="noopener"'
+            f' title="{esc(label)}" aria-label="{esc(label)}">{_icon("full")}</a>'
         )
     parts.append(_status_chip(lang))
     parts.append(_theme_toggle(theme, next_url, lang))
@@ -568,6 +574,7 @@ def lite_home(request: Request) -> HTMLResponse:
 
     # The SPA shows recent searches when they exist and the example pills
     # otherwise; a cookie makes both possible without JavaScript.
+    hint = ""
     if recent:
         label = (
             f'<p class="pills-label">{esc(_t(lang, "recentSearches"))} '
@@ -578,13 +585,15 @@ def lite_home(request: Request) -> HTMLResponse:
             for query in recent
         )
     else:
+        # Static stand-in for the SPA's typewriter placeholder hint.
+        hint = f'<p class="hint">{esc(_t(lang, "hint"))}</p>'
         label = f'<p class="pills-label">{esc(_t(lang, "exampleSearches"))}</p>'
         pills = "".join(
             f'<a class="pill" href="{_href("/lite/search", q=entry)}">{esc(entry)}</a>' for entry in _EXAMPLES
         )
 
     body = f"""{form}
-{label}
+{hint}{label}
 <div class="pills">{pills}</div>"""
     return _page(
         _t(lang, "search"),
