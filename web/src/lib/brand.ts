@@ -9,4 +9,4 @@ export const BRAND_SHORT = 'Reikun';
 export const BRAND_SUBTEXT = 'Semantic Japanese Dictionary & Reading Assistant';
 export const BRAND_TITLE = `${BRAND_NAME} — ${BRAND_SUBTEXT}`;
 export const BRAND_DESCRIPTION =
-	'Search English or Japanese, break down sentences word-by-word with furigana and meanings, inspect kanji, and get grammar explanations tuned to your JLPT level.';
+	'Search English or Japanese words and sentences, break them down word-by-word with furigana and meanings, inspect kanji, and get grammar explanations tuned to your JLPT level.';
