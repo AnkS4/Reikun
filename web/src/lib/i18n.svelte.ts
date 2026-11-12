@@ -1,5 +1,5 @@
 /**
- * Tiny interface-chrome i18n: English and Japanese.
+ * Tiny interface-chrome i18n: English, Japanese, Spanish, Marathi, Hindi.
  *
  * The app is a mixed-language product by design — UI chrome is localized,
  * while JMdict glosses, example sentences and LLM explanations stay English
@@ -15,17 +15,26 @@ import { browser } from '$app/env';
 import { safeStorage } from './storage.ts';
 import en from './i18n/en.json';
 import ja from './i18n/ja.json';
+import es from './i18n/es.json';
+import mr from './i18n/mr.json';
+import hi from './i18n/hi.json';
 
-export const LOCALES = ['en', 'ja'] as const;
+export const LOCALES = ['en', 'ja', 'es', 'mr', 'hi'] as const;
 export type Locale = (typeof LOCALES)[number];
 export const LOCALE_NAMES: Record<Locale, string> = {
 	en: 'English',
-	ja: '日本語'
+	ja: '日本語',
+	es: 'Español',
+	mr: 'मराठी',
+	hi: 'हिन्दी'
 };
 /** BCP 47 tags used for locale-aware number formatting. */
 export const LOCALE_TAGS: Record<Locale, string> = {
 	en: 'en',
-	ja: 'ja-JP'
+	ja: 'ja-JP',
+	es: 'es',
+	mr: 'mr-IN',
+	hi: 'hi-IN'
 };
 
 const KEY = 'reikun-locale';
@@ -39,7 +48,7 @@ const COOKIE_AGE = 2_592_000; // 30 days — same as lite's _COOKIE_MAX_AGE
 
 function readSharedCookie(): Locale | null {
 	if (!browser) return null;
-	const m = document.cookie.match(/(?:^|;\s*)lite_lang=(en|ja)(?:;|$)/);
+	const m = document.cookie.match(/(?:^|;\s*)lite_lang=(en|ja|es|mr|hi)(?:;|$)/);
 	return m ? (m[1] as Locale) : null;
 }
 
@@ -50,7 +59,7 @@ function syncSharedCookie(next: Locale): void {
 
 export type MessageKey = keyof typeof en;
 
-const DICTS: Record<Locale, Record<MessageKey, string>> = { en, ja };
+const DICTS: Record<Locale, Record<MessageKey, string>> = { en, ja, es, mr, hi };
 
 let locale = $state<Locale>('en');
 let initialized = false;

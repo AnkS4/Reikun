@@ -135,7 +135,12 @@ _FURI_COOKIE = "lite_furi"
 _THEME_COOKIE = "lite_theme"
 _RECENT_COOKIE = "lite_recent"
 _LANG_COOKIE = "lite_lang"
-_LANGS = ("en", "ja")
+_LANGS = ("en", "ja", "es", "mr", "hi")
+# Endonyms — a language is always named in itself, never translated.
+_LANG_NAMES = {
+    "en": "English", "ja": "日本語", "es": "Español",
+    "mr": "मराठी", "hi": "हिन्दी",
+}
 _COOKIE_MAX_AGE = 2_592_000
 MAX_RECENT = 8
 _RECENT_MAX_CHARS = 150
@@ -730,7 +735,7 @@ def _read_theme(request: Request) -> str:
 
 
 def _read_lang(request: Request) -> str:
-    """Interface language — English unless the shared cookie says Japanese."""
+    """Interface language — English unless the shared cookie names another."""
     value = request.cookies.get(_LANG_COOKIE, "")
     return value if value in _LANGS else "en"
 
@@ -1148,7 +1153,7 @@ def lite_kanji_group(request: Request, by: str, value: str = "", n: str = "60", 
     )
     group_label = esc(cards["label"])
     suffix = esc(_t(lang, "kanjiSuffix"))
-    subtitle = esc(_t(lang, "lite_groupSubtitle", group=group_label.lower() if lang == "en" else group_label))
+    subtitle = esc(_t(lang, "lite_groupSubtitle", group=group_label.lower() if lang in ("en", "es") else group_label))
     body = f"""<h1 class="kgroup-title">{group_label} {suffix}
 <span class="kgroup-total">{cards["total"]}</span></h1>
 <p class="kgroup-sub">{subtitle}</p>

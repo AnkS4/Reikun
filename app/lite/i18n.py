@@ -1,4 +1,4 @@
-"""Chrome strings for the Lite UI (en/ja).
+"""Chrome strings for the Lite UI.
 
 Strings live in the shared ``i18n/*.json`` files at the repo root — the same
 source the SvelteKit SPA imports — so both surfaces stay in sync. Keys used
@@ -18,7 +18,11 @@ def _load(lang: str) -> dict[str, str]:
     return json.loads((_I18N_DIR / f"{lang}.json").read_text(encoding="utf-8"))
 
 
-_I18N: dict[str, dict[str, str]] = {lang: _load(lang) for lang in ("en", "ja")}
+# Every i18n/<locale>.json ships a full table; "en" is the required fallback.
+_LOCALES = tuple(
+    sorted(p.stem for p in _I18N_DIR.glob("*.json"))
+)
+_I18N: dict[str, dict[str, str]] = {lang: _load(lang) for lang in _LOCALES}
 
 
 def _t(lang: str, key: str, **vars: object) -> str:
