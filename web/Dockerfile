@@ -13,8 +13,12 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies
-RUN npm ci
+# Install dependencies. npm's optional-deps resolution can drop the
+# platform-specific rolldown native binding on musl (npm/cli#4828), so install
+# it explicitly at the version rolldown declares.
+RUN npm ci \
+    && npm install --no-save \
+       "@rolldown/binding-linux-x64-musl@$(node -p "require('rolldown/package.json').optionalDependencies['@rolldown/binding-linux-x64-musl'] || require('rolldown/package.json').version")"
 
 # Copy source
 COPY . .
