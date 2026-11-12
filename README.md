@@ -7,7 +7,7 @@
 <h1 align="center">Reikun (例訓) — Semantic Japanese Dictionary & Reading Assistant</h1>
 
 <p align="center">
-  A Semantic Japanese Dictionary & Reading Assistant — search in English or Japanese, break down sentences word-by-word with furigana and meanings, inspect kanji, and get grammar explanations tuned to your JLPT level.
+  A Semantic Japanese Dictionary & Reading Assistant — search English or Japanese words and sentences, break them down word-by-word, see meanings and furigana, inspect kanji, and get grammar explanations tuned to your JLPT level.
 </p>
 
 <p align="center">
