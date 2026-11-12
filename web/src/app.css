@@ -664,6 +664,28 @@ ruby rt {
 	pointer-events: auto;
 }
 
+/* Typewriter hint rendered as an overlay (not a placeholder) so it can
+   auto-scroll: it starts flush-left and slides left only when the text
+   overflows, keeping the newest typed characters visible on narrow screens. */
+.search-hint {
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	overflow: hidden;
+	white-space: nowrap;
+	display: flex;
+	align-items: center;
+	pointer-events: none;
+	color: var(--text-faint);
+	font-size: var(--fs-lg);
+}
+
+.search-hint-text {
+	display: inline-block;
+	white-space: nowrap;
+	will-change: transform;
+}
+
 /* Auxiliary controls on the search row — shuffle, furigana and JLPT all use
    the same square footprint so the strip stays visually even. */
 .search-row > .btn-3d,

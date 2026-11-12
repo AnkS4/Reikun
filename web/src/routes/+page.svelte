@@ -142,6 +142,33 @@
 	// placeholder — no timer churning behind a finished search.
 	const hint = typewriter(() => (hasResults ? [] : [t('hint')]));
 
+	// The hint renders as an overlay (placeholder can't scroll). Keep its right
+	// edge pinned to the input's text area and slide it left only when the text
+	// overflows, so the end of the typed phrase stays visible on narrow screens.
+	let hintBox = $state<HTMLElement>();
+	let hintText = $state<HTMLElement>();
+	$effect(() => {
+		const box = hintBox,
+			text = hintText,
+			inp = searchInput;
+		if (!box || !text || !inp) return;
+		const cs = getComputedStyle(inp);
+		const padL = parseFloat(cs.paddingLeft),
+			padR = parseFloat(cs.paddingRight),
+			borderL = parseFloat(cs.borderLeftWidth);
+		const sync = () => {
+			box.style.left = `${inp.offsetLeft + borderL + padL}px`;
+			box.style.width = `${inp.clientWidth - padL - padR}px`;
+			text.style.transform = `translateX(${Math.min(0, box.clientWidth - text.offsetWidth)}px)`;
+		};
+		sync();
+		const ro = new ResizeObserver(sync);
+		ro.observe(box);
+		ro.observe(text);
+		ro.observe(inp);
+		return () => ro.disconnect();
+	});
+
 	// URL → search: ?q= drives everything (deep links, back/forward, pills).
 	// ?kanji= is a legacy deep link → becomes a single-kanji search. urlKey
 	// dedupes effect refires on params we don't care about (level).
@@ -331,7 +358,7 @@
 		<input
 			type="search"
 			id="search"
-			placeholder={hasResults ? t('searchPlaceholder') : hint.text}
+			placeholder={hasResults ? t('searchPlaceholder') : ''}
 			aria-label={t('search')}
 			bind:value={qInput}
 			bind:this={searchInput}
@@ -339,6 +366,11 @@
 			autocapitalize="none"
 			spellcheck="false"
 		/>
+		{#if !hasResults && !qInput}
+			<span class="search-hint" bind:this={hintBox} aria-hidden="true"
+				><span class="search-hint-text" bind:this={hintText}>{hint.text}</span></span
+			>
+		{/if}
 		<button
 			type="button"
 			class="search-clear"
