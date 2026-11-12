@@ -848,6 +848,47 @@ ruby rt {
 	white-space: nowrap;
 }
 
+/* Vertical option list for header popovers (theme, language): with five
+   locales the horizontal segmented row overflowed, so options stack like
+   Lite's <details> menu — same sel highlight (primary text on soft bg). */
+.opt-list {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+}
+
+.opt-list button {
+	font: inherit;
+	font-family: var(--font-mono);
+	font-size: var(--fs-sm);
+	font-weight: 500;
+	border: none;
+	background: transparent;
+	color: var(--text-muted);
+	padding: 0.32rem 0.55rem;
+	border-radius: calc(var(--radius-sm) - 3px);
+	cursor: pointer;
+	text-align: left;
+	transition: all 0.15s var(--ease);
+}
+
+.opt-list button:hover:not(.sel) {
+	color: var(--text);
+	background: var(--surface-soft);
+}
+
+.opt-list button.sel {
+	color: var(--primary);
+	font-weight: 600;
+	background: var(--surface-soft);
+}
+
+/* The 17rem panel minimum was sized for horizontal segmented rows; a
+   vertical option list only needs room for the longest endonym. */
+.popover-panel:has(> .opt-list) {
+	min-width: 10.5rem;
+}
+
 /* Furigana toggle in the search row — visible one-click switch */
 .furi-toggle .furi-kana {
 	font-size: var(--fs-lg);

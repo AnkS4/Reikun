@@ -106,7 +106,7 @@
 	</span>
 	<Popover icon="palette" title={t('appearanceTitle')}>
 		<p class="popover-title">{t('appearance')}</p>
-		<div class="segmented" role="group" aria-label={t('theme')}>
+		<div class="opt-list" role="group" aria-label={t('theme')}>
 			{#each THEME_OPTIONS as option (option.v)}
 				<button
 					type="button"
@@ -121,7 +121,7 @@
 	</Popover>
 	<Popover icon="languages" title={t('languageTitle')}>
 		<p class="popover-title">{t('language')}</p>
-		<div class="segmented lang-segmented" role="group" aria-label={t('languageTitle')}>
+		<div class="opt-list" role="group" aria-label={t('languageTitle')}>
 			{#each LOCALES as code (code)}
 				<button
 					type="button"
