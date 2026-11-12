@@ -94,7 +94,11 @@ text-decoration:none;color:var(--text);}
 .tag{font-family:var(--font-mono);font-size:var(--fs-2xs);font-weight:500;color:var(--text-muted);
 background:var(--surface-soft);border:1px solid var(--border-soft);border-radius:var(--radius-pill);
 padding:.1rem .5rem;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap}
-.controls{position:fixed;top:.6rem;right:.85rem;margin-right:-15px;z-index:200;display:flex;
+/* Negative right margin keeps the icon row visually flush with the page
+   edge, but -15px pushed the border box ~1.4px past the viewport — enough
+   for Firefox's :focus-visible outline (which Chrome doesn't paint on
+   click) to clip. -8px leaves ~5.6px of clearance for the ring. */
+.controls{position:fixed;top:.6rem;right:.85rem;margin-right:-8px;z-index:200;display:flex;
 align-items:center;gap:.15rem}
 /* Top-right icon buttons, mirroring the SPA's header cluster: same 2rem round
    hit area, muted until hover. Titles + aria-labels carry the meaning. */

@@ -340,12 +340,15 @@ ruby rt {
 }
 
 /* Floating control cluster — bare ghost icons at the viewport edge,
-   decoupled from the centered column */
+   decoupled from the centered column. The negative right margin keeps the
+   icons visually flush, but -15px pushed the border box ~1.4px past the
+   viewport — enough for Firefox's :focus-visible outline (which Chrome
+   doesn't paint on click) to clip. -8px leaves ~5.6px of clearance. */
 .header-controls {
 	position: fixed;
 	top: 0.6rem;
 	right: 0.85rem;
-	margin-right: -15px;
+	margin-right: -8px;
 	z-index: 200;
 	display: flex;
 	align-items: center;
@@ -2517,7 +2520,7 @@ a.kanji-tip {
 	position: fixed;
 	bottom: calc(1.5rem + env(safe-area-inset-bottom, 0px));
 	right: 1.5rem;
-	margin-right: -15px;
+	margin-right: -8px; /* same offscreen-margin fix as .header-controls */
 	display: flex;
 	flex-direction: column;
 	gap: 0.6rem;
