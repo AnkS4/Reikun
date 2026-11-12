@@ -8,7 +8,6 @@ hero are verified without them).
 
 import json
 import time
-from pathlib import Path
 from urllib.parse import quote, unquote
 
 import pytest
@@ -323,18 +322,13 @@ def test_about_page() -> None:
     # the anchor the home page's lite note links to.
     assert '<h2 id="lite">' in r.text and "<h2>Version</h2>" in r.text
     assert 'href="/lite/about#lite"' in client.get("/lite").text
-    # The emblem is a copy of the SPA's, served immutable from lite's static path.
-    assert '<img src="/lite/static/emblem.svg?v=' in r.text
 
 
-def test_emblem_matches_the_spa_copy() -> None:
-    root = Path(__file__).resolve().parent.parent
-    lite_copy = (root / "app" / "static" / "emblem.svg").read_bytes()
-    assert lite_copy == (root / "web" / "static" / "icons" / "emblem.svg").read_bytes()
-    r = client.get("/lite/static/emblem.svg")
-    assert r.status_code == 200 and r.content == lite_copy
-    assert r.headers["content-type"].startswith("image/svg+xml")
-    assert "immutable" in r.headers["cache-control"]
+def test_about_page_has_no_external_assets() -> None:
+    # Lite stays asset-free apart from its stylesheet: no emblem request.
+    r = client.get("/lite/about")
+    assert "<img" not in r.text and "emblem" not in r.text
+    assert client.get("/lite/static/emblem.svg").status_code == 404
 
 
 def test_privacy_page(monkeypatch: pytest.MonkeyPatch) -> None:

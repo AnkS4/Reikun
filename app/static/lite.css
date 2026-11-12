@@ -374,9 +374,7 @@ form.search button[type=submit],form.search .btn{min-height:2.75rem}
 }
 /* About article — the SPA's type scale: mono section labels, muted body text. */
 .about{max-width:38rem;margin:2.5rem auto 0}
-.about-title{display:flex;align-items:center;gap:.75rem;margin:0 0 1rem}
-.about-title img{width:clamp(2rem,5vw,2.5rem);height:clamp(2rem,5vw,2.5rem);border-radius:22%;flex-shrink:0}
-.about-title h1{margin:0}
+.about h1{margin:0 0 1rem}
 .about h1{font-family:var(--font-display);font-size:clamp(1.8rem,5vw,2.4rem);
 font-weight:500;margin:0 0 1rem}
 .about .lede{font-size:var(--fs-lg);line-height:1.7;color:var(--text)}

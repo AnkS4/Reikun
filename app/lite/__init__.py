@@ -64,7 +64,7 @@ from app.render import furigana_parts, kanji_card, kanji_group_cards, related_wo
 from app.retrieval import MAX_JA_QUERY_CHARS, SearchResponse, is_headword, search
 from app.telemetry import telemetry
 
-from .assets import _EMBLEM_HASH, _EMBLEM_SVG, _EMBLEM_URL, _LITE_CSS_HASH, _LITE_CSS_TEXT, _LITE_CSS_URL
+from .assets import _LITE_CSS_HASH, _LITE_CSS_TEXT, _LITE_CSS_URL
 from .i18n import _t
 
 logger = logging.getLogger("reikun.lite")
@@ -160,17 +160,6 @@ def lite_static_css() -> Response:
         },
     )
 
-
-@router.get("/lite/static/emblem.svg", include_in_schema=False)
-def lite_static_emblem() -> Response:
-    return Response(
-        content=_EMBLEM_SVG,
-        media_type="image/svg+xml",
-        headers={
-            "Cache-Control": "public, max-age=31536000, immutable",
-            "ETag": f'"{_EMBLEM_HASH}"',
-        },
-    )
 
 # The footer stays in English even when the rest of the site is Japanese: the
 # copyright, licence name and data attributions are legal/credit lines and are
@@ -1395,8 +1384,7 @@ def lite_about(request: Request) -> HTMLResponse:
         f'{esc(_t(lang, "sourceAfter"))}'
     )
     body = f"""<article class="about">
-<div class="about-title"><img src="{_EMBLEM_URL}" alt="" width="40" height="40">
-<h1>{esc(_t(lang, "aboutTitle"))}</h1></div>
+<h1>{esc(_t(lang, "aboutTitle"))}</h1>
 <p class="lede">{esc(_t(lang, "aboutLede"))}</p>
 <h2>{esc(_t(lang, "whatItDoes"))}</h2>
 <ul>
