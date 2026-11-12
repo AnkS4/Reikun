@@ -122,6 +122,7 @@ router = APIRouter(tags=["lite"], include_in_schema=False, route_class=_LiteRout
 _search_limit = Depends(rate_limited(RATE_LIMIT_SEARCH, TRUSTED_PROXY_HOPS))
 
 _CACHE_STATIC = "public, max-age=86400, stale-while-revalidate=604800"
+_CANONICAL_BASE = "https://reikun.app"
 
 _BRAND_SUBTEXT = "Semantic Japanese Dictionary & Reading Assistant"
 _EXAMPLES = [
@@ -461,7 +462,14 @@ def _page(
     theme: str = "system",
     lang: str = "en",
     furi: bool = True,
+    canonical: str = "",
+    noindex: bool = False,
 ) -> HTMLResponse:
+    head_extras = (
+        f'<meta name="description" content="{esc(_t(lang, "lite_tagline"))}">\n'
+        + (f'<link rel="canonical" href="{_CANONICAL_BASE}{esc(canonical)}">\n' if canonical else "")
+        + ('<meta name="robots" content="noindex">\n' if noindex else "")
+    )
     document = f"""<!doctype html>
 <html lang="{esc(lang)}" data-theme="{esc(theme)}">
 <head>
@@ -469,7 +477,7 @@ def _page(
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light dark">
 <title>{esc(title)} · Reikun Lite</title>
-<link rel="stylesheet" href="{_LITE_CSS_URL}">
+{head_extras}<link rel="stylesheet" href="{_LITE_CSS_URL}">
 </head>
 <body>
 {_header(hero, lang)}
@@ -516,6 +524,7 @@ def _error_page(
         theme=theme,
         controls=controls,
         lang=lang,
+        noindex=True,
     )
 
 
@@ -602,6 +611,7 @@ def lite_home(request: Request) -> HTMLResponse:
         controls=_controls(request),
         theme=_read_theme(request),
         lang=lang,
+        canonical="/lite/",
     )
 
 
@@ -621,6 +631,7 @@ def lite_search(
             controls=_controls(request),
             theme=_read_theme(request),
             lang=lang,
+            noindex=True,
         )
     furi = _read_furi(request)
     theme = _read_theme(request)
@@ -628,7 +639,7 @@ def lite_search(
     recent_value = _recent_cookie_value(request.cookies.get(_RECENT_COOKIE, ""), query)
 
     def _finish(status: int, body: str, title: str) -> Response:
-        page = _page(title, body, status_code=status, theme=theme, controls=_controls(request), lang=lang)
+        page = _page(title, body, status_code=status, theme=theme, controls=_controls(request), lang=lang, noindex=True)
         page.set_cookie(
             _RECENT_COOKIE,
             recent_value,
@@ -960,6 +971,7 @@ def lite_conjugations(request: Request, word: str = "", reading: str = "") -> Re
             controls=_controls(request),
             theme=theme,
             lang=lang,
+            canonical="/lite/conjugations",
         )
     try:
         resp = search(word, 3, "auto", rewrite_mode="off")
@@ -995,6 +1007,7 @@ def lite_conjugations(request: Request, word: str = "", reading: str = "") -> Re
             controls=_controls(request),
             theme=theme,
             lang=lang,
+            canonical="/lite/conjugations",
         )
 
     shown_reading = esc(headword) + (
@@ -1025,7 +1038,12 @@ def lite_conjugations(request: Request, word: str = "", reading: str = "") -> Re
 </table>
 <div class="conj-page-back">{back}</div></div>"""
     return _page(
-        _t(lang, "conjPageTitle", word=headword), body, controls=_controls(request), theme=theme, lang=lang
+        _t(lang, "conjPageTitle", word=headword),
+        body,
+        controls=_controls(request),
+        theme=theme,
+        lang=lang,
+        canonical="/lite/conjugations",
     )
 
 
@@ -1170,7 +1188,13 @@ def lite_kanji_group(request: Request, by: str, value: str = "", n: str = "60", 
 {pagination}
 <div class="kgroup-bottom-actions"><a href="{back_href}" class="btn">{back_label}</a></div>"""
     return _page(
-        cards["label"], body, cache=_CACHE_STATIC, controls=_controls(request), theme=theme, lang=lang
+        cards["label"],
+        body,
+        cache=_CACHE_STATIC,
+        controls=_controls(request),
+        theme=theme,
+        lang=lang,
+        canonical="/lite/kanji/group",
     )
 
 
@@ -1320,6 +1344,7 @@ def lite_kanji(request: Request, char: str, log: bool = Query(True, include_in_s
         theme=theme,
         lang=lang,
         furi=furi,
+        canonical=f"/lite/kanji/{char}",
     )
 
 
@@ -1384,6 +1409,7 @@ def lite_about(request: Request) -> HTMLResponse:
         controls=_controls(request),
         theme=_read_theme(request),
         lang=lang,
+        canonical="/lite/about",
     )
 
 
@@ -1452,4 +1478,5 @@ def lite_privacy(request: Request) -> HTMLResponse:
         controls=_controls(request),
         theme=_read_theme(request),
         lang="en",
+        canonical="/lite/privacy",
     )
