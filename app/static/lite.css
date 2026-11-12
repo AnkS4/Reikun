@@ -127,6 +127,25 @@ width:2rem;height:2rem;border-radius:999px;color:var(--text-faint);cursor:defaul
 .controls .status-dot.err{color:var(--err)}
 /* Not probed yet: a step quieter than the other icons' --text-muted. */
 .controls .status-dot.checking{color:var(--text-faint)}
+/* Status disclosure: same <details> pattern as the language menu. The
+   summary keeps the status-dot look; opening it reveals the SPA-style
+   status panel (title, state line, detail sub-line). */
+.controls .status-menu{position:relative;display:inline-flex}
+.controls .status-menu summary{list-style:none;cursor:pointer}
+.controls .status-menu summary::-webkit-details-marker{display:none}
+.status-pop{position:absolute;top:calc(100% + .35rem);right:0;z-index:90;margin:0;
+min-width:13rem;max-width:20rem;padding:.7rem .9rem;background:var(--surface);
+border:1px solid var(--border);border-radius:var(--radius-md);
+box-shadow:0 .5rem 1.5rem rgb(0 0 0 / .18);font-size:var(--fs-sm);line-height:1.55;
+text-align:left;cursor:default}
+.status-pop .popover-title{font-family:var(--font-mono);font-size:var(--fs-2xs);
+font-weight:500;text-transform:uppercase;letter-spacing:.08em;color:var(--text-faint);
+margin:0 0 .6rem}
+.status-line{display:flex;align-items:center;gap:.45rem;font-weight:500;color:var(--text)}
+.status-mark{width:.45rem;height:.45rem;border-radius:50%;background:var(--text-faint);flex:none}
+.status-mark.ok{background:var(--ok)}
+.status-mark.err{background:var(--err)}
+.status-sub{display:block;margin-top:.25rem;color:var(--text-muted)}
 /* System mode renders both directions and this hides the one matching the OS
    scheme — a first visit shows exactly one button, e.g. the moon on a light OS.
    Specificity note: these selectors must outrank `.controls .icon-link`. */

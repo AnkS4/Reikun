@@ -68,11 +68,12 @@ def test_theme_toggle_is_one_click_and_variant_switch(monkeypatch) -> None:
     assert home.count("/lite/theme") >= 2  # both directions present
     assert 'aria-label="Switch to the light theme"' in home
     assert 'aria-label="Switch to the dark theme"' in home
-    controls = home.split("<main>")[0].split('class="controls"')[1].split("</div>")[0]
+    controls = home.split("<main>")[0].split('class="controls"')[1].split("skip-link")[0]
     # Controls mirror the SPA's header cluster order and icon set — full
     # switch, status dot, theme sun/moon and the languages menu trigger — but
-    # the glyphs are pure CSS (.icon-*), never SVG: hardened browsers
-    # (svg.disabled) blank inline SVG for the no-JS visitors lite serves.
+    # the glyphs come from the subset icon font (.icon-*), never SVG:
+    # hardened browsers (svg.disabled) blank inline SVG for the no-JS
+    # visitors lite serves.
     assert "<svg" not in controls
     assert 'class="icon icon-full"' in controls and 'class="icon icon-db"' in controls
     assert 'class="icon icon-sun"' in controls and 'class="icon icon-moon"' in controls
@@ -139,15 +140,17 @@ def test_stroke_paths_are_outlines_like_the_spa() -> None:
     assert "fill:none;stroke:currentColor" in css
 
 
-def test_status_chip_is_a_minimal_native_tooltip() -> None:
-    # The Lite status chip mirrors the SPA's status dot: an SVG glyph whose
-    # state and detail ride on the native title/aria attributes.
+def test_status_chip_is_a_native_disclosure() -> None:
+    # The Lite status chip mirrors the SPA's status dot as a <details>
+    # disclosure: the summary is the tinted glyph, and the panel carries the
+    # same title/state/detail text the SPA's hover popover shows.
     client.cookies.clear()
     home = client.get("/lite")
+    assert 'class="status-menu"' in home.text
     assert 'class="status-dot' in home.text
-    assert 'role="img"' in home.text
-    assert 'title="' in home.text
-    assert 'class="status-pop"' not in home.text
+    assert 'class="status-pop"' in home.text
+    assert 'class="popover-title"' in home.text
+    assert 'class="status-line"' in home.text and 'class="status-sub"' in home.text
     controls = home.text.split('class="controls"')[1]
     assert controls.index("status-dot") < controls.index("theme-toggle") < controls.index("lang-menu")
 

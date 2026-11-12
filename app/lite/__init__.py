@@ -256,17 +256,18 @@ def _header(hero: bool, lang: str = "en") -> str:
 # small pill in the top-right cluster — a dot plus a short word, with the
 # detail in a native title tooltip.
 _status_lock = threading.Lock()
-_status_snapshot: dict[str, object] = {"ok": None, "count": None, "at": 0.0}
+_status_snapshot: dict[str, object] = {"ok": None, "count": None, "at": 0.0, "error": None}
 _STATUS_TTL = 60.0  # seconds between probes
 
 
-def _status_state() -> tuple[bool | None, int | None, bool]:
-    """(ok, entry count, stale?) from the last probe — no network call."""
+def _status_state() -> tuple[bool | None, int | None, bool, str | None]:
+    """(ok, entry count, stale?, last error) from the last probe — no network call."""
     with _status_lock:
         ok = cast("bool | None", _status_snapshot["ok"])
         count = cast("int | None", _status_snapshot["count"])
         at = cast("float", _status_snapshot["at"])
-    return ok, count, (time.monotonic() - at) > _STATUS_TTL
+        error = cast("str | None", _status_snapshot["error"])
+    return ok, count, (time.monotonic() - at) > _STATUS_TTL, error
 
 
 def _refresh_status() -> None:
@@ -274,6 +275,7 @@ def _refresh_status() -> None:
     slow or sleeping Qdrant never delays a page."""
     count: int | None = None
     ok = False
+    error: str | None = None
     try:
         result = qdrant_client().count(COLLECTION, timeout=2)
         count = result.count
@@ -281,18 +283,18 @@ def _refresh_status() -> None:
         # dictionary, however reachable the server is.
         ok = bool(count)
     except Exception as exc:  # unreachable, missing collection, timeout, …
-        logger.debug("lite status: dictionary unreachable (%s)", type(exc).__name__)
+        error = type(exc).__name__
+        logger.debug("lite status: dictionary unreachable (%s)", error)
     with _status_lock:
-        _status_snapshot.update(ok=ok, count=count, at=time.monotonic())
+        _status_snapshot.update(ok=ok, count=count, at=time.monotonic(), error=error)
 
 
 # Top-right controls mirror the SPA's header cluster order and icon set —
-# but drawn in pure CSS (.icon-* classes in lite.css), NOT inline SVG:
-# hardened browsers (Tor/LibreWolf "Safest") set svg.disabled=true, which
-# blanks inline SVG exactly for the no-JS visitors lite serves. CSS gradients
-# render everywhere, keep currentColor tinting, and need no assets or JS.
-# The glyphs are CSS approximations of the SPA's Lucide icons: sun, moon,
-# layout-dashboard (full), languages and database.
+# but drawn from a subset icon font (.icon-* classes in lite.css), NOT
+# inline SVG: hardened browsers (Tor/LibreWolf "Safest") set
+# svg.disabled=true, which blanks inline SVG exactly for the no-JS visitors
+# lite serves. scripts/build_lite_icons.py generates the font from the same
+# Lucide stroke paths the SPA inlines, so the glyphs match.
 
 
 def _icon(name: str) -> str:
@@ -300,29 +302,37 @@ def _icon(name: str) -> str:
 
 
 def _status_chip(lang: str) -> str:
-    """The SPA's database status dot, rendered server-side: green/red glyph
-    plus a hover/focus tooltip with the state and live entry count. The page
-    was rendered by the process that owns the Qdrant client, so unlike the SPA
-    there is no "connecting" phase -- it is either connected or not. The state
-    comes from the last cached snapshot (refreshed in the background), so a
-    page view never waits on Qdrant."""
-    ok, count, _ = _status_state()
+    """The SPA's database status dot as a no-JS <details> disclosure: the
+    summary is the same tinted glyph, and opening it reveals the same status
+    panel the SPA's hover popover carries — title, state line with its mark,
+    and a detail sub-line (entry count, waking note, or reach error). The
+    state comes from the last cached snapshot (refreshed in the background),
+    so a page view never waits on Qdrant."""
+    ok, count, _, error = _status_state()
     if ok is None:
         state = "checking"
-        label = _t(lang, "lite_statusChecking")
-        aria = _t(lang, "statusTitle")
+        line = _t(lang, "statusConnecting")
+        sub = _t(lang, "statusWaking")
+        mark = ""
+        aria = _t(lang, "statusAriaConnecting")
     elif ok:
         state = "ok"
-        label = _t(lang, "statusConnected")
+        line = _t(lang, "statusConnected")
+        sub = _t(lang, "statusReadyWords", count=f"{count or 0:,}")
+        mark = "ok"
         aria = _t(lang, "statusAriaReady", count=f"{count or 0:,}")
     else:
         state = "err"
-        label = _t(lang, "statusOffline")
-        aria = _t(lang, "statusAriaOffline", msg=_t(lang, "lite_statusUnavailable"))
-    title = label
+        line = _t(lang, "statusOffline")
+        sub = _t(lang, "statusReachError", msg=error or _t(lang, "lite_statusUnavailable"))
+        mark = "err"
+        aria = _t(lang, "statusAriaOffline", msg=error or _t(lang, "lite_statusUnavailable"))
     return (
-        f'<span class="status-dot {state}" role="img" tabindex="0" '
-        f'aria-label="{esc(aria)}" title="{esc(title)}">{_icon("db")}</span>'
+        f'<details class="status-menu"><summary class="status-dot {state}" '
+        f'aria-label="{esc(aria)}">{_icon("db")}</summary>'
+        f'<div class="status-pop"><span class="popover-title">{esc(_t(lang, "statusTitle"))}</span>'
+        f'<span class="status-line"><span class="status-mark{" " + mark if mark else ""}"></span>{esc(line)}</span>'
+        f'<span class="status-sub">{esc(sub)}</span></div></details>'
     )
 
 
@@ -494,7 +504,7 @@ def _page(
         # caches may ignore Vary: Cookie (Cloudflare does) and serve one
         # visitor's copy to another, so keep it to the browser.
         cache = cache.replace("public,", "private,", 1)
-    ok, _, stale = _status_state()
+    ok, _, stale, _ = _status_state()
     if cache and ok is not True:
         # The status chip is baked into the page: only share a copy that says
         # "Ready", never one that says "Offline" (or has not probed yet).
