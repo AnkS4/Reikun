@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Three more UI locales**: Spanish, Marathi and Hindi join English and Japanese — 208 shared strings per locale in `i18n/*.json`. Both variant switchers show the language name in its own script (`Español`, `मराठी`, `हिन्दी`), the shared `lite_lang` cookie now carries all five codes so one choice follows a visitor across the SPA and Lite, and Lite's language menu is a no-JS `<details>` disclosure listing all five horizontally. `scripts/check_i18n.py` now validates every `*.json` in `i18n/` against `en.json`, so a sixth locale is a new file plus a loader entry — no code changes.
+- **Lite control icons as a subset icon font**: the top-right cluster (status, theme, language, full-version switch) is drawn from a 932-byte WOFF2 subset built by `scripts/build_lite_icons.py`, which traces the same Lucide stroke paths the SPA inlines — same shapes, same 15px metrics, `currentColor` tinting, crisp at any DPI. Because fonts are not SVG, the controls survive hardened browser profiles that set `svg.disabled=true` and blank inline SVG — the failure mode the earlier text-pill and CSS-gradient fallbacks were built around.
+- **Lite SEO head**: every lite page now emits a localized meta description (the `lite_tagline` string) and a self-canonical URL, so `?q=`/`?word=`/`?by=` parameter variants consolidate to the clean path. `/lite/search` and error pages carry `noindex` — infinite thin result pages have no place in an index — while kanji, conjugation, group, about and privacy pages stay indexable: the SPA equivalents are client-rendered shells, so Lite's server-rendered HTML is the most crawlable copy of that content.
+
+### Changed
+- **Search and hint copy clarified**: `searchPlaceholder`, the homepage `hint` and both taglines no longer say "Search in English or Japanese" / "Type or tap an example" — ambiguous phrasing that machine-translated poorly and implied typing alone triggers a search. They now read "Search for English or Japanese text" / "Search English or Japanese words and sentences, break them down…" across all five locales (DeepL output reviewed per locale; Marathi/Hindi grammar terminology and the author's name hand-checked). `BRAND_DESCRIPTION` (the English-only meta description) matches.
+- **SPA search hint is an overlay, not a placeholder**: the typewriter hint rendered as an absolutely-positioned layer over the input that starts flush-left and auto-scrolls left only when it overflows, so the end being typed stays visible on narrow screens — a `placeholder` cannot scroll. Position and width track the input's real padding box via `ResizeObserver`, so it follows font-size and padding changes at every viewport.
+- **Lite home shows the shared hint**: the examples branch renders the same `hint` string as a static line — the no-JS stand-in for the SPA's typewriter — and the language menu summary shows the current language's endonym instead of its code.
+
+### Fixed
+- **Web Docker image builds on Alpine again**: `npm ci` on `node:22-alpine` dropped `@rolldown/binding-linux-x64-musl` (the known npm optional-deps bug), failing the Vite build inside Docker. The Dockerfile now installs the matching binding right after `npm ci`, deriving the version from rolldown's own `optionalDependencies` so it cannot drift from the lockfile.
+
 ## [1.2.2] - 2026-11-12
 
 Patch release: fixes the CI backend job — the lite privacy-page test no longer depends on a reachable Qdrant.
