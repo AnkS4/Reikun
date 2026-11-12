@@ -1937,7 +1937,7 @@ a.kanji-tip {
 
 .kanji-section-title {
 	font-family: var(--font-mono);
-	font-size: var(--fs-2xs);
+	font-size: var(--fs-sm);
 	text-transform: uppercase;
 	letter-spacing: 0.08em;
 	color: var(--text-faint);

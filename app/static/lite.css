@@ -317,7 +317,7 @@ border-left:1px dashed var(--line-guide)}
 .kbadges{display:flex;flex-wrap:wrap;gap:.35rem;margin-top:.85rem;justify-content:center}
 .kbadges .badge{margin:0;font-size:var(--fs-2xs);padding:.15rem .55rem}
 .ksection{margin-bottom:1rem}
-.ksection-title{font-family:var(--font-mono);font-size:var(--fs-2xs);
+.ksection-title{font-family:var(--font-mono);font-size:var(--fs-sm);
 font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-faint);margin:0 0 .35rem}
 .meanings{margin:.1rem 0 .75rem;font-size:var(--fs-2xl);line-height:1.35}
 .meanings .first{font-weight:500}
