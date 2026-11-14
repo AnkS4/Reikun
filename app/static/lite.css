@@ -281,7 +281,7 @@ font-size:var(--fs-2xs);color:var(--text-muted);white-space:nowrap}
 .sense-block:target{border-left-color:var(--primary);background:var(--primary-light)}
 /* Dictionary cross-references — JMdict xref antonym/see-also chips,
    mirroring the SPA's .xref-row (links in Lite). */
-.xref-row{display:flex;flex-wrap:wrap;align-items:baseline;gap:.4rem;margin:.35rem 0 .75rem}
+.xref-row{display:flex;flex-wrap:wrap;align-items:baseline;gap:.4rem;margin:.5rem 0 .75rem}
 .xref-label{font-family:var(--font-mono);font-size:var(--fs-2xs);text-transform:uppercase;
 letter-spacing:.05em;color:var(--text-muted)}
 .chip.xref-ant{border-color:var(--primary)}

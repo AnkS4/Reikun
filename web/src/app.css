@@ -1564,7 +1564,7 @@ a.kanji-tip {
 	flex-wrap: wrap;
 	align-items: baseline;
 	gap: 0.4rem;
-	margin: 0 0 0.35rem;
+	margin: 0.5rem 0 0.35rem;
 }
 
 .xref-label {
