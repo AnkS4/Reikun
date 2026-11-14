@@ -79,6 +79,13 @@
 		</button>
 	</div>
 	<p class="meanings-line">{result.meanings.slice(0, 6).join('; ')}</p>
+	{#if result.lsource?.length}
+		<!-- Etymology ("From Portuguese — espada"): JMdict-authored English like
+		     the glosses; the source form carries its BCP-47 lang tag. -->
+		<p class="etymology">
+			{#each result.lsource as src, i (src.lang + '-' + i)}{i > 0 ? '; ' : ''}{src.label}{#if src.text} — <span class="etym-src" lang={src.tag ?? undefined}>{src.text}</span>{/if}{/each}
+		</p>
+	{/if}
 	{#if searched && result.inflection}
 		<p class="inflection-bar">
 			<span lang="ja">{searched}</span>

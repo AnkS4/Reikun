@@ -24,6 +24,8 @@ Routes (mounted by ``app/api.py``):
     GET /lite/lang             set the interface language cookie, redirect back
     GET /lite/recent/clear     empty the recent-searches cookie, redirect back
     GET /lite/conjugations     conjugation table for one word
+    GET /lite/loanwords        borrowed-words browse: source-language facets
+    GET /lite/loanwords/{lang} borrowed words from one source language
     GET /lite/kanji/{char}     KANJIDIC2 card + static KanjiVG stroke diagram
     GET /lite/kanji/random     redirect to a random kanji card
     GET /lite/kanji/group      browse kanji sharing strokes/grade/JLPT
@@ -58,7 +60,9 @@ from app.config import (
     WEB_BASE_URL,
     qdrant_client,
 )
+from app.etymology import enrich_lsource
 from app.kanji_lookup import is_kanji, kanji_in, random_kanji
+from app.loanwords import loanword_facets, loanwords_page
 from app.ratelimit import rate_limited
 from app.render import furigana_parts, kanji_card, kanji_group_cards, related_words, segment_chip
 from app.retrieval import MAX_JA_QUERY_CHARS, SearchResponse, is_headword, search
@@ -421,6 +425,16 @@ def _full_switch_url(request: Request) -> str:
         if query:
             url += f"?{query}"
         return url
+    if path == "/lite/loanwords":
+        return f"{base}/loanwords"
+    if path.startswith("/lite/loanwords/"):
+        # SPA pages by ?page= (50/page); lite pages by ?offset= (item count).
+        lw_lang = path.rsplit("/", 1)[-1]
+        qs = f"lang={quote(lw_lang, safe='')}"
+        off = request.query_params.get("offset", "")
+        if off.isdigit() and int(off) > 0:
+            qs += f"&page={int(off) // 50}"
+        return f"{base}/loanwords?{qs}"
     if path == "/lite/about":
         return f"{base}/about"
     if path == "/lite/privacy":
@@ -905,6 +919,21 @@ def _result_card(query: str, result: dict, furi: bool, lang: str) -> str:
     parts = [f'<article class="entry"{anchor}><h2>{head_html} {common}</h2>']
     if meanings:
         parts.append(f'<p class="gloss">{esc("; ".join(meanings[:6]))}</p>')
+    # Etymology line ("From Portuguese — espada"): JMdict-authored English,
+    # rendered like the glosses — no i18n keys. The source form carries its
+    # BCP-47 lang tag so it reads as its real language.
+    etym_sources = enrich_lsource(result.get("lsource"))
+    if etym_sources:
+        etym_html = "; ".join(
+            esc(src["label"])
+            + (
+                f' — <span class="etym-src" lang="{esc(src["tag"])}">{esc(src["text"])}</span>'
+                if src["text"]
+                else ""
+            )
+            for src in etym_sources
+        )
+        parts.append(f'<p class="etymology">{etym_html}</p>')
     parts.append(inflection_note)
 
     # Conjugations live on their own page, reached by click (like /conjugations in the SPA).
@@ -1353,6 +1382,122 @@ def lite_kanji(request: Request, char: str, log: bool = Query(True, include_in_s
     )
 
 
+# ── Loanwords ────────────────────────────────────────────────────────────────
+# Borrowed-words browse (JMdict lsource etymology). The facet list and the
+# per-language pages come from app.loanwords' in-process index — the nested
+# lsource.lang payload path can't be filtered in Qdrant, so this scrolls the
+# ~6.2k tagged points once per TTL instead.
+
+@router.get("/lite/loanwords", response_class=HTMLResponse)
+def lite_loanwords(request: Request) -> Response:
+    theme = _read_theme(request)
+    lang = _read_lang(request)
+    try:
+        facets = loanword_facets()
+    except Exception:
+        logger.exception("lite loanwords facets failed")
+        return _error_page(
+            _t(lang, "lite_lookupUnavailable"),
+            _t(lang, "lite_searchUnavailable"),
+            502,
+            theme,
+            _controls(request),
+            lang,
+        )
+    chips = " ".join(
+        f'<a class="chip" href="/lite/loanwords/{quote(src["lang"], safe="")}">'
+        f'{esc(src["name"])} · {src["count"]:,}</a>'
+        for src in facets
+    )
+    body = (
+        f'<h1>{esc(_t(lang, "loanwordsTitle"))}</h1>'
+        f'<p class="muted">{esc(_t(lang, "loanwordsTagline"))}</p>'
+        f'<div class="related-row" aria-label="{esc(_t(lang, "loanwordsTitle"))}">{chips}</div>'
+    )
+    return _page(
+        _t(lang, "loanwordsTitle"),
+        body,
+        cache=_CACHE_STATIC,
+        controls=_controls(request),
+        theme=theme,
+        lang=lang,
+        canonical="/lite/loanwords",
+    )
+
+
+@router.get("/lite/loanwords/{lang}", response_class=HTMLResponse)
+def lite_loanwords_lang(
+    request: Request,
+    lang: str,
+    n: str = "50",
+    offset: str = "0",
+) -> Response:
+    theme = _read_theme(request)
+    ui_lang = _read_lang(request)
+    size = min(max(_int(n, 50), 1), 50)
+    start = max(_int(offset, 0), 0)
+    try:
+        page = loanwords_page(lang, start, size)
+    except Exception:
+        logger.exception("lite loanwords page failed")
+        return _error_page(
+            _t(ui_lang, "lite_lookupUnavailable"),
+            _t(ui_lang, "lite_searchUnavailable"),
+            502,
+            theme,
+            _controls(request),
+            ui_lang,
+        )
+    if page is None:
+        return _error_page(
+            _t(ui_lang, "loanwordsUnknown"),
+            _t(ui_lang, "loanwordsUnknownMsg"),
+            404,
+            theme,
+            _controls(request),
+            ui_lang,
+        )
+    furi = _read_furi(request)
+    cards = "".join(_result_card("", result, furi, ui_lang) for result in page["results"])
+
+    nav = [
+        f'<a class="chip" href="/lite/loanwords">← {esc(_t(ui_lang, "loanwordsAll"))}</a>'
+    ]
+    if start > 0:
+        nav.append(
+            f'<a class="btn" href="{_href("/lite/loanwords/" + quote(lang, safe=""), offset=max(start - size, 0))}">'
+            f'{esc(_t(ui_lang, "previous"))}</a>'
+        )
+    if start + size < page["total"]:
+        nav.append(
+            f'<a class="btn" href="{_href("/lite/loanwords/" + quote(lang, safe=""), offset=start + size)}">'
+            f'{esc(_t(ui_lang, "next"))}</a>'
+        )
+    if page["total"] > size:
+        pages = (page["total"] + size - 1) // size
+        nav.insert(
+            1,
+            f'<span class="kg-pager-label">{esc(_t(ui_lang, "pageOf", page=start // size + 1, pages=pages))}</span>',
+        )
+    pagination = f'<nav class="kg-pager" aria-label="pages">{" ".join(nav)}</nav>'
+
+    body = (
+        f'<h1 class="kgroup-title">{esc(page["name"])} '
+        f'<span class="kgroup-total">{page["total"]:,}</span></h1>'
+        f'<p class="kgroup-sub">{esc(_t(ui_lang, "loanwordsFromTagline", name=page["name"]))}</p>'
+        f'{cards}{pagination}'
+    )
+    return _page(
+        _t(ui_lang, "loanwordsTitle"),
+        body,
+        cache=_CACHE_STATIC,
+        controls=_controls(request),
+        theme=theme,
+        lang=ui_lang,
+        canonical=f"/lite/loanwords/{lang}",
+    )
+
+
 # ── About ────────────────────────────────────────────────────────────────────
 # Sections and copy mirror web/src/routes/about/+page.svelte (which pulls its
 # text from i18n.svelte.ts), adapted to what Lite itself does.
@@ -1398,6 +1543,8 @@ def lite_about(request: Request) -> HTMLResponse:
 <p>{esc(_t(lang, "lite_howTextLite"))}</p>
 <h2>{esc(_t(lang, "dataSources"))}</h2>
 <p>{data_para}</p>
+<h2>{esc(_t(lang, "loanwordsTitle"))}</h2>
+<p>{esc(_t(lang, "loanwordsAboutText"))} <a href="/lite/loanwords">{esc(_t(lang, "loanwordsBrowse"))}</a></p>
 <h2>{esc(_t(lang, "privacy"))}</h2>
 <p>{esc(_t(lang, "privacyText"))}</p>
 <p><a href="/lite/privacy">{esc(_t(lang, "privacyMore"))}</a></p>

@@ -386,3 +386,68 @@ def test_language_toggle_flips_cookie_and_translates_the_page(monkeypatch: pytes
     finally:  # restore the default even on failure — later tests depend on it
         client.cookies.clear()
 
+
+
+def test_result_card_renders_etymology_line() -> None:
+    # lsource arrives raw ([{lang, text}]) from search(); the card enriches it
+    # to "From Spanish — tabaco" with a BCP-47 lang tag on the source form.
+    result = {
+        "id": 1, "kanji_form": "タバコ", "reading": "たばこ",
+        "kanji_forms": [], "readings": [], "meanings": ["tobacco, cigaret"],
+        "example_sentences": [], "is_common": False, "text": "",
+        "inflected_forms": [], "inflection": None, "score": 1.0,
+        "lsource": [{"lang": "spa", "text": "tabaco"}],
+        "reading_restrictions": {},
+    }
+    html_out = lite._result_card("", result, True, "en")
+    assert "From Spanish" in html_out
+    assert 'class="etym-src" lang="es"' in html_out and "tabaco" in html_out
+
+
+def test_result_card_etymology_no_text_branch() -> None:
+    result = {
+        "id": 2, "kanji_form": None, "reading": "えるにーにょ",
+        "kanji_forms": [], "readings": [], "meanings": ["El Niño"],
+        "example_sentences": [], "is_common": False, "text": "",
+        "inflected_forms": [], "inflection": None, "score": 1.0,
+        "lsource": [{"lang": "spa", "text": ""}],
+        "reading_restrictions": {},
+    }
+    html_out = lite._result_card("", result, True, "en")
+    assert "From Spanish" in html_out and "etym-src" not in html_out
+
+
+def test_loanwords_facet_page(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(
+        lite, "loanword_facets",
+        lambda: [{"lang": "spa", "name": "Spanish", "count": 164}],
+    )
+    r = client.get("/lite/loanwords")
+    assert r.status_code == 200
+    assert "Borrowed words" in r.text and "Spanish · 164" in r.text
+    assert 'href="/lite/loanwords/spa"' in r.text
+
+
+def test_loanwords_lang_page(monkeypatch: pytest.MonkeyPatch) -> None:
+    result = {
+        "id": 3, "kanji_form": "タバコ", "reading": "たばこ",
+        "kanji_forms": [], "readings": [], "meanings": ["tobacco"],
+        "example_sentences": [], "is_common": False, "text": "",
+        "inflected_forms": [], "inflection": None, "score": 3.0,
+        "lsource": [{"lang": "spa", "text": "tabaco", "label": "From Spanish", "tag": "es"}],
+        "reading_restrictions": {},
+    }
+    monkeypatch.setattr(
+        lite, "loanwords_page",
+        lambda lang, offset, limit: {
+            "lang": lang, "name": "Spanish", "total": 164, "offset": offset,
+            "results": [result],
+        } if lang == "spa" else None,
+    )
+    r = client.get("/lite/loanwords/spa")
+    assert r.status_code == 200
+    assert "タバコ" in r.text and "From Spanish" in r.text
+    assert "All languages" in r.text and 'href="/lite/loanwords"' in r.text
+    # Unknown language → the HTML 404 page, not a JSON error.
+    bad = client.get("/lite/loanwords/zzz")
+    assert bad.status_code == 404 and bad.headers["content-type"].startswith("text/html")

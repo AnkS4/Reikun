@@ -72,6 +72,11 @@
 	</section>
 
 	<section>
+		<h2>{t('loanwordsTitle')}</h2>
+		<p>{t('loanwordsAboutText')} <a href="/loanwords">{t('loanwordsBrowse')}</a></p>
+	</section>
+
+	<section>
 		<h2>{t('privacy')}</h2>
 		<p>{t('privacyText')}</p>
 		<p><a href="/privacy">{t('privacyMore')}</a></p>

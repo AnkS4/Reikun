@@ -206,5 +206,13 @@
 	"lite_backToGroup": "グループに戻る",
 	"lite_kanjiPageTitle": "漢字 {char}",
 	"lite_resultsTitle": "「{query}」の検索結果",
-	"lite_howTextLite": "検索では、Qdrantで統合されたハイブリッド検索（高密度ベクトル埋め込みとBM25の組み合わせ）が実行され、クエリルーティングによって、英語の単語、英語の文、および日本語の入力に対して最適な処理プランが選択されます。文の解析にはSudachi形態素解析器が使用され、埋め込みにはCPU上で実行される量子化されたONNXモデルが用いられています。Liteページはすべて1つのHTML文字列で構成されており、フロントエンドのバンドルは存在しません。"
+	"lite_howTextLite": "検索では、Qdrantで統合されたハイブリッド検索（高密度ベクトル埋め込みとBM25の組み合わせ）が実行され、クエリルーティングによって、英語の単語、英語の文、および日本語の入力に対して最適な処理プランが選択されます。文の解析にはSudachi形態素解析器が使用され、埋め込みにはCPU上で実行される量子化されたONNXモデルが用いられています。Liteページはすべて1つのHTML文字列で構成されており、フロントエンドのバンドルは存在しません。",
+	"loanwordsTitle": "借用語",
+	"loanwordsTagline": "他言語から日本語に入った言葉 — JMdict の語源タグより。",
+	"loanwordsAll": "すべての言語",
+	"loanwordsUnknown": "不明な出典言語",
+	"loanwordsUnknownMsg": "借用語一覧から言語を選んでください。",
+	"loanwordsFromTagline": "{name} からの借用語 — 頻度順。",
+	"loanwordsAboutText": "JMdict が出典言語をタグ付けした項目を言語別に閲覧できます — コンピュータのような英語由来の語から、跆拳道のような漢字借用まで。",
+	"loanwordsBrowse": "言語別に見る →"
 }

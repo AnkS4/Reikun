@@ -20,6 +20,9 @@ export type KanjiCard = components['schemas']['KanjiCard'];
 export type KanjiHover = components['schemas']['KanjiHover'];
 export type StrokeData = components['schemas']['StrokeData'];
 export type KanjiGroupResponse = components['schemas']['KanjiGroupResponse'];
+export type LoanwordsResponse = components['schemas']['LoanwordsResponse'];
+export type LoanwordsPageResponse = components['schemas']['LoanwordsPageResponse'];
+export type LoanwordFacet = components['schemas']['LoanwordFacet'];
 export type ReadyInfo = components['schemas']['ReadyResponse'];
 export type ExplainRequest = components['schemas']['ExplainRequest'];
 export type Level = ExplainRequest['level'];
@@ -179,6 +182,25 @@ export function apiKanjiGroup(by: GroupKey, value: number, n = 40, offset = 0): 
 	return call(async (signal) => {
 		const { data, error, response } = await client.GET('/kanji/group', {
 			params: { query: { by, value, n, offset } },
+			signal
+		});
+		if (error) throw asError(error, response.status);
+		return data;
+	});
+}
+
+export function apiLoanwords(): Promise<LoanwordsResponse> {
+	return call(async (signal) => {
+		const { data, error, response } = await client.GET('/loanwords', { signal });
+		if (error) throw asError(error, response.status);
+		return data;
+	});
+}
+
+export function apiLoanwordsLang(lang: string, n = 50, offset = 0): Promise<LoanwordsPageResponse> {
+	return call(async (signal) => {
+		const { data, error, response } = await client.GET('/loanwords/{lang}', {
+			params: { path: { lang }, query: { n, offset } },
 			signal
 		});
 		if (error) throw asError(error, response.status);

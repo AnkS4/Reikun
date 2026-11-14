@@ -214,6 +214,8 @@ padding:1.35rem 1.5rem;margin:1.15rem 0;
 .entry:hover{border-color:var(--border-hover)}
 ruby rt{font-size:.6em;font-weight:500;letter-spacing:0;color:var(--text-muted)}
 .gloss{margin:.5rem 0 .85rem;font-size:var(--fs-body);line-height:1.5;color:var(--text-muted)}
+.etymology{margin:-.2rem 0 .85rem;font-size:var(--fs-md);color:var(--text-muted)}
+.etym-src{font-style:italic}
 .reading-note,.muted{color:var(--text-muted);font-size:var(--fs-md)}
 .inflection-bar{font-size:var(--fs-sm);color:var(--text-muted);margin:-.2rem 0 .35rem}
 .inflection-bar [lang=ja]{color:var(--text);font-size:var(--fs-base)}

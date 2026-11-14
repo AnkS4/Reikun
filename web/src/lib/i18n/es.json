@@ -206,5 +206,13 @@
 	"lite_backToGroup": "Volver al grupo",
 	"lite_kanjiPageTitle": "Kanji {char}",
 	"lite_resultsTitle": "{query} — resultados",
-	"lite_howTextLite": "La búsqueda realiza una recuperación híbrida —incrustaciones vectoriales densas más BM25— fusionadas en Qdrant, con un enrutamiento de consultas que selecciona el plan adecuado para palabras en inglés, frases en inglés y entradas en japonés. El análisis de las frases utiliza el analizador morfológico Sudachi; las incrustaciones son modelos ONNX cuantificados que se ejecutan en la CPU. Cada página Lite es una cadena HTML; no hay ningún paquete de JavaScript."
+	"lite_howTextLite": "La búsqueda realiza una recuperación híbrida —incrustaciones vectoriales densas más BM25— fusionadas en Qdrant, con un enrutamiento de consultas que selecciona el plan adecuado para palabras en inglés, frases en inglés y entradas en japonés. El análisis de las frases utiliza el analizador morfológico Sudachi; las incrustaciones son modelos ONNX cuantificados que se ejecutan en la CPU. Cada página Lite es una cadena HTML; no hay ningún paquete de JavaScript.",
+	"loanwordsTitle": "Palabras prestadas",
+	"loanwordsTagline": "Palabras japonesas prestadas de otros idiomas — etiquetas de etimología de JMdict.",
+	"loanwordsAll": "Todos los idiomas",
+	"loanwordsUnknown": "Idioma de origen desconocido",
+	"loanwordsUnknownMsg": "Elige un idioma de la lista de palabras prestadas.",
+	"loanwordsFromTagline": "Palabras japonesas prestadas del {name} — las más comunes primero.",
+	"loanwordsAboutText": "Todas las entradas que JMdict etiqueta con un idioma de origen, navegables por idioma — desde gairaigo inglés como コンピュータ hasta préstamos en kanji como 跆拳道.",
+	"loanwordsBrowse": "Explorar por idioma →"
 }

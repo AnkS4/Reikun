@@ -431,6 +431,128 @@
         }
       }
     },
+    "/loanwords": {
+      "get": {
+        "tags": [
+          "loanwords"
+        ],
+        "summary": "Loanwords Facets Endpoint",
+        "description": "Facet list of source languages for the borrowed-words browse —\nlang code, English name and entry count, most common first.",
+        "operationId": "loanwords_facets_endpoint_loanwords_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoanwordsResponse"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Qdrant unreachable while building the facet index",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/loanwords/{lang}": {
+      "get": {
+        "tags": [
+          "loanwords"
+        ],
+        "summary": "Loanwords Lang Endpoint",
+        "description": "One page of Japanese words borrowed from `lang` (a JMdict lsource code,\ne.g. `spa`, `eng`, `chi`), ranked by corpus frequency.",
+        "operationId": "loanwords_lang_endpoint_loanwords__lang__get",
+        "parameters": [
+          {
+            "name": "lang",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Lang"
+            }
+          },
+          {
+            "name": "n",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 50,
+              "minimum": 1,
+              "description": "Page size",
+              "default": 50,
+              "title": "N"
+            },
+            "description": "Page size"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Items to skip",
+              "default": 0,
+              "title": "Offset"
+            },
+            "description": "Items to skip"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoanwordsPageResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown source-language code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Qdrant unreachable while building the facet index",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/explain": {
       "post": {
         "tags": [
@@ -614,6 +736,41 @@
         ],
         "title": "ErrorResponse",
         "description": "FastAPI's HTTPException body — declared so non-422 errors show up in the schema."
+      },
+      "EtymologySource": {
+        "properties": {
+          "lang": {
+            "type": "string",
+            "title": "Lang"
+          },
+          "text": {
+            "type": "string",
+            "title": "Text",
+            "default": ""
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "tag": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tag"
+          }
+        },
+        "type": "object",
+        "required": [
+          "lang",
+          "label"
+        ],
+        "title": "EtymologySource",
+        "description": "One JMdict ``lsource`` item, display-enriched: ``label`` is the English\nphrase (\"From Portuguese\"), ``tag`` the BCP-47 ``lang`` attribute for the\nsource form (None → render without a lang tag)."
       },
       "ExampleSentence": {
         "properties": {
@@ -1145,6 +1302,81 @@
         "title": "KanjiHover",
         "description": "Compact card for kanji-in-text hover tooltips (batch endpoint)."
       },
+      "LoanwordFacet": {
+        "properties": {
+          "lang": {
+            "type": "string",
+            "title": "Lang"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count"
+          }
+        },
+        "type": "object",
+        "required": [
+          "lang",
+          "name",
+          "count"
+        ],
+        "title": "LoanwordFacet"
+      },
+      "LoanwordsPageResponse": {
+        "properties": {
+          "lang": {
+            "type": "string",
+            "title": "Lang"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "offset": {
+            "type": "integer",
+            "title": "Offset"
+          },
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/SearchResult"
+            },
+            "type": "array",
+            "title": "Results"
+          }
+        },
+        "type": "object",
+        "required": [
+          "lang",
+          "name",
+          "total",
+          "offset",
+          "results"
+        ],
+        "title": "LoanwordsPageResponse"
+      },
+      "LoanwordsResponse": {
+        "properties": {
+          "sources": {
+            "items": {
+              "$ref": "#/components/schemas/LoanwordFacet"
+            },
+            "type": "array",
+            "title": "Sources"
+          }
+        },
+        "type": "object",
+        "required": [
+          "sources"
+        ],
+        "title": "LoanwordsResponse"
+      },
       "MetaBadge": {
         "properties": {
           "label": {
@@ -1558,6 +1790,25 @@
             "type": "array",
             "title": "Inflected Forms",
             "default": []
+          },
+          "lsource": {
+            "items": {
+              "$ref": "#/components/schemas/EtymologySource"
+            },
+            "type": "array",
+            "title": "Lsource",
+            "default": []
+          },
+          "reading_restrictions": {
+            "additionalProperties": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "type": "object",
+            "title": "Reading Restrictions",
+            "default": {}
           },
           "inflection": {
             "anyOf": [

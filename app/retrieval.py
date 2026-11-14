@@ -183,6 +183,11 @@ def _hit_to_dict(hit, score: float | None = None) -> dict:
         # Conjugation table (verb/adjective entries) + the label of the row
         # the *query itself* inflects — filled by _auto_search.
         "inflected_forms": p.get("inflected_forms", []),
+        # Etymology source languages ([{lang, text}]) and reading→kanji-form
+        # bindings — payload passthrough; display enrichment happens at the
+        # API/lite boundary (app.etymology).
+        "lsource": p.get("lsource") or [],
+        "reading_restrictions": p.get("reading_restrictions") or {},
         "inflection": None,
         "score": round(float(hit.score if score is None else score), 4),
     }

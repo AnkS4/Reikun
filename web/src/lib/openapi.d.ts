@@ -153,6 +153,48 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/loanwords": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Loanwords Facets Endpoint
+         * @description Facet list of source languages for the borrowed-words browse —
+         *     lang code, English name and entry count, most common first.
+         */
+        get: operations["loanwords_facets_endpoint_loanwords_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/loanwords/{lang}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Loanwords Lang Endpoint
+         * @description One page of Japanese words borrowed from `lang` (a JMdict lsource code,
+         *     e.g. `spa`, `eng`, `chi`), ranked by corpus frequency.
+         */
+        get: operations["loanwords_lang_endpoint_loanwords__lang__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/explain": {
         parameters: {
             query?: never;
@@ -250,6 +292,25 @@ export interface components {
         ErrorResponse: {
             /** Detail */
             detail: string;
+        };
+        /**
+         * EtymologySource
+         * @description One JMdict ``lsource`` item, display-enriched: ``label`` is the English
+         *     phrase ("From Portuguese"), ``tag`` the BCP-47 ``lang`` attribute for the
+         *     source form (None → render without a lang tag).
+         */
+        EtymologySource: {
+            /** Lang */
+            lang: string;
+            /**
+             * Text
+             * @default
+             */
+            text: string;
+            /** Label */
+            label: string;
+            /** Tag */
+            tag?: string | null;
         };
         /** ExampleSentence */
         ExampleSentence: {
@@ -479,6 +540,33 @@ export interface components {
              */
             meta: components["schemas"]["MetaBadge"][];
         };
+        /** LoanwordFacet */
+        LoanwordFacet: {
+            /** Lang */
+            lang: string;
+            /** Name */
+            name: string;
+            /** Count */
+            count: number;
+        };
+        /** LoanwordsPageResponse */
+        LoanwordsPageResponse: {
+            /** Lang */
+            lang: string;
+            /** Name */
+            name: string;
+            /** Total */
+            total: number;
+            /** Offset */
+            offset: number;
+            /** Results */
+            results: components["schemas"]["SearchResult"][];
+        };
+        /** LoanwordsResponse */
+        LoanwordsResponse: {
+            /** Sources */
+            sources: components["schemas"]["LoanwordFacet"][];
+        };
         /** MetaBadge */
         MetaBadge: {
             /** Label */
@@ -656,6 +744,18 @@ export interface components {
              * @default []
              */
             inflected_forms: components["schemas"]["InflectionRow"][];
+            /**
+             * Lsource
+             * @default []
+             */
+            lsource: components["schemas"]["EtymologySource"][];
+            /**
+             * Reading Restrictions
+             * @default {}
+             */
+            reading_restrictions: {
+                [key: string]: string[];
+            };
             /** Inflection */
             inflection?: string | null;
         };
@@ -964,6 +1064,89 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    loanwords_facets_endpoint_loanwords_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LoanwordsResponse"];
+                };
+            };
+            /** @description Qdrant unreachable while building the facet index */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    loanwords_lang_endpoint_loanwords__lang__get: {
+        parameters: {
+            query?: {
+                /** @description Page size */
+                n?: number;
+                /** @description Items to skip */
+                offset?: number;
+            };
+            header?: never;
+            path: {
+                lang: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LoanwordsPageResponse"];
+                };
+            };
+            /** @description Unknown source-language code */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description Qdrant unreachable while building the facet index */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };

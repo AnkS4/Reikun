@@ -40,6 +40,7 @@ from app.config import (
     TRUSTED_PROXY_HOPS,
     qdrant_client,
 )
+from app.etymology import enrich_lsource
 from app.grammar_explain import (
     JLPT_LEVELS,
     MAX_ENGLISH_CHARS,
@@ -52,6 +53,7 @@ from app.grammar_explain import (
 )
 from app.kanji_lookup import is_kanji, jlpt_kanji, random_kanji
 from app.lite import router as lite_router
+from app.loanwords import loanword_facets, loanwords_page
 from app.ratelimit import rate_limited
 from app.render import (
     furigana_parts,
@@ -178,6 +180,16 @@ class InflectionRow(BaseModel):
     kana: str | None = None
 
 
+class EtymologySource(BaseModel):
+    """One JMdict ``lsource`` item, display-enriched: ``label`` is the English
+    phrase ("From Portuguese"), ``tag`` the BCP-47 ``lang`` attribute for the
+    source form (None → render without a lang tag)."""
+    lang: str
+    text: str = ""
+    label: str
+    tag: str | None = None
+
+
 class SearchResult(BaseModel):
     id: int | None
     kanji_form: str | None = None
@@ -192,6 +204,13 @@ class SearchResult(BaseModel):
     ruby: list[RubyPart] = []
     related: list[CommonWord] = []
     inflected_forms: list[InflectionRow] = []
+    # Etymology source languages ("From Portuguese espada") — empty for the
+    # ~213k entries JMdict tags no lsource for.
+    lsource: list[EtymologySource] = []
+    # reading → kanji forms it may appear with (JMdict re_restr/re_nokanji);
+    # passed through for the deferred variant-forms display — nothing renders
+    # it yet.
+    reading_restrictions: dict[str, list[str]] = {}
     # when the *query itself* is one of the entry's inflected forms, its row
     # label ("走った searching 走る → "Past")
     inflection: str | None = None
@@ -317,6 +336,24 @@ class KanjiHover(BaseModel):
     on_yomi: list[str] = []
     kun_yomi: list[str] = []
     meta: list[MetaBadge] = []
+
+
+class LoanwordFacet(BaseModel):
+    lang: str
+    name: str
+    count: int
+
+
+class LoanwordsResponse(BaseModel):
+    sources: list[LoanwordFacet]
+
+
+class LoanwordsPageResponse(BaseModel):
+    lang: str
+    name: str
+    total: int
+    offset: int
+    results: list[SearchResult]
 
 
 class ExplainRequest(BaseModel):
@@ -456,6 +493,9 @@ def search_endpoint(
         entry = {
             **r,
             "ruby": furigana_parts(head, r.get("reading")),
+            # Enrich the raw payload lsource ([{lang, text}]) into display
+            # dicts ({lang, text, label, tag}) for the EtymologySource model.
+            "lsource": enrich_lsource(r.get("lsource")),
             # Whole-entry-card only: every written form joins the exclusion
             # set so the word can't recommend itself.
             "related": related_words(
@@ -583,6 +623,58 @@ def kanji_endpoint(
     if log:
         background.add_task(telemetry().kanji_lookup, char, source="api")
     return card
+
+
+# ── Loanwords (JMdict lsource etymology) ─────────────────────────────────────
+
+# The in-process index rebuilds every ~10 min; HTTP caches can be shorter.
+_CACHE_LOANWORDS = "public, max-age=300"
+
+
+@app.get(
+    "/loanwords",
+    tags=["loanwords"],
+    response_model=LoanwordsResponse,
+    responses={502: {"model": ErrorResponse, "description": "Qdrant unreachable while building the facet index"}},
+)
+def loanwords_facets_endpoint(response: Response) -> dict:
+    """Facet list of source languages for the borrowed-words browse —
+    lang code, English name and entry count, most common first."""
+    try:
+        sources = loanword_facets()
+    except Exception:
+        logger.exception("loanwords facets failed")
+        raise HTTPException(502, "The borrowed-words index is temporarily unavailable.") from None
+    response.headers["Cache-Control"] = _CACHE_LOANWORDS
+    return {"sources": sources}
+
+
+@app.get(
+    "/loanwords/{lang}",
+    tags=["loanwords"],
+    response_model=LoanwordsPageResponse,
+    responses={
+        404: {"model": ErrorResponse, "description": "Unknown source-language code"},
+        502: {"model": ErrorResponse, "description": "Qdrant unreachable while building the facet index"},
+    },
+)
+def loanwords_lang_endpoint(
+    response: Response,
+    lang: str,
+    n: Annotated[int, Query(ge=1, le=50, description="Page size")] = 50,
+    offset: Annotated[int, Query(ge=0, description="Items to skip")] = 0,
+) -> dict:
+    """One page of Japanese words borrowed from `lang` (a JMdict lsource code,
+    e.g. `spa`, `eng`, `chi`), ranked by corpus frequency."""
+    try:
+        page = loanwords_page(lang, offset, n)
+    except Exception:
+        logger.exception("loanwords page failed")
+        raise HTTPException(502, "The borrowed-words index is temporarily unavailable.") from None
+    if page is None:
+        raise HTTPException(404, f"No borrowed words from {lang!r}")
+    response.headers["Cache-Control"] = _CACHE_LOANWORDS
+    return page
 
 
 # ── Grammar explanations ─────────────────────────────────────────────────────

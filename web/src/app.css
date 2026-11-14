@@ -1317,6 +1317,19 @@ a.kanji-tip {
 	line-height: 1.5;
 }
 
+/* Etymology line — "From Portuguese — espada" (JMdict lsource); the source
+   form is italic and carries its own lang attribute. */
+.etymology {
+	margin: -0.35rem 0 0.85rem;
+	font-size: var(--fs-sm);
+	color: var(--text-muted);
+	line-height: 1.5;
+}
+
+.etym-src {
+	font-style: italic;
+}
+
 /* Example rows inside cards */
 .example-section {
 	margin-top: 0.85rem;
@@ -1929,6 +1942,24 @@ a.kanji-tip {
 	font-family: var(--font-mono);
 	font-size: var(--fs-sm);
 	color: var(--text-muted);
+}
+
+/* Loanwords browse — source-language facet chips (name + count). */
+.lw-chips {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+	margin-top: 0.5rem;
+}
+
+.lw-chip {
+	text-decoration: none;
+}
+
+.lw-count {
+	font-family: var(--font-mono);
+	font-size: var(--fs-xs);
+	color: var(--text-faint);
 }
 
 .kanji-section {

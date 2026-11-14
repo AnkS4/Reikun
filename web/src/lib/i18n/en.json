@@ -206,5 +206,13 @@
 	"lite_backToGroup": "Back to group",
 	"lite_kanjiPageTitle": "Kanji {char}",
 	"lite_resultsTitle": "{query} — results",
-	"lite_howTextLite": "Search runs hybrid retrieval — dense vector embeddings plus BM25 — fused in Qdrant, with query routing that picks the right plan for English words, English sentences, and Japanese input. Sentence parsing uses the Sudachi morphological analyzer; embeddings are quantized ONNX models running on CPU. Every Lite page is one HTML string — there is no frontend bundle."
+	"lite_howTextLite": "Search runs hybrid retrieval — dense vector embeddings plus BM25 — fused in Qdrant, with query routing that picks the right plan for English words, English sentences, and Japanese input. Sentence parsing uses the Sudachi morphological analyzer; embeddings are quantized ONNX models running on CPU. Every Lite page is one HTML string — there is no frontend bundle.",
+	"loanwordsTitle": "Borrowed words",
+	"loanwordsTagline": "Japanese words borrowed from other languages — etymology tags from JMdict.",
+	"loanwordsAll": "All languages",
+	"loanwordsUnknown": "Unknown source language",
+	"loanwordsUnknownMsg": "Pick a language from the borrowed-words list.",
+	"loanwordsFromTagline": "Words in Japanese borrowed from {name} — most common first.",
+	"loanwordsAboutText": "Every entry JMdict tags with a source language, browsable by language — from English gairaigo like コンピュータ to kanji borrowings like 跆拳道.",
+	"loanwordsBrowse": "Browse by language →"
 }

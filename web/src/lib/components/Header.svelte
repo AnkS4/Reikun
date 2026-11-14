@@ -39,6 +39,14 @@
 		if (path.startsWith('/kanji/')) return `${base}/lite${path}${search}`;
 		if (path === '/kanji-group') return `${base}/lite/kanji/group${search}`;
 		if (path === '/conjugations') return `${base}/lite/conjugations${search}`;
+		if (path === '/loanwords') {
+			const lw = page.url.searchParams.get('lang');
+			if (!lw) return `${base}/lite/loanwords`;
+			// SPA pages by ?page= (50/page); lite pages by ?offset= (item count).
+			const p = Number(page.url.searchParams.get('page') ?? 0);
+			const off = Number.isInteger(p) && p > 0 ? `?offset=${p * 50}` : '';
+			return `${base}/lite/loanwords/${encodeURIComponent(lw)}${off}`;
+		}
 		return `${base}/lite`;
 	});
 
