@@ -218,8 +218,17 @@ def to_point_reused(chunk: dict, dense, sparse, sig: str | None = None) -> Point
 def _sparse_source(old_payload: dict) -> str:
     """Recompose the BM25 embed input from a stored payload — `sparse_text` is
     built from exactly these fields for points written by the current builder,
-    so an equal recomposition proves the stored sparse vector is on-form."""
-    forms = ((old_payload.get("kanji_forms") or []) + (old_payload.get("readings") or []))
+    so an equal recomposition proves the stored sparse vector is on-form.
+
+    The plural lists only exist when an entry has variants (len > 1); a
+    single-form entry carries just the singular kanji_form/reading, which
+    *are* its whole form list — without the fallback every single-form
+    entry (~half the corpus) fails recomposition and re-embeds for nothing.
+    """
+    forms = [f for f in (
+        (old_payload.get("kanji_forms") or [old_payload.get("kanji_form")])
+        + (old_payload.get("readings") or [old_payload.get("reading")])
+    ) if f]
     return f"{' '.join(forms)}: {', '.join(old_payload.get('meanings') or [])}"
 
 
@@ -291,7 +300,8 @@ def reuse_vectors_upload(client, todo: list[dict], fresh_sigs: dict[int, str], s
             page, offset = scroll.scroll(
                 COLLECTION, limit=BATCH_SIZE, offset=offset,
                 with_payload=PayloadSelectorInclude(
-                    include=["meanings", "kanji_forms", "readings", "text", "inflected_forms"]),
+                    include=["meanings", "kanji_form", "reading",
+                             "kanji_forms", "readings", "text", "inflected_forms"]),
                 with_vectors=True,
             )
             points: list[PointStruct] = []
