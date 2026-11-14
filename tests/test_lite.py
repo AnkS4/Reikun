@@ -496,6 +496,51 @@ def test_result_card_sense_blocks() -> None:
     assert "試験を受ける" in html_out and "take an exam" in html_out
 
 
+def test_result_card_variant_forms() -> None:
+    result = _bare_result(
+        kanji_form="梔子", reading="くちなし",
+        kanji_forms=["梔子", "巵子", "山梔子", "梔"],
+        readings=["くちなし", "クチナシ", "しし", "さんしし"],
+        reading_restrictions={
+            "クチナシ": [], "しし": ["梔子", "巵子"], "さんしし": ["山梔子"],
+        },
+        variants={
+            "forms": [
+                {"form": "梔子", "readings": ["しし"], "labels": []},
+                {"form": "巵子", "readings": ["しし"], "labels": []},
+                {"form": "山梔子", "readings": ["さんしし"], "labels": ["oK"]},
+                {"form": "梔", "readings": [], "labels": []},
+            ],
+            "readings": ["はな", "くちなし"],  # はな unrestricted, くちなし = primary (hidden)
+            "kana_only": ["クチナシ"],
+        },
+    )
+    html_out = lite._result_card("", result, True, "en")
+    assert 'class="variants"' in html_out and "Variant forms" in html_out
+    # Per-form bound readings render on their own rows.
+    assert "梔子" in html_out and "しし" in html_out and "さんしし" in html_out
+    # ke_inf label → localized tag.
+    assert "old form" in html_out
+    # Shared unrestricted line skips the primary reading (already in h2).
+    assert "read as" in html_out and "はな" in html_out
+    # re_nokanji reading gets the kana-only tag.
+    assert "kana only" in html_out and "クチナシ" in html_out
+
+
+def test_result_card_sense_form_restrictions() -> None:
+    result = _bare_result(
+        senses=[{
+            "glosses": ["place"],
+            "stagk": ["彼所"],
+            "stagr": ["あそこ", "あすこ"],
+        }],
+    )
+    html_out = lite._result_card("", result, True, "en")
+    assert 'class="sense-variants"' in html_out
+    assert "written forms: 彼所" in html_out
+    assert "readings: あそこ · あすこ" in html_out
+
+
 def test_result_card_sense_blocks_localized() -> None:
     result = _bare_result(
         senses=[{"glosses": ["試験"], "pos": ["verb"], "misc": ["abbr"]}],

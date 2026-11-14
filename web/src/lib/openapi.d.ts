@@ -767,6 +767,7 @@ export interface components {
             reading_restrictions: {
                 [key: string]: string[];
             };
+            variants?: components["schemas"]["Variants"] | null;
             /**
              * Senses
              * @default []
@@ -909,6 +910,52 @@ export interface components {
             input?: unknown;
             /** Context */
             ctx?: Record<string, never>;
+        };
+        /**
+         * VariantForm
+         * @description One written form (k_ele) in the variant-forms block: ``form`` is the
+         *     keb, ``readings`` the readings JMdict binds *specifically* to it
+         *     (re_restr — empty when unrestricted), ``labels`` its ``ke_inf`` codes
+         *     (sK search-only / rK rare / ateji / io / iK / oK / ik).
+         */
+        VariantForm: {
+            /** Form */
+            form: string;
+            /**
+             * Readings
+             * @default []
+             */
+            readings: string[];
+            /**
+             * Labels
+             * @default []
+             */
+            labels: string[];
+        };
+        /**
+         * Variants
+         * @description Written-form ↔ reading pairings (JMdict re_restr/re_nokanji +
+         *     ke_inf), computed in retrieval so both UIs render identically.
+         *     ``forms`` one row per keb; ``readings`` the unrestricted readings that
+         *     apply to every form; ``kana_only`` the re_nokanji readings that apply
+         *     to no written form.
+         */
+        Variants: {
+            /**
+             * Forms
+             * @default []
+             */
+            forms: components["schemas"]["VariantForm"][];
+            /**
+             * Readings
+             * @default []
+             */
+            readings: string[];
+            /**
+             * Kana Only
+             * @default []
+             */
+            kana_only: string[];
         };
         /**
          * Xref

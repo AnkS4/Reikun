@@ -227,6 +227,27 @@ class SenseResult(BaseModel):
     examples: list[ExampleSentence] = []
 
 
+class VariantForm(BaseModel):
+    """One written form (k_ele) in the variant-forms block: ``form`` is the
+    keb, ``readings`` the readings JMdict binds *specifically* to it
+    (re_restr — empty when unrestricted), ``labels`` its ``ke_inf`` codes
+    (sK search-only / rK rare / ateji / io / iK / oK / ik)."""
+    form: str
+    readings: list[str] = []
+    labels: list[str] = []
+
+
+class Variants(BaseModel):
+    """Written-form ↔ reading pairings (JMdict re_restr/re_nokanji +
+    ke_inf), computed in retrieval so both UIs render identically.
+    ``forms`` one row per keb; ``readings`` the unrestricted readings that
+    apply to every form; ``kana_only`` the re_nokanji readings that apply
+    to no written form."""
+    forms: list[VariantForm] = []
+    readings: list[str] = []
+    kana_only: list[str] = []
+
+
 class SearchResult(BaseModel):
     id: int | None
     kanji_form: str | None = None
@@ -245,9 +266,12 @@ class SearchResult(BaseModel):
     # ~213k entries JMdict tags no lsource for.
     lsource: list[EtymologySource] = []
     # reading → kanji forms it may appear with (JMdict re_restr/re_nokanji);
-    # passed through for the deferred variant-forms display — nothing renders
-    # it yet.
+    # raw passthrough — the display-ready pairings live in `variants`.
     reading_restrictions: dict[str, list[str]] = {}
+    # Variant-forms block: per-keb reading bindings + ke_inf labels +
+    # kana-only readings; None when the entry carries no restrictions or
+    # labels (plain alternates need no annotation).
+    variants: Variants | None = None
     # Per-sense structure — the canonical display data. Each sense carries
     # its own glosses, pos/misc/field/dial badges, s_inf notes, typed xrefs
     # (with seq/sno deep-link pointers), stagk/stagr form restrictions and

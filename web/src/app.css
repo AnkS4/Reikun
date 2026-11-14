@@ -1364,6 +1364,57 @@ a.kanji-tip {
 	line-height: 1.5;
 }
 
+/* Sense-level form restrictions (stagk/stagr) — muted note inside the block. */
+.sense-variants {
+	margin: 0.35rem 0 0;
+	font-size: var(--fs-sm);
+	color: var(--text-muted);
+	line-height: 1.5;
+}
+.sense-variants span + span {
+	margin-left: 0.9rem;
+}
+
+/* Variant forms — JMdict reading↔kanji bindings + ke_inf labels. */
+.variants {
+	margin: 0.5rem 0 0;
+	padding: 0.5rem 0.75rem;
+	border: 1px solid var(--border-soft);
+	border-radius: var(--radius-sm);
+	background: var(--surface-soft);
+}
+.variants-title {
+	margin: 0 0 0.3rem;
+	font-family: var(--font-mono);
+	font-size: var(--fs-2xs);
+	font-weight: 500;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: var(--text-faint);
+}
+.variant-row {
+	margin: 0.15rem 0;
+	font-size: var(--fs-sm);
+	line-height: 1.5;
+	color: var(--text);
+}
+.variant-row .v-form {
+	font-weight: 500;
+}
+.variant-row .v-tag {
+	display: inline-block;
+	margin-left: 0.4rem;
+	padding: 0.05rem 0.4rem;
+	border-radius: var(--radius-pill, 999px);
+	border: 1px solid var(--border-soft);
+	font-size: var(--fs-2xs);
+	color: var(--text-muted);
+	white-space: nowrap;
+}
+.variant-row .v-read {
+	color: var(--text-muted);
+}
+
 /* Deep-link target (?seq=&sense=): brief highlight on the referenced sense. */
 .sense-focus {
 	border-left-color: var(--primary);

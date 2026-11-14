@@ -905,6 +905,12 @@ _POS_LABEL_KEYS = {
 _MISC_LABEL_KEYS = {
     "on-mim": "miscOnom", "kana": "miscKana", "abbr": "miscAbbr", "idiom": "miscIdiom",
 }
+# ke_inf per-form labels → i18n keys (codes from scripts/build_chunks.py).
+_KE_INF_KEYS = {
+    "sK": "variantSearchOnly", "rK": "variantRare", "oK": "variantOldForm",
+    "ateji": "variantAteji", "io": "variantIrregularOkurigana",
+    "iK": "variantIrregularKanji", "ik": "variantIrregularKana",
+}
 
 
 def _sense_block(sense: dict, si: int, entry_id, lang: str) -> str:
@@ -936,6 +942,18 @@ def _sense_block(sense: dict, si: int, entry_id, lang: str) -> str:
     )
     if badges:
         parts.append(f'<p class="sense-badges">{" ".join(badges)}</p>')
+
+    # Sense-level form restrictions (JMdict stagk/stagr): this meaning only
+    # applies to the listed written forms / readings.
+    sense_var_notes = []
+    if stagk := sense.get("stagk") or []:
+        sense_var_notes.append(
+            esc(_t(lang, "senseWrittenOnly", forms=" · ".join(stagk))))
+    if stagr := sense.get("stagr") or []:
+        sense_var_notes.append(
+            esc(_t(lang, "senseReadOnly", readings=" · ".join(stagr))))
+    if sense_var_notes:
+        parts.append(f'<p class="sense-variants">{" ".join(sense_var_notes)}</p>')
 
     if sinf := sense.get("s_inf") or []:
         parts.append(f'<p class="sense-note" lang="en">{esc(" ".join(sinf))}</p>')
@@ -1047,6 +1065,46 @@ def _result_card(query: str, result: dict, furi: bool, lang: str) -> str:
             for char in kanji_chars
         )
         parts.append(f'<p class="reading-note">{esc(_t(lang, "lite_kanjiLabel"))}: {links}</p>')
+
+    # Variant forms: JMdict's reading→kanji bindings (re_restr/re_nokanji)
+    # plus per-form ke_inf labels — which spelling goes with which reading.
+    variants = result.get("variants") or {}
+    vforms = variants.get("forms") or []
+    if vforms:
+        rows = []
+        for f in vforms:
+            tags = "".join(
+                f'<span class="v-tag">{esc(_t(lang, _KE_INF_KEYS[c]))}</span>'
+                for c in (f.get("labels") or []) if c in _KE_INF_KEYS
+            )
+            bound = f.get("readings") or []
+            read_html = (
+                f' <span class="v-read">— {esc(" · ".join(bound))}</span>'
+                if bound else ""
+            )
+            rows.append(
+                f'<p class="variant-row"><span class="v-form" lang="ja">'
+                f'{esc(f.get("form") or "")}</span>{tags}{read_html}</p>')
+        # Unrestricted readings apply to every form; the primary reading is
+        # already in the headword, so only alternates earn the shared line.
+        shared = [
+            r for r in (variants.get("readings") or [])
+            if r and r != result.get("reading")
+        ]
+        if shared:
+            rows.append(
+                f'<p class="variant-row"><span class="v-tag">'
+                f'{esc(_t(lang, "variantReadAs"))}</span> '
+                f'<span class="v-read" lang="ja">{esc(" · ".join(shared))}</span></p>')
+        kana_only = variants.get("kana_only") or []
+        if kana_only:
+            rows.append(
+                f'<p class="variant-row"><span class="v-tag">'
+                f'{esc(_t(lang, "variantKanaOnly"))}</span> '
+                f'<span class="v-read" lang="ja">{esc(" · ".join(kana_only))}</span></p>')
+        parts.append(
+            f'<div class="variants"><p class="variants-title">'
+            f'{esc(_t(lang, "variantsTitle"))}</p>{"".join(rows)}</div>')
 
     # Related words sit directly under the headword (no collapse), as in the web UI.
     forms = (head, *kanji_forms, *readings)

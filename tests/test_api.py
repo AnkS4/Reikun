@@ -121,6 +121,68 @@ def test_search_result_sense_fields() -> None:
         assert name in sense_fields, name
     xref = api.Xref(seq="1", sno="2", text="お店", type="see")
     assert xref.sno == "2"
+    # Variant-forms block: per-keb reading bindings + ke_inf labels +
+    # kana-only readings; None when the entry has neither.
+    assert "variants" in fields
+    variant_fields = api.Variants.model_fields
+    for name in ("forms", "readings", "kana_only"):
+        assert name in variant_fields, name
+    form_fields = api.VariantForm.model_fields
+    for name in ("form", "readings", "labels"):
+        assert name in form_fields, name
+
+
+def test_variant_forms_pairings() -> None:
+    from app.retrieval import _variant_forms
+
+    # re_restr: each reading binds to exactly one keb.
+    out = _variant_forms({
+        "kanji_forms": ["ＣＤプレーヤー", "ＣＤプレイヤー"],
+        "readings": ["シーディープレーヤー", "シーディープレイヤー"],
+        "reading_restrictions": {
+            "シーディープレーヤー": ["ＣＤプレーヤー"],
+            "シーディープレイヤー": ["ＣＤプレイヤー"],
+        },
+        "ke_inf": {},
+    })
+    assert out is not None
+    assert out["forms"][0]["readings"] == ["シーディープレーヤー"]
+    assert out["forms"][1]["readings"] == ["シーディープレイヤー"]
+    assert out["readings"] == [] and out["kana_only"] == []
+
+    # re_nokanji: the katakana reading applies to no written form; the
+    # hiragana one is unrestricted and lands in the shared readings line.
+    out = _variant_forms({
+        "kanji_forms": ["梔子", "巵子", "山梔子", "梔"],
+        "readings": ["くちなし", "クチナシ", "しし", "さんしし"],
+        "reading_restrictions": {
+            "クチナシ": [], "しし": ["梔子", "巵子"], "さんしし": ["山梔子"],
+        },
+        "ke_inf": {},
+    })
+    assert out is not None
+    assert out["kana_only"] == ["クチナシ"]
+    assert out["readings"] == ["くちなし"]  # unrestricted only
+    assert out["forms"][0]["readings"] == ["しし"]
+    assert out["forms"][2]["readings"] == ["さんしし"]
+    assert out["forms"][3]["readings"] == []
+
+    # ke_inf labels ride along per form; unrestricted readings = all.
+    out = _variant_forms({
+        "kanji_forms": ["明白", "偸閑"],
+        "readings": ["あからさま"],
+        "reading_restrictions": {},
+        "ke_inf": {"明白": ["ateji", "rK"], "偸閑": ["ateji", "rK"]},
+    })
+    assert out is not None
+    assert out["forms"][0]["labels"] == ["ateji", "rK"]
+    assert out["readings"] == ["あからさま"]
+
+    # No restrictions and no labels → no block (plain alternates).
+    assert _variant_forms({
+        "kanji_forms": ["犬"], "readings": ["いぬ"],
+        "reading_restrictions": {}, "ke_inf": {},
+    }) is None
 
 
 def test_explain_validates() -> None:

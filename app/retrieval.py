@@ -168,6 +168,42 @@ class SearchResponse:
     meta: MappingProxyType[str, object] = _EMPTY_META
 
 
+def _variant_forms(p: dict) -> dict | None:
+    """Written-form ↔ reading pairings for the variant-forms display.
+
+    JMdict scopes the binding two ways: ``reading_restrictions`` maps a
+    reading to the kebs it may appear with (``[]`` = re_nokanji, kana-only —
+    the reading applies to *no* written form), and ``ke_inf`` labels each
+    keb (sK search-only / rK rare / ateji / io / iK / oK / ik). A reading
+    absent from the map is unrestricted and applies to every keb.
+
+    Returns ``{"forms": [{form, readings, labels}], "readings": [...],
+    "kana_only": [...]}`` — ``forms[].readings`` lists only the readings
+    *bound* to that keb; ``readings`` carries the unrestricted ones (shown
+    once, since they apply to all forms); ``kana_only`` the re_nokanji
+    readings. ``None`` when the entry has no restrictions or labels —
+    plain alternate forms need no annotation block."""
+    rr = p.get("reading_restrictions") or {}
+    ki = p.get("ke_inf") or {}
+    kforms = p.get("kanji_forms") or []
+    reads = p.get("readings") or []
+    if not (rr or ki) or not kforms:
+        return None
+    rows = [
+        {
+            "form": keb,
+            "readings": [r for r in reads if keb in (rr.get(r) or [])],
+            "labels": ki.get(keb) or [],
+        }
+        for keb in kforms
+    ]
+    return {
+        "forms": rows,
+        "readings": [r for r in reads if r not in rr] if rr else reads,
+        "kana_only": [r for r in reads if rr.get(r) == []],
+    }
+
+
 def _hit_to_dict(hit, score: float | None = None) -> dict:
     p = hit.payload or {}
     return {
@@ -188,6 +224,9 @@ def _hit_to_dict(hit, score: float | None = None) -> dict:
         # API/lite boundary (app.etymology).
         "lsource": p.get("lsource") or [],
         "reading_restrictions": p.get("reading_restrictions") or {},
+        # Written-form ↔ reading pairings + per-form ke_inf labels, computed
+        # once here so the SPA and lite render identical variant blocks.
+        "variants": _variant_forms(p),
         # Per-sense structure — canonical display data (glosses with their
         # own pos/misc/field/dial/s_inf/xrefs/stagk/stagr/examples). The old
         # entry-level unions were dropped at build time; senses replaced them.

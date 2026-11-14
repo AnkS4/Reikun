@@ -1829,6 +1829,16 @@
             "title": "Reading Restrictions",
             "default": {}
           },
+          "variants": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Variants"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "senses": {
             "items": {
               "$ref": "#/components/schemas/SenseResult"
@@ -2098,6 +2108,67 @@
           "type"
         ],
         "title": "ValidationError"
+      },
+      "VariantForm": {
+        "properties": {
+          "form": {
+            "type": "string",
+            "title": "Form"
+          },
+          "readings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Readings",
+            "default": []
+          },
+          "labels": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Labels",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "form"
+        ],
+        "title": "VariantForm",
+        "description": "One written form (k_ele) in the variant-forms block: ``form`` is the\nkeb, ``readings`` the readings JMdict binds *specifically* to it\n(re_restr — empty when unrestricted), ``labels`` its ``ke_inf`` codes\n(sK search-only / rK rare / ateji / io / iK / oK / ik)."
+      },
+      "Variants": {
+        "properties": {
+          "forms": {
+            "items": {
+              "$ref": "#/components/schemas/VariantForm"
+            },
+            "type": "array",
+            "title": "Forms",
+            "default": []
+          },
+          "readings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Readings",
+            "default": []
+          },
+          "kana_only": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Kana Only",
+            "default": []
+          }
+        },
+        "type": "object",
+        "title": "Variants",
+        "description": "Written-form ↔ reading pairings (JMdict re_restr/re_nokanji +\nke_inf), computed in retrieval so both UIs render identically.\n``forms`` one row per keb; ``readings`` the unrestricted readings that\napply to every form; ``kana_only`` the re_nokanji readings that apply\nto no written form."
       },
       "Xref": {
         "properties": {

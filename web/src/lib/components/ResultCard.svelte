@@ -26,6 +26,16 @@
 		abbr: 'miscAbbr',
 		idiom: 'miscIdiom'
 	};
+	/** ke_inf per-form labels → i18n keys (codes from scripts/build_chunks.py). */
+	const KE_INF_LABEL: Record<string, MessageKey> = {
+		sK: 'variantSearchOnly',
+		rK: 'variantRare',
+		oK: 'variantOldForm',
+		ateji: 'variantAteji',
+		io: 'variantIrregularOkurigana',
+		iK: 'variantIrregularKanji',
+		ik: 'variantIrregularKana'
+	};
 
 	let {
 		result,
@@ -101,6 +111,11 @@
 
 	const senses = $derived(result.senses ?? []);
 	const flatExamples = $derived(result.example_sentences ?? []);
+	// Unrestricted readings apply to every written form — the primary reading
+	// already sits in the headword, so only alternates earn the shared line.
+	const sharedReads = $derived(
+		(result.variants?.readings ?? []).filter((r) => r && r !== result.reading)
+	);
 	const hasExamples = $derived(
 		senses.length ? senses.some((s) => (s.examples ?? []).length > 0) : flatExamples.length > 0
 	);
@@ -164,6 +179,15 @@
 						{#each sense.dial ?? [] as d (d.code)}<span class="badge dial" title={t('dialect')}>{d.name}</span>{/each}
 					</p>
 				{/if}
+				{#if sense.stagk?.length || sense.stagr?.length}
+					<!-- Sense-level form restrictions (JMdict stagk/stagr): this
+					     meaning only applies to the listed written forms /
+					     readings. -->
+					<p class="sense-variants">
+						{#if sense.stagk?.length}<span>{t('senseWrittenOnly', { forms: sense.stagk.join(' · ') })}</span>{/if}
+						{#if sense.stagr?.length}<span>{t('senseReadOnly', { readings: sense.stagr.join(' · ') })}</span>{/if}
+					</p>
+				{/if}
 				{#if sense.s_inf?.length}
 					<p class="sense-note" lang="en">{sense.s_inf.join(' ')}</p>
 				{/if}
@@ -214,6 +238,33 @@
 				{/each}
 			</div>
 		{/if}
+	{/if}
+	{#if result.variants?.forms?.length}
+		<!-- Variant forms: JMdict's reading→kanji bindings (re_restr /
+		     re_nokanji) plus per-form ke_inf labels — which spelling goes
+		     with which reading, and which spellings are search-only/rare. -->
+		<div class="variants">
+			<p class="variants-title">{t('variantsTitle')}</p>
+			{#each result.variants.forms as f (f.form)}
+				<p class="variant-row">
+					<span class="v-form" lang="ja">{f.form}</span>
+					{#each f.labels ?? [] as l (l)}{#if KE_INF_LABEL[l]}<span class="v-tag">{t(KE_INF_LABEL[l])}</span>{/if}{/each}
+					{#if f.readings?.length}<span class="v-read">— {f.readings.join(' · ')}</span>{/if}
+				</p>
+			{/each}
+			{#if sharedReads.length}
+				<p class="variant-row">
+					<span class="v-tag">{t('variantReadAs')}</span>
+					<span class="v-read" lang="ja">{sharedReads.join(' · ')}</span>
+				</p>
+			{/if}
+			{#if result.variants.kana_only?.length}
+				<p class="variant-row">
+					<span class="v-tag">{t('variantKanaOnly')}</span>
+					<span class="v-read" lang="ja">{result.variants.kana_only.join(' · ')}</span>
+				</p>
+			{/if}
+		</div>
 	{/if}
 	{#if onSearchWord && result.related?.length}
 		<div class="related-row" aria-label={t('relatedWords')}>
