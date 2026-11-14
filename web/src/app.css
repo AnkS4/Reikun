@@ -2139,6 +2139,15 @@ a.kanji-tip {
 	word-break: break-word;
 }
 
+/* Value-picker cards reuse .kg-card; the facet label takes the glyph's
+   slot at text size. */
+.kv-value {
+	font-size: 1.3rem;
+	font-weight: 600;
+	line-height: 1.25;
+	color: var(--text);
+}
+
 .kg-pager {
 	display: flex;
 	align-items: center;

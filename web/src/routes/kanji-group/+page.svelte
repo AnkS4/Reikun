@@ -167,15 +167,16 @@
 	{#if !req}
 		{#if byParam}
 			<!-- Value picker: `?by=X` without a usable value lists every
-			     available value as a chip with its kanji count. -->
+			     available value as a card with its kanji count, in the same
+			     grid the results use. -->
 			<h1 class="kgroup-title">{browseLabel(byParam)} {cap(t('kanjiSuffix'))}</h1>
 			<p class="kgroup-sub">{t('pickValueSub', { group: groupLabel(byParam) })}</p>
 			{#if facets}
-				<div class="lw-chips">
+				<div class="kg-grid">
 					{#each facets[byParam] ?? [] as v (v.value)}
-						<a class="pill lw-chip" href="/kanji-group?by={byParam}&value={v.value}">
-							<span>{valueLabel(byParam, v.value)}</span>
-							<span class="lw-count">{v.count.toLocaleString()}</span>
+						<a class="kg-card kv-card" href="/kanji-group?by={byParam}&value={v.value}">
+							<span class="kv-value">{valueLabel(byParam, v.value)}</span>
+							<span class="kg-meta">{v.count.toLocaleString()} {t('kanjiSuffix')}</span>
 						</a>
 					{/each}
 				</div>

@@ -1384,9 +1384,10 @@ def _kg_pick_page(request: Request, by: str, lang: str, theme: str) -> Response:
         canonical = "/lite/kanji/group"
     else:
         name_key = _KG_BROWSE[by][1]
-        chips = "".join(
-            f'<a class="pill" href="{_href("/lite/kanji/group", by=by, value=v["value"])}">'
-            f'{esc(_kg_value_label(by, v["value"], lang))} · {v["count"]:,}</a>'
+        items = "".join(
+            f'<li class="kg-card"><a href="{_href("/lite/kanji/group", by=by, value=v["value"])}">'
+            f'<span class="kv-value">{esc(_kg_value_label(by, v["value"], lang))}</span>'
+            f'<span class="kg-meta">{v["count"]:,} {esc(_t(lang, "kanjiSuffix"))}</span></a></li>'
             for v in kanji_group_facets()[by]
         )
         disp = _t(lang, name_key)
@@ -1394,7 +1395,7 @@ def _kg_pick_page(request: Request, by: str, lang: str, theme: str) -> Response:
         title = f'{disp} {suffix[:1].upper() + suffix[1:]}'
         group = _t(lang, by)
         sub = esc(_t(lang, "pickValueSub", group=group.lower() if lang in ("en", "es") else group))
-        grid = f'<div class="pills">{chips}</div>'
+        grid = f'<ul class="kg-grid">{items}</ul>'
         canonical = f"/lite/kanji/group?by={quote(by)}"
     body = f'<h1 class="kgroup-title">{esc(title)}</h1><p class="kgroup-sub">{sub}</p>{grid}'
     return _page(

@@ -426,6 +426,9 @@ text-decoration:none;color:inherit}
 .kg-gloss{color:var(--text-muted);font-size:var(--fs-sm);min-height:2em;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .kg-meta{display:block;font-family:var(--font-mono);color:var(--text-faint);font-size:var(--fs-2xs);
 line-height:1.15;white-space:normal;word-break:break-word}
+/* Value-picker cards reuse .kg-card; the facet label takes the glyph's
+   slot at text size. */
+.kv-value{font-size:1.3rem;font-weight:600;line-height:1.25;color:var(--text)}
 .kg-pager{display:flex;justify-content:center;align-items:center;gap:1rem;margin-top:1.5rem}
 .kg-pager-label{font-family:var(--font-mono);font-size:var(--fs-sm);color:var(--text-muted)}
 .kgroup-bottom-actions{margin-top:2rem;display:flex;justify-content:flex-start}
