@@ -9,6 +9,7 @@ machine with a local Qdrant sees 200 instead).
 
 from fastapi.testclient import TestClient
 
+from app import api
 from app.api import APP_VERSION, app
 
 # Plain instantiation — no `with`, so the lifespan never runs and the
@@ -103,6 +104,16 @@ def test_search_too_long_short_circuits() -> None:
     assert body["meta"] == {"route": None, "rewrite_ms": None, "embed_ms": None,
                             "retrieve_ms": None, "segment_ms": None,
                             "cached": False, "too_long": 150}
+
+
+def test_search_result_phase2_fields() -> None:
+    # POS/misc badges, typed dictionary xrefs and dialect labels are part of
+    # the public schema — a dropped field here is a silent UI regression.
+    fields = api.SearchResult.model_fields
+    for name in ("pos", "misc", "xrefs", "dial", "lsource", "reading_restrictions"):
+        assert name in fields, name
+    xref = api.Xref(seq="1", text="反対", type="ant")
+    assert xref.type == "ant"
 
 
 def test_explain_validates() -> None:

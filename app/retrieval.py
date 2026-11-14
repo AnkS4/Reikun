@@ -188,6 +188,13 @@ def _hit_to_dict(hit, score: float | None = None) -> dict:
         # API/lite boundary (app.etymology).
         "lsource": p.get("lsource") or [],
         "reading_restrictions": p.get("reading_restrictions") or {},
+        # Coarse POS/misc tags, dictionary xrefs (typed) and dialect labels —
+        # payload passthrough for badges/chips. field_tags/ke_inf/s_inf stay
+        # payload-only (capture-only fields).
+        "pos": p.get("pos") or [],
+        "misc": p.get("misc") or [],
+        "xrefs": p.get("xrefs") or [],
+        "dial": p.get("dial") or [],
         "inflection": None,
         "score": round(float(hit.score if score is None else score), 4),
     }

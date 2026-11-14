@@ -1310,6 +1310,18 @@ a.kanji-tip {
 	color: var(--coral);
 }
 
+/* POS/misc/dialect badges — quieter than the green `common` marker */
+.badge.pos,
+.badge.misc {
+	background: var(--surface-soft);
+	color: var(--text-muted);
+}
+
+.badge.dial {
+	background: var(--primary-light);
+	color: var(--primary);
+}
+
 .meanings-line {
 	margin: 0.5rem 0 0.85rem;
 	font-size: var(--fs-body);
@@ -1441,6 +1453,28 @@ a.kanji-tip {
 	text-overflow: ellipsis;
 	white-space: nowrap;
 	max-width: 14rem;
+}
+
+/* Dictionary cross-references — JMdict xref antonym/see-also chips,
+   distinct from the kanji-overlap .related-row above them. */
+.xref-row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	gap: 0.4rem;
+	margin: 0 0 0.35rem;
+}
+
+.xref-label {
+	font-family: var(--font-mono);
+	font-size: var(--fs-2xs);
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	color: var(--text-muted);
+}
+
+.related-pill.xref-ant {
+	border-color: var(--coral);
 }
 
 .example-row {

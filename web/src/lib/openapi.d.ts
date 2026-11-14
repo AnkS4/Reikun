@@ -286,6 +286,17 @@ export interface components {
             ruby: components["schemas"]["RubyPart"][];
         };
         /**
+         * DialectLabel
+         * @description One JMdict ``<dial>`` dialect tag: entity ``code`` (ksb, rkb, …) and
+         *     its English ``name`` ("Kansai-ben").
+         */
+        DialectLabel: {
+            /** Code */
+            code: string;
+            /** Name */
+            name: string;
+        };
+        /**
          * ErrorResponse
          * @description FastAPI's HTTPException body — declared so non-422 errors show up in the schema.
          */
@@ -756,6 +767,26 @@ export interface components {
             reading_restrictions: {
                 [key: string]: string[];
             };
+            /**
+             * Pos
+             * @default []
+             */
+            pos: string[];
+            /**
+             * Misc
+             * @default []
+             */
+            misc: string[];
+            /**
+             * Xrefs
+             * @default []
+             */
+            xrefs: components["schemas"]["Xref"][];
+            /**
+             * Dial
+             * @default []
+             */
+            dial: components["schemas"]["DialectLabel"][];
             /** Inflection */
             inflection?: string | null;
         };
@@ -832,6 +863,20 @@ export interface components {
             input?: unknown;
             /** Context */
             ctx?: Record<string, never>;
+        };
+        /**
+         * Xref
+         * @description One JMdict ``<xref>`` — a dictionary cross-reference. ``type`` is
+         *     ``see`` (general), ``ant`` (antonym) or ``syn`` (synonym); ``text`` is the
+         *     referenced headword, searchable as-is.
+         */
+        Xref: {
+            /** Seq */
+            seq: string;
+            /** Text */
+            text: string;
+            /** Type */
+            type: string;
         };
     };
     responses: never;

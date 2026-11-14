@@ -28,7 +28,8 @@ import logging
 import re
 import sys
 import xml.etree.ElementTree as ET
-from collections import defaultdict
+from collections import Counter, defaultdict
+from collections.abc import Iterable
 from datetime import UTC, datetime
 from functools import lru_cache
 from pathlib import Path
@@ -55,6 +56,124 @@ XML_LANG = "{http://www.w3.org/XML/1998/namespace}lang"
 COMMON_PRI = frozenset({"news1", "ichi1", "spec1", "spec2", "gai1"})
 COMMON_PRI2 = frozenset({"news2", "ichi2", "gai2"})
 _NF_RE = re.compile(r"nf(\d{2})")
+
+# ── Entity-code classification ────────────────────────────────────────────────
+# iterparse resolves the DOCTYPE's <!ENTITY> declarations, so <pos>, <misc>,
+# <dial>, <field> and <ke_inf> arrive as English text ("noun (common)
+# (futsuumeishi)", "Kansai-ben", "computing"). The original code is recovered
+# through the entity table parsed once from the file head — an exact-match
+# lookup, never prefix heuristics (adj-na / adj-no / adj-nari / adj-pn share
+# every prefix boundary a regex would test). Verified against the
+# 2026-11-13 JMdict_e build: every occurring element is exactly one entity.
+
+_ENTITY_RE = re.compile(r'<!ENTITY\s+(\S+)\s+"([^"]*)"')
+
+
+@lru_cache(maxsize=1)
+def _entities() -> tuple[dict[str, str], dict[str, str]]:
+    """(code → resolved text, resolved text → code) from the DOCTYPE subset."""
+    head = (RAW_DIR / JMDICT_XML).read_bytes()[:262_144].decode("utf-8", "replace")
+    dtd = head[: head.index("]>") + 2]
+    code_to_text = dict(_ENTITY_RE.findall(dtd))
+    return code_to_text, {text: code for code, text in code_to_text.items()}
+
+
+_UNMAPPED: Counter = Counter()
+
+
+def _entity_code(text: str | None) -> str | None:
+    """JMdict entity code for a resolved element text (None when unmapped —
+    counted in _UNMAPPED so a DTD drift surfaces in the build log)."""
+    code = _entities()[1].get(text or "")
+    if code is None and text:
+        _UNMAPPED[text] += 1
+    return code
+
+
+# POS: the 83 codes occurring in JMdict_e (2026-11-13 census, 322,409 sense
+# occurrences) plus five DTD-defined codes that occur zero times here
+# (adj-kari, v5uru, n-adv, n-t, n-pr — kept so a future full-JMdict feed
+# classifies instead of dropping). Tag totals cross-check to the census:
+# verb 61,302 · adj-i 3,680 · adj-na 15,074 · noun 214,573 · adv 7,675 ·
+# phrase 14,843 · intj 955 · other 4,307.
+_POS_TAG_MAP: dict[str, str] = {
+    # verb — godan v5*, ichidan v1*, archaic v2*/v4*, suru/kuru/zuru families
+    "vt": "verb", "vi": "verb", "vr": "verb", "vk": "verb", "vn": "verb",
+    "vz": "verb", "v-unspec": "verb",
+    "v1": "verb", "v1-s": "verb",
+    "v5r": "verb", "v5s": "verb", "v5k": "verb", "v5u": "verb", "v5m": "verb",
+    "v5t": "verb", "v5g": "verb", "v5b": "verb", "v5n": "verb", "v5aru": "verb",
+    "v5r-i": "verb", "v5k-s": "verb", "v5u-s": "verb", "v5uru": "verb",
+    "vs": "verb", "vs-i": "verb", "vs-s": "verb", "vs-c": "verb",
+    "v2a-s": "verb", "v2b-k": "verb", "v2b-s": "verb", "v2d-k": "verb",
+    "v2d-s": "verb", "v2g-k": "verb", "v2g-s": "verb", "v2h-k": "verb",
+    "v2h-s": "verb", "v2k-k": "verb", "v2k-s": "verb", "v2m-k": "verb",
+    "v2m-s": "verb", "v2n-s": "verb", "v2r-k": "verb", "v2r-s": "verb",
+    "v2s-s": "verb", "v2t-k": "verb", "v2t-s": "verb", "v2w-s": "verb",
+    "v2y-k": "verb", "v2y-s": "verb", "v2z-s": "verb",
+    "v4b": "verb", "v4g": "verb", "v4h": "verb", "v4k": "verb", "v4m": "verb",
+    "v4n": "verb", "v4r": "verb", "v4s": "verb", "v4t": "verb",
+    # adj-i — keiyoushi incl. the archaic ku/shiku/taru/kari classes
+    "adj-i": "adj-i", "adj-ix": "adj-i", "adj-ku": "adj-i",
+    "adj-shiku": "adj-i", "adj-t": "adj-i", "adj-kari": "adj-i",
+    # adj-na — keiyodoshi + rentaishi/genitive-noun adjectivals
+    "adj-na": "adj-na", "adj-nari": "adj-na", "adj-no": "adj-na", "adj-pn": "adj-na",
+    # noun — common + prefix/suffix uses; n-adv/n-t/n-pr are DTD no-ops here
+    "n": "noun", "n-suf": "noun", "n-pref": "noun",
+    "n-adv": "noun", "n-t": "noun", "n-pr": "noun",
+    "adv": "adv", "adv-to": "adv",
+    "exp": "phrase",
+    "int": "intj",
+    # other — prenominal adj-f, bound forms (suf/pref/pn/prt/conj/ctr),
+    # auxiliaries, numbers, copula, unclassified
+    "adj-f": "other", "suf": "other", "pn": "other", "prt": "other",
+    "pref": "other", "conj": "other", "ctr": "other", "aux-v": "other",
+    "num": "other", "aux": "other", "unc": "other", "cop": "other",
+    "aux-adj": "other",
+}
+
+# Badge order: specific tags before the noun/other catch-alls — plain `n` is
+# 66.5% of sense-level tags, so an adj-na+noun entry must badge the adjective.
+_POS_ORDER = ("verb", "adj-i", "adj-na", "adv", "intj", "phrase", "noun", "other")
+
+# misc: all 55 DTD codes (52 occur in JMdict_e 2026-11-13, 50,648 elements —
+# oth/X/station are DTD no-ops kept for completeness). Two-tier policy: the
+# first four tags are union-safe content-type labels that display as badges;
+# the rest are sense-conditional register/name labels captured for the
+# sense-aware restructure and the org-name suppression in related_words.
+_MISC_TAG_MAP: dict[str, str] = {
+    # tier 1 — display now
+    "on-mim": "on-mim", "uk": "kana", "abbr": "abbr",
+    "yoji": "idiom", "id": "idiom", "proverb": "idiom",
+    # tier 2 — capture-only
+    "form": "formal", "hon": "formal",
+    "arch": "archaic", "rare": "archaic", "hist": "archaic",
+    "obs": "archaic", "dated": "archaic", "poet": "archaic",
+    "col": "colloquial", "sl": "colloquial", "net-sl": "colloquial",
+    "m-sl": "colloquial", "derog": "colloquial", "vulg": "colloquial",
+    "joc": "colloquial", "hum": "colloquial", "fam": "colloquial",
+    "serv": "colloquial", "chn": "colloquial", "pol": "colloquial",
+    "sens": "colloquial",
+    "org": "name", "work": "name", "company": "name", "product": "name",
+    "person": "name", "place": "name", "surname": "name", "given": "name",
+    "dei": "name", "ship": "name", "station": "name", "ev": "name",
+    "obj": "name", "doc": "name", "creat": "name", "fict": "name",
+    "leg": "name", "myth": "name", "relig": "name", "group": "name",
+    "unclass": "name",
+    "fem": "other", "male": "other", "char": "other", "quote": "other",
+    "euph": "other", "oth": "other", "X": "other",
+}
+
+_MISC_ORDER = ("on-mim", "idiom", "abbr", "kana",
+               "formal", "archaic", "colloquial", "name", "other")
+
+
+def _coded_tags(texts: Iterable[str], code_to_tag: dict[str, str],
+                order: tuple[str, ...]) -> list[str]:
+    """Resolved element texts → deduped coarse tags in display priority order."""
+    tags = {code_to_tag[c] for t in texts
+            if (c := _entity_code(t)) is not None and c in code_to_tag}
+    return sorted(tags, key=order.index)
 
 
 def iter_elements(path: Path, tag: str):
@@ -196,6 +315,7 @@ def _entry_to_chunk(entry: ET.Element) -> dict | None:
     kanji_forms: list[str] = []
     readings: list[str] = []
     reading_restrictions: dict[str, list[str]] = {}
+    ke_inf: dict[str, list[str]] = {}
     pris: set[str] = set()
     primary_kanji: str | None = None
     primary_kana: str | None = None
@@ -209,6 +329,11 @@ def _entry_to_chunk(entry: ET.Element) -> dict | None:
         pris |= k_pris
         if primary_kanji is None and k_pris & COMMON_PRI:
             primary_kanji = keb
+        # Per-form usage labels (sK search-only / rK rare / ateji / io / iK /
+        # oK / ik) — capture-only; the variant-forms package owns display.
+        if labels := [c for inf in k.findall("ke_inf")
+                      if (c := _entity_code(inf.text))]:
+            ke_inf[keb] = labels
     if primary_kanji is None and kanji_forms:
         primary_kanji = kanji_forms[0]
 
@@ -241,7 +366,8 @@ def _entry_to_chunk(entry: ET.Element) -> dict | None:
     meanings: list[str] = []
     primary_meanings: list[str] = []
     example_sentences: list[dict] = []
-    related: list[dict] = []
+    xrefs: list[dict] = []
+    s_inf: list[str] = []
     seen_xref: set[tuple] = set()
     kana_pref = False
     for i, sense in enumerate(entry.findall("sense")):
@@ -252,6 +378,9 @@ def _entry_to_chunk(entry: ET.Element) -> dict | None:
         if i == 0:
             kana_pref = any(
                 m.text and "kana alone" in m.text for m in sense.findall("misc"))
+            # First-sense usage notes — capture-only until the note-line UI
+            # ships (JMdict-authored English, e.g. "usu. as …").
+            s_inf = [s.text for s in sense.findall("s_inf") if s.text]
         for gloss in sense.findall("gloss"):
             if gloss.get(XML_LANG, "eng") == "eng" and gloss.text:
                 meanings.append(gloss.text)
@@ -272,16 +401,40 @@ def _entry_to_chunk(entry: ET.Element) -> dict | None:
             if key in seen_xref:
                 continue
             seen_xref.add(key)
-            related.append({"seq": key[0], "text": key[1]})
+            # type is a REQUIRED attr ("see"/"ant"/"syn") — dictionary-
+            # authoritative relations, unlike the kanji-overlap `related`
+            # computed at render time. Shipped under `xrefs` to keep the
+            # two datasets distinct.
+            xrefs.append({"seq": key[0], "text": key[1], "type": x.get("type") or "see"})
 
     if not meanings:
         return None
 
-    lsource = [
-        {"lang": ls.get(XML_LANG, "eng"), "text": ls.text or ""}
-        for ls in entry.findall("lsource")
-    ]
+    lsource = []
+    for ls in entry.findall("lsource"):
+        item = {"lang": ls.get(XML_LANG, "eng"), "text": ls.text or ""}
+        # ls_type="part" marks a partial source phrase; ls_wasei="y" marks a
+        # Japanese coinage built from source-language words (wasei-eigo) —
+        # both capture-only for now.
+        if ls.get("ls_type") == "part":
+            item["type"] = "part"
+        if ls.get("ls_wasei") == "y":
+            item["wasei"] = True
+        lsource.append(item)
     notes = [i.text for i in entry.findall("info") if i.text]
+
+    # Sense-level unions (entry-level tags — the accepted flattening
+    # tradeoff): POS badges, misc register markers, domain fields, dialects.
+    pos_tags = _coded_tags(pos_texts, _POS_TAG_MAP, _POS_ORDER)
+    misc_tags = _coded_tags(
+        (m.text for m in entry.findall("sense/misc") if m.text),
+        _MISC_TAG_MAP, _MISC_ORDER)
+    field_tags = sorted({f.text for f in entry.findall("sense/field")
+                         if f.text and _entity_code(f.text)})
+    code_to_text = _entities()[0]
+    dial_codes = {_entity_code(d.text) for d in entry.findall("sense/dial")}
+    dial_codes.discard(None)
+    dial = [{"code": c, "name": code_to_text[c]} for c in sorted(dial_codes)]
 
     # Display text: primary headword + reading + glosses. The dense
     # vector is built from glosses only at ingest time. Example sentences
@@ -353,8 +506,20 @@ def _entry_to_chunk(entry: ET.Element) -> dict | None:
         chunk["readings"] = readings
     if reading_restrictions:
         chunk["reading_restrictions"] = reading_restrictions
-    if related:
-        chunk["related"] = related
+    if ke_inf:
+        chunk["ke_inf"] = ke_inf
+    if xrefs:
+        chunk["xrefs"] = xrefs
+    if pos_tags:
+        chunk["pos"] = pos_tags
+    if misc_tags:
+        chunk["misc"] = misc_tags
+    if field_tags:
+        chunk["field_tags"] = field_tags
+    if dial:
+        chunk["dial"] = dial
+    if s_inf:
+        chunk["s_inf"] = s_inf
     if lsource:
         chunk["lsource"] = lsource
     if notes:
@@ -388,6 +553,12 @@ def build_word_chunks() -> tuple[list[dict], dict[str, list[str]]]:
         "  → %s chunks built from %s entries  (%s skipped - no meaning)",
         f"{len(chunks):,}", f"{total:,}", f"{skipped:,}",
     )
+    if _UNMAPPED:
+        log.warning(
+            "  %s element texts not in the DOCTYPE entity table (dropped): %s",
+            f"{sum(_UNMAPPED.values()):,}",
+            ", ".join(f"{t!r}x{n}" for t, n in _UNMAPPED.most_common(10)),
+        )
     return chunks, dict(kanji_to_ids)
 
 
@@ -445,9 +616,14 @@ def build_kanji_table(
         # ── Common words using this kanji ─────────────────────────────────────
         # Ranked, not file order: JMdict emits entries in document order, so a
         # raw word_ids[:30] slice could skip the kanji's actual top words when
-        # they happen to sit deeper in the file.
+        # they happen to sit deeper in the file. Name-tagged entries (proper
+        # nouns — composers, places, orgs; misc "name") are excluded: this
+        # pool feeds both the kanji card's common words and related_words(),
+        # where Picasso/Mozart chips are noise, not relations.
+        pool = [id_to_chunk[w] for w in kanji_to_ids.get(literal, []) if w in id_to_chunk]
+        pool = [c for c in pool if "name" not in (c.get("misc") or [])]
         ranked = sorted(
-            (id_to_chunk[w] for w in kanji_to_ids.get(literal, []) if w in id_to_chunk),
+            pool,
             key=lambda c: (bool(c.get("is_common")), c.get("commonness", 0.0), c.get("wf_score", 0.0)),
             reverse=True,
         )

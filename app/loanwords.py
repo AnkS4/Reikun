@@ -30,6 +30,7 @@ _PAYLOAD_FIELDS = [
     "kanji_form", "reading", "kanji_forms", "readings", "meanings",
     "example_sentences", "is_common", "text", "inflected_forms",
     "lsource", "reading_restrictions",
+    "pos", "misc", "xrefs", "dial",
 ]
 
 _lock = threading.Lock()

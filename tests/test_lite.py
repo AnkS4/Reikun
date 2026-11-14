@@ -451,3 +451,53 @@ def test_loanwords_lang_page(monkeypatch: pytest.MonkeyPatch) -> None:
     # Unknown language → the HTML 404 page, not a JSON error.
     bad = client.get("/lite/loanwords/zzz")
     assert bad.status_code == 404 and bad.headers["content-type"].startswith("text/html")
+
+
+def _bare_result(**extra) -> dict:
+    return {
+        "id": 9, "kanji_form": "試験", "reading": "しけん",
+        "kanji_forms": [], "readings": [], "meanings": ["exam"],
+        "example_sentences": [], "is_common": False, "text": "",
+        "inflected_forms": [], "inflection": None, "score": 1.0,
+        "lsource": [], "reading_restrictions": {}, **extra,
+    }
+
+
+def test_result_card_pos_misc_dial_badges() -> None:
+    result = _bare_result(
+        pos=["verb", "noun", "adv", "other"],          # capped at 3
+        misc=["on-mim", "kana", "archaic", "name"],    # tier-1 only, capped at 3
+        dial=[{"code": "ksb", "name": "Kansai-ben"}],
+    )
+    html_out = lite._result_card("", result, True, "en")
+    h2 = html_out.split("<h2")[1].split("</h2>")[0]
+    assert 'class="badge pos"' in h2
+    assert ">Verb<" in h2 and ">Noun<" in h2 and ">Adverb<" in h2
+    assert ">Other<" not in h2  # 4th pos tag cut by the cap
+    # tier-1 misc badges render; tier-2 (archaic/name) stay hidden
+    assert "Onomatopoeia" in h2 and "Kana" in h2
+    assert "Archaic" not in h2 and ">Name<" not in h2
+    assert "Kansai-ben" in h2 and 'title="Dialect"' in h2
+
+
+def test_result_card_badges_localized() -> None:
+    result = _bare_result(pos=["verb"], misc=["abbr"])
+    html_out = lite._result_card("", result, True, "ja")
+    assert ">動詞<" in html_out and ">略語<" in html_out
+
+
+def test_result_card_xref_chips() -> None:
+    result = _bare_result(
+        xrefs=[
+            {"seq": "1", "text": "反対", "type": "ant"},
+            {"seq": "2", "text": "テスト", "type": "see"},
+            {"seq": "3", "text": "試験場", "type": "syn"},
+        ],
+    )
+    html_out = lite._result_card("", result, True, "en")
+    assert "Antonyms" in html_out and "See also" in html_out
+    assert 'class="chip xref-ant"' in html_out
+    assert 'href="/lite/search?q=%E5%8F%8D%E5%AF%BE"' in html_out  # 反対 url-encoded
+    assert "試験場" in html_out  # syn folds into see-also
+    # no xrefs → no row at all
+    assert "xref-row" not in lite._result_card("", _bare_result(), True, "en")

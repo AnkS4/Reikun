@@ -894,6 +894,19 @@ def _results_html(request: Request, query: str, resp: SearchResponse, lang: str)
     return "".join(parts)
 
 
+# Coarse POS/misc tags → i18n keys (built by scripts/build_chunks.py). Misc
+# renders tier-1 union-safe labels only; tier-2 register/name tags are
+# capture-only until the sense-aware restructure.
+_POS_LABEL_KEYS = {
+    "verb": "posVerb", "adj-i": "posAdjI", "adj-na": "posAdjNa",
+    "noun": "posNoun", "adv": "posAdv", "phrase": "posPhrase",
+    "intj": "posIntj", "other": "posOther",
+}
+_MISC_LABEL_KEYS = {
+    "on-mim": "miscOnom", "kana": "miscKana", "abbr": "miscAbbr", "idiom": "miscIdiom",
+}
+
+
 def _result_card(query: str, result: dict, furi: bool, lang: str) -> str:
     """One entry card, structured like the web UI's ResultCard: headword,
     meanings line, inflection note, conjugations link, kanji links, related
@@ -903,7 +916,24 @@ def _result_card(query: str, result: dict, furi: bool, lang: str) -> str:
     kanji_forms = result.get("kanji_forms") or []
     meanings = result.get("meanings") or []
 
-    common = f'<span class="badge">{esc(_t(lang, "common"))}</span>' if result.get("is_common") else ""
+    badges = [f'<span class="badge">{esc(_t(lang, "common"))}</span>'] if result.get("is_common") else []
+    badges += [
+        f'<span class="badge pos">{esc(_t(lang, _POS_LABEL_KEYS[tag]))}</span>'
+        for tag in (result.get("pos") or [])[:3]
+        if tag in _POS_LABEL_KEYS
+    ]
+    misc_shown = 0
+    for tag in result.get("misc") or []:
+        if tag in _MISC_LABEL_KEYS:
+            badges.append(f'<span class="badge misc">{esc(_t(lang, _MISC_LABEL_KEYS[tag]))}</span>')
+            misc_shown += 1
+            if misc_shown >= 3:
+                break
+    for d in result.get("dial") or []:
+        badges.append(
+            f'<span class="badge dial" title="{esc(_t(lang, "dialect"))}">{esc(d.get("name") or "")}</span>'
+        )
+    common = " ".join(badges)
     entry_id = result.get("id")
     anchor = f' id="r{esc(entry_id)}"' if entry_id is not None else ""
     head_html = _ruby(furigana_parts(head, result.get("reading")), furi)
@@ -952,6 +982,31 @@ def _result_card(query: str, result: dict, furi: bool, lang: str) -> str:
             for char in kanji_chars
         )
         parts.append(f'<p class="reading-note">{esc(_t(lang, "lite_kanjiLabel"))}: {links}</p>')
+
+    # Dictionary cross-references (JMdict xref): antonyms and see-also
+    # pointers — searchable headwords, unlike the kanji-overlap `related`.
+    xrefs = result.get("xrefs") or []
+    xref_ants = [x for x in xrefs if x.get("type") == "ant"]
+    xref_sees = [x for x in xrefs if x.get("type") != "ant"][:6]
+    if xref_ants or xref_sees:
+        groups = []
+        if xref_ants:
+            chips = " ".join(
+                f'<a class="chip xref-ant" href="{_href("/lite/search", q=x.get("text") or "")}">'
+                f'<span lang="ja">{esc(x.get("text") or "")}</span></a>'
+                for x in xref_ants
+            )
+            groups.append(
+                f'<span class="xref-label">{esc(_t(lang, "antonyms"))}</span>{chips}')
+        if xref_sees:
+            chips = " ".join(
+                f'<a class="chip" href="{_href("/lite/search", q=x.get("text") or "")}">'
+                f'<span lang="ja">{esc(x.get("text") or "")}</span></a>'
+                for x in xref_sees
+            )
+            groups.append(
+                f'<span class="xref-label">{esc(_t(lang, "seeAlso"))}</span>{chips}')
+        parts.append(f'<div class="xref-row">{"".join(groups)}</div>')
 
     # Related words sit directly under the headword (no collapse), as in the web UI.
     forms = (head, *kanji_forms, *readings)

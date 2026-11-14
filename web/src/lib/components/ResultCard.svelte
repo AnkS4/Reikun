@@ -4,7 +4,28 @@
 	import Ruby from './Ruby.svelte';
 	import ExampleRow from './ExampleRow.svelte';
 	import Icon from './Icon.svelte';
-	import { t } from '#lib/i18n.svelte.ts';
+	import { t, type MessageKey } from '#lib/i18n.svelte.ts';
+
+	/** Coarse POS tag → i18n key (tags are built by scripts/build_chunks.py). */
+	const POS_LABEL: Record<string, MessageKey> = {
+		verb: 'posVerb',
+		'adj-i': 'posAdjI',
+		'adj-na': 'posAdjNa',
+		noun: 'posNoun',
+		adv: 'posAdv',
+		phrase: 'posPhrase',
+		intj: 'posIntj',
+		other: 'posOther'
+	};
+	/** Union-safe misc tags that render as badges; tier-2 register/name tags
+	 *  stay capture-only until the sense-aware restructure. */
+	const MISC_LABEL: Record<string, MessageKey> = {
+		'on-mim': 'miscOnom',
+		kana: 'miscKana',
+		abbr: 'miscAbbr',
+		idiom: 'miscIdiom'
+	};
+
 	let {
 		result,
 		level,
@@ -25,6 +46,13 @@
 
 	let copied = $state(false);
 	let timer: ReturnType<typeof setTimeout> | undefined;
+
+	const posBadges = $derived((result.pos ?? []).slice(0, 3));
+	const miscBadges = $derived((result.misc ?? []).filter((tag) => tag in MISC_LABEL).slice(0, 3));
+	const xrefAntonyms = $derived((result.xrefs ?? []).filter((x) => x.type === 'ant'));
+	const xrefSeeAlso = $derived(
+		(result.xrefs ?? []).filter((x) => x.type !== 'ant').slice(0, 6)
+	);
 
 	/** Build URL for the conjugations page. */
 	const conjHref = $derived.by(() => {
@@ -68,6 +96,9 @@
 	<div class="result-head">
 		<span class="headword" lang="ja"><Ruby parts={result.ruby} onpick={onPickKanji} /></span>
 		{#if result.is_common}<span class="badge">{t('common')}</span>{/if}
+		{#each posBadges as tag (tag)}<span class="badge pos">{t(POS_LABEL[tag] ?? 'posOther')}</span>{/each}
+		{#each miscBadges as tag (tag)}<span class="badge misc">{t(MISC_LABEL[tag] ?? 'miscOnom')}</span>{/each}
+		{#each result.dial ?? [] as d (d.code)}<span class="badge dial" title={t('dialect')}>{d.name}</span>{/each}
 		<button
 			type="button"
 			class="btn tertiary copy-word"
@@ -105,6 +136,34 @@
 				<span class="conj-count">{result.inflected_forms.length}</span>
 				<Icon name="arrow-right" size={12} />
 			</a>
+		</div>
+	{/if}
+	{#if onSearchWord && (xrefAntonyms.length || xrefSeeAlso.length)}
+		<!-- Dictionary cross-references (JMdict xref): antonyms and see-also
+		     pointers — searchable headwords, unlike the kanji-overlap `related`. -->
+		<div class="xref-row">
+			{#if xrefAntonyms.length}
+				<span class="xref-label">{t('antonyms')}</span>
+				{#each xrefAntonyms as x (x.seq + x.text)}
+					<button
+						type="button"
+						class="related-pill xref-ant"
+						title={t('searchWord', { word: x.text })}
+						onclick={() => onSearchWord(x.text)}
+					><span lang="ja">{x.text}</span></button>
+				{/each}
+			{/if}
+			{#if xrefSeeAlso.length}
+				<span class="xref-label">{t('seeAlso')}</span>
+				{#each xrefSeeAlso as x (x.seq + x.text)}
+					<button
+						type="button"
+						class="related-pill"
+						title={t('searchWord', { word: x.text })}
+						onclick={() => onSearchWord(x.text)}
+					><span lang="ja">{x.text}</span></button>
+				{/each}
+			{/if}
 		</div>
 	{/if}
 	{#if onSearchWord && result.related?.length}

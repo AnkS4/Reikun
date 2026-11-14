@@ -251,6 +251,17 @@ font-size:var(--fs-base);}
 .chip [lang=ja]{color:var(--text)}
 .chip .muted{font-size:var(--fs-xs);color:var(--text-muted);max-width:14rem;overflow:hidden;
 text-overflow:ellipsis;white-space:nowrap}
+/* POS/misc/dialect badges in the entry head — quieter than the green
+   `common` marker (.entry h2 .badge above). */
+.entry h2 .badge.pos,.entry h2 .badge.misc{background:var(--surface-soft);
+border-color:var(--border-soft);color:var(--text-muted)}
+.entry h2 .badge.dial{background:var(--primary-light);border-color:transparent;color:var(--primary)}
+/* Dictionary cross-references — JMdict xref antonym/see-also chips,
+   mirroring the SPA's .xref-row (links in Lite). */
+.xref-row{display:flex;flex-wrap:wrap;align-items:baseline;gap:.4rem;margin:.35rem 0 .75rem}
+.xref-label{font-family:var(--font-mono);font-size:var(--fs-2xs);text-transform:uppercase;
+letter-spacing:.05em;color:var(--text-muted)}
+.chip.xref-ant{border-color:var(--primary)}
 /* Sentence Breakdown card — the SPA's SegChips: mono header with hint, then
    vertical tiles (word over gloss). approx tiles get dashed borders. */
 .seg-card{border:1px solid var(--border-soft);border-radius:var(--radius-lg);background:var(--surface);

@@ -190,6 +190,22 @@ class EtymologySource(BaseModel):
     tag: str | None = None
 
 
+class Xref(BaseModel):
+    """One JMdict ``<xref>`` — a dictionary cross-reference. ``type`` is
+    ``see`` (general), ``ant`` (antonym) or ``syn`` (synonym); ``text`` is the
+    referenced headword, searchable as-is."""
+    seq: str
+    text: str
+    type: str
+
+
+class DialectLabel(BaseModel):
+    """One JMdict ``<dial>`` dialect tag: entity ``code`` (ksb, rkb, …) and
+    its English ``name`` ("Kansai-ben")."""
+    code: str
+    name: str
+
+
 class SearchResult(BaseModel):
     id: int | None
     kanji_form: str | None = None
@@ -211,6 +227,16 @@ class SearchResult(BaseModel):
     # passed through for the deferred variant-forms display — nothing renders
     # it yet.
     reading_restrictions: dict[str, list[str]] = {}
+    # Coarse POS tags (verb/adj-i/adj-na/noun/adv/phrase/intj/other) and misc
+    # register markers (on-mim/kana/abbr/idiom + capture-only tier-2 tags) —
+    # badge-priority ordered, union across senses.
+    pos: list[str] = []
+    misc: list[str] = []
+    # Dictionary cross-references (antonym/see-also/synonym) — distinct from
+    # `related`, the kanji-overlap heuristic computed below.
+    xrefs: list[Xref] = []
+    # Regional-dialect labels ("Kansai-ben" …).
+    dial: list[DialectLabel] = []
     # when the *query itself* is one of the entry's inflected forms, its row
     # label ("走った searching 走る → "Past")
     inflection: str | None = None

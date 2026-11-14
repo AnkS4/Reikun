@@ -723,6 +723,25 @@
         "type": "object",
         "title": "CommonWord"
       },
+      "DialectLabel": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          }
+        },
+        "type": "object",
+        "required": [
+          "code",
+          "name"
+        ],
+        "title": "DialectLabel",
+        "description": "One JMdict ``<dial>`` dialect tag: entity ``code`` (ksb, rkb, …) and\nits English ``name`` (\"Kansai-ben\")."
+      },
       "ErrorResponse": {
         "properties": {
           "detail": {
@@ -1810,6 +1829,38 @@
             "title": "Reading Restrictions",
             "default": {}
           },
+          "pos": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Pos",
+            "default": []
+          },
+          "misc": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Misc",
+            "default": []
+          },
+          "xrefs": {
+            "items": {
+              "$ref": "#/components/schemas/Xref"
+            },
+            "type": "array",
+            "title": "Xrefs",
+            "default": []
+          },
+          "dial": {
+            "items": {
+              "$ref": "#/components/schemas/DialectLabel"
+            },
+            "type": "array",
+            "title": "Dial",
+            "default": []
+          },
           "inflection": {
             "anyOf": [
               {
@@ -1984,6 +2035,30 @@
           "type"
         ],
         "title": "ValidationError"
+      },
+      "Xref": {
+        "properties": {
+          "seq": {
+            "type": "string",
+            "title": "Seq"
+          },
+          "text": {
+            "type": "string",
+            "title": "Text"
+          },
+          "type": {
+            "type": "string",
+            "title": "Type"
+          }
+        },
+        "type": "object",
+        "required": [
+          "seq",
+          "text",
+          "type"
+        ],
+        "title": "Xref",
+        "description": "One JMdict ``<xref>`` — a dictionary cross-reference. ``type`` is\n``see`` (general), ``ant`` (antonym) or ``syn`` (synonym); ``text`` is the\nreferenced headword, searchable as-is."
       }
     }
   }
