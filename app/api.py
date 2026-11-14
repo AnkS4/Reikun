@@ -51,7 +51,7 @@ from app.grammar_explain import (
     last_model,
     validate_input,
 )
-from app.kanji_lookup import is_kanji, jlpt_kanji, random_kanji
+from app.kanji_lookup import is_kanji, jlpt_kanji, kanji_group_facets, random_kanji
 from app.lite import router as lite_router
 from app.loanwords import loanword_facets, loanwords_page
 from app.ratelimit import rate_limited
@@ -371,6 +371,19 @@ class KanjiGroupEntry(BaseModel):
     meta: list[MetaBadge] = []
 
 
+class KanjiGroupValue(BaseModel):
+    """One selectable value of a /kanji/group facet (stroke count, grade or
+    JLPT level) with its kanji count — drives the browse pickers."""
+    value: int
+    count: int
+
+
+class KanjiGroupsResponse(BaseModel):
+    strokes: list[KanjiGroupValue]
+    grade: list[KanjiGroupValue]
+    jlpt: list[KanjiGroupValue]
+
+
 class KanjiGroupResponse(BaseModel):
     by: Literal["strokes", "grade", "jlpt"]
     value: int
@@ -624,6 +637,19 @@ def kanji_random_endpoint(
 
 
 GroupKey = Literal["strokes", "grade", "jlpt"]
+
+
+@app.get(
+    "/kanji/groups",
+    tags=["kanji"],
+    response_model=KanjiGroupsResponse,
+    responses={500: {"model": ErrorResponse, "description": "Kanji metadata table unavailable"}},
+)
+def kanji_groups_endpoint() -> dict:
+    """Selectable values + counts for each /kanji/group key — the data behind
+    the browse pickers on the kanji-group page (stroke counts 1-34, school
+    grades, JLPT levels)."""
+    return kanji_group_facets()
 
 
 @app.get("/kanji/group", tags=["kanji"], response_model=KanjiGroupResponse)

@@ -125,6 +125,30 @@ def _kanji_pool(by: str, v: int) -> tuple[dict, ...]:
     )
 
 
+@lru_cache(maxsize=1)
+def kanji_group_facets() -> dict[str, list[dict]]:
+    """Available values + entry counts per group key, for the /kanji-group
+    pickers — one pass over the static table, cached for the process life.
+    Order: strokes/grade ascending, jlpt descending (N5 → N1)."""
+    table = _load_kanji_table()
+    counts: dict[str, dict[int, int]] = {"strokes": {}, "grade": {}, "jlpt": {}}
+    keys = {"strokes": "stroke_count", "grade": "grade", "jlpt": "jlpt_level"}
+    for d in table.values():
+        for by, field in keys.items():
+            v = d.get(field)
+            if v:
+                counts[by][v] = counts[by].get(v, 0) + 1
+    ordered = {
+        "strokes": sorted(counts["strokes"]),
+        "grade": sorted(counts["grade"]),
+        "jlpt": sorted(counts["jlpt"], reverse=True),
+    }
+    return {
+        by: [{"value": v, "count": counts[by][v]} for v in ordered[by]]
+        for by in counts
+    }
+
+
 # ── Stroke order ─────────────────────────────────────────────────────────────
 # KanjiVG ships one SVG per kanji (~27 MB for the 6.4k KANJIDIC2 overlap), of
 # which the frontend only draws the stroke paths and number labels. Those are

@@ -222,6 +222,38 @@
         }
       }
     },
+    "/kanji/groups": {
+      "get": {
+        "tags": [
+          "kanji"
+        ],
+        "summary": "Kanji Groups Endpoint",
+        "description": "Selectable values + counts for each /kanji/group key — the data behind\nthe browse pickers on the kanji-group page (stroke counts 1-34, school\ngrades, JLPT levels).",
+        "operationId": "kanji_groups_endpoint_kanji_groups_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KanjiGroupsResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Kanji metadata table unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/kanji/group": {
       "get": {
         "tags": [
@@ -1274,6 +1306,57 @@
           "kanjis"
         ],
         "title": "KanjiGroupResponse"
+      },
+      "KanjiGroupValue": {
+        "properties": {
+          "value": {
+            "type": "integer",
+            "title": "Value"
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count"
+          }
+        },
+        "type": "object",
+        "required": [
+          "value",
+          "count"
+        ],
+        "title": "KanjiGroupValue",
+        "description": "One selectable value of a /kanji/group facet (stroke count, grade or\nJLPT level) with its kanji count — drives the browse pickers."
+      },
+      "KanjiGroupsResponse": {
+        "properties": {
+          "strokes": {
+            "items": {
+              "$ref": "#/components/schemas/KanjiGroupValue"
+            },
+            "type": "array",
+            "title": "Strokes"
+          },
+          "grade": {
+            "items": {
+              "$ref": "#/components/schemas/KanjiGroupValue"
+            },
+            "type": "array",
+            "title": "Grade"
+          },
+          "jlpt": {
+            "items": {
+              "$ref": "#/components/schemas/KanjiGroupValue"
+            },
+            "type": "array",
+            "title": "Jlpt"
+          }
+        },
+        "type": "object",
+        "required": [
+          "strokes",
+          "grade",
+          "jlpt"
+        ],
+        "title": "KanjiGroupsResponse"
       },
       "KanjiHover": {
         "properties": {

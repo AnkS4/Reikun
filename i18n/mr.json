@@ -241,5 +241,11 @@
 	"loanwordsUnknownMsg": "उधारी शब्दांच्या यादीतून एक भाषा निवडा.",
 	"loanwordsFromTagline": "{name} वरून घेतलेले जपानी शब्द — सर्वात सामान्य आधी.",
 	"loanwordsAboutText": "JMdict ने स्रोत भाषा टॅग लावलेली प्रत्येक नोंद, भाषेनुसार पाहता येते — コンピュータ सारख्या इंग्रजी शब्दांपासून 跆拳道 सारख्या कंजी उधारींपर्यंत.",
-	"loanwordsBrowse": "भाषेनुसार पहा →"
+	"loanwordsBrowse": "भाषेनुसार पहा →",
+	"browse": "ब्राउझ करा",
+	"browseKanji": "कांजी ब्राउझ करा",
+	"pickGroupSub": "एक श्रेणी निवडा",
+	"pickValueSub": "{group} निवडा",
+	"allGroups": "सर्व श्रेण्या",
+	"gradeCount": "ग्रेड {n}"
 }

@@ -3356,6 +3356,14 @@ button, a, input, summary {
 	margin-top: 1.5rem;
 }
 
+.browse {
+	margin-top: 1.5rem;
+}
+
+.browse .popover-title {
+	text-align: center;
+}
+
 .recent .popover-title {
 	display: flex;
 	justify-content: space-between;

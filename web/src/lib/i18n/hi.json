@@ -241,5 +241,11 @@
 	"loanwordsUnknownMsg": "उधार शब्दों की सूची से एक भाषा चुनें।",
 	"loanwordsFromTagline": "{name} से लिए गए जापानी शब्द — सबसे सामान्य पहले।",
 	"loanwordsAboutText": "JMdict द्वारा स्रोत भाषा टैग की गई हर प्रविष्टि, भाषा अनुसार ब्राउज़ करें — コンピュータ जैसे अंग्रेज़ी गैरायगोगो से लेकर 跆拳道 जैसे कांजी उधार तक।",
-	"loanwordsBrowse": "भाषा अनुसार देखें →"
+	"loanwordsBrowse": "भाषा अनुसार देखें →",
+	"browse": "ब्राउज़ करें",
+	"browseKanji": "कांजी ब्राउज़ करें",
+	"pickGroupSub": "एक श्रेणी चुनें",
+	"pickValueSub": "{group} चुनें",
+	"allGroups": "सभी श्रेणियाँ",
+	"gradeCount": "ग्रेड {n}"
 }

@@ -1,7 +1,13 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
-	import { apiKanjiGroup, type GroupKey, type KanjiGroupResponse } from '#lib/api.ts';
+	import {
+		apiKanjiGroup,
+		apiKanjiGroups,
+		type GroupKey,
+		type KanjiGroupResponse,
+		type KanjiGroupsResponse
+	} from '#lib/api.ts';
 	import Header from '#lib/components/Header.svelte';
 	import Icon from '#lib/components/Icon.svelte';
 	import { t } from '#lib/i18n.svelte.ts';
@@ -13,26 +19,46 @@
 	const fromWord = $derived(page.url.searchParams.get('from') ?? '');
 
 	// Validated request descriptor — anything unrecognized renders the
-	// bad-request notice instead of a fetch.
+	// picker (no/invalid `by` → category chips, `by` without a usable
+	// `value` → value chips) instead of a fetch.
+	const byParam = $derived.by((): GroupKey | null => {
+		const raw = page.url.searchParams.get('by');
+		return raw === 'strokes' || raw === 'grade' || raw === 'jlpt' ? raw : null;
+	});
+	const valueParam = $derived.by(() => {
+		const value = Number(page.url.searchParams.get('value') ?? NaN);
+		return Number.isInteger(value) && value >= 1 && value <= 50 ? value : null;
+	});
+	const pageParam = $derived.by(() => {
+		const pageNo = Number(page.url.searchParams.get('page') ?? 0);
+		return Number.isInteger(pageNo) && pageNo >= 0 ? pageNo : null;
+	});
 	let req = $derived.by((): { by: GroupKey; value: number; skip: number } | null => {
-		const params = page.url.searchParams;
-		const raw = params.get('by');
-		const by: GroupKey | null =
-			raw === 'strokes' || raw === 'grade' || raw === 'jlpt' ? raw : null;
-		if (!by) return null;
-		// The API accepts value 1–50 and a non-negative integer offset; a
-		// garbage param (?value=abc, no value) must show the "unknown group"
-		// notice, not fire a request that 422s into the failure banner.
-		const value = Number(params.get('value') ?? NaN);
-		if (!Number.isInteger(value) || value < 1 || value > 50) return null;
-		const pageNo = Number(params.get('page') ?? 0);
-		if (!Number.isInteger(pageNo) || pageNo < 0) return null;
-		return { by, value, skip: pageNo * PAGE_SIZE };
+		if (!byParam || valueParam === null || pageParam === null) return null;
+		return { by: byParam, value: valueParam, skip: pageParam * PAGE_SIZE };
 	});
 
 	let data = $state.raw<KanjiGroupResponse | null>(null);
+	let facets = $state.raw<KanjiGroupsResponse | null>(null);
 	let busy = $state(false);
 	let error = $state('');
+
+	// The value picker needs the facet list (values + counts) — fetch it
+	// only while a `by` is chosen but no grid request is possible.
+	$effect(() => {
+		const needs = byParam !== null && req === null;
+		facets = null;
+		if (!needs) return;
+		let dropped = false;
+		apiKanjiGroups()
+			.then((d) => {
+				if (!dropped) facets = d;
+			})
+			.catch(() => {});
+		return () => {
+			dropped = true;
+		};
+	});
 
 	$effect(() => {
 		const r = req;
@@ -99,6 +125,14 @@
 		return t(by === 'jlpt' ? 'jlpt' : by);
 	}
 
+	// Picker chip label for one facet value — stroke counts and grades are
+	// localized counts, JLPT maps the internal 4→1 scale to N-levels.
+	function valueLabel(by: GroupKey, v: number): string {
+		if (by === 'strokes') return t('strokesCount', { n: v });
+		if (by === 'grade') return t('gradeCount', { n: v });
+		return { 4: 'N5', 3: 'N4', 2: 'N2-N3', 1: 'N1' }[v] ?? `N${v}`;
+	}
+
 	function metaLine(k: KanjiGroupResponse['kanjis'][number]): string {
 		return [
 			k.stroke_count ? t('strokesCount', { n: k.stroke_count }) : '',
@@ -117,7 +151,35 @@
 <Header />
 <div class="kgroup-wrap">
 	{#if !req}
-		<p class="notice"><Icon name="info" size={16} /> {t('unknownGroup')}</p>
+		{#if byParam}
+			<!-- Value picker: `?by=X` without a usable value lists every
+			     available value as a chip with its kanji count. -->
+			<h1 class="kgroup-title">{groupLabel(byParam)} {t('kanjiSuffix')}</h1>
+			<p class="kgroup-sub">{t('pickValueSub', { group: groupLabel(byParam) })}</p>
+			{#if facets}
+				<div class="lw-chips">
+					{#each facets[byParam] ?? [] as v (v.value)}
+						<a class="pill lw-chip" href="/kanji-group?by={byParam}&value={v.value}">
+							<span>{valueLabel(byParam, v.value)}</span>
+							<span class="lw-count">{v.count.toLocaleString()}</span>
+						</a>
+					{/each}
+				</div>
+			{:else}
+				<div class="kgroup-loading"><span class="spinner"></span></div>
+			{/if}
+			<p><a class="btn-3d" href="/kanji-group">← {t('allGroups')}</a></p>
+		{:else}
+			<!-- Category picker: bare /kanji-group (or a bad `by`) offers the
+			     three kanji groupings. -->
+			<h1 class="kgroup-title">{t('browseKanji')}</h1>
+			<p class="kgroup-sub">{t('pickGroupSub')}</p>
+			<div class="lw-chips">
+				<a class="pill lw-chip" href="/kanji-group?by=strokes"><span>{t('strokes')}</span></a>
+				<a class="pill lw-chip" href="/kanji-group?by=grade"><span>{t('grade')}</span></a>
+				<a class="pill lw-chip" href="/kanji-group?by=jlpt"><span>{t('jlpt')}</span></a>
+			</div>
+		{/if}
 	{:else}
 		<h1 class="kgroup-title">
 			{data?.label ?? groupLabel(req.by)} {t('kanjiSuffix')}

@@ -608,6 +608,15 @@
 			</div>
 		</div>
 	{/if}
+	<div class="browse" aria-label={t('browse')}>
+		<p class="popover-title">{t('browse')}</p>
+		<div class="pills">
+			<a class="pill" href="/kanji-group?by=strokes"><span>{t('strokes')}</span></a>
+			<a class="pill" href="/kanji-group?by=grade"><span>{t('grade')}</span></a>
+			<a class="pill" href="/kanji-group?by=jlpt"><span>{t('jlpt')}</span></a>
+			<a class="pill" href="/loanwords"><span>{t('loanwordsTitle')}</span></a>
+		</div>
+	</div>
 {/if}
 
 <!-- Floating navigation button -->

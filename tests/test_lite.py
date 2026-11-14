@@ -32,6 +32,16 @@ def test_home_is_html_without_javascript() -> None:
     assert "<script" not in r.text.lower()
 
 
+def test_home_browse_links() -> None:
+    client.cookies.clear()
+    home = client.get("/lite").text
+    # Same browse shortcuts as the SPA homepage chips.
+    assert 'href="/lite/kanji/group?by=strokes"' in home
+    assert 'href="/lite/kanji/group?by=grade"' in home
+    assert 'href="/lite/kanji/group?by=jlpt"' in home
+    assert 'href="/lite/loanwords"' in home
+
+
 def test_home_mirrors_spa_hero_and_examples() -> None:
     r = client.get("/lite")
     # Same brand subtext and tagline as the Svelte hero (brand.ts / i18n),
@@ -250,17 +260,33 @@ def test_kanji_group_page() -> None:
     assert "/lite/kanji/" in r.text
 
 
-def test_kanji_group_rejects_bad_key() -> None:
-    assert client.get("/lite/kanji/group", params={"by": "color", "value": 1}).status_code == 404
+def test_kanji_group_category_picker() -> None:
+    # No `by` (or an unknown one) renders the category picker — chips for the
+    # three groupings — not an error page.
+    for params in ({}, {"by": "color"}):
+        r = client.get("/lite/kanji/group", params=params)
+        assert r.status_code == 200
+        assert 'href="/lite/kanji/group?by=strokes"' in r.text
+        assert 'href="/lite/kanji/group?by=grade"' in r.text
+        assert 'href="/lite/kanji/group?by=jlpt"' in r.text
 
 
-def test_kanji_group_non_integer_value_is_an_html_404_not_json() -> None:
+def test_kanji_group_value_picker() -> None:
+    # A `by` without a usable value lists every available value + count.
+    r = client.get("/lite/kanji/group", params={"by": "strokes"})
+    assert r.status_code == 200
+    assert "by=strokes&amp;value=1" in r.text
+    assert "by=strokes&amp;value=34" in r.text
+    assert "/lite/kanji/group" in r.text  # ← All categories link
+
+
+def test_kanji_group_non_integer_value_shows_picker_not_json() -> None:
     # FastAPI would answer an int parse failure with a bare JSON 422 body —
-    # lite promises HTML, so the handler coerces and falls into the error page.
+    # lite promises HTML, so the handler coerces and falls into the picker.
     r = client.get("/lite/kanji/group", params={"by": "strokes", "value": "abc"})
-    assert r.status_code == 404
+    assert r.status_code == 200
     assert r.headers["content-type"].startswith("text/html")
-    assert "No kanji in group" in r.text
+    assert "by=strokes&amp;value=" in r.text
 
 
 def test_error_and_empty_pages_carry_the_controls_row() -> None:

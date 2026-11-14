@@ -241,5 +241,11 @@
 	"loanwordsUnknownMsg": "Elige un idioma de la lista de palabras prestadas.",
 	"loanwordsFromTagline": "Palabras japonesas prestadas del {name} — las más comunes primero.",
 	"loanwordsAboutText": "Todas las entradas que JMdict etiqueta con un idioma de origen, navegables por idioma — desde gairaigo inglés como コンピュータ hasta préstamos en kanji como 跆拳道.",
-	"loanwordsBrowse": "Explorar por idioma →"
+	"loanwordsBrowse": "Explorar por idioma →",
+	"browse": "Explorar",
+	"browseKanji": "Explorar kanji",
+	"pickGroupSub": "Elige una categoría",
+	"pickValueSub": "Elige {group}",
+	"allGroups": "Todas las categorías",
+	"gradeCount": "Curso {n}"
 }

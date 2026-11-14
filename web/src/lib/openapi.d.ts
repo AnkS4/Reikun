@@ -89,6 +89,28 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/kanji/groups": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Kanji Groups Endpoint
+         * @description Selectable values + counts for each /kanji/group key — the data behind
+         *     the browse pickers on the kanji-group page (stroke counts 1-34, school
+         *     grades, JLPT levels).
+         */
+        get: operations["kanji_groups_endpoint_kanji_groups_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/kanji/group": {
         parameters: {
             query?: never;
@@ -522,6 +544,26 @@ export interface components {
             offset: number;
             /** Kanjis */
             kanjis: components["schemas"]["KanjiGroupEntry"][];
+        };
+        /**
+         * KanjiGroupValue
+         * @description One selectable value of a /kanji/group facet (stroke count, grade or
+         *     JLPT level) with its kanji count — drives the browse pickers.
+         */
+        KanjiGroupValue: {
+            /** Value */
+            value: number;
+            /** Count */
+            count: number;
+        };
+        /** KanjiGroupsResponse */
+        KanjiGroupsResponse: {
+            /** Strokes */
+            strokes: components["schemas"]["KanjiGroupValue"][];
+            /** Grade */
+            grade: components["schemas"]["KanjiGroupValue"][];
+            /** Jlpt */
+            jlpt: components["schemas"]["KanjiGroupValue"][];
         };
         /**
          * KanjiHover
@@ -1100,6 +1142,35 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    kanji_groups_endpoint_kanji_groups_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["KanjiGroupsResponse"];
+                };
+            };
+            /** @description Kanji metadata table unavailable */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };

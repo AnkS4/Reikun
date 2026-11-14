@@ -76,6 +76,16 @@ def test_kanji_group() -> None:
     assert client.get("/kanji/group", params={"by": "strokes", "value": 51}).status_code == 422
 
 
+def test_kanji_groups_facets() -> None:
+    r = client.get("/kanji/groups")
+    assert r.status_code == 200
+    data = r.json()
+    # Stroke counts run 1-34 with no kanji at 31; jlpt is the internal 4→1 scale.
+    assert [v["value"] for v in data["strokes"]] == [n for n in range(1, 35) if n != 31]
+    assert [v["value"] for v in data["jlpt"]] == [4, 3, 2, 1]
+    assert all(v["count"] > 0 for group in data.values() for v in group)
+
+
 def test_kanji_random() -> None:
     for params in ({}, {"level": "N5"}):
         r = client.get("/kanji/random", params=params)

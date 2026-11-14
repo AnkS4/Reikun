@@ -61,7 +61,7 @@ from app.config import (
     qdrant_client,
 )
 from app.etymology import enrich_lsource
-from app.kanji_lookup import is_kanji, kanji_in, random_kanji
+from app.kanji_lookup import is_kanji, kanji_group_facets, kanji_in, random_kanji
 from app.loanwords import loanword_facets, loanwords_page
 from app.ratelimit import rate_limited
 from app.render import furigana_parts, kanji_card, kanji_group_cards, related_words, segment_chip
@@ -620,9 +620,27 @@ def lite_home(request: Request) -> HTMLResponse:
             f'<a class="pill" href="{_href("/lite/search", q=entry)}">{esc(entry)}</a>' for entry in _EXAMPLES
         )
 
+    # Browse shortcuts — same four destinations as the SPA homepage chips.
+    browse_links = (
+        ("/lite/kanji/group", {"by": "strokes"}, "strokes"),
+        ("/lite/kanji/group", {"by": "grade"}, "grade"),
+        ("/lite/kanji/group", {"by": "jlpt"}, "jlpt"),
+        ("/lite/loanwords", {}, "loanwordsTitle"),
+    )
+    browse = (
+        f'<p class="pills-label">{esc(_t(lang, "browse"))}</p>'
+        '<div class="pills">'
+        + "".join(
+            f'<a class="pill" href="{_href(path, **params)}">{esc(_t(lang, key))}</a>'
+            for path, params, key in browse_links
+        )
+        + "</div>"
+    )
+
     body = f"""{form}
 {label}
-<div class="pills">{pills}</div>"""
+<div class="pills">{pills}</div>
+{browse}"""
     return _page(
         _t(lang, "search"),
         body,
@@ -1315,8 +1333,56 @@ def _kg_meta(card: dict, lang: str) -> str:
     return " · ".join(parts)
 
 
+def _kg_value_label(by: str, value: int, lang: str) -> str:
+    """Picker chip label for one facet value — mirrors the SPA's valueLabel:
+    localized stroke/grade counts, JLPT's internal 4→1 scale as N-levels."""
+    if by == "strokes":
+        return _t(lang, "strokesCount", n=value)
+    if by == "grade":
+        return _t(lang, "gradeCount", n=value)
+    return {4: "N5", 3: "N4", 2: "N2-N3", 1: "N1"}.get(value, f"N{value}")
+
+
+def _kg_pick_page(request: Request, by: str, lang: str, theme: str) -> Response:
+    """The /lite/kanji/group picker states — no `by` lists the three groupings,
+    a `by` without a usable value lists every available value + count."""
+    if by not in ("strokes", "grade", "jlpt"):
+        chips = "".join(
+            f'<a class="pill" href="{_href("/lite/kanji/group", by=key)}">'
+            f'{esc(_t(lang, key))}</a>'
+            for key in ("strokes", "grade", "jlpt")
+        )
+        title = _t(lang, "browseKanji")
+        sub = esc(_t(lang, "pickGroupSub"))
+        canonical = "/lite/kanji/group"
+    else:
+        chips = "".join(
+            f'<a class="pill" href="{_href("/lite/kanji/group", by=by, value=v["value"])}">'
+            f'{esc(_kg_value_label(by, v["value"], lang))} · {v["count"]:,}</a>'
+            for v in kanji_group_facets()[by]
+        )
+        disp = _t(lang, by)
+        title = f'{disp[:1].upper() + disp[1:]} {_t(lang, "kanjiSuffix")}'
+        group = disp
+        sub = esc(_t(lang, "pickValueSub", group=group.lower() if lang in ("en", "es") else group))
+        canonical = f"/lite/kanji/group?by={quote(by)}"
+    body = f'<h1 class="kgroup-title">{esc(title)}</h1><p class="kgroup-sub">{sub}</p><div class="pills">{chips}</div>'
+    if by in ("strokes", "grade", "jlpt"):
+        body += (
+            f'<p><a href="/lite/kanji/group">← {esc(_t(lang, "allGroups"))}</a></p>'
+        )
+    return _page(
+        title,
+        body,
+        controls=_controls(request),
+        theme=theme,
+        lang=lang,
+        canonical=canonical,
+    )
+
+
 @router.get("/lite/kanji/group", response_class=HTMLResponse)
-def lite_kanji_group(request: Request, by: str, value: str = "", n: str = "60", offset: str = "0",
+def lite_kanji_group(request: Request, by: str = "", value: str = "", n: str = "60", offset: str = "0",
                      frm: str = Query("", alias="from")) -> Response:
     theme = _read_theme(request)
     lang = _read_lang(request)
@@ -1324,14 +1390,9 @@ def lite_kanji_group(request: Request, by: str, value: str = "", n: str = "60", 
     # FastAPI 422 JSON body) — lite pages are always HTML.
     _int_value = _int(value, 0)
     if by not in ("strokes", "grade", "jlpt"):
-        return _error_page(
-            _t(lang, "lite_unknownGroup"),
-            _t(lang, "lite_unknownGroupMsg"),
-            404,
-            theme,
-            _controls(request),
-            lang,
-        )
+        return _kg_pick_page(request, "", lang, theme)
+    if _int_value < 1:
+        return _kg_pick_page(request, by, lang, theme)
     size = min(max(_int(n, 60), 1), 100)
     start = max(_int(offset, 0), 0)
     cards = kanji_group_cards(by, str(_int_value), size, start)

@@ -241,5 +241,11 @@
 	"loanwordsUnknownMsg": "借用語一覧から言語を選んでください。",
 	"loanwordsFromTagline": "{name} からの借用語 — 頻度順。",
 	"loanwordsAboutText": "JMdict が出典言語をタグ付けした項目を言語別に閲覧できます — コンピュータのような英語由来の語から、跆拳道のような漢字借用まで。",
-	"loanwordsBrowse": "言語別に見る →"
+	"loanwordsBrowse": "言語別に見る →",
+	"browse": "一覧",
+	"browseKanji": "漢字一覧",
+	"pickGroupSub": "分類を選んでください",
+	"pickValueSub": "{group}を選んでください",
+	"allGroups": "すべての分類",
+	"gradeCount": "{n}学年"
 }

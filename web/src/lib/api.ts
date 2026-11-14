@@ -178,6 +178,15 @@ export function apiRandomKanji(level: Level): Promise<string> {
 }
 
 export type GroupKey = 'strokes' | 'grade' | 'jlpt';
+export type KanjiGroupsResponse = components['schemas']['KanjiGroupsResponse'];
+
+export function apiKanjiGroups(): Promise<KanjiGroupsResponse> {
+	return call(async (signal) => {
+		const { data, error, response } = await client.GET('/kanji/groups', { signal });
+		if (error) throw asError(error, response.status);
+		return data;
+	});
+}
 
 export function apiKanjiGroup(by: GroupKey, value: number, n = 40, offset = 0): Promise<KanjiGroupResponse> {
 	return call(async (signal) => {
