@@ -397,15 +397,28 @@ def _entry_to_chunk(entry: ET.Element) -> dict | None:
             if jpn and eng:
                 example_sentences.append({"japanese": jpn, "english": eng})
         for x in sense.findall("xref"):
-            key = (x.get("seq") or "", x.text or "")
+            # The element text is display-oriented: it can carry a "(reading)"
+            # gloss and a trailing "[n]" that disambiguates the *sense* of the
+            # target entry (JMdict sno), not part of the headword — searching
+            # "お店[1]" literally finds nothing. xk/xr attrs hold the clean
+            # target forms; fall back to text minus the "[n]" suffix.
+            disp = x.get("xk") or x.get("xr") or re.sub(r"\s*\[\d+\]\s*$", "", x.text or "")
+            if not disp:
+                continue
+            x_type = x.get("type") or "see"
+            key = (disp, x_type)
             if key in seen_xref:
                 continue
             seen_xref.add(key)
             # type is a REQUIRED attr ("see"/"ant"/"syn") — dictionary-
             # authoritative relations, unlike the kanji-overlap `related`
             # computed at render time. Shipped under `xrefs` to keep the
-            # two datasets distinct.
-            xrefs.append({"seq": key[0], "text": key[1], "type": x.get("type") or "see"})
+            # two datasets distinct. seq/sno keep the entry/sense pointer
+            # for a future deep link.
+            ref = {"seq": x.get("seq") or "", "text": disp, "type": x_type}
+            if x.get("sno"):
+                ref["sno"] = x.get("sno")
+            xrefs.append(ref)
 
     if not meanings:
         return None
