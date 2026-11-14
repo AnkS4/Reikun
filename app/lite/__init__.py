@@ -620,23 +620,23 @@ def lite_home(request: Request) -> HTMLResponse:
             f'<a class="pill" href="{_href("/lite/search", q=entry)}">{esc(entry)}</a>' for entry in _EXAMPLES
         )
 
-    # Browse tiles — same four destinations as the SPA homepage grid. Lite
-    # has no icon font, so each tile leads with a thematic kanji glyph.
+    # Browse tiles — same four destinations as the SPA homepage grid, drawn
+    # from the same subset icon font as the top-right controls.
     browse_tiles = (
-        ("/lite/kanji/group", {"by": "strokes"}, "永", "browseStrokes", "browseStrokesDesc"),
-        ("/lite/kanji/group", {"by": "grade"}, "学", "browseGrade", "browseGradeDesc"),
-        ("/lite/kanji/group", {"by": "jlpt"}, "試", "browseJlpt", "browseJlptDesc"),
-        ("/lite/loanwords", {}, "語", "browseLoanwords", "browseLoanwordsDesc"),
+        ("/lite/kanji/group", {"by": "strokes"}, "pencil", "browseStrokes", "browseStrokesDesc"),
+        ("/lite/kanji/group", {"by": "grade"}, "school", "browseGrade", "browseGradeDesc"),
+        ("/lite/kanji/group", {"by": "jlpt"}, "sparkles", "browseJlpt", "browseJlptDesc"),
+        ("/lite/loanwords", {}, "lang", "browseLoanwords", "browseLoanwordsDesc"),
     )
     browse = (
         f'<p class="pills-label">{esc(_t(lang, "browse"))}</p>'
         '<div class="browse-grid">'
         + "".join(
             f'<a class="browse-tile" href="{_href(path, **params)}">'
-            f'<span class="browse-glyph" lang="ja" aria-hidden="true">{glyph}</span>'
+            f'<span class="browse-icon">{_icon(icon)}</span>'
             f'<span class="browse-name">{esc(_t(lang, name_key))}</span>'
             f'<span class="browse-desc">{esc(_t(lang, desc_key))}</span></a>'
-            for path, params, glyph, name_key, desc_key in browse_tiles
+            for path, params, icon, name_key, desc_key in browse_tiles
         )
         + "</div>"
     )
@@ -1348,9 +1348,9 @@ def _kg_value_label(by: str, value: int, lang: str) -> str:
 
 
 _KG_BROWSE = {
-    "strokes": ("永", "browseStrokes", "browseStrokesDesc"),
-    "grade": ("学", "browseGrade", "browseGradeDesc"),
-    "jlpt": ("試", "browseJlpt", "browseJlptDesc"),
+    "strokes": ("pencil", "browseStrokes", "browseStrokesDesc"),
+    "grade": ("school", "browseGrade", "browseGradeDesc"),
+    "jlpt": ("sparkles", "browseJlpt", "browseJlptDesc"),
 }
 
 
@@ -1361,10 +1361,10 @@ def _kg_pick_page(request: Request, by: str, lang: str, theme: str) -> Response:
     if by not in ("strokes", "grade", "jlpt"):
         tiles = "".join(
             f'<a class="browse-tile" href="{_href("/lite/kanji/group", by=key)}">'
-            f'<span class="browse-glyph" lang="ja" aria-hidden="true">{glyph}</span>'
+            f'<span class="browse-icon">{_icon(icon)}</span>'
             f'<span class="browse-name">{esc(_t(lang, name_key))}</span>'
             f'<span class="browse-desc">{esc(_t(lang, desc_key))}</span></a>'
-            for key, (glyph, name_key, desc_key) in _KG_BROWSE.items()
+            for key, (icon, name_key, desc_key) in _KG_BROWSE.items()
         )
         title = _t(lang, "browseKanji")
         sub = esc(_t(lang, "pickGroupSub"))

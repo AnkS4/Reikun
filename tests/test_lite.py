@@ -42,7 +42,9 @@ def test_home_browse_links() -> None:
     assert 'href="/lite/kanji/group?by=grade"' in home
     assert 'href="/lite/kanji/group?by=jlpt"' in home
     assert 'href="/lite/loanwords"' in home
-    assert 'lang="ja" aria-hidden="true">永' in home
+    # Tiles draw from the subset icon font like the top-right controls.
+    assert home.count('class="icon icon-') >= 4
+    assert 'icon-pencil' in home and 'icon-lang' in home
 
 
 def test_home_mirrors_spa_hero_and_examples() -> None:

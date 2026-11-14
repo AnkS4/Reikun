@@ -114,7 +114,7 @@ width:2rem;height:2rem;border-radius:999px;color:var(--text-muted)}
    everywhere SVG is disabled (svg.disabled blanks inline SVG for exactly
    the no-JS visitors lite serves), and currentColor keeps state tinting
    and hover colors working. */
-@font-face{font-family:'reikun-icons';font-display:block;src:url(data:font/woff2;base64,d09GMgABAAAAAAOkAAoAAAAABxwAAANZAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAABmAAVAqHJIYjATYCJAMOCw4ABCAFgh0HWxvWBUAeB9XtTNPtTCavyYfq9PN51vtJWg+E/IXd/BFQpHtLVjwNdV1jyPOSYwLbfS3qskILrZEMyAvZ+b+fz4u0RwN6vvSdGe945L2rbhtHg02s4lf4J6zjf1GvnhQOOvVXgY737QJIMHqaOcDs4BfAr+n/z4DqDlAWQwPrTIkghLHzf9TkKMyf/n39T/Xf4P/PFhfBv3cpVWnKKEWrbBcgPVXqsBqAM0AXABVPzUCHFChyUvSRuzxrc7VcrShscrlpsJnL7UkvSzKIvAAGAfEj4pBhUBhGvBgWhBBBypl6qqkXa5oHCjgzVaJBqRR4C874k439S7iWvqSvKxs0DIlBLexVMAyeGT49ohLBEMiCMGgcOjuCVOygMMyXqUSg9GsQzQcgCqmsHgVRcYBBeuDjKoSCRXmki8PTowKaenFg80BwELs5qGNoKbliTRr7Q01EE1YLfNDK3l8SumVTcOvwirDrdneXhbQNJnJ2lxkChs4GjfCBw2fI4A5puWi8gHgRmMqIJBi8AKkpojBAg5Sv8Jd2pu/QYg4HlpS0ZsWBmKsvJGxQ20H+1UnNndY/1bxiRQGmkGFnxoXMP1bzzL9/S78KPPbxnbtuG423d+3s6npr0fbrV+hoZxvGFvuXdWLhyRNr8zIBdwaHLC6aebWXI16E6yVFnAMvvQlOU3xajvRmN7REw4EW9IJWj6egkihpNOLGmxoncXpO40ShBj7fmp7ubO6c+Lpu7reNWyd9NeU5e5fFcuWWnqyN9hW/MYd/s9x0OdsJx8/w47Q9Fbs1vRU2h328eyrDnu/2Cm/sKZvlM5jgGZaAMu1tTzomeuKW7qTjkpNOiR5YAAAbgcb63cd2N7CEPZiJGQ5H24MUQQPqocFjXiivaEhOTKA3IsWndlX50yizrX/kiH4PAN45vgqC7mE5R2c8BAAaRU8sKZku3xc1l554Tn0UFgBShGIEpU8r6SBptxpgKEVGjdIsWGEYgrdTSs1H0FC47a2zKMXUMZTmKQzDELRQqlH4ElLSCjKX3WTVeY9kkxJ7/z5EwpGQsO449wuQK0GKNAUyLYOROFkCh9GApLQuXYxcOZCegXxan0afDMmd230CSn9FClBHNGKQBEnl66dbttLKQOIq4mriGrgWAAA=) format('woff2')}
+@font-face{font-family:'reikun-icons';font-display:block;src:url(data:font/woff2;base64,d09GMgABAAAAAAUkAAoAAAAACZgAAATaAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAABmAAXAqLcIlUATYCJAMUCxQABCAFgh0HfBu2ByAuBmM3zUZYoPP+/4dFcJfmNJimq7Srudy9y/+XiBUyJZVIinRVXacOAIUBQB54LvdvgN3xtYZu4gQ7agn3Al2eFxZYImPS/VX31rnF6/n5RL/Anu7pWcuxbgsGUN2XyCmq6ZRF/r9aUxtEI94HfSYqTmT8A+19gLBArIGFq1EA5OtrZFVVbVVsa+LgbRZO9Gc/FWh0EfQAD2P1kCJ28RaCR/ydabQAsWIKclnAbGb4/p0EIQT/Hj3/r/Xr5Fvsx0IxwCNCvyHJExMRLRBJEZ4SuAFaNcJAxoqMhuIfkBnYAEMahxDCR0URE0+FXD85KXshMeGKa7xETUkJKdUyN9VeSkZajKtz2FNcG7BtyB2f6tjffrLTRtoTIEKU853zM3Oagc9t2+K8VrSdFRFp46SdMzOyW51JXsuyK3cdsB2nxDx8BbEHpzsPdTGfA2w0Rm0HBzvOdFmJGh+0dR7YhSNyAn2QclFWZCgjxZgkBTGGgfMHIcZy3RRS4ekpUTnNwHLbpsfgILGow4VenkqzW2eKt5u6WBsXc2nvr5sZHDg9v9N91jVJneuMgvalXac37Bc6OsUujnV20PZbZEpvaw9y7cAMUeSpqEf0E5QIiKWFGroC7q6ONMGbL0+l5aqrEvGaZBvG+hGbwZf6qUQlbGtfVKe661e5a6G763w39wUubotc3a9MKwiY/9i08CpXGLwoyzgdsZ14srgo6fKX3P7f10CLE6hKLby1Fnz8xLJkUalg72yYv98tc5VSuGEUnkjv+NDHTvS6oVzFbprYU9ldfzFLzk7CX+X85VfWX2VL1Z+bvtYZKxMCbMeO/DyYAXm6leLgl/iy17LcelseyHV3rzCgrXf6jBX/aNMZ//JCfxXSTtIiImsOts64RTRsrksXfH6ebE89mMCkONd6k5PPnsmZl7VBfWzcf/6J5IPNJFJPSXNkbROkayehT6i0h9DmPH4P5QlqAjv76HaVKdCjAjw/OhruaBcivKPCGLg5/vy8bOv3pesmjosn3pr87g0xrgvJ7sm6vmOd7n0xAV+M/Ww0londM8xkT9NYFN88Ni3JaGgan/XS3fMG9SlB1l/d4JdxSCRX4jJkS3UwW2TInDPkS7WASzCNMf5pVGpUFqY4IdM9GRmXAOETPBXXpnriAD4rHQ0UmfSOhifN4+Zz0/bPn5cSdq/e02vbw/HQnVkAYeMq27w8678AI18P4HB6PCyLctVEFHQoOOuFcdXlfrPBsBMZTU1G4xGGqS8T9fh7TRaLibxKUK7FeDRpNvx+eB1QqLvoezH9zxthv0zAL2NI+5Qc8tHsh+Dl5ceQOae0D42N0BWL/Ha/Dn6M9PoY7LDodeMY8qLjIvBxB8ezMMFZQOLW7wH0+PNnUL8+TkBrFNVPGRRqpUg6vgoF9AKA8+y8vdhSpRbtjiMAihxIUhlhf4do+uWSOakFO+wACIslvAGxdotohnQk5pkRBACdMEqarJiR62X5xAhmjIXzSuwtRkgIwigdCWJG3oT4hwycLlmxasta1zdJ/6aP1GPQuf8ehe6iR4lGqrkGlcuSp0CVYuaKOUMJ7sThkJMOK5SmnAiFGSrBuYfMJym1XLW2QKwvEgYYIkUGechHAQqhsNDFDLl6WFZWeCq8FN4KH4Wvwg/5AwA=) format('woff2')}
 .controls .icon{display:inline-flex;align-items:center;justify-content:center;
 width:1rem;height:1rem;flex:none;font:.94rem/1 'reikun-icons',sans-serif}
 .icon-sun::before{content:"\f5a2"}
@@ -122,6 +122,9 @@ width:1rem;height:1rem;flex:none;font:.94rem/1 'reikun-icons',sans-serif}
 .icon-full::before{content:"\f3f9"}
 .icon-lang::before{content:"\f658"}
 .icon-db::before{content:"\f8c4"}
+.icon-pencil::before{content:"\f101"}
+.icon-school::before{content:"\f102"}
+.icon-sparkles::before{content:"\f103"}
 .controls .status-dot{display:inline-flex;align-items:center;justify-content:center;
 width:2rem;height:2rem;border-radius:999px;color:var(--text-faint);cursor:default}
 .controls .status-dot.ok{color:var(--ok)}
@@ -215,8 +218,10 @@ margin:1.4rem 0 .6rem;text-align:left}
 padding:.85rem .9rem;border:1px solid var(--border-soft);border-radius:var(--radius-lg);
 background:var(--surface);text-decoration:none;color:inherit}
 .browse-tile:active{border-color:var(--border-hover)}
-.browse-glyph{font-family:var(--font-japanese);font-size:1.6rem;line-height:1;
-color:var(--text-faint);margin-bottom:.15rem}
+.browse-icon{display:inline-flex;align-items:center;justify-content:center;
+width:2rem;height:2rem;margin-bottom:.15rem;border-radius:var(--radius-md);
+background:var(--surface-soft);color:var(--text-muted)}
+.browse-icon .icon{font-size:1.05rem}
 .browse-name{font-size:var(--fs-md);font-weight:600;color:var(--text)}
 .browse-desc{font-size:var(--fs-sm);color:var(--text-muted);line-height:1.4}
 

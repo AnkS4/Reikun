@@ -69,6 +69,20 @@ _ICONS = {
         "M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5",
         "M3 12c0 1.66 4 3 9 3s9-1.34 9-3",
     ),
+    # pencil — browse tile: kanji by stroke count
+    "F101": ("M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z",),
+    # school (graduation cap) — browse tile: kanji by school grade
+    "F102": (
+        "M22 10 12 5 2 10l10 5 10-5z",
+        "M6 12.5v4.5c0 1.4 2.7 2.5 6 2.5s6-1.1 6-2.5v-4.5",
+        "M22 10v6",
+    ),
+    # sparkles — browse tile: kanji by JLPT level
+    "F103": (
+        "m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21"
+        "l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3z",
+        "M5 3v4", "M19 17v4", "M3 5h4", "M17 19h4",
+    ),
 }
 
 
