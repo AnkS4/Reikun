@@ -40,6 +40,7 @@
 
 	let data = $state.raw<KanjiGroupResponse | null>(null);
 	let facets = $state.raw<KanjiGroupsResponse | null>(null);
+	let facetsError = $state('');
 	let busy = $state(false);
 	let error = $state('');
 
@@ -48,13 +49,16 @@
 	$effect(() => {
 		const needs = byParam !== null && req === null;
 		facets = null;
+		facetsError = '';
 		if (!needs) return;
 		let dropped = false;
 		apiKanjiGroups()
 			.then((d) => {
 				if (!dropped) facets = d;
 			})
-			.catch(() => {});
+			.catch((e) => {
+				if (!dropped) facetsError = e instanceof Error ? e.message : t('groupLoadFailed');
+			});
 		return () => {
 			dropped = true;
 		};
@@ -180,6 +184,8 @@
 						</a>
 					{/each}
 				</div>
+			{:else if facetsError}
+				<p class="error-banner"><Icon name="warning" size={16} /> {facetsError}</p>
 			{:else}
 				<div class="kgroup-loading"><span class="spinner"></span></div>
 			{/if}

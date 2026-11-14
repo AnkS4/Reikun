@@ -26,10 +26,12 @@ log = logging.getLogger(__name__)
 _TTL = 600.0  # seconds — the dictionary changes on daily syncs, not per request
 
 # Everything _hit_to_dict + the result cards read, plus lsource itself.
+# wf_score is fetched solely to rank each language's listing (d["score"]);
+# it isn't echoed into the response dicts.
 _PAYLOAD_FIELDS = [
     "kanji_form", "reading", "kanji_forms", "readings", "meanings",
     "example_sentences", "is_common", "text", "inflected_forms",
-    "lsource", "reading_restrictions", "ke_inf", "senses",
+    "lsource", "reading_restrictions", "ke_inf", "senses", "wf_score",
 ]
 
 _lock = threading.Lock()
@@ -54,7 +56,13 @@ def _build() -> dict[str, list[dict]]:
         for rec in page:
             d = _hit_to_dict(rec, score=float((rec.payload or {}).get("wf_score") or 0.0))
             d["lsource"] = enrich_lsource(d.get("lsource"))
+            # An entry can carry several lsource items in the same language
+            # (e.g. eng + eng-variant) — list it once per language.
+            seen: set[str] = set()
             for src in d["lsource"]:
+                if src["lang"] in seen:
+                    continue
+                seen.add(src["lang"])
                 out.setdefault(src["lang"], []).append(d)
         if offset is None:
             break

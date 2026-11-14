@@ -489,6 +489,7 @@ def _page(
     furi: bool = True,
     canonical: str = "",
     noindex: bool = False,
+    cache_lang: str | None = None,
 ) -> HTMLResponse:
     head_extras = (
         f'<meta name="description" content="{esc(_t(lang, "lite_tagline"))}">\n'
@@ -514,7 +515,10 @@ def _page(
 {_FOOTER}
 </body>
 </html>"""
-    if cache and (theme != "system" or lang != "en" or not furi):
+    # cache_lang is the visitor's UI language when it differs from the
+    # rendered `lang` (e.g. /lite/privacy keeps English chrome but its
+    # controls row still localizes) — the downgrade check must see it.
+    if cache and (theme != "system" or (cache_lang or lang) != "en" or not furi):
         # Cookie-specific markup (theme, language, hidden readings): shared
         # caches may ignore Vary: Cookie (Cloudflare does) and serve one
         # visitor's copy to another, so keep it to the browser.
@@ -1759,6 +1763,7 @@ def lite_loanwords_lang(
         controls=_controls(request),
         theme=theme,
         lang=ui_lang,
+        furi=furi,
         canonical=f"/lite/loanwords/{lang}",
     )
 
@@ -1884,9 +1889,9 @@ rel="noopener noreferrer">github.com/AnkS4/Reikun</a>.</p>
 
 @router.get("/lite/privacy", response_class=HTMLResponse, include_in_schema=False)
 def lite_privacy(request: Request) -> HTMLResponse:
-    # English in every language, like the About page and the footer — the
-    # policy is legal text, not UI copy. English-only keeps the page
-    # shared-cacheable regardless of language cookies.
+    # English in every language, like the footer — the policy is legal text,
+    # not UI copy. The controls row still follows the visitor's language, so
+    # cache_lang keeps the shared-cache downgrade honest.
     return _page(
         "Privacy Policy",
         _PRIVACY_BODY,
@@ -1894,5 +1899,6 @@ def lite_privacy(request: Request) -> HTMLResponse:
         controls=_controls(request),
         theme=_read_theme(request),
         lang="en",
+        cache_lang=_read_lang(request),
         canonical="/lite/privacy",
     )

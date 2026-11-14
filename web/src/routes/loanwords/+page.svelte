@@ -77,7 +77,11 @@
 	const pages = $derived(listing ? Math.ceil(listing.total / PAGE_SIZE) : 0);
 
 	function pageHref(p: number): string {
-		return `/loanwords?lang=${encodeURIComponent(lang)}&page=${p}`;
+		// `level` is display-only (ResultCard badges) but must survive
+		// pagination so page 2 doesn't silently reset to N5.
+		const lvl = page.url.searchParams.get('level');
+		const lvlParam = lvl ? `&level=${encodeURIComponent(lvl)}` : '';
+		return `/loanwords?lang=${encodeURIComponent(lang)}&page=${p}${lvlParam}`;
 	}
 
 	function searchWord(q: string, ref?: { seq?: string; sno?: string | null }) {
@@ -111,6 +115,7 @@
 		<p class="error-banner"><Icon name="warning" size={16} /> {error}</p>
 	{:else if notFound}
 		<p class="notice"><Icon name="info" size={16} /> {t('loanwordsUnknownMsg')}</p>
+		<p><a class="btn-3d" href="/loanwords">← {t('loanwordsAll')}</a></p>
 	{:else if listing}
 		<p class="kgroup-sub">{t('loanwordsFromTagline', { name: listing.name })}</p>
 		{#each listing.results as r, i (`${r.id ?? r.text}-${i}`)}

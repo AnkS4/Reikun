@@ -153,7 +153,7 @@ _MISC_TAG_MAP: dict[str, str] = {
     "m-sl": "colloquial", "derog": "colloquial", "vulg": "colloquial",
     "joc": "colloquial", "hum": "colloquial", "fam": "colloquial",
     "serv": "colloquial", "chn": "colloquial", "pol": "colloquial",
-    "sens": "colloquial",
+    "sens": "sensitive",
     "org": "name", "work": "name", "company": "name", "product": "name",
     "person": "name", "place": "name", "surname": "name", "given": "name",
     "dei": "name", "ship": "name", "station": "name", "ev": "name",
@@ -165,7 +165,7 @@ _MISC_TAG_MAP: dict[str, str] = {
 }
 
 _MISC_ORDER = ("on-mim", "idiom", "abbr", "kana",
-               "formal", "archaic", "colloquial", "name", "other")
+               "formal", "archaic", "colloquial", "sensitive", "name", "other")
 
 
 def _coded_tags(texts: Iterable[str], code_to_tag: dict[str, str],

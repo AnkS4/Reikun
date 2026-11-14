@@ -396,11 +396,12 @@ def test_language_toggle_flips_cookie_and_translates_the_page(monkeypatch: pytes
         assert 'aria-label="インターフェースの言語: 日本語"' in home.text  # menu labelled in-page language
         assert 'href="/lite/lang?v=en&next=' in home.text  # English entry in the list
         # The About page follows the language (like the SPA's), so with a
-        # language cookie it is private. The privacy policy stays English in
-        # every language (legal text, like the footer) and stays shared. Pages
-        # are only shared once the status chip says "Ready", so pin a fresh
-        # ready probe: CI has no Qdrant, and a local one would make the result
-        # depend on it.
+        # language cookie it is private. The privacy policy's legal text stays
+        # English in every language (like the footer), but its controls row
+        # still localizes — so a non-English visitor gets a private copy too.
+        # Pages are only shared once the status chip says "Ready", so pin a
+        # fresh ready probe: CI has no Qdrant, and a local one would make the
+        # result depend on it.
         monkeypatch.setitem(lite._status_snapshot, "ok", True)
         monkeypatch.setitem(lite._status_snapshot, "count", 1)
         monkeypatch.setitem(lite._status_snapshot, "at", time.monotonic())
@@ -409,7 +410,7 @@ def test_language_toggle_flips_cookie_and_translates_the_page(monkeypatch: pytes
         assert "private" in about.headers["cache-control"]
         privacy = client.get("/lite/privacy")
         assert "Privacy Policy" in privacy.text
-        assert "public" in privacy.headers["cache-control"]
+        assert "private" in privacy.headers["cache-control"]
         # Unknown values leave the current choice alone (same as /lite/theme).
         same = client.get("/lite/lang", params={"v": "nope"}, follow_redirects=False)
         assert "lite_lang" not in same.headers.get("set-cookie", "")
@@ -485,6 +486,40 @@ def test_loanwords_lang_page(monkeypatch: pytest.MonkeyPatch) -> None:
     # Unknown language → the HTML 404 page, not a JSON error.
     bad = client.get("/lite/loanwords/zzz")
     assert bad.status_code == 404 and bad.headers["content-type"].startswith("text/html")
+
+
+def test_loanwords_lang_page_furi_cookie_makes_it_private(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # Cards hide readings when the furigana toggle is off — a shared cache
+    # must not serve that variant to a visitor who wants them (and vice
+    # versa). Same downgrade rule as the search page.
+    monkeypatch.setitem(lite._status_snapshot, "ok", True)
+    monkeypatch.setitem(lite._status_snapshot, "count", 1)
+    monkeypatch.setitem(lite._status_snapshot, "at", time.monotonic())
+    result = {
+        "id": 3, "kanji_form": "タバコ", "reading": "たばこ",
+        "kanji_forms": [], "readings": [], "meanings": ["tobacco"],
+        "example_sentences": [], "is_common": False, "text": "",
+        "inflected_forms": [], "inflection": None, "score": 3.0,
+        "lsource": [{"lang": "spa", "text": "tabaco", "label": "From Spanish", "tag": "es"}],
+        "reading_restrictions": {},
+    }
+    monkeypatch.setattr(
+        lite, "loanwords_page",
+        lambda lang, offset, limit: {
+            "lang": lang, "name": "Spanish", "total": 1, "offset": offset,
+            "results": [result],
+        },
+    )
+    client.cookies.set("lite_furi", "0")
+    try:
+        r = client.get("/lite/loanwords/spa")
+        assert r.status_code == 200
+        assert "private" in r.headers["cache-control"]
+        assert "<rt" not in r.text  # readings hidden
+    finally:
+        client.cookies.clear()
 
 
 def _bare_result(**extra) -> dict:

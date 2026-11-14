@@ -217,3 +217,24 @@ def test_cache_headers() -> None:
     assert client.get("/health").headers["cache-control"] == "no-store"
     batch = client.get("/kanji", params={"chars": "家"})
     assert batch.headers["cache-control"].startswith("public")
+
+
+def test_loanwords_page_does_not_mutate_shared_index(monkeypatch) -> None:
+    # loanwords_page slices the shared TTL index — the endpoint must copy
+    # before attaching ruby/related, or per-request keys race readers and
+    # permanently bloat the cache.
+    shared = {
+        "id": 1, "kanji_form": "パン", "reading": "ぱん",
+        "kanji_forms": [], "readings": [], "meanings": ["bread"],
+        "example_sentences": [], "is_common": True, "text": "",
+        "inflected_forms": [], "lsource": [], "reading_restrictions": {},
+        "ke_inf": {}, "senses": [], "score": 1.0,
+    }
+    page = {"lang": "por", "name": "Portuguese", "total": 1, "offset": 0,
+            "results": [shared]}
+    monkeypatch.setattr(api, "loanwords_page", lambda *a, **k: page)
+    r = client.get("/loanwords/por")
+    assert r.status_code == 200
+    assert "ruby" not in shared and "related" not in shared
+    shaped = r.json()["results"][0]
+    assert shaped["ruby"] and shaped["related"] is not None

@@ -47,6 +47,24 @@ def test_enrich_lsource_empty() -> None:
     assert etym.enrich_lsource(None) == [] and etym.enrich_lsource([]) == []
 
 
+def test_enrich_lsource_is_idempotent() -> None:
+    # The loanwords index enriches at build time and lite cards enrich again
+    # at render — phase-2 fields must survive the second pass or "Wasei-eigo"
+    # degrades to a plain "From English".
+    once = etym.enrich_lsource([{"lang": "eng", "text": "", "wasei": "eng"}])
+    twice = etym.enrich_lsource(once)
+    assert twice[0]["label"] == "Wasei-eigo (Japanese-made English)"
+    part = etym.enrich_lsource([{"lang": "eng", "text": "x", "type": "part"}])
+    assert etym.enrich_lsource(part)[0]["label"] == "Partly from English"
+
+
+def test_lang_names_iso639_2() -> None:
+    # kir is Kyrgyz (Gilbertese is gil); bnt is the Bantu collective.
+    assert etym.lang_name("kir") == "Kyrgyz"
+    assert etym.LANG_TAGS["kir"] == "ky"
+    assert etym.lang_name("bnt") == "Bantu"
+
+
 def _fixture_index() -> dict[str, list[dict]]:
     def entry(eid: int, form: str, wf: float, lang: str) -> dict:
         return {

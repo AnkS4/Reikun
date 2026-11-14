@@ -19,14 +19,14 @@ so the labels extend without a second pass here.
 LANG_NAMES = {
     "afr": "Afrikaans", "ain": "Ainu", "alb": "Albanian", "alg": "Algonquian",
     "amh": "Amharic", "ara": "Arabic", "arm": "Armenian", "arn": "Mapudungun",
-    "aze": "Azerbaijani", "ben": "Bengali", "bnt": "Bantenese", "bre": "Breton",
+    "aze": "Azerbaijani", "ben": "Bengali", "bnt": "Bantu", "bre": "Breton",
     "bul": "Bulgarian", "bur": "Burmese", "chi": "Chinese", "cze": "Czech",
     "dan": "Danish", "div": "Dhivehi", "dut": "Dutch", "eng": "English",
     "epo": "Esperanto", "est": "Estonian", "fil": "Filipino", "fin": "Finnish",
     "fre": "French", "geo": "Georgian", "ger": "German", "glg": "Galician",
     "grc": "Ancient Greek", "gre": "Greek", "haw": "Hawaiian", "heb": "Hebrew",
     "hin": "Hindi", "hun": "Hungarian", "ice": "Icelandic", "ind": "Indonesian",
-    "ita": "Italian", "kaz": "Kazakh", "khm": "Khmer", "kir": "Gilbertese",
+    "ita": "Italian", "kaz": "Kazakh", "khm": "Khmer", "kir": "Kyrgyz",
     "kor": "Korean", "kur": "Kurdish", "lao": "Lao", "lat": "Latin",
     "lit": "Lithuanian", "mal": "Malayalam", "mao": "Maori", "may": "Malay",
     "mlg": "Malagasy", "mnc": "Manchu", "mon": "Mongolian", "nep": "Nepali",
@@ -50,7 +50,7 @@ LANG_TAGS = {
     "epo": "eo", "est": "et", "fil": "fil", "fin": "fi", "fre": "fr",
     "geo": "ka", "ger": "de", "glg": "gl", "grc": "grc", "gre": "el",
     "haw": "haw", "heb": "he", "hin": "hi", "hun": "hu", "ice": "is",
-    "ind": "id", "ita": "it", "kaz": "kk", "khm": "km", "kir": "gil",
+    "ind": "id", "ita": "it", "kaz": "kk", "khm": "km", "kir": "ky",
     "kor": "ko", "kur": "ku", "lao": "lo", "lat": "la", "lit": "lt",
     "mal": "ml", "mao": "mi", "may": "ms", "mlg": "mg", "mnc": "mnc",
     "mon": "mn", "nep": "ne", "nor": "no", "per": "fa", "pol": "pl",
@@ -87,10 +87,18 @@ def enrich_lsource(raw: list[dict] | None) -> list[dict]:
         tag = LANG_TAGS.get(lang)
         if tag is None and len(lang) == 3 and lang.isalpha():
             tag = lang  # ISO-639-3 codes are valid BCP-47 subtags
-        out.append({
+        enriched = {
             "lang": lang,
             "text": item.get("text") or "",
             "label": _label(item),
             "tag": tag,
-        })
+        }
+        # Pass the phase-2 fields through so re-enriching an already-enriched
+        # list (the loanwords index enriches at build; lite cards enrich again
+        # at render) stays idempotent — without them _label() degrades
+        # "Wasei-eigo"/"Partly from" back to a plain "From …".
+        for key in ("wasei", "type"):
+            if item.get(key):
+                enriched[key] = item[key]
+        out.append(enriched)
     return out

@@ -1,25 +1,35 @@
 """Unit tests for the JMdict entity-code classification maps in
 scripts/build_chunks.py — POS_TAG_MAP / MISC_TAG_MAP coverage, tag ordering,
-and the resolved-text → code lookup. Offline; reads only the XML DOCTYPE
-head, never the full document."""
+and the resolved-text → code lookup. The map-shape tests are fully offline;
+the entity-lookup and _entry_to_chunk tests parse the DOCTYPE head of the
+gitignored raw download, so they skip cleanly where it isn't present (CI)."""
 
 import xml.etree.ElementTree as ET
+
+import pytest
 
 from scripts.build_chunks import (
     _MISC_ORDER,
     _MISC_TAG_MAP,
     _POS_ORDER,
     _POS_TAG_MAP,
+    JMDICT_XML,
+    RAW_DIR,
     _coded_tags,
     _entity_code,
     _entry_to_chunk,
 )
 
+_RAW_JMDICT = RAW_DIR / JMDICT_XML
+_needs_raw_xml = pytest.mark.skipif(
+    not _RAW_JMDICT.exists(), reason=f"raw JMdict XML not downloaded: {_RAW_JMDICT}"
+)
+
 
 def test_pos_map_covers_all_tag_groups() -> None:
     assert set(_POS_TAG_MAP.values()) <= set(_POS_ORDER)
-    # The 2026-11-13 census: 83 occurring codes + 5 DTD no-ops
-    # (adj-kari, v5uru, n-adv, n-t, n-pr).
+    # The 2026-11-13 census: 83 occurring codes + 9 DTD no-ops
+    # (adj-kari, v5uru, n-adv, n-t, n-pr, v2b-s, v2d-k, v2m-k, v4n).
     assert len(_POS_TAG_MAP) == 92
     for tag in _POS_ORDER:
         assert tag in _POS_TAG_MAP.values()
@@ -33,6 +43,7 @@ def test_misc_map_covers_all_tag_groups() -> None:
         assert tag in _MISC_TAG_MAP.values()
 
 
+@_needs_raw_xml
 def test_entity_code_roundtrip() -> None:
     # Resolved JMdict entity texts map back to their codes.
     assert _entity_code("noun (common) (futsuumeishi)") == "n"
@@ -47,6 +58,7 @@ def test_entity_code_roundtrip() -> None:
     assert _entity_code(None) is None
 
 
+@_needs_raw_xml
 def test_coded_tags_priority_order() -> None:
     # adj-na + noun must badge the adjective, not flatten into "noun".
     tags = _coded_tags(
@@ -67,6 +79,7 @@ def _entry(xml: str) -> ET.Element:
     return ET.fromstring(xml)
 
 
+@_needs_raw_xml
 def test_entry_to_chunk_phase2_fields() -> None:
     entry = _entry("""
     <entry>
@@ -114,6 +127,7 @@ def test_entry_to_chunk_phase2_fields() -> None:
     assert "related" not in chunk
 
 
+@_needs_raw_xml
 def test_entry_to_chunk_lsource_attrs() -> None:
     entry = _entry("""
     <entry>

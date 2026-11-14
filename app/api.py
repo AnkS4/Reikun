@@ -769,20 +769,26 @@ def loanwords_lang_endpoint(
     # Same display shaping /search applies per result — ruby furigana parts
     # (the card headword renders from them) and the related-words row — so
     # cards look identical on this page. lsource is already enriched by
-    # app.loanwords' index build.
+    # app.loanwords' index build. Copy each dict: page["results"] slices the
+    # shared TTL index, and mutating it would race other readers and bloat
+    # the cache with per-request keys.
+    results = []
     for r in page["results"]:
         head = r.get("kanji_form") or r.get("reading") or r.get("text") or ""
-        r["ruby"] = furigana_parts(head, r.get("reading"))
-        r["related"] = (
-            related_words(
-                (head, *(r.get("kanji_forms") or ()), *(r.get("readings") or ())),
-                (head, *(r.get("kanji_forms") or ()), *(r.get("readings") or ())),
-            )
-            if head
-            else []
-        )
+        results.append({
+            **r,
+            "ruby": furigana_parts(head, r.get("reading")),
+            "related": (
+                related_words(
+                    (head, *(r.get("kanji_forms") or ()), *(r.get("readings") or ())),
+                    (head, *(r.get("kanji_forms") or ()), *(r.get("readings") or ())),
+                )
+                if head
+                else []
+            ),
+        })
     response.headers["Cache-Control"] = _CACHE_LOANWORDS
-    return page
+    return {**page, "results": results}
 
 
 # ── Grammar explanations ─────────────────────────────────────────────────────
