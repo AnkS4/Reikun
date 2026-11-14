@@ -24,12 +24,17 @@
 		let path = '/';
 		let search = '';
 		let q = '';
+		let lwLang = '';
+		let lwPage = 0;
 		try {
 			path = page.url.pathname;
 			search = page.url.search;
-			q = page.url.searchParams.get('q') ?? '';
+			const sp = page.url.searchParams;
+			q = sp.get('q') ?? '';
+			lwLang = sp.get('lang') ?? '';
+			lwPage = Number(sp.get('page') ?? 0);
 		} catch {
-			// prerendering — url.search unavailable
+			// prerendering — url.search/searchParams unavailable
 		}
 		if (path === '/') {
 			if (q) return `${base}/lite/search?q=${encodeURIComponent(q)}`;
@@ -40,12 +45,10 @@
 		if (path === '/kanji-group') return `${base}/lite/kanji/group${search}`;
 		if (path === '/conjugations') return `${base}/lite/conjugations${search}`;
 		if (path === '/loanwords') {
-			const lw = page.url.searchParams.get('lang');
-			if (!lw) return `${base}/lite/loanwords`;
+			if (!lwLang) return `${base}/lite/loanwords`;
 			// SPA pages by ?page= (50/page); lite pages by ?offset= (item count).
-			const p = Number(page.url.searchParams.get('page') ?? 0);
-			const off = Number.isInteger(p) && p > 0 ? `?offset=${p * 50}` : '';
-			return `${base}/lite/loanwords/${encodeURIComponent(lw)}${off}`;
+			const off = Number.isInteger(lwPage) && lwPage > 0 ? `?offset=${lwPage * 50}` : '';
+			return `${base}/lite/loanwords/${encodeURIComponent(lwLang)}${off}`;
 		}
 		return `${base}/lite`;
 	});
