@@ -112,10 +112,7 @@ def _point_sigs(client) -> dict[int, str | None]:
 
 
 _INDEX_FIELDS = ("kanji_form", "reading", "gloss_keys", "primary_gloss_keys",
-                 "head_gloss_keys", "kanji_forms", "readings", "infl_forms",
-                 # POS/misc badges and domain facets — keyword-indexed so a
-                 # future filter arm (pos=verb, field=…) needs no re-ingest.
-                 "pos", "misc", "field_tags")
+                 "head_gloss_keys", "kanji_forms", "readings", "infl_forms")
 
 # wf_score/commonness feed the FormulaQuery mult expressions — strict mode
 # (Qdrant Cloud default) requires an index on every filtered/formula field.
@@ -186,18 +183,13 @@ def _payload(chunk: dict, sig: str) -> dict:
         "inflected_forms": chunk.get("inflected_forms", []),
         "infl_forms": chunk.get("infl_forms", []),
         "freq_band": chunk.get("freq_band"),
-        # Dictionary cross-references (JMdict <xref>) with their type —
-        # antonym/see-also/synonym relations, distinct from the kanji-overlap
-        # `related` computed at render time.
-        "xrefs": chunk.get("xrefs", []),
-        # POS/misc coarse tags, domain fields, dialect labels, per-form
-        # ke_inf labels and first-sense usage notes — see build_chunks.
-        "pos": chunk.get("pos", []),
-        "misc": chunk.get("misc", []),
-        "field_tags": chunk.get("field_tags", []),
-        "dial": chunk.get("dial", []),
+        # Per-sense structure — the canonical display data: glosses with
+        # their own pos/misc/field/dial/s_inf/xrefs/stagk/stagr/examples.
+        # Replaces the old entry-level unions (pos/misc/field_tags/dial/
+        # s_inf/xrefs), which mislabeled minor senses.
+        "senses": chunk.get("senses", []),
+        # Per-form ke_inf labels (sK/rK/ateji/…) — entry-level by nature.
         "ke_inf": chunk.get("ke_inf", {}),
-        "s_inf": chunk.get("s_inf", []),
         "lsource": chunk.get("lsource", []),
         "reading_restrictions": chunk.get("reading_restrictions", {}),
         "notes": chunk.get("notes", []),

@@ -106,14 +106,21 @@ def test_search_too_long_short_circuits() -> None:
                             "cached": False, "too_long": 150}
 
 
-def test_search_result_phase2_fields() -> None:
-    # POS/misc badges, typed dictionary xrefs and dialect labels are part of
-    # the public schema — a dropped field here is a silent UI regression.
+def test_search_result_sense_fields() -> None:
+    # Per-sense structure is the public schema — glosses with their own
+    # pos/misc/dial badges, s_inf notes, typed xrefs (seq/sno deep-link
+    # pointers), form restrictions and examples. The old entry-level
+    # pos/misc/xrefs/dial unions are gone.
     fields = api.SearchResult.model_fields
-    for name in ("pos", "misc", "xrefs", "dial", "lsource", "reading_restrictions"):
-        assert name in fields, name
-    xref = api.Xref(seq="1", text="反対", type="ant")
-    assert xref.type == "ant"
+    assert "senses" in fields
+    for gone in ("pos", "misc", "xrefs", "dial"):
+        assert gone not in fields, gone
+    sense_fields = api.SenseResult.model_fields
+    for name in ("glosses", "pos", "misc", "field", "dial", "s_inf",
+                 "xrefs", "stagk", "stagr", "examples"):
+        assert name in sense_fields, name
+    xref = api.Xref(seq="1", sno="2", text="お店", type="see")
+    assert xref.sno == "2"
 
 
 def test_explain_validates() -> None:

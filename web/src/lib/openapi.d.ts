@@ -768,25 +768,10 @@ export interface components {
                 [key: string]: string[];
             };
             /**
-             * Pos
+             * Senses
              * @default []
              */
-            pos: string[];
-            /**
-             * Misc
-             * @default []
-             */
-            misc: string[];
-            /**
-             * Xrefs
-             * @default []
-             */
-            xrefs: components["schemas"]["Xref"][];
-            /**
-             * Dial
-             * @default []
-             */
-            dial: components["schemas"]["DialectLabel"][];
+            senses: components["schemas"]["SenseResult"][];
             /** Inflection */
             inflection?: string | null;
         };
@@ -831,6 +816,67 @@ export interface components {
             approx: boolean;
         };
         /**
+         * SenseResult
+         * @description One JMdict ``<sense>`` — a single meaning with everything JMdict
+         *     scopes to it. ``glosses`` are the English translations; ``pos``/``misc``
+         *     are the coarse tag lists (badge-priority ordered); ``field`` domain
+         *     labels; ``dial`` dialect labels; ``s_inf`` usage notes; ``xrefs``
+         *     dictionary cross-references; ``stagk``/``stagr`` the kanji/reading
+         *     forms this sense is restricted to; ``examples`` sentence pairs.
+         */
+        SenseResult: {
+            /**
+             * Glosses
+             * @default []
+             */
+            glosses: string[];
+            /**
+             * Pos
+             * @default []
+             */
+            pos: string[];
+            /**
+             * Misc
+             * @default []
+             */
+            misc: string[];
+            /**
+             * Field
+             * @default []
+             */
+            field: string[];
+            /**
+             * Dial
+             * @default []
+             */
+            dial: components["schemas"]["DialectLabel"][];
+            /**
+             * S Inf
+             * @default []
+             */
+            s_inf: string[];
+            /**
+             * Xrefs
+             * @default []
+             */
+            xrefs: components["schemas"]["Xref"][];
+            /**
+             * Stagk
+             * @default []
+             */
+            stagk: string[];
+            /**
+             * Stagr
+             * @default []
+             */
+            stagr: string[];
+            /**
+             * Examples
+             * @default []
+             */
+            examples: components["schemas"]["ExampleSentence"][];
+        };
+        /**
          * StrokeData
          * @description KanjiVG stroke order as sanitized data — the frontend draws the SVG.
          */
@@ -868,7 +914,8 @@ export interface components {
          * Xref
          * @description One JMdict ``<xref>`` — a dictionary cross-reference. ``type`` is
          *     ``see`` (general), ``ant`` (antonym) or ``syn`` (synonym); ``text`` is the
-         *     referenced headword, searchable as-is.
+         *     referenced headword, searchable as-is. ``seq``/``sno`` are the target
+         *     entry's sequence number and sense number — the deep-link pointer.
          */
         Xref: {
             /** Seq */
@@ -877,6 +924,8 @@ export interface components {
             text: string;
             /** Type */
             type: string;
+            /** Sno */
+            sno?: string | null;
         };
     };
     responses: never;

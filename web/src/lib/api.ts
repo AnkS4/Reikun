@@ -13,6 +13,7 @@ import { t } from './i18n.svelte.ts';
 
 export type SearchResponse = components['schemas']['SearchResponseModel'];
 export type SearchResult = components['schemas']['SearchResult'];
+export type SenseResult = components['schemas']['SenseResult'];
 export type ExampleSentence = components['schemas']['ExampleSentence'];
 export type Segment = components['schemas']['Segment'];
 export type RubyPart = components['schemas']['RubyPart'];

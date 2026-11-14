@@ -188,13 +188,10 @@ def _hit_to_dict(hit, score: float | None = None) -> dict:
         # API/lite boundary (app.etymology).
         "lsource": p.get("lsource") or [],
         "reading_restrictions": p.get("reading_restrictions") or {},
-        # Coarse POS/misc tags, dictionary xrefs (typed) and dialect labels —
-        # payload passthrough for badges/chips. field_tags/ke_inf/s_inf stay
-        # payload-only (capture-only fields).
-        "pos": p.get("pos") or [],
-        "misc": p.get("misc") or [],
-        "xrefs": p.get("xrefs") or [],
-        "dial": p.get("dial") or [],
+        # Per-sense structure — canonical display data (glosses with their
+        # own pos/misc/field/dial/s_inf/xrefs/stagk/stagr/examples). The old
+        # entry-level unions were dropped at build time; senses replaced them.
+        "senses": p.get("senses") or [],
         "inflection": None,
         "score": round(float(hit.score if score is None else score), 4),
     }

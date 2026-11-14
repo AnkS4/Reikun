@@ -193,10 +193,12 @@ class EtymologySource(BaseModel):
 class Xref(BaseModel):
     """One JMdict ``<xref>`` — a dictionary cross-reference. ``type`` is
     ``see`` (general), ``ant`` (antonym) or ``syn`` (synonym); ``text`` is the
-    referenced headword, searchable as-is."""
+    referenced headword, searchable as-is. ``seq``/``sno`` are the target
+    entry's sequence number and sense number — the deep-link pointer."""
     seq: str
     text: str
     type: str
+    sno: str | None = None
 
 
 class DialectLabel(BaseModel):
@@ -204,6 +206,25 @@ class DialectLabel(BaseModel):
     its English ``name`` ("Kansai-ben")."""
     code: str
     name: str
+
+
+class SenseResult(BaseModel):
+    """One JMdict ``<sense>`` — a single meaning with everything JMdict
+    scopes to it. ``glosses`` are the English translations; ``pos``/``misc``
+    are the coarse tag lists (badge-priority ordered); ``field`` domain
+    labels; ``dial`` dialect labels; ``s_inf`` usage notes; ``xrefs``
+    dictionary cross-references; ``stagk``/``stagr`` the kanji/reading
+    forms this sense is restricted to; ``examples`` sentence pairs."""
+    glosses: list[str] = []
+    pos: list[str] = []
+    misc: list[str] = []
+    field: list[str] = []
+    dial: list[DialectLabel] = []
+    s_inf: list[str] = []
+    xrefs: list[Xref] = []
+    stagk: list[str] = []
+    stagr: list[str] = []
+    examples: list[ExampleSentence] = []
 
 
 class SearchResult(BaseModel):
@@ -227,16 +248,12 @@ class SearchResult(BaseModel):
     # passed through for the deferred variant-forms display — nothing renders
     # it yet.
     reading_restrictions: dict[str, list[str]] = {}
-    # Coarse POS tags (verb/adj-i/adj-na/noun/adv/phrase/intj/other) and misc
-    # register markers (on-mim/kana/abbr/idiom + capture-only tier-2 tags) —
-    # badge-priority ordered, union across senses.
-    pos: list[str] = []
-    misc: list[str] = []
-    # Dictionary cross-references (antonym/see-also/synonym) — distinct from
-    # `related`, the kanji-overlap heuristic computed below.
-    xrefs: list[Xref] = []
-    # Regional-dialect labels ("Kansai-ben" …).
-    dial: list[DialectLabel] = []
+    # Per-sense structure — the canonical display data. Each sense carries
+    # its own glosses, pos/misc/field/dial badges, s_inf notes, typed xrefs
+    # (with seq/sno deep-link pointers), stagk/stagr form restrictions and
+    # examples. Replaces the old entry-level pos/misc/xrefs/dial unions,
+    # which mislabeled minor senses.
+    senses: list[SenseResult] = []
     # when the *query itself* is one of the entry's inflected forms, its row
     # label ("走った searching 走る → "Past")
     inflection: str | None = None

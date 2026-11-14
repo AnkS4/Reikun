@@ -6,6 +6,8 @@
 	import Icon from './Icon.svelte';
 	import { t, type MessageKey } from '#lib/i18n.svelte.ts';
 
+	type Sense = SearchResult['senses'][number];
+
 	/** Coarse POS tag → i18n key (tags are built by scripts/build_chunks.py). */
 	const POS_LABEL: Record<string, MessageKey> = {
 		verb: 'posVerb',
@@ -17,8 +19,7 @@
 		intj: 'posIntj',
 		other: 'posOther'
 	};
-	/** Union-safe misc tags that render as badges; tier-2 register/name tags
-	 *  stay capture-only until the sense-aware restructure. */
+	/** Misc tags that render as badges; register/name tags stay capture-only. */
 	const MISC_LABEL: Record<string, MessageKey> = {
 		'on-mim': 'miscOnom',
 		kana: 'miscKana',
@@ -38,7 +39,7 @@
 		result: SearchResult;
 		level: Level;
 		onPickKanji: (c: string) => void;
-		onSearchWord?: (q: string) => void;
+		onSearchWord?: (q: string, ref?: { seq?: string; sno?: string | null }) => void;
 		active?: boolean;
 		searched?: string | null;
 		style?: string;
@@ -47,12 +48,21 @@
 	let copied = $state(false);
 	let timer: ReturnType<typeof setTimeout> | undefined;
 
-	const posBadges = $derived((result.pos ?? []).slice(0, 3));
-	const miscBadges = $derived((result.misc ?? []).filter((tag) => tag in MISC_LABEL).slice(0, 3));
-	const xrefAntonyms = $derived((result.xrefs ?? []).filter((x) => x.type === 'ant'));
-	const xrefSeeAlso = $derived(
-		(result.xrefs ?? []).filter((x) => x.type !== 'ant').slice(0, 6)
-	);
+	function posTags(s: Sense): string[] {
+		return (s.pos ?? []).slice(0, 3);
+	}
+	function miscTags(s: Sense): string[] {
+		return (s.misc ?? []).filter((tag) => tag in MISC_LABEL).slice(0, 3);
+	}
+	function xrefAntonyms(s: Sense) {
+		return (s.xrefs ?? []).filter((x) => x.type === 'ant');
+	}
+	function xrefSeeAlso(s: Sense) {
+		return (s.xrefs ?? []).filter((x) => x.type !== 'ant').slice(0, 6);
+	}
+	function hasXrefs(s: Sense): boolean {
+		return xrefAntonyms(s).length > 0 || xrefSeeAlso(s).length > 0;
+	}
 
 	/** Build URL for the conjugations page. */
 	const conjHref = $derived.by(() => {
@@ -89,16 +99,17 @@
 		}
 	}
 
-	const examples = $derived(result.example_sentences.slice(0, 3));
+	const senses = $derived(result.senses ?? []);
+	const flatExamples = $derived(result.example_sentences ?? []);
+	const hasExamples = $derived(
+		senses.length ? senses.some((s) => (s.examples ?? []).length > 0) : flatExamples.length > 0
+	);
 </script>
 
 <div class="result-card" {style} class:kbd-active={active}>
 	<div class="result-head">
 		<span class="headword" lang="ja"><Ruby parts={result.ruby} onpick={onPickKanji} /></span>
 		{#if result.is_common}<span class="badge">{t('common')}</span>{/if}
-		{#each posBadges as tag (tag)}<span class="badge pos">{t(POS_LABEL[tag] ?? 'posOther')}</span>{/each}
-		{#each miscBadges as tag (tag)}<span class="badge misc">{t(MISC_LABEL[tag] ?? 'miscOnom')}</span>{/each}
-		{#each result.dial ?? [] as d (d.code)}<span class="badge dial" title={t('dialect')}>{d.name}</span>{/each}
 		<button
 			type="button"
 			class="btn tertiary copy-word"
@@ -109,7 +120,6 @@
 			<Icon name={copied ? 'check' : 'copy'} size={15} />
 		</button>
 	</div>
-	<p class="meanings-line">{result.meanings.slice(0, 6).join('; ')}</p>
 	{#if result.lsource?.length}
 		<!-- Etymology ("From Portuguese — espada"): JMdict-authored English like
 		     the glosses; the source form carries its BCP-47 lang tag. -->
@@ -138,33 +148,72 @@
 			</a>
 		</div>
 	{/if}
-	{#if onSearchWord && (xrefAntonyms.length || xrefSeeAlso.length)}
-		<!-- Dictionary cross-references (JMdict xref): antonyms and see-also
-		     pointers — searchable headwords, unlike the kanji-overlap `related`. -->
-		<div class="xref-row">
-			{#if xrefAntonyms.length}
-				<span class="xref-label">{t('antonyms')}</span>
-				{#each xrefAntonyms as x (x.seq + x.text)}
-					<button
-						type="button"
-						class="related-pill xref-ant"
-						title={t('searchWord', { word: x.text })}
-						onclick={() => onSearchWord(x.text)}
-					><span lang="ja">{x.text}</span></button>
+	{#if senses.length}
+		<!-- Per-sense blocks: each meaning keeps its own glosses, badges,
+		     usage notes, cross-references and examples (JMdict scopes all of
+		     these to the sense — see scripts/build_chunks.py). -->
+		{#each senses as sense, si (si)}
+			<div class="sense-block" id={result.id != null ? `sense-${result.id}-${si + 1}` : undefined}>
+				{#if sense.glosses?.length}
+					<p class="sense-glosses">{sense.glosses.join('; ')}</p>
+				{/if}
+				{#if posTags(sense).length || miscTags(sense).length || (sense.dial ?? []).length}
+					<p class="sense-badges">
+						{#each posTags(sense) as tag (tag)}<span class="badge pos">{t(POS_LABEL[tag] ?? 'posOther')}</span>{/each}
+						{#each miscTags(sense) as tag (tag)}<span class="badge misc">{t(MISC_LABEL[tag] ?? 'miscOnom')}</span>{/each}
+						{#each sense.dial ?? [] as d (d.code)}<span class="badge dial" title={t('dialect')}>{d.name}</span>{/each}
+					</p>
+				{/if}
+				{#if sense.s_inf?.length}
+					<p class="sense-note" lang="en">{sense.s_inf.join(' ')}</p>
+				{/if}
+				{#if onSearchWord && hasXrefs(sense)}
+					<!-- Dictionary cross-references (JMdict xref): antonyms and
+					     see-also pointers — searchable headwords carrying the
+					     target entry seq + sense number for the deep link. -->
+					<div class="xref-row">
+						{#if xrefAntonyms(sense).length}
+							<span class="xref-label">{t('antonyms')}</span>
+							{#each xrefAntonyms(sense) as x (x.seq + x.sno + x.text)}
+								<button
+									type="button"
+									class="related-pill xref-ant"
+									title={t('searchWord', { word: x.text })}
+									onclick={() => onSearchWord!(x.text, { seq: x.seq, sno: x.sno })}
+								><span lang="ja">{x.text}</span></button>
+							{/each}
+						{/if}
+						{#if xrefSeeAlso(sense).length}
+							<span class="xref-label">{t('seeAlso')}</span>
+							{#each xrefSeeAlso(sense) as x (x.seq + x.sno + x.text)}
+								<button
+									type="button"
+									class="related-pill"
+									title={t('searchWord', { word: x.text })}
+									onclick={() => onSearchWord!(x.text, { seq: x.seq, sno: x.sno })}
+								><span lang="ja">{x.text}</span></button>
+							{/each}
+						{/if}
+					</div>
+				{/if}
+				{#if sense.examples?.length}
+					<div class="example-section">
+						{#each sense.examples as ex, i (ex.japanese + i)}
+							<ExampleRow {ex} {level} onpick={onPickKanji} />
+						{/each}
+					</div>
+				{/if}
+			</div>
+		{/each}
+	{:else}
+		<p class="meanings-line">{result.meanings.slice(0, 6).join('; ')}</p>
+		{#if flatExamples.length}
+			<div class="example-section">
+				{#each flatExamples.slice(0, 3) as ex, i (ex.japanese + i)}
+					<ExampleRow {ex} {level} onpick={onPickKanji} />
 				{/each}
-			{/if}
-			{#if xrefSeeAlso.length}
-				<span class="xref-label">{t('seeAlso')}</span>
-				{#each xrefSeeAlso as x (x.seq + x.text)}
-					<button
-						type="button"
-						class="related-pill"
-						title={t('searchWord', { word: x.text })}
-						onclick={() => onSearchWord(x.text)}
-					><span lang="ja">{x.text}</span></button>
-				{/each}
-			{/if}
-		</div>
+			</div>
+		{/if}
 	{/if}
 	{#if onSearchWord && result.related?.length}
 		<div class="related-row" aria-label={t('relatedWords')}>
@@ -181,13 +230,7 @@
 			{/each}
 		</div>
 	{/if}
-	{#if examples.length}
-		<div class="example-section">
-			{#each examples as ex, i (ex.japanese + i)}
-				<ExampleRow {ex} {level} onpick={onPickKanji} />
-			{/each}
-		</div>
-	{:else}
+	{#if !hasExamples}
 		<p class="no-example">{t('noExamples')}</p>
 	{/if}
 </div>

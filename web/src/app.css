@@ -1329,6 +1329,57 @@ a.kanji-tip {
 	line-height: 1.5;
 }
 
+/* Per-sense blocks — each JMdict sense keeps its own glosses, badges,
+   usage notes, xrefs and examples (the entry-level unions are gone). */
+.sense-block {
+	margin: 0.35rem 0 0.85rem;
+	padding: 0.5rem 0.75rem;
+	border-left: 2px solid var(--border-soft);
+	border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+
+.sense-block + .sense-block {
+	margin-top: 0.5rem;
+}
+
+.sense-glosses {
+	margin: 0;
+	font-size: var(--fs-body);
+	color: var(--text);
+	line-height: 1.5;
+}
+
+.sense-badges {
+	margin: 0.35rem 0 0;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.3rem;
+}
+
+.sense-note {
+	margin: 0.35rem 0 0;
+	font-size: var(--fs-sm);
+	color: var(--text-muted);
+	font-style: italic;
+	line-height: 1.5;
+}
+
+/* Deep-link target (?seq=&sense=): brief highlight on the referenced sense. */
+.sense-focus {
+	border-left-color: var(--primary);
+	background: var(--primary-light);
+	animation: sense-focus-fade 6s ease forwards;
+}
+
+@keyframes sense-focus-fade {
+	from {
+		background: var(--primary-light);
+	}
+	to {
+		background: transparent;
+	}
+}
+
 /* Etymology line — "From Portuguese — espada" (JMdict lsource); the source
    form is italic and carries its own lang attribute. */
 .etymology {

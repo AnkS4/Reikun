@@ -91,13 +91,26 @@ def test_entry_to_chunk_phase2_fields() -> None:
     </entry>""")
     chunk = _entry_to_chunk(entry)
     assert chunk is not None
-    assert chunk["pos"] == ["verb", "adv", "noun"]      # union, badge order
-    assert chunk["misc"] == ["kana", "archaic"]      # tier-1 before tier-2
-    assert chunk["field_tags"] == ["computing"]
-    assert chunk["dial"] == [{"code": "ksb", "name": "Kansai-ben"}]
+    senses = chunk["senses"]
+    assert len(senses) == 2
+    s0, s1 = senses
+    # Per-sense tags keep badge order within the sense, not an entry union.
+    assert s0["pos"] == ["verb", "noun"]
+    assert s0["misc"] == ["kana"]
+    assert s0["field"] == ["computing"]
+    assert s0["dial"] == [{"code": "ksb", "name": "Kansai-ben"}]
+    assert s0["s_inf"] == ["sometimes used for zero"]
+    assert s0["xrefs"] == [{"seq": "123", "text": "反対", "type": "ant"}]
+    assert s0["glosses"] == ["exam"]
+    # Sense boundaries survive: the adverb/archaic tags stay on sense 2.
+    assert s1["pos"] == ["adv"]
+    assert s1["misc"] == ["archaic"]
+    assert s1["glosses"] == ["trial"]
+    assert "xrefs" not in s1
+    # Entry-level display unions are gone — senses are canonical.
+    for flat in ("pos", "misc", "field_tags", "dial", "s_inf", "xrefs"):
+        assert flat not in chunk
     assert chunk["ke_inf"] == {"試験": ["sK"]}
-    assert chunk["s_inf"] == ["sometimes used for zero"]  # first sense only
-    assert chunk["xrefs"] == [{"seq": "123", "text": "反対", "type": "ant"}]
     assert "related" not in chunk
 
 

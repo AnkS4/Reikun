@@ -463,41 +463,64 @@ def _bare_result(**extra) -> dict:
     }
 
 
-def test_result_card_pos_misc_dial_badges() -> None:
+def test_result_card_sense_blocks() -> None:
     result = _bare_result(
-        pos=["verb", "noun", "adv", "other"],          # capped at 3
-        misc=["on-mim", "kana", "archaic", "name"],    # tier-1 only, capped at 3
-        dial=[{"code": "ksb", "name": "Kansai-ben"}],
+        senses=[
+            {
+                "glosses": ["exam"],
+                "pos": ["verb", "noun", "adv", "other"],   # capped at 3
+                "misc": ["on-mim", "kana", "archaic", "name"],  # tier-1 only
+                "dial": [{"code": "ksb", "name": "Kansai-ben"}],
+                "s_inf": ["sometimes used for zero"],
+                "examples": [{"japanese": "試験を受ける", "english": "take an exam"}],
+            },
+            {"glosses": ["trial"], "pos": ["adv"], "misc": ["archaic"]},
+        ],
     )
     html_out = lite._result_card("", result, True, "en")
+    # Sense blocks carry stable fragment ids for xref deep links.
+    assert 'id="r9-s1"' in html_out and 'id="r9-s2"' in html_out
+    assert ">exam<" in html_out or "exam" in html_out
+    assert "trial" in html_out
+    # Badges live inside the sense block, not the h2.
     h2 = html_out.split("<h2")[1].split("</h2>")[0]
-    assert 'class="badge pos"' in h2
-    assert ">Verb<" in h2 and ">Noun<" in h2 and ">Adverb<" in h2
-    assert ">Other<" not in h2  # 4th pos tag cut by the cap
-    # tier-1 misc badges render; tier-2 (archaic/name) stay hidden
-    assert "Onomatopoeia" in h2 and "Kana" in h2
-    assert "Archaic" not in h2 and ">Name<" not in h2
-    assert "Kansai-ben" in h2 and 'title="Dialect"' in h2
+    assert "badge pos" not in h2 and "Kansai-ben" not in h2
+    assert 'class="badge pos"' in html_out and ">Verb<" in html_out and ">Noun<" in html_out
+    assert ">Adverb<" in html_out and ">Other<" not in html_out  # 4th pos tag cut
+    assert "Onomatopoeia" in html_out and "Kana" in html_out
+    assert "Archaic" not in html_out and ">Name<" not in html_out  # tier-2 hidden
+    assert "Kansai-ben" in html_out and 'title="Dialect"' in html_out
+    # Per-sense usage note renders as English JMdict text.
+    assert 'class="sense-note" lang="en"' in html_out and "sometimes used for zero" in html_out
+    # Per-sense example renders inside its block.
+    assert "試験を受ける" in html_out and "take an exam" in html_out
 
 
-def test_result_card_badges_localized() -> None:
-    result = _bare_result(pos=["verb"], misc=["abbr"])
+def test_result_card_sense_blocks_localized() -> None:
+    result = _bare_result(
+        senses=[{"glosses": ["試験"], "pos": ["verb"], "misc": ["abbr"]}],
+    )
     html_out = lite._result_card("", result, True, "ja")
     assert ">動詞<" in html_out and ">略語<" in html_out
 
 
-def test_result_card_xref_chips() -> None:
+def test_result_card_xref_chips_deep_link() -> None:
     result = _bare_result(
-        xrefs=[
-            {"seq": "1", "text": "反対", "type": "ant"},
-            {"seq": "2", "text": "テスト", "type": "see"},
-            {"seq": "3", "text": "試験場", "type": "syn"},
-        ],
+        senses=[{
+            "glosses": ["store"],
+            "xrefs": [
+                {"seq": "2409240", "sno": "1", "text": "お店", "type": "see"},
+                {"seq": "2409240", "sno": "2", "text": "お店", "type": "see"},
+                {"seq": "1", "text": "反対", "type": "ant"},
+            ],
+        }],
     )
     html_out = lite._result_card("", result, True, "en")
     assert "Antonyms" in html_out and "See also" in html_out
     assert 'class="chip xref-ant"' in html_out
-    assert 'href="/lite/search?q=%E5%8F%8D%E5%AF%BE"' in html_out  # 反対 url-encoded
-    assert "試験場" in html_out  # syn folds into see-also
+    # Deep link: search for the headword + #r<seq>-s<sno> fragment.
+    assert 'href="/lite/search?q=%E3%81%8A%E5%BA%97#r2409240-s1"' in html_out
+    assert 'href="/lite/search?q=%E3%81%8A%E5%BA%97#r2409240-s2"' in html_out
+    assert 'href="/lite/search?q=%E5%8F%8D%E5%AF%BE#r1"' in html_out  # no sno → card anchor
     # no xrefs → no row at all
     assert "xref-row" not in lite._result_card("", _bare_result(), True, "en")

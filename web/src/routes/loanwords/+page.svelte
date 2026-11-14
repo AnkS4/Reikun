@@ -80,8 +80,15 @@
 		return `/loanwords?lang=${encodeURIComponent(lang)}&page=${p}`;
 	}
 
-	function searchWord(q: string) {
-		goto(`/?q=${encodeURIComponent(q)}`);
+	function searchWord(q: string, ref?: { seq?: string; sno?: string | null }) {
+		// Xref chips carry the target entry seq + sense — the search page's
+		// ?seq=&sense= deep link scrolls to that sense block.
+		const u = new URLSearchParams({ q });
+		if (ref?.seq) {
+			u.set('seq', ref.seq);
+			if (ref.sno) u.set('sense', ref.sno);
+		}
+		goto(`/?${u}`);
 	}
 </script>
 

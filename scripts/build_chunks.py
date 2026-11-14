@@ -348,8 +348,8 @@ def _entry_to_chunk(entry: ET.Element) -> dict | None:
             primary_kana = reb
         # r_ele↔k_ele pairing (what jmdict-simplified called appliesToKanji):
         # re_nokanji = reading-only (empty list); re_restr = applies only to
-        # the listed keb. Sense-level stagk/stagr pairing is dropped, as it
-        # was in the JSON→chunk flattening.
+        # the listed keb. Sense-level stagk/stagr pairing is captured
+        # per-sense in the senses list below.
         if r.find("re_nokanji") is not None:
             reading_restrictions[reb] = []
         elif (restr := [x.text for x in r.findall("re_restr") if x.text]):
@@ -366,9 +366,8 @@ def _entry_to_chunk(entry: ET.Element) -> dict | None:
     meanings: list[str] = []
     primary_meanings: list[str] = []
     example_sentences: list[dict] = []
-    xrefs: list[dict] = []
-    s_inf: list[str] = []
-    seen_xref: set[tuple] = set()
+    senses: list[dict] = []
+    code_to_text = _entities()[0]
     kana_pref = False
     for i, sense in enumerate(entry.findall("sense")):
         # &uk; — "word usually written using kana alone"; the entity resolves to
@@ -378,14 +377,41 @@ def _entry_to_chunk(entry: ET.Element) -> dict | None:
         if i == 0:
             kana_pref = any(
                 m.text and "kana alone" in m.text for m in sense.findall("misc"))
-            # First-sense usage notes — capture-only until the note-line UI
-            # ships (JMdict-authored English, e.g. "usu. as …").
-            s_inf = [s.text for s in sense.findall("s_inf") if s.text]
-        for gloss in sense.findall("gloss"):
-            if gloss.get(XML_LANG, "eng") == "eng" and gloss.text:
-                meanings.append(gloss.text)
-                if i == 0:
-                    primary_meanings.append(gloss.text)
+        glosses = [g.text for g in sense.findall("gloss")
+                   if g.get(XML_LANG, "eng") == "eng" and g.text]
+        meanings.extend(glosses)
+        if i == 0:
+            primary_meanings.extend(glosses)
+        # Per-sense structure — JMdict scopes every display attribute to the
+        # sense (DTD: sense = stagk*, stagr*, pos*, xref*, field*, misc*,
+        # s_inf*, dial*, gloss*, example*). Keeping the boundaries is what
+        # lets badges/notes/xrefs attach to the meaning they describe
+        # instead of an entry-level union that misfires on minor senses.
+        sd: dict = {}
+        if glosses:
+            sd["glosses"] = glosses
+        if pos_t := _coded_tags(
+                (p.text for p in sense.findall("pos") if p.text),
+                _POS_TAG_MAP, _POS_ORDER):
+            sd["pos"] = pos_t
+        if misc_t := _coded_tags(
+                (m.text for m in sense.findall("misc") if m.text),
+                _MISC_TAG_MAP, _MISC_ORDER):
+            sd["misc"] = misc_t
+        if field_t := sorted({f.text for f in sense.findall("field")
+                              if f.text and _entity_code(f.text)}):
+            sd["field"] = field_t
+        if dial_t := sorted(
+                c for c in (_entity_code(d.text) for d in sense.findall("dial"))
+                if c is not None):
+            sd["dial"] = [{"code": c, "name": code_to_text[c]} for c in dial_t]
+        if sinf := [s.text for s in sense.findall("s_inf") if s.text]:
+            sd["s_inf"] = sinf
+        if stags := [t.text for t in sense.findall("stagk") if t.text]:
+            sd["stagk"] = stags
+        if stags := [t.text for t in sense.findall("stagr") if t.text]:
+            sd["stagr"] = stags
+        exs: list[dict] = []
         for ex in sense.findall("example"):
             jpn = eng = None
             for s in ex.findall("ex_sent"):
@@ -395,13 +421,20 @@ def _entry_to_chunk(entry: ET.Element) -> dict | None:
                 elif lang == "eng" and eng is None:
                     eng = s.text
             if jpn and eng:
-                example_sentences.append({"japanese": jpn, "english": eng})
+                pair = {"japanese": jpn, "english": eng}
+                exs.append(pair)
+                example_sentences.append(pair)
+        if exs:
+            sd["examples"] = exs[:3]
+        # Dictionary cross-references scoped to this sense. The element text
+        # is display-oriented: it can carry a "(reading)" gloss and a
+        # trailing "[n]" that disambiguates the *sense* of the target entry
+        # (JMdict sno), not part of the headword — searching "お店[1]"
+        # literally finds nothing. xk/xr attrs hold the clean target forms;
+        # fall back to text minus the "[n]" suffix. seq/sno keep the
+        # entry/sense pointer for the ?seq=&sense= deep link.
+        seen_xref: set[tuple] = set()
         for x in sense.findall("xref"):
-            # The element text is display-oriented: it can carry a "(reading)"
-            # gloss and a trailing "[n]" that disambiguates the *sense* of the
-            # target entry (JMdict sno), not part of the headword — searching
-            # "お店[1]" literally finds nothing. xk/xr attrs hold the clean
-            # target forms; fall back to text minus the "[n]" suffix.
             disp = x.get("xk") or x.get("xr") or re.sub(r"\s*\[\d+\]\s*$", "", x.text or "")
             if not disp:
                 continue
@@ -410,15 +443,12 @@ def _entry_to_chunk(entry: ET.Element) -> dict | None:
             if key in seen_xref:
                 continue
             seen_xref.add(key)
-            # type is a REQUIRED attr ("see"/"ant"/"syn") — dictionary-
-            # authoritative relations, unlike the kanji-overlap `related`
-            # computed at render time. Shipped under `xrefs` to keep the
-            # two datasets distinct. seq/sno keep the entry/sense pointer
-            # for a future deep link.
             ref = {"seq": x.get("seq") or "", "text": disp, "type": x_type}
             if x.get("sno"):
                 ref["sno"] = x.get("sno")
-            xrefs.append(ref)
+            sd.setdefault("xrefs", []).append(ref)
+        if sd:
+            senses.append(sd)
 
     if not meanings:
         return None
@@ -435,19 +465,6 @@ def _entry_to_chunk(entry: ET.Element) -> dict | None:
             item["wasei"] = True
         lsource.append(item)
     notes = [i.text for i in entry.findall("info") if i.text]
-
-    # Sense-level unions (entry-level tags — the accepted flattening
-    # tradeoff): POS badges, misc register markers, domain fields, dialects.
-    pos_tags = _coded_tags(pos_texts, _POS_TAG_MAP, _POS_ORDER)
-    misc_tags = _coded_tags(
-        (m.text for m in entry.findall("sense/misc") if m.text),
-        _MISC_TAG_MAP, _MISC_ORDER)
-    field_tags = sorted({f.text for f in entry.findall("sense/field")
-                         if f.text and _entity_code(f.text)})
-    code_to_text = _entities()[0]
-    dial_codes = {_entity_code(d.text) for d in entry.findall("sense/dial")}
-    dial_codes.discard(None)
-    dial = [{"code": c, "name": code_to_text[c]} for c in sorted(dial_codes)]
 
     # Display text: primary headword + reading + glosses. The dense
     # vector is built from glosses only at ingest time. Example sentences
@@ -521,18 +538,8 @@ def _entry_to_chunk(entry: ET.Element) -> dict | None:
         chunk["reading_restrictions"] = reading_restrictions
     if ke_inf:
         chunk["ke_inf"] = ke_inf
-    if xrefs:
-        chunk["xrefs"] = xrefs
-    if pos_tags:
-        chunk["pos"] = pos_tags
-    if misc_tags:
-        chunk["misc"] = misc_tags
-    if field_tags:
-        chunk["field_tags"] = field_tags
-    if dial:
-        chunk["dial"] = dial
-    if s_inf:
-        chunk["s_inf"] = s_inf
+    if senses:
+        chunk["senses"] = senses
     if lsource:
         chunk["lsource"] = lsource
     if notes:
@@ -634,7 +641,9 @@ def build_kanji_table(
         # pool feeds both the kanji card's common words and related_words(),
         # where Picasso/Mozart chips are noise, not relations.
         pool = [id_to_chunk[w] for w in kanji_to_ids.get(literal, []) if w in id_to_chunk]
-        pool = [c for c in pool if "name" not in (c.get("misc") or [])]
+        pool = [c for c in pool
+                if "name" not in {t for s in (c.get("senses") or [])
+                                 for t in (s.get("misc") or [])}]
         ranked = sorted(
             pool,
             key=lambda c: (bool(c.get("is_common")), c.get("commonness", 0.0), c.get("wf_score", 0.0)),

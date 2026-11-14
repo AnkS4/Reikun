@@ -251,11 +251,21 @@ font-size:var(--fs-base);}
 .chip [lang=ja]{color:var(--text)}
 .chip .muted{font-size:var(--fs-xs);color:var(--text-muted);max-width:14rem;overflow:hidden;
 text-overflow:ellipsis;white-space:nowrap}
-/* POS/misc/dialect badges in the entry head — quieter than the green
-   `common` marker (.entry h2 .badge above). */
-.entry h2 .badge.pos,.entry h2 .badge.misc{background:var(--surface-soft);
-border-color:var(--border-soft);color:var(--text-muted)}
-.entry h2 .badge.dial{background:var(--primary-light);border-color:transparent;color:var(--primary)}
+/* POS/misc/dialect badges — quieter than the green `common` marker
+   (.entry h2 .badge above); per-sense badges live in .sense-badges. */
+.entry h2 .badge.pos,.entry h2 .badge.misc,.sense-badges .badge.pos,.sense-badges .badge.misc{
+background:var(--surface-soft);border-color:var(--border-soft);color:var(--text-muted)}
+.entry h2 .badge.dial,.sense-badges .badge.dial{background:var(--primary-light);border-color:transparent;color:var(--primary)}
+/* Per-sense blocks — each JMdict sense keeps its own glosses, badges,
+   usage notes, xrefs and examples. id="r<entry>-s<n>" is the fragment
+   target xref chips deep-link to. */
+.sense-block{margin:.35rem 0 .85rem;padding:.5rem .75rem .5rem .85rem;
+border-left:2px solid var(--border-soft);border-radius:0 var(--radius-sm) var(--radius-sm) 0}
+.sense-block+.sense-block{margin-top:.5rem}
+.sense-glosses{margin:0;font-size:var(--fs-body);line-height:1.5;color:var(--text)}
+.sense-badges{margin:.35rem 0 0}
+.sense-note{margin:.35rem 0 0;font-size:var(--fs-sm);color:var(--text-muted);font-style:italic;line-height:1.5}
+.sense-block:target{border-left-color:var(--primary);background:var(--primary-light)}
 /* Dictionary cross-references — JMdict xref antonym/see-also chips,
    mirroring the SPA's .xref-row (links in Lite). */
 .xref-row{display:flex;flex-wrap:wrap;align-items:baseline;gap:.4rem;margin:.35rem 0 .75rem}

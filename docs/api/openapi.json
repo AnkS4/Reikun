@@ -1829,36 +1829,12 @@
             "title": "Reading Restrictions",
             "default": {}
           },
-          "pos": {
+          "senses": {
             "items": {
-              "type": "string"
+              "$ref": "#/components/schemas/SenseResult"
             },
             "type": "array",
-            "title": "Pos",
-            "default": []
-          },
-          "misc": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array",
-            "title": "Misc",
-            "default": []
-          },
-          "xrefs": {
-            "items": {
-              "$ref": "#/components/schemas/Xref"
-            },
-            "type": "array",
-            "title": "Xrefs",
-            "default": []
-          },
-          "dial": {
-            "items": {
-              "$ref": "#/components/schemas/DialectLabel"
-            },
-            "type": "array",
-            "title": "Dial",
+            "title": "Senses",
             "default": []
           },
           "inflection": {
@@ -1942,6 +1918,93 @@
         ],
         "title": "Segment",
         "description": "One word unit of a parsed Japanese sentence (a chip)."
+      },
+      "SenseResult": {
+        "properties": {
+          "glosses": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Glosses",
+            "default": []
+          },
+          "pos": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Pos",
+            "default": []
+          },
+          "misc": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Misc",
+            "default": []
+          },
+          "field": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Field",
+            "default": []
+          },
+          "dial": {
+            "items": {
+              "$ref": "#/components/schemas/DialectLabel"
+            },
+            "type": "array",
+            "title": "Dial",
+            "default": []
+          },
+          "s_inf": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "S Inf",
+            "default": []
+          },
+          "xrefs": {
+            "items": {
+              "$ref": "#/components/schemas/Xref"
+            },
+            "type": "array",
+            "title": "Xrefs",
+            "default": []
+          },
+          "stagk": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Stagk",
+            "default": []
+          },
+          "stagr": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Stagr",
+            "default": []
+          },
+          "examples": {
+            "items": {
+              "$ref": "#/components/schemas/ExampleSentence"
+            },
+            "type": "array",
+            "title": "Examples",
+            "default": []
+          }
+        },
+        "type": "object",
+        "title": "SenseResult",
+        "description": "One JMdict ``<sense>`` — a single meaning with everything JMdict\nscopes to it. ``glosses`` are the English translations; ``pos``/``misc``\nare the coarse tag lists (badge-priority ordered); ``field`` domain\nlabels; ``dial`` dialect labels; ``s_inf`` usage notes; ``xrefs``\ndictionary cross-references; ``stagk``/``stagr`` the kanji/reading\nforms this sense is restricted to; ``examples`` sentence pairs."
       },
       "StrokeData": {
         "properties": {
@@ -2049,6 +2112,17 @@
           "type": {
             "type": "string",
             "title": "Type"
+          },
+          "sno": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sno"
           }
         },
         "type": "object",
@@ -2058,7 +2132,7 @@
           "type"
         ],
         "title": "Xref",
-        "description": "One JMdict ``<xref>`` — a dictionary cross-reference. ``type`` is\n``see`` (general), ``ant`` (antonym) or ``syn`` (synonym); ``text`` is the\nreferenced headword, searchable as-is."
+        "description": "One JMdict ``<xref>`` — a dictionary cross-reference. ``type`` is\n``see`` (general), ``ant`` (antonym) or ``syn`` (synonym); ``text`` is the\nreferenced headword, searchable as-is. ``seq``/``sno`` are the target\nentry's sequence number and sense number — the deep-link pointer."
       }
     }
   }

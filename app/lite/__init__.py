@@ -907,32 +907,91 @@ _MISC_LABEL_KEYS = {
 }
 
 
-def _result_card(query: str, result: dict, furi: bool, lang: str) -> str:
-    """One entry card, structured like the web UI's ResultCard: headword,
-    meanings line, inflection note, conjugations link, kanji links, related
-    words and examples. No collapsed sections — everything visible."""
-    head = result.get("kanji_form") or result.get("reading") or result.get("text") or ""
-    readings = result.get("readings") or []
-    kanji_forms = result.get("kanji_forms") or []
-    meanings = result.get("meanings") or []
+def _sense_block(sense: dict, si: int, entry_id, lang: str) -> str:
+    """One JMdict sense: glosses, its own pos/misc/dial badges, usage note,
+    typed xrefs (deep-linking to the target entry+sense) and examples.
+    ``id="r<entry>-s<n>"`` is the fragment target for xref deep links —
+    lite is no-JS, so the browser's native fragment scroll does the work."""
+    sid = f' id="r{esc(entry_id)}-s{si + 1}"' if entry_id is not None else ""
+    parts = [f'<div class="sense-block"{sid}>']
+    glosses = sense.get("glosses") or []
+    if glosses:
+        parts.append(f'<p class="sense-glosses">{esc("; ".join(glosses))}</p>')
 
-    badges = [f'<span class="badge">{esc(_t(lang, "common"))}</span>'] if result.get("is_common") else []
-    badges += [
+    badges = [
         f'<span class="badge pos">{esc(_t(lang, _POS_LABEL_KEYS[tag]))}</span>'
-        for tag in (result.get("pos") or [])[:3]
+        for tag in (sense.get("pos") or [])[:3]
         if tag in _POS_LABEL_KEYS
     ]
     misc_shown = 0
-    for tag in result.get("misc") or []:
+    for tag in sense.get("misc") or []:
         if tag in _MISC_LABEL_KEYS:
             badges.append(f'<span class="badge misc">{esc(_t(lang, _MISC_LABEL_KEYS[tag]))}</span>')
             misc_shown += 1
             if misc_shown >= 3:
                 break
-    for d in result.get("dial") or []:
-        badges.append(
-            f'<span class="badge dial" title="{esc(_t(lang, "dialect"))}">{esc(d.get("name") or "")}</span>'
-        )
+    badges.extend(
+        f'<span class="badge dial" title="{esc(_t(lang, "dialect"))}">{esc(d.get("name") or "")}</span>'
+        for d in (sense.get("dial") or [])
+    )
+    if badges:
+        parts.append(f'<p class="sense-badges">{" ".join(badges)}</p>')
+
+    if sinf := sense.get("s_inf") or []:
+        parts.append(f'<p class="sense-note" lang="en">{esc(" ".join(sinf))}</p>')
+
+    xrefs = sense.get("xrefs") or []
+    xref_ants = [x for x in xrefs if x.get("type") == "ant"]
+    xref_sees = [x for x in xrefs if x.get("type") != "ant"][:6]
+    if xref_ants or xref_sees:
+        groups = []
+        for label_key, xs, ant in (
+            ("antonyms", xref_ants, True),
+            ("seeAlso", xref_sees, False),
+        ):
+            if not xs:
+                continue
+            chips = " ".join(
+                f'<a class="chip{" xref-ant" if ant else ""}" href="{_xref_href(x)}">'
+                f'<span lang="ja">{esc(x.get("text") or "")}</span></a>'
+                for x in xs
+            )
+            groups.append(
+                f'<span class="xref-label">{esc(_t(lang, label_key))}</span>{chips}')
+        parts.append(f'<div class="xref-row">{"".join(groups)}</div>')
+
+    for example in (sense.get("examples") or [])[:3]:
+        japanese = example.get("japanese") or ""
+        english = example.get("english") or ""
+        parts.append(f'<div class="example"><p lang="ja">{esc(japanese)}</p>')
+        if english:
+            parts.append(f'<p class="muted">{esc(english)}</p>')
+        parts.append("</div>")
+    parts.append("</div>")
+    return "".join(parts)
+
+
+def _xref_href(x: dict) -> str:
+    """Search link for an xref chip; appends the #r<seq>-s<sno> fragment so
+    the browser lands on the target entry's sense block natively (no JS)."""
+    href = _href("/lite/search", q=x.get("text") or "")
+    seq = x.get("seq")
+    if seq:
+        sno = x.get("sno")
+        href += f"#r{seq}" + (f"-s{sno}" if sno else "")
+    return href
+
+
+def _result_card(query: str, result: dict, furi: bool, lang: str) -> str:
+    """One entry card, structured like the web UI's ResultCard: headword,
+    per-sense gloss/badge/note/xref/example blocks, etymology, inflection
+    note, conjugations link, kanji links and related words. No collapsed
+    sections — everything visible."""
+    head = result.get("kanji_form") or result.get("reading") or result.get("text") or ""
+    readings = result.get("readings") or []
+    kanji_forms = result.get("kanji_forms") or []
+
+    badges = [f'<span class="badge">{esc(_t(lang, "common"))}</span>'] if result.get("is_common") else []
     common = " ".join(badges)
     entry_id = result.get("id")
     anchor = f' id="r{esc(entry_id)}"' if entry_id is not None else ""
@@ -947,8 +1006,14 @@ def _result_card(query: str, result: dict, furi: bool, lang: str) -> str:
         )
 
     parts = [f'<article class="entry"{anchor}><h2>{head_html} {common}</h2>']
-    if meanings:
-        parts.append(f'<p class="gloss">{esc("; ".join(meanings[:6]))}</p>')
+    senses = result.get("senses") or []
+    if senses:
+        for si, sense in enumerate(senses):
+            parts.append(_sense_block(sense, si, entry_id, lang))
+    else:
+        meanings = result.get("meanings") or []
+        if meanings:
+            parts.append(f'<p class="gloss">{esc("; ".join(meanings[:6]))}</p>')
     # Etymology line ("From Portuguese — espada"): JMdict-authored English,
     # rendered like the glosses — no i18n keys. The source form carries its
     # BCP-47 lang tag so it reads as its real language.
@@ -983,31 +1048,6 @@ def _result_card(query: str, result: dict, furi: bool, lang: str) -> str:
         )
         parts.append(f'<p class="reading-note">{esc(_t(lang, "lite_kanjiLabel"))}: {links}</p>')
 
-    # Dictionary cross-references (JMdict xref): antonyms and see-also
-    # pointers — searchable headwords, unlike the kanji-overlap `related`.
-    xrefs = result.get("xrefs") or []
-    xref_ants = [x for x in xrefs if x.get("type") == "ant"]
-    xref_sees = [x for x in xrefs if x.get("type") != "ant"][:6]
-    if xref_ants or xref_sees:
-        groups = []
-        if xref_ants:
-            chips = " ".join(
-                f'<a class="chip xref-ant" href="{_href("/lite/search", q=x.get("text") or "")}">'
-                f'<span lang="ja">{esc(x.get("text") or "")}</span></a>'
-                for x in xref_ants
-            )
-            groups.append(
-                f'<span class="xref-label">{esc(_t(lang, "antonyms"))}</span>{chips}')
-        if xref_sees:
-            chips = " ".join(
-                f'<a class="chip" href="{_href("/lite/search", q=x.get("text") or "")}">'
-                f'<span lang="ja">{esc(x.get("text") or "")}</span></a>'
-                for x in xref_sees
-            )
-            groups.append(
-                f'<span class="xref-label">{esc(_t(lang, "seeAlso"))}</span>{chips}')
-        parts.append(f'<div class="xref-row">{"".join(groups)}</div>')
-
     # Related words sit directly under the headword (no collapse), as in the web UI.
     forms = (head, *kanji_forms, *readings)
     related = related_words(forms, forms) if head else []
@@ -1021,16 +1061,17 @@ def _result_card(query: str, result: dict, furi: bool, lang: str) -> str:
             f'<div class="related-row" aria-label="{esc(_t(lang, "relatedWords"))}">{chips}</div>'
         )
 
-    examples = []
-    for example in (result.get("example_sentences") or [])[:3]:
-        japanese = example.get("japanese") or ""
-        english = example.get("english") or ""
-        examples.append(f'<div class="example"><p lang="ja">{esc(japanese)}</p>')
-        if english:
-            examples.append(f'<p class="muted">{esc(english)}</p>')
-        examples.append("</div>")
-    if examples:
-        parts.append(f'<div class="example-section">{"".join(examples)}</div>')
+    if not senses:
+        examples = []
+        for example in (result.get("example_sentences") or [])[:3]:
+            japanese = example.get("japanese") or ""
+            english = example.get("english") or ""
+            examples.append(f'<div class="example"><p lang="ja">{esc(japanese)}</p>')
+            if english:
+                examples.append(f'<p class="muted">{esc(english)}</p>')
+            examples.append("</div>")
+        if examples:
+            parts.append(f'<div class="example-section">{"".join(examples)}</div>')
 
     parts.append("</article>")
     return "".join(parts)

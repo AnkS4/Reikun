@@ -125,6 +125,34 @@
 	);
 	const hasResults = $derived(resp !== null);
 	const infoId = $props.id();
+
+	// Xref deep link: ?seq=<entry>&sense=<n> scrolls to that sense block once
+	// the results render. seq/sense aren't part of urlKey, so a same-query
+	// navigation doesn't re-search — this effect owns the scroll/highlight.
+	const focusSeq = $derived(browser ? page.url.searchParams.get('seq') : null);
+	const focusSense = $derived(browser ? page.url.searchParams.get('sense') : null);
+	let focusedKey = '';
+	let lastResp: SearchResponse | null = null;
+	$effect(() => {
+		// New result set → fresh DOM → allow the same deep link to fire again.
+		if (resp !== lastResp) {
+			lastResp = resp;
+			focusedKey = '';
+		}
+		const seq = focusSeq;
+		const sn = focusSense;
+		if (!seq || !sn || !resp) {
+			if (!seq || !sn) focusedKey = '';
+			return;
+		}
+		const key = `${seq}:${sn}`;
+		if (key === focusedKey) return;
+		const el = document.getElementById(`sense-${seq}-${sn}`);
+		if (!el) return; // target entry isn't among these results — keep waiting
+		focusedKey = key;
+		el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+		el.classList.add('sense-focus');
+	});
 	// One always-mounted live region: screen readers hear search progress and the
 	// outcome without having to find the visual stats line.
 	const announce = $derived(
@@ -248,14 +276,29 @@
 		const u = new URL(page.url.href);
 		if (v) u.searchParams.set('q', v);
 		else u.searchParams.delete('q');
+		// Manual searches drop any xref deep-link target.
+		u.searchParams.delete('seq');
+		u.searchParams.delete('sense');
 		goto(u, { reset: false });
 	}
 
-	function commit(v: string) {
+	function commit(v: string, ref?: { seq?: string; sno?: string | null }) {
 		// Desktop keeps the caret — pills, kanji picks, shuffle all land here.
 		// Touch drops it so the on-screen keyboard collapses off the results.
 		if (matchMedia('(pointer: coarse)').matches) searchInput?.blur();
 		else searchInput?.focus({ preventScroll: true });
+		// Dictionary cross-reference chips carry the target entry seq + sense
+		// number — land on ?q=&seq=&sense= so the matching sense block scrolls
+		// into view and highlights (see the focus effect below).
+		if (ref?.seq) {
+			const u = new URL(page.url.href);
+			u.searchParams.set('q', v);
+			u.searchParams.set('seq', ref.seq);
+			if (ref.sno) u.searchParams.set('sense', ref.sno);
+			else u.searchParams.delete('sense');
+			goto(u, { reset: false });
+			return;
+		}
 		// Same query again (re-submit, same kanji picked twice) → search directly;
 		// a changed query goes through ?q= so history records it. A kanji repick
 		// doesn't change kanjiChar → scroll imperatively, the effect won't refire.

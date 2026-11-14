@@ -29,8 +29,7 @@ _TTL = 600.0  # seconds — the dictionary changes on daily syncs, not per reque
 _PAYLOAD_FIELDS = [
     "kanji_form", "reading", "kanji_forms", "readings", "meanings",
     "example_sentences", "is_common", "text", "inflected_forms",
-    "lsource", "reading_restrictions",
-    "pos", "misc", "xrefs", "dial",
+    "lsource", "reading_restrictions", "senses",
 ]
 
 _lock = threading.Lock()
