@@ -246,28 +246,61 @@
 	{#if result.variants?.forms?.length}
 		<!-- Variant forms: JMdict's reading→kanji bindings (re_restr /
 		     re_nokanji) plus per-form ke_inf labels — which spelling goes
-		     with which reading, and which spellings are search-only/rare. -->
+		     with which reading, and which spellings are search-only/rare.
+		     Chips flow horizontally and click through to a search. -->
 		<div class="variants">
 			<p class="variants-title">{t('variantsTitle')}</p>
-			{#each result.variants.forms as f (f.form)}
-				<p class="variant-row">
-					<span class="v-form" lang="ja">{f.form}</span>
-					{#each f.labels ?? [] as l (l)}{#if KE_INF_LABEL[l]}<span class="v-tag">{t(KE_INF_LABEL[l])}</span>{/if}{/each}
-					{#if f.readings?.length}<span class="v-read">— {f.readings.join(' · ')}</span>{/if}
-				</p>
-			{/each}
-			{#if sharedReads.length}
-				<p class="variant-row">
-					<span class="v-tag">{t('variantReadAs')}</span>
-					<span class="v-read" lang="ja">{sharedReads.join(' · ')}</span>
-				</p>
-			{/if}
-			{#if result.variants.kana_only?.length}
-				<p class="variant-row">
-					<span class="v-tag">{t('variantKanaOnly')}</span>
-					<span class="v-read" lang="ja">{result.variants.kana_only.join(' · ')}</span>
-				</p>
-			{/if}
+			<div class="variant-chips">
+				{#each result.variants.forms as f (f.form)}
+					{#snippet chip()}
+						<span class="v-form" lang="ja">{f.form}</span>
+						{#each f.labels ?? [] as l (l)}{#if KE_INF_LABEL[l]}<span class="v-tag">{t(KE_INF_LABEL[l])}</span>{/if}{/each}
+						{#if f.readings?.length}<span class="v-read">— {f.readings.join(' · ')}</span>{/if}
+					{/snippet}
+					{#if onSearchWord}
+						<button
+							type="button"
+							class="variant-chip"
+							title={t('searchWord', { word: f.form })}
+							onclick={() => onSearchWord!(f.form)}
+						>{@render chip()}</button>
+					{:else}
+						<span class="variant-chip">{@render chip()}</span>
+					{/if}
+				{/each}
+				{#if sharedReads.length}
+					<span class="variant-note">{t('variantReadAs')}</span>
+					{#each sharedReads as r (r)}
+						{#if onSearchWord}
+							<button
+								type="button"
+								class="variant-chip v-read-chip"
+								lang="ja"
+								title={t('searchWord', { word: r })}
+								onclick={() => onSearchWord!(r)}
+							>{r}</button>
+						{:else}
+							<span class="variant-chip v-read-chip" lang="ja">{r}</span>
+						{/if}
+					{/each}
+				{/if}
+				{#if result.variants.kana_only?.length}
+					<span class="variant-note">{t('variantKanaOnly')}</span>
+					{#each result.variants.kana_only as r (r)}
+						{#if onSearchWord}
+							<button
+								type="button"
+								class="variant-chip v-read-chip"
+								lang="ja"
+								title={t('searchWord', { word: r })}
+								onclick={() => onSearchWord!(r)}
+							>{r}</button>
+						{:else}
+							<span class="variant-chip v-read-chip" lang="ja">{r}</span>
+					{/if}
+					{/each}
+				{/if}
+			</div>
 		</div>
 	{/if}
 	{#if onSearchWord && result.related?.length}

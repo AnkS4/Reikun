@@ -278,12 +278,17 @@ border-left:2px solid var(--border-soft);border-radius:0 var(--radius-sm) var(--
 border-radius:var(--radius-sm);background:var(--surface-soft)}
 .variants-title{margin:0 0 .3rem;font-family:var(--font-mono);font-size:var(--fs-2xs);
 font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-faint)}
-.variant-row{margin:.15rem 0;font-size:var(--fs-sm);line-height:1.5;color:var(--text)}
-.variant-row .v-form{font-weight:500}
-.variant-row .v-tag{display:inline-block;margin-left:.4rem;padding:.05rem .4rem;
-border-radius:var(--radius-pill,999px);border:1px solid var(--border-soft);
-font-size:var(--fs-2xs);color:var(--text-muted);white-space:nowrap}
-.variant-row .v-read{color:var(--text-muted)}
+.variant-chips{display:flex;flex-wrap:wrap;align-items:center;gap:.35rem}
+.variant-chip{display:inline-flex;align-items:baseline;gap:.4rem;border:1px solid var(--border-soft);
+background:var(--surface-soft);border-radius:var(--radius-xs);padding:.22rem .55rem;
+font-size:var(--fs-sm);line-height:1.5;color:var(--text);text-decoration:none}
+.variant-chip:hover{background:var(--surface);border-color:var(--border-hover)}
+.variant-chip .v-form{font-weight:500}
+.variant-chip .v-tag{display:inline-block;padding:.05rem .4rem;border-radius:var(--radius-pill,999px);
+border:1px solid var(--border-soft);font-size:var(--fs-2xs);color:var(--text-muted);white-space:nowrap}
+.variant-chip .v-read,.variant-chip.v-read-chip{color:var(--text-muted)}
+.variant-note{font-family:var(--font-mono);font-size:var(--fs-2xs);font-weight:500;
+letter-spacing:.05em;text-transform:uppercase;color:var(--text-faint)}
 .sense-block:target{border-left-color:var(--primary);background:var(--primary-light)}
 /* Dictionary cross-references — JMdict xref antonym/see-also chips,
    mirroring the SPA's .xref-row (links in Lite). */

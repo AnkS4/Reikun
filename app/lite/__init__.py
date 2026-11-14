@@ -1087,8 +1087,9 @@ def _result_card(query: str, result: dict, furi: bool, lang: str) -> str:
     variants = result.get("variants") or {}
     vforms = variants.get("forms") or []
     if vforms:
-        rows = []
+        chips = []
         for f in vforms:
+            form = f.get("form") or ""
             tags = "".join(
                 f'<span class="v-tag">{esc(_t(lang, _KE_INF_KEYS[c]))}</span>'
                 for c in (f.get("labels") or []) if c in _KE_INF_KEYS
@@ -1098,29 +1099,35 @@ def _result_card(query: str, result: dict, furi: bool, lang: str) -> str:
                 f' <span class="v-read">— {esc(" · ".join(bound))}</span>'
                 if bound else ""
             )
-            rows.append(
-                f'<p class="variant-row"><span class="v-form" lang="ja">'
-                f'{esc(f.get("form") or "")}</span>{tags}{read_html}</p>')
+            chips.append(
+                f'<a class="variant-chip" href="{_href("/lite/search", q=form)}"'
+                f' title="{esc(_t(lang, "searchWord", word=form))}">'
+                f'<span class="v-form" lang="ja">{esc(form)}</span>'
+                f'{tags}{read_html}</a>')
         # Unrestricted readings apply to every form; the primary reading is
         # already in the headword, so only alternates earn the shared line.
         shared = [
             r for r in (variants.get("readings") or [])
             if r and r != result.get("reading")
         ]
-        if shared:
-            rows.append(
-                f'<p class="variant-row"><span class="v-tag">'
-                f'{esc(_t(lang, "variantReadAs"))}</span> '
-                f'<span class="v-read" lang="ja">{esc(" · ".join(shared))}</span></p>')
-        kana_only = variants.get("kana_only") or []
-        if kana_only:
-            rows.append(
-                f'<p class="variant-row"><span class="v-tag">'
-                f'{esc(_t(lang, "variantKanaOnly"))}</span> '
-                f'<span class="v-read" lang="ja">{esc(" · ".join(kana_only))}</span></p>')
+        for label_key, reads in (
+            ("variantReadAs", shared),
+            ("variantKanaOnly", variants.get("kana_only") or []),
+        ):
+            if not reads:
+                continue
+            chips.append(
+                f'<span class="variant-note">{esc(_t(lang, label_key))}</span>')
+            chips.extend(
+                f'<a class="variant-chip v-read-chip" lang="ja"'
+                f' href="{_href("/lite/search", q=r)}"'
+                f' title="{esc(_t(lang, "searchWord", word=r))}">{esc(r)}</a>'
+                for r in reads
+            )
         parts.append(
             f'<div class="variants"><p class="variants-title">'
-            f'{esc(_t(lang, "variantsTitle"))}</p>{"".join(rows)}</div>')
+            f'{esc(_t(lang, "variantsTitle"))}</p>'
+            f'<div class="variant-chips">{"".join(chips)}</div></div>')
 
     # Related words sit directly under the headword (no collapse), as in the web UI.
     forms = (head, *kanji_forms, *readings)
