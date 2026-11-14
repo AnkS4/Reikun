@@ -740,6 +740,21 @@ def loanwords_lang_endpoint(
         raise HTTPException(502, "The borrowed-words index is temporarily unavailable.") from None
     if page is None:
         raise HTTPException(404, f"No borrowed words from {lang!r}")
+    # Same display shaping /search applies per result — ruby furigana parts
+    # (the card headword renders from them) and the related-words row — so
+    # cards look identical on this page. lsource is already enriched by
+    # app.loanwords' index build.
+    for r in page["results"]:
+        head = r.get("kanji_form") or r.get("reading") or r.get("text") or ""
+        r["ruby"] = furigana_parts(head, r.get("reading"))
+        r["related"] = (
+            related_words(
+                (head, *(r.get("kanji_forms") or ()), *(r.get("readings") or ())),
+                (head, *(r.get("kanji_forms") or ()), *(r.get("readings") or ())),
+            )
+            if head
+            else []
+        )
     response.headers["Cache-Control"] = _CACHE_LOANWORDS
     return page
 
