@@ -56,12 +56,18 @@
 	/* Layout constants */
 	--stroke-w: 168px;
 	--tip-w: 290px;
-	--font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-	--font-display: 'Space Grotesk', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+	/* Script stacks trail the Latin faces so ja/mr/hi glyphs resolve to a
+	   proper font instead of an arbitrary system fallback at a smaller
+	   effective size — same fix as .kanji-section-title, applied globally. */
+	--font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+		var(--font-japanese), var(--font-devanagari), sans-serif;
+	--font-display: 'Space Grotesk', 'Inter', -apple-system, BlinkMacSystemFont,
+		'Segoe UI', Roboto, var(--font-japanese), var(--font-devanagari), sans-serif;
 	--font-japanese: 'Noto Sans JP', 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Yu Gothic', sans-serif;
 	--font-devanagari: 'Nirmala UI', 'Noto Sans Devanagari', 'Mangal', 'Lohit Devanagari',
 		system-ui, sans-serif;
-	--font-mono: 'JetBrains Mono', 'DM Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+	--font-mono: 'JetBrains Mono', 'DM Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+		var(--font-japanese), var(--font-devanagari), monospace;
 
 	/* Motion: one easing for all transitions (was a mix of ease / two cubics). */
 	--ease: cubic-bezier(0.16, 1, 0.3, 1);
@@ -782,6 +788,27 @@ ruby rt {
 	animation: pop-in 0.15s var(--ease);
 }
 
+/* Caret ties the panel to its trigger — a rotated square keeps the panel's
+   own border colour on both edges, so it reads as one precision control. */
+.popover-panel::after {
+	content: '';
+	position: absolute;
+	top: -5px;
+	right: 1rem;
+	width: 9px;
+	height: 9px;
+	background: var(--surface);
+	border-left: 1px solid var(--border-soft);
+	border-top: 1px solid var(--border-soft);
+	transform: rotate(45deg);
+}
+
+/* An open popover keeps its trigger visibly pressed. */
+.popover-wrap > .btn[aria-expanded='true'] {
+	background: var(--surface-soft);
+	color: var(--text);
+}
+
 @keyframes pop-in {
 	from {
 		opacity: 0;
@@ -852,7 +879,7 @@ ruby rt {
 
 /* Vertical option list for header popovers (theme, language): with five
    locales the horizontal segmented row overflowed, so options stack like
-   Lite's <details> menu — same sel highlight (primary text on soft bg). */
+   Lite's <details> menu. */
 .opt-list {
 	display: flex;
 	flex-direction: column;
@@ -860,6 +887,9 @@ ruby rt {
 }
 
 .opt-list button {
+	display: flex;
+	align-items: center;
+	gap: 0.45rem;
 	font: inherit;
 	font-family: var(--font-mono);
 	font-size: var(--fs-sm);
@@ -874,15 +904,31 @@ ruby rt {
 	transition: all 0.15s var(--ease);
 }
 
+/* Leading check slot — always rendered so option labels stay aligned;
+   the icon only mounts on the selected row. */
+.opt-check {
+	flex: 0 0 0.8rem;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	color: var(--primary);
+}
+
 .opt-list button:hover:not(.sel) {
 	color: var(--text);
 	background: var(--surface-soft);
 }
 
+/* Selected row: primary wash + check, not primary text — the accent stays
+   reserved for the search submit per the design language. */
 .opt-list button.sel {
-	color: var(--primary);
+	color: var(--text);
 	font-weight: 600;
-	background: var(--surface-soft);
+	background: var(--primary-light);
+}
+
+.opt-list button.sel:hover {
+	background: color-mix(in srgb, var(--primary) 16%, transparent);
 }
 
 /* The 17rem panel minimum was sized for horizontal segmented rows; a
@@ -2204,6 +2250,75 @@ a.kanji-tip {
 html:lang(ja) .kanji-section-title,
 html:lang(mr) .kanji-section-title,
 html:lang(hi) .kanji-section-title {
+	font-size: var(--fs-base);
+}
+
+/* Same nudge for every other localized title and micro-label: page h1s
+   (UA default 2em → 2.2em), the hero tagline, and the mono labels —
+   each stepped up one size in the type scale. */
+html:lang(ja) .kgroup-title,
+html:lang(mr) .kgroup-title,
+html:lang(hi) .kgroup-title,
+html:lang(ja) .conj-page-title,
+html:lang(mr) .conj-page-title,
+html:lang(hi) .conj-page-title {
+	font-size: 2.2em;
+}
+
+html:lang(ja) .tagline,
+html:lang(mr) .tagline,
+html:lang(hi) .tagline {
+	font-size: var(--fs-xl);
+}
+
+html:lang(ja) .seg-title,
+html:lang(mr) .seg-title,
+html:lang(hi) .seg-title,
+html:lang(ja) .tip-label,
+html:lang(mr) .tip-label,
+html:lang(hi) .tip-label,
+html:lang(ja) .variant-note,
+html:lang(mr) .variant-note,
+html:lang(hi) .variant-note,
+html:lang(ja) .badge,
+html:lang(mr) .badge,
+html:lang(hi) .badge,
+html:lang(ja) .meta-badge,
+html:lang(mr) .meta-badge,
+html:lang(hi) .meta-badge,
+html:lang(ja) .kg-meta,
+html:lang(mr) .kg-meta,
+html:lang(hi) .kg-meta,
+html:lang(ja) .conj-count,
+html:lang(mr) .conj-count,
+html:lang(hi) .conj-count,
+html:lang(ja) .popover-title,
+html:lang(mr) .popover-title,
+html:lang(hi) .popover-title {
+	font-size: var(--fs-xs);
+}
+
+html:lang(ja) .lw-count,
+html:lang(mr) .lw-count,
+html:lang(hi) .lw-count,
+html:lang(ja) .caption,
+html:lang(mr) .caption,
+html:lang(hi) .caption,
+html:lang(ja) .stats-meta,
+html:lang(mr) .stats-meta,
+html:lang(hi) .stats-meta {
+	font-size: var(--fs-sm);
+}
+
+html:lang(ja) .kg-pager-label,
+html:lang(mr) .kg-pager-label,
+html:lang(hi) .kg-pager-label,
+html:lang(ja) .stats-line,
+html:lang(mr) .stats-line,
+html:lang(hi) .stats-line,
+html:lang(ja) .opt-list button,
+html:lang(mr) .opt-list button,
+html:lang(hi) .opt-list button {
 	font-size: var(--fs-base);
 }
 

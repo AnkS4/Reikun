@@ -141,10 +141,24 @@
 		margin: 0;
 	}
 
+	/* CJK and Indic glyphs sit lower than Latin caps at the same size —
+	   nudge the localized headings up in those locales. */
+	:global(html:lang(ja)) .about h1,
+	:global(html:lang(mr)) .about h1,
+	:global(html:lang(hi)) .about h1 {
+		font-size: calc(clamp(1.8rem, 5vw, 2.4rem) * 1.1);
+	}
+
 	.lede {
 		font-size: var(--fs-lg);
 		line-height: 1.7;
 		color: var(--text);
+	}
+
+	:global(html:lang(ja)) .about .lede,
+	:global(html:lang(mr)) .about .lede,
+	:global(html:lang(hi)) .about .lede {
+		font-size: var(--fs-xl);
 	}
 
 	.about section {
@@ -159,6 +173,12 @@
 		text-transform: uppercase;
 		color: var(--text-faint);
 		margin: 0 0 0.75rem;
+	}
+
+	:global(html:lang(ja)) .about h2,
+	:global(html:lang(mr)) .about h2,
+	:global(html:lang(hi)) .about h2 {
+		font-size: var(--fs-sm);
 	}
 
 	.about p,

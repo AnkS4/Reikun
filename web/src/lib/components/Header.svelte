@@ -117,14 +117,20 @@
 	</span>
 	<Popover icon="palette" title={t('appearanceTitle')}>
 		<p class="popover-title">{t('appearance')}</p>
-		<div class="opt-list" role="group" aria-label={t('theme')}>
+		<div class="opt-list" role="listbox" aria-label={t('theme')}>
 			{#each THEME_OPTIONS as option (option.v)}
 				<button
 					type="button"
+					role="option"
+					aria-selected={theme.choice === option.v}
 					class:sel={theme.choice === option.v}
-					aria-pressed={theme.choice === option.v}
-					onclick={() => theme.set(option.v)}>{t(option.key)}</button
+					onclick={() => theme.set(option.v)}
 				>
+					<span class="opt-check" aria-hidden="true"
+						>{#if theme.choice === option.v}<Icon name="check" size={12} />{/if}</span
+					>
+					<span>{t(option.key)}</span>
+				</button>
 			{/each}
 		</div>
 		<!-- Furigana moved to the search row's あ button — the popover keeping a
@@ -132,14 +138,20 @@
 	</Popover>
 	<Popover icon="languages" title={t('languageTitle')}>
 		<p class="popover-title">{t('language')}</p>
-		<div class="opt-list" role="group" aria-label={t('languageTitle')}>
+		<div class="opt-list" role="listbox" aria-label={t('languageTitle')}>
 			{#each LOCALES as code (code)}
 				<button
 					type="button"
+					role="option"
+					aria-selected={i18n.locale === code}
 					class:sel={i18n.locale === code}
-					aria-pressed={i18n.locale === code}
-					onclick={() => i18n.set(code)}>{LOCALE_NAMES[code]}</button
+					onclick={() => i18n.set(code)}
 				>
+					<span class="opt-check" aria-hidden="true"
+						>{#if i18n.locale === code}<Icon name="check" size={12} />{/if}</span
+					>
+					<span>{LOCALE_NAMES[code]}</span>
+				</button>
 			{/each}
 		</div>
 	</Popover>
