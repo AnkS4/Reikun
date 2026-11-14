@@ -3388,6 +3388,18 @@ button, a, input, summary {
 	}
 }
 
+/* The kanji-group category picker has three tiles — one row on desktop,
+   stacked on mobile (an orphan second row of one looked wrong at 2-up). */
+.pick-grid {
+	grid-template-columns: repeat(3, 1fr);
+}
+
+@media (max-width: 40rem) {
+	.pick-grid {
+		grid-template-columns: 1fr;
+	}
+}
+
 .browse-tile {
 	display: flex;
 	flex-direction: column;

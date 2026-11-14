@@ -1347,34 +1347,44 @@ def _kg_value_label(by: str, value: int, lang: str) -> str:
     return {4: "N5", 3: "N4", 2: "N2-N3", 1: "N1"}.get(value, f"N{value}")
 
 
+_KG_BROWSE = {
+    "strokes": ("永", "browseStrokes", "browseStrokesDesc"),
+    "grade": ("学", "browseGrade", "browseGradeDesc"),
+    "jlpt": ("試", "browseJlpt", "browseJlptDesc"),
+}
+
+
 def _kg_pick_page(request: Request, by: str, lang: str, theme: str) -> Response:
-    """The /lite/kanji/group picker states — no `by` lists the three groupings,
-    a `by` without a usable value lists every available value + count."""
+    """The /lite/kanji/group picker states — no `by` lists the three groupings
+    as browse tiles, a `by` without a usable value lists every available
+    value + count."""
     if by not in ("strokes", "grade", "jlpt"):
-        chips = "".join(
-            f'<a class="pill" href="{_href("/lite/kanji/group", by=key)}">'
-            f'{esc(_t(lang, key))}</a>'
-            for key in ("strokes", "grade", "jlpt")
+        tiles = "".join(
+            f'<a class="browse-tile" href="{_href("/lite/kanji/group", by=key)}">'
+            f'<span class="browse-glyph" lang="ja" aria-hidden="true">{glyph}</span>'
+            f'<span class="browse-name">{esc(_t(lang, name_key))}</span>'
+            f'<span class="browse-desc">{esc(_t(lang, desc_key))}</span></a>'
+            for key, (glyph, name_key, desc_key) in _KG_BROWSE.items()
         )
         title = _t(lang, "browseKanji")
         sub = esc(_t(lang, "pickGroupSub"))
+        grid = f'<div class="browse-grid pick-grid">{tiles}</div>'
         canonical = "/lite/kanji/group"
     else:
+        name_key = _KG_BROWSE[by][1]
         chips = "".join(
             f'<a class="pill" href="{_href("/lite/kanji/group", by=by, value=v["value"])}">'
             f'{esc(_kg_value_label(by, v["value"], lang))} · {v["count"]:,}</a>'
             for v in kanji_group_facets()[by]
         )
-        disp = _t(lang, by)
-        title = f'{disp[:1].upper() + disp[1:]} {_t(lang, "kanjiSuffix")}'
-        group = disp
+        disp = _t(lang, name_key)
+        suffix = _t(lang, "kanjiSuffix")
+        title = f'{disp} {suffix[:1].upper() + suffix[1:]}'
+        group = _t(lang, by)
         sub = esc(_t(lang, "pickValueSub", group=group.lower() if lang in ("en", "es") else group))
+        grid = f'<div class="pills">{chips}</div>'
         canonical = f"/lite/kanji/group?by={quote(by)}"
-    body = f'<h1 class="kgroup-title">{esc(title)}</h1><p class="kgroup-sub">{sub}</p><div class="pills">{chips}</div>'
-    if by in ("strokes", "grade", "jlpt"):
-        body += (
-            f'<p><a href="/lite/kanji/group">← {esc(_t(lang, "allGroups"))}</a></p>'
-        )
+    body = f'<h1 class="kgroup-title">{esc(title)}</h1><p class="kgroup-sub">{sub}</p>{grid}'
     return _page(
         title,
         body,

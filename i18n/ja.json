@@ -246,7 +246,6 @@
 	"browseKanji": "漢字一覧",
 	"pickGroupSub": "分類を選んでください",
 	"pickValueSub": "{group}を選んでください",
-	"allGroups": "すべての分類",
 	"gradeCount": "{n}学年",
 	"browseStrokes": "画数",
 	"browseStrokesDesc": "画数ごとの漢字",

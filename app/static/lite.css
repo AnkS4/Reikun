@@ -209,6 +209,8 @@ margin:1.4rem 0 .6rem;text-align:center}
 .pills-label a{margin-left:.6rem}
 .browse-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:.75rem;margin-top:.75rem}
 @media (max-width:40rem){.browse-grid{grid-template-columns:repeat(2,1fr)}}
+.pick-grid{grid-template-columns:repeat(3,1fr)}
+@media (max-width:40rem){.pick-grid{grid-template-columns:1fr}}
 .browse-tile{display:flex;flex-direction:column;align-items:flex-start;gap:.3rem;
 padding:.85rem .9rem;border:1px solid var(--border-soft);border-radius:var(--radius-lg);
 background:var(--surface);text-decoration:none;color:inherit}

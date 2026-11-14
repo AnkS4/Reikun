@@ -133,6 +133,20 @@
 		return { 4: 'N5', 3: 'N4', 2: 'N2-N3', 1: 'N1' }[v] ?? `N${v}`;
 	}
 
+	// Title-case browse label per grouping — the same strings the homepage
+	// tiles use, so picker headings match ("Strokes", "JLPT Level").
+	const BROWSE_KEY = {
+		strokes: 'browseStrokes',
+		grade: 'browseGrade',
+		jlpt: 'browseJlpt'
+	} as const;
+	function browseLabel(by: GroupKey): string {
+		return t(BROWSE_KEY[by]);
+	}
+	function cap(s: string): string {
+		return s ? s[0].toUpperCase() + s.slice(1) : s;
+	}
+
 	function metaLine(k: KanjiGroupResponse['kanjis'][number]): string {
 		return [
 			k.stroke_count ? t('strokesCount', { n: k.stroke_count }) : '',
@@ -154,7 +168,7 @@
 		{#if byParam}
 			<!-- Value picker: `?by=X` without a usable value lists every
 			     available value as a chip with its kanji count. -->
-			<h1 class="kgroup-title">{groupLabel(byParam)} {t('kanjiSuffix')}</h1>
+			<h1 class="kgroup-title">{browseLabel(byParam)} {cap(t('kanjiSuffix'))}</h1>
 			<p class="kgroup-sub">{t('pickValueSub', { group: groupLabel(byParam) })}</p>
 			{#if facets}
 				<div class="lw-chips">
@@ -168,16 +182,27 @@
 			{:else}
 				<div class="kgroup-loading"><span class="spinner"></span></div>
 			{/if}
-			<p><a class="btn-3d" href="/kanji-group">← {t('allGroups')}</a></p>
 		{:else}
 			<!-- Category picker: bare /kanji-group (or a bad `by`) offers the
-			     three kanji groupings. -->
+			     three kanji groupings as the same tiles the homepage uses. -->
 			<h1 class="kgroup-title">{t('browseKanji')}</h1>
 			<p class="kgroup-sub">{t('pickGroupSub')}</p>
-			<div class="lw-chips">
-				<a class="pill lw-chip" href="/kanji-group?by=strokes"><span>{t('strokes')}</span></a>
-				<a class="pill lw-chip" href="/kanji-group?by=grade"><span>{t('grade')}</span></a>
-				<a class="pill lw-chip" href="/kanji-group?by=jlpt"><span>{t('jlpt')}</span></a>
+			<div class="browse-grid pick-grid">
+				<a class="browse-tile" href="/kanji-group?by=strokes">
+					<span class="browse-icon"><Icon name="feather" size={18} /></span>
+					<span class="browse-name">{t('browseStrokes')}</span>
+					<span class="browse-desc">{t('browseStrokesDesc')}</span>
+				</a>
+				<a class="browse-tile" href="/kanji-group?by=grade">
+					<span class="browse-icon"><Icon name="school" size={18} /></span>
+					<span class="browse-name">{t('browseGrade')}</span>
+					<span class="browse-desc">{t('browseGradeDesc')}</span>
+				</a>
+				<a class="browse-tile" href="/kanji-group?by=jlpt">
+					<span class="browse-icon"><Icon name="languages" size={18} /></span>
+					<span class="browse-name">{t('browseJlpt')}</span>
+					<span class="browse-desc">{t('browseJlptDesc')}</span>
+				</a>
 			</div>
 		{/if}
 	{:else}

@@ -264,23 +264,26 @@ def test_kanji_group_page() -> None:
 
 
 def test_kanji_group_category_picker() -> None:
-    # No `by` (or an unknown one) renders the category picker — chips for the
-    # three groupings — not an error page.
+    # No `by` (or an unknown one) renders the category picker — the same
+    # browse tiles as the homepage — not an error page.
     for params in ({}, {"by": "color"}):
         r = client.get("/lite/kanji/group", params=params)
         assert r.status_code == 200
+        assert r.text.count('class="browse-tile"') == 3
         assert 'href="/lite/kanji/group?by=strokes"' in r.text
         assert 'href="/lite/kanji/group?by=grade"' in r.text
         assert 'href="/lite/kanji/group?by=jlpt"' in r.text
 
 
 def test_kanji_group_value_picker() -> None:
-    # A `by` without a usable value lists every available value + count.
+    # A `by` without a usable value lists every available value + count,
+    # under a title-cased heading, with no back-to-categories button.
     r = client.get("/lite/kanji/group", params={"by": "strokes"})
     assert r.status_code == 200
     assert "by=strokes&amp;value=1" in r.text
     assert "by=strokes&amp;value=34" in r.text
-    assert "/lite/kanji/group" in r.text  # ← All categories link
+    assert "Strokes" in r.text
+    assert "All categories" not in r.text
 
 
 def test_kanji_group_non_integer_value_shows_picker_not_json() -> None:
