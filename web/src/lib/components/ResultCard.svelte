@@ -208,7 +208,7 @@
 									class="related-pill xref-ant"
 									title={t('searchWord', { word: x.text })}
 									onclick={() => onSearchWord!(x.text, { seq: x.seq, sno: x.sno })}
-								><span lang="ja">{x.text}</span>{#if x.sno}<sup class="xref-sno">{x.sno}</sup>{/if}</button>
+								><span lang="ja">{x.text}{#if x.sno}<sup class="xref-sno">{x.sno}</sup>{/if}</span></button>
 							{/each}
 						{/if}
 						{#if xrefSeeAlso(sense).length}
@@ -219,7 +219,7 @@
 									class="related-pill"
 									title={t('searchWord', { word: x.text })}
 									onclick={() => onSearchWord!(x.text, { seq: x.seq, sno: x.sno })}
-								><span lang="ja">{x.text}</span>{#if x.sno}<sup class="xref-sno">{x.sno}</sup>{/if}</button>
+								><span lang="ja">{x.text}{#if x.sno}<sup class="xref-sno">{x.sno}</sup>{/if}</span></button>
 							{/each}
 						{/if}
 					</div>

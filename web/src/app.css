@@ -1646,9 +1646,8 @@ a.kanji-tip {
 /* Sense-number superscript on xref chips — previews the deep-link target
    (see-also 良い¹ vs 良い²) so repeated chips read as intentional. */
 .xref-sno {
-	font-size: 0.65em;
 	color: var(--text-faint);
-	margin-left: 0.15rem;
+	margin-left: 0.1rem;
 }
 
 .example-row {

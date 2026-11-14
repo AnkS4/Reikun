@@ -296,7 +296,7 @@ letter-spacing:.05em;text-transform:uppercase;color:var(--text-faint)}
 .xref-label{font-family:var(--font-mono);font-size:var(--fs-2xs);text-transform:uppercase;
 letter-spacing:.05em;color:var(--text-muted)}
 .chip.xref-ant{border-color:var(--primary)}
-.xref-sno{font-size:.65em;color:var(--text-faint);margin-left:.15rem}
+.xref-sno{color:var(--text-faint);margin-left:.1rem}
 /* Sentence Breakdown card — the SPA's SegChips: mono header with hint, then
    vertical tiles (word over gloss). approx tiles get dashed borders. */
 .seg-card{border:1px solid var(--border-soft);border-radius:var(--radius-lg);background:var(--surface);

@@ -976,13 +976,13 @@ def _sense_block(sense: dict, si: int, entry_id, lang: str) -> str:
                 continue
             chips = " ".join(
                 f'<a class="chip{" xref-ant" if ant else ""}" href="{_xref_href(x)}">'
-                f'<span lang="ja">{esc(x.get("text") or "")}</span>'
+                f'<span lang="ja">{esc(x.get("text") or "")}'
                 + (
                     f'<sup class="xref-sno">{esc(str(x["sno"]))}</sup>'
                     if x.get("sno")
                     else ""
                 )
-                + '</a>'
+                + '</span></a>'
                 for x in xs
             )
             groups.append(
