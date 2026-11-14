@@ -342,10 +342,10 @@ def _status_chip(lang: str) -> str:
 
 
 # Top-right controls mirror the SPA's header cluster: the same Lucide-style
-# inline SVG icons in the same order (full-version switch, dictionary status,
-# theme, language). Inline markup needs no JavaScript. Note: hardened browsers
-# with svg.disabled (Tor/LibreWolf "Safest") blank these icons — the trade-off
-# accepted for visual parity with the SPA.
+# glyphs in the same order (full-version switch, dictionary status, theme,
+# language), drawn from the subset WOFF2 icon font (scripts/build_lite_icons.py)
+# so hardened browsers with svg.disabled still render them. Markup needs no
+# JavaScript — status and language are <details> disclosures.
 #
 # Lite's icon language otherwise stays minimal:
 #   - wayfinding: typographic arrows in link text (←, →, from lite/i18n.py);
