@@ -207,6 +207,16 @@ background:var(--surface);color:var(--text-muted);
 font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);
 margin:1.4rem 0 .6rem;text-align:center}
 .pills-label a{margin-left:.6rem}
+.browse-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:.75rem;margin-top:.75rem}
+@media (max-width:40rem){.browse-grid{grid-template-columns:repeat(2,1fr)}}
+.browse-tile{display:flex;flex-direction:column;align-items:flex-start;gap:.3rem;
+padding:.85rem .9rem;border:1px solid var(--border-soft);border-radius:var(--radius-lg);
+background:var(--surface);text-decoration:none;color:inherit}
+.browse-tile:active{border-color:var(--border-hover)}
+.browse-glyph{font-family:var(--font-japanese);font-size:1.6rem;line-height:1;
+color:var(--text-faint);margin-bottom:.15rem}
+.browse-name{font-size:var(--fs-md);font-weight:600;color:var(--text)}
+.browse-desc{font-size:var(--fs-sm);color:var(--text-muted);line-height:1.4}
 
 .entry{border:1px solid var(--border-soft);border-radius:var(--radius-lg);background:var(--surface);
 padding:1.35rem 1.5rem;margin:1.15rem 0;
@@ -366,8 +376,11 @@ border-left:1px dashed var(--line-guide)}
 .kbadges{display:flex;flex-wrap:wrap;gap:.35rem;margin-top:.85rem;justify-content:center}
 .kbadges .badge{margin:0;font-size:var(--fs-2xs);padding:.15rem .55rem}
 .ksection{margin-bottom:1rem}
-.ksection-title{font-family:var(--font-mono);font-size:var(--fs-sm);
-font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-faint);margin:0 0 .35rem}
+.ksection-title{font-family:var(--font-mono),var(--font-japanese),var(--font-devanagari);
+font-size:var(--fs-sm);font-weight:500;letter-spacing:.08em;text-transform:uppercase;
+color:var(--text-faint);margin:0 0 .35rem}
+html:lang(ja) .ksection-title,html:lang(mr) .ksection-title,html:lang(hi) .ksection-title{
+font-size:var(--fs-base)}
 .meanings{margin:.1rem 0 .75rem;font-size:var(--fs-2xl);line-height:1.35}
 .meanings .first{font-weight:500}
 .meanings .rest{color:var(--text-muted)}

@@ -35,11 +35,14 @@ def test_home_is_html_without_javascript() -> None:
 def test_home_browse_links() -> None:
     client.cookies.clear()
     home = client.get("/lite").text
-    # Same browse shortcuts as the SPA homepage chips.
+    # Same four browse tiles as the SPA homepage grid — kanji glyph, title,
+    # description and link.
+    assert home.count('class="browse-tile"') == 4
     assert 'href="/lite/kanji/group?by=strokes"' in home
     assert 'href="/lite/kanji/group?by=grade"' in home
     assert 'href="/lite/kanji/group?by=jlpt"' in home
     assert 'href="/lite/loanwords"' in home
+    assert 'lang="ja" aria-hidden="true">永' in home
 
 
 def test_home_mirrors_spa_hero_and_examples() -> None:

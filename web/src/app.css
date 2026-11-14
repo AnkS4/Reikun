@@ -59,6 +59,8 @@
 	--font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 	--font-display: 'Space Grotesk', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 	--font-japanese: 'Noto Sans JP', 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Yu Gothic', sans-serif;
+	--font-devanagari: 'Nirmala UI', 'Noto Sans Devanagari', 'Mangal', 'Lohit Devanagari',
+		system-ui, sans-serif;
 	--font-mono: 'JetBrains Mono', 'DM Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
 	/* Motion: one easing for all transitions (was a mix of ease / two cubics). */
@@ -2174,13 +2176,26 @@ a.kanji-tip {
 }
 
 .kanji-section-title {
-	font-family: var(--font-mono);
+	/* Mono for Latin; script fonts appended so ja/mr/hi glyphs don't fall
+	   through to an arbitrary system face at a smaller effective size. */
+	font-family:
+		var(--font-mono),
+		var(--font-japanese),
+		var(--font-devanagari);
 	font-size: var(--fs-sm);
 	text-transform: uppercase;
 	letter-spacing: 0.08em;
 	color: var(--text-faint);
 	margin: 0 0 0.35rem;
 	font-weight: 500;
+}
+
+/* CJK and Indic glyphs sit lower than Latin caps at the same size — nudge
+   the section titles up a step in those locales. */
+html:lang(ja) .kanji-section-title,
+html:lang(mr) .kanji-section-title,
+html:lang(hi) .kanji-section-title {
+	font-size: var(--fs-base);
 }
 
 .meanings {
@@ -3360,8 +3375,64 @@ button, a, input, summary {
 	margin-top: 1.5rem;
 }
 
-.browse .popover-title {
-	text-align: center;
+.browse-grid {
+	display: grid;
+	grid-template-columns: repeat(4, 1fr);
+	gap: 0.75rem;
+	margin-top: 0.75rem;
+}
+
+@media (max-width: 40rem) {
+	.browse-grid {
+		grid-template-columns: repeat(2, 1fr);
+	}
+}
+
+.browse-tile {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 0.3rem;
+	padding: 0.85rem 0.9rem;
+	border: 1px solid var(--border-soft);
+	border-radius: var(--radius-lg);
+	background: var(--surface);
+	text-decoration: none;
+	color: inherit;
+	transition:
+		border-color 0.15s var(--ease),
+		transform 0.15s var(--ease),
+		box-shadow 0.15s var(--ease);
+}
+
+.browse-tile:hover {
+	border-color: var(--border-hover);
+	transform: translateY(-2px);
+	box-shadow: var(--shadow-sm);
+}
+
+.browse-icon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 2rem;
+	height: 2rem;
+	margin-bottom: 0.15rem;
+	border-radius: var(--radius-md);
+	background: var(--surface-soft);
+	color: var(--text-muted);
+}
+
+.browse-name {
+	font-size: var(--fs-md);
+	font-weight: 600;
+	color: var(--text);
+}
+
+.browse-desc {
+	font-size: var(--fs-sm);
+	color: var(--text-muted);
+	line-height: 1.4;
 }
 
 .recent .popover-title {

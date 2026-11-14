@@ -247,5 +247,13 @@
 	"pickGroupSub": "分類を選んでください",
 	"pickValueSub": "{group}を選んでください",
 	"allGroups": "すべての分類",
-	"gradeCount": "{n}学年"
+	"gradeCount": "{n}学年",
+	"browseStrokes": "画数",
+	"browseStrokesDesc": "画数ごとの漢字",
+	"browseGrade": "学年",
+	"browseGradeDesc": "学年ごとの漢字",
+	"browseJlpt": "JLPTレベル",
+	"browseJlptDesc": "JLPTレベルごとの漢字",
+	"browseLoanwords": "借用語",
+	"browseLoanwordsDesc": "他言語から借りた言葉"
 }

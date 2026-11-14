@@ -247,5 +247,13 @@
 	"pickGroupSub": "एक श्रेणी निवडा",
 	"pickValueSub": "{group} निवडा",
 	"allGroups": "सर्व श्रेण्या",
-	"gradeCount": "ग्रेड {n}"
+	"gradeCount": "ग्रेड {n}",
+	"browseStrokes": "स्ट्रोक",
+	"browseStrokesDesc": "स्ट्रोक संख्येनुसार कांजी",
+	"browseGrade": "ग्रेड",
+	"browseGradeDesc": "शालेय ग्रेडनुसार कांजी",
+	"browseJlpt": "JLPT स्तर",
+	"browseJlptDesc": "JLPT स्तरानुसार कांजी",
+	"browseLoanwords": "उधारी शब्द",
+	"browseLoanwordsDesc": "इतर भाषांमधून घेतलेले शब्द"
 }

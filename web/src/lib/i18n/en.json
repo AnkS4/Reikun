@@ -247,5 +247,13 @@
 	"pickGroupSub": "Pick a category",
 	"pickValueSub": "Pick {group}",
 	"allGroups": "All categories",
-	"gradeCount": "Grade {n}"
+	"gradeCount": "Grade {n}",
+	"browseStrokes": "Strokes",
+	"browseStrokesDesc": "Kanji by stroke count",
+	"browseGrade": "Grade",
+	"browseGradeDesc": "Kanji by school grade",
+	"browseJlpt": "JLPT Level",
+	"browseJlptDesc": "Kanji by JLPT level",
+	"browseLoanwords": "Loanwords",
+	"browseLoanwordsDesc": "Words borrowed from other languages"
 }

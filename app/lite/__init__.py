@@ -620,19 +620,23 @@ def lite_home(request: Request) -> HTMLResponse:
             f'<a class="pill" href="{_href("/lite/search", q=entry)}">{esc(entry)}</a>' for entry in _EXAMPLES
         )
 
-    # Browse shortcuts — same four destinations as the SPA homepage chips.
-    browse_links = (
-        ("/lite/kanji/group", {"by": "strokes"}, "strokes"),
-        ("/lite/kanji/group", {"by": "grade"}, "grade"),
-        ("/lite/kanji/group", {"by": "jlpt"}, "jlpt"),
-        ("/lite/loanwords", {}, "loanwordsTitle"),
+    # Browse tiles — same four destinations as the SPA homepage grid. Lite
+    # has no icon font, so each tile leads with a thematic kanji glyph.
+    browse_tiles = (
+        ("/lite/kanji/group", {"by": "strokes"}, "永", "browseStrokes", "browseStrokesDesc"),
+        ("/lite/kanji/group", {"by": "grade"}, "学", "browseGrade", "browseGradeDesc"),
+        ("/lite/kanji/group", {"by": "jlpt"}, "試", "browseJlpt", "browseJlptDesc"),
+        ("/lite/loanwords", {}, "語", "browseLoanwords", "browseLoanwordsDesc"),
     )
     browse = (
         f'<p class="pills-label">{esc(_t(lang, "browse"))}</p>'
-        '<div class="pills">'
+        '<div class="browse-grid">'
         + "".join(
-            f'<a class="pill" href="{_href(path, **params)}">{esc(_t(lang, key))}</a>'
-            for path, params, key in browse_links
+            f'<a class="browse-tile" href="{_href(path, **params)}">'
+            f'<span class="browse-glyph" lang="ja" aria-hidden="true">{glyph}</span>'
+            f'<span class="browse-name">{esc(_t(lang, name_key))}</span>'
+            f'<span class="browse-desc">{esc(_t(lang, desc_key))}</span></a>'
+            for path, params, glyph, name_key, desc_key in browse_tiles
         )
         + "</div>"
     )
