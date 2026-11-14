@@ -116,8 +116,9 @@ width:2rem;height:2rem;border-radius:999px;color:var(--text-muted)}
    serves), and currentColor keeps state tinting and hover colors
    working. The ?v= hash is substituted by app/lite/assets.py. */
 @font-face{font-family:'reikun-icons';font-display:block;src:url(/lite/static/lite-icons.woff2?v=__FONT_HASH__) format('woff2')}
-.controls .icon{display:inline-flex;align-items:center;justify-content:center;
-width:1rem;height:1rem;flex:none;font:.94rem/1 'reikun-icons',sans-serif}
+.icon{display:inline-flex;align-items:center;justify-content:center;
+font:.94rem/1 'reikun-icons',sans-serif}
+.controls .icon{width:1rem;height:1rem;flex:none}
 .icon-sun::before{content:"\f5a2"}
 .icon-moon::before{content:"\f497"}
 .icon-full::before{content:"\f3f9"}
