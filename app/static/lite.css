@@ -266,6 +266,8 @@ background:var(--surface-soft);border-color:var(--border-soft);color:var(--text-
 .sense-block{margin:.35rem 0 .85rem;padding:.5rem .75rem .5rem .85rem;
 border-left:2px solid var(--border-soft);border-radius:0 var(--radius-sm) var(--radius-sm) 0}
 .sense-block+.sense-block{margin-top:.5rem}
+.sense-line{display:flex;justify-content:space-between;align-items:baseline;gap:.5rem 1rem;flex-wrap:wrap}
+.sense-line .sense-badges{margin:0}
 .sense-glosses{margin:0;font-size:var(--fs-body);line-height:1.5;color:var(--text)}
 .sense-badges{margin:.35rem 0 0}
 .sense-note{margin:.35rem 0 0;font-size:var(--fs-sm);color:var(--text-muted);font-style:italic;line-height:1.5}

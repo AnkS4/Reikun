@@ -921,8 +921,6 @@ def _sense_block(sense: dict, si: int, entry_id, lang: str) -> str:
     sid = f' id="r{esc(entry_id)}-s{si + 1}"' if entry_id is not None else ""
     parts = [f'<div class="sense-block"{sid}>']
     glosses = sense.get("glosses") or []
-    if glosses:
-        parts.append(f'<p class="sense-glosses">{esc("; ".join(glosses))}</p>')
 
     badges = [
         f'<span class="badge pos">{esc(_t(lang, _POS_LABEL_KEYS[tag]))}</span>'
@@ -940,8 +938,15 @@ def _sense_block(sense: dict, si: int, entry_id, lang: str) -> str:
         f'<span class="badge dial" title="{esc(_t(lang, "dialect"))}">{esc(d.get("name") or "")}</span>'
         for d in (sense.get("dial") or [])
     )
+    # Glosses and badges share one line — badges right-align like the
+    # `common` marker on the headword row, keeping the block compact.
+    line = ""
+    if glosses:
+        line += f'<p class="sense-glosses">{esc("; ".join(glosses))}</p>'
     if badges:
-        parts.append(f'<p class="sense-badges">{" ".join(badges)}</p>')
+        line += f'<p class="sense-badges">{" ".join(badges)}</p>'
+    if line:
+        parts.append(f'<div class="sense-line">{line}</div>')
 
     # Sense-level form restrictions (JMdict stagk/stagr): this meaning only
     # applies to the listed written forms / readings.

@@ -169,15 +169,19 @@
 		     these to the sense — see scripts/build_chunks.py). -->
 		{#each senses as sense, si (si)}
 			<div class="sense-block" id={result.id != null ? `sense-${result.id}-${si + 1}` : undefined}>
-				{#if sense.glosses?.length}
-					<p class="sense-glosses">{sense.glosses.join('; ')}</p>
-				{/if}
-				{#if posTags(sense).length || miscTags(sense).length || (sense.dial ?? []).length}
-					<p class="sense-badges">
-						{#each posTags(sense) as tag (tag)}<span class="badge pos">{t(POS_LABEL[tag] ?? 'posOther')}</span>{/each}
-						{#each miscTags(sense) as tag (tag)}<span class="badge misc">{t(MISC_LABEL[tag] ?? 'miscOnom')}</span>{/each}
-						{#each sense.dial ?? [] as d (d.code)}<span class="badge dial" title={t('dialect')}>{d.name}</span>{/each}
-					</p>
+				{#if sense.glosses?.length || posTags(sense).length || miscTags(sense).length || (sense.dial ?? []).length}
+					<div class="sense-line">
+						{#if sense.glosses?.length}
+							<p class="sense-glosses">{sense.glosses.join('; ')}</p>
+						{/if}
+						{#if posTags(sense).length || miscTags(sense).length || (sense.dial ?? []).length}
+							<p class="sense-badges">
+								{#each posTags(sense) as tag (tag)}<span class="badge pos">{t(POS_LABEL[tag] ?? 'posOther')}</span>{/each}
+								{#each miscTags(sense) as tag (tag)}<span class="badge misc">{t(MISC_LABEL[tag] ?? 'miscOnom')}</span>{/each}
+								{#each sense.dial ?? [] as d (d.code)}<span class="badge dial" title={t('dialect')}>{d.name}</span>{/each}
+							</p>
+						{/if}
+					</div>
 				{/if}
 				{#if sense.stagk?.length || sense.stagr?.length}
 					<!-- Sense-level form restrictions (JMdict stagk/stagr): this

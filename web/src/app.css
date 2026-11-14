@@ -1342,6 +1342,19 @@ a.kanji-tip {
 	margin-top: 0.5rem;
 }
 
+/* Gloss line + badges share a row: badges right-align like `common` on the
+   headword line, saving a whole row per sense. */
+.sense-line {
+	display: flex;
+	justify-content: space-between;
+	align-items: baseline;
+	gap: 0.5rem 1rem;
+	flex-wrap: wrap;
+}
+.sense-line .sense-badges {
+	margin: 0;
+}
+
 .sense-glosses {
 	margin: 0;
 	font-size: var(--fs-body);
