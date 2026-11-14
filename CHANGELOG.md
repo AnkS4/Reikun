@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-11-15
+
+Minor release: Spanish, Marathi and Hindi join English and Japanese across both variants; dictionary metadata surfaces on result cards — etymology lines, a borrowed-words browser, POS/register/dialect badges, cross-reference chips, per-sense blocks and variant-form pairings; the homepage gains browse tiles with kanji-group pickers; Lite moves its chrome to a subset icon font with no-JS `<details>` menus and a localized SEO head; plus a deep-review fix pass and non-Latin typography corrections.
+
 ### Added
 - **Browse tiles and kanji-group pickers**: the homepage (SPA and Lite) now shows a four-tile browse grid — Strokes, Grade, JLPT Level and Loanwords, each with the same Lucide icon in both variants — the SPA inlines the SVG, Lite draws it from its subset icon font and a one-line description — and `/kanji-group` (SPA) / `/lite/kanji/group` (Lite) render picker pages instead of an error when `by`/`value` are missing or unusable: the category picker offers the three groupings as the same browse tiles the homepage uses, and each grouping's value picker lists every available value with its kanji count as cards in the same grid the results use (stroke counts 1-34, school grades, JLPT N5→N1) driven by a new `GET /kanji/groups` facets endpoint. Fourteen new i18n keys across all five locales.
 - **Three more UI locales**: Spanish, Marathi and Hindi join English and Japanese — 208 shared strings per locale in `i18n/*.json`. Both variant switchers show the language name in its own script (`Español`, `मराठी`, `हिन्दी`), the shared `lite_lang` cookie now carries all five codes so one choice follows a visitor across the SPA and Lite, and Lite's language menu is a no-JS `<details>` disclosure listing all five. `scripts/check_i18n.py` now validates every `*.json` in `i18n/` against `en.json`, so a sixth locale is a new file plus a loader entry — no code changes.
@@ -38,6 +42,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Arrow-separated Japanese phrases**: a query like "検索可能な単語やフレーズ → 語を検索できます" no longer treats everything after `→` as one English suffix; the full Sudachi parse now decomposes both sides of the separator.
 - **Firefox clipped the focus ring on edge icons**: both variants' fixed control clusters used `margin-right:-15px`, pushing the border box ~1.4px past the viewport — enough for Firefox's `:focus-visible` outline (which Chrome doesn't paint on click) to clip on the rightmost icon. Now `-8px`, leaving ~5.6px of clearance; applied to the SPA's `.header-controls` and `.floating-buttons` and lite's `.controls`.
 - **Web Docker image builds on Alpine again**: `npm ci` on `node:22-alpine` dropped `@rolldown/binding-linux-x64-musl` (the known npm optional-deps bug), failing the Vite build inside Docker. The Dockerfile now installs the matching binding right after `npm ci`, deriving the version from rolldown's own `optionalDependencies` so it cannot drift from the lockfile.
+
+- Versions: API 1.3.0 (pyproject + openapi), web 1.3.0
 
 ## [1.2.2] - 2026-11-12
 
