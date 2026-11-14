@@ -612,7 +612,7 @@
 		<p class="popover-title">{t('browse')}</p>
 		<div class="browse-grid">
 			<a class="browse-tile" href="/kanji-group?by=strokes">
-				<span class="browse-icon"><Icon name="feather" size={18} /></span>
+				<span class="browse-icon"><Icon name="pencil" size={18} /></span>
 				<span class="browse-name">{t('browseStrokes')}</span>
 				<span class="browse-desc">{t('browseStrokesDesc')}</span>
 			</a>
@@ -622,12 +622,12 @@
 				<span class="browse-desc">{t('browseGradeDesc')}</span>
 			</a>
 			<a class="browse-tile" href="/kanji-group?by=jlpt">
-				<span class="browse-icon"><Icon name="languages" size={18} /></span>
+				<span class="browse-icon"><Icon name="sparkles" size={18} /></span>
 				<span class="browse-name">{t('browseJlpt')}</span>
 				<span class="browse-desc">{t('browseJlptDesc')}</span>
 			</a>
 			<a class="browse-tile" href="/loanwords">
-				<span class="browse-icon"><Icon name="book-open" size={18} /></span>
+				<span class="browse-icon"><Icon name="languages" size={18} /></span>
 				<span class="browse-name">{t('browseLoanwords')}</span>
 				<span class="browse-desc">{t('browseLoanwordsDesc')}</span>
 			</a>
