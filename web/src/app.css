@@ -1447,7 +1447,7 @@ a.kanji-tip {
 /* Etymology line — "From Portuguese — espada" (JMdict lsource); the source
    form is italic and carries its own lang attribute. */
 .etymology {
-	margin: -0.35rem 0 0.85rem;
+	margin: 0.3rem 0 0.85rem;
 	font-size: var(--fs-sm);
 	color: var(--text-muted);
 	line-height: 1.5;
