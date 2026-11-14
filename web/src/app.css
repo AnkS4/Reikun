@@ -1377,7 +1377,7 @@ a.kanji-tip {
 
 /* Variant forms — JMdict reading↔kanji bindings + ke_inf labels. */
 .variants {
-	margin: 0.5rem 0 0;
+	margin: 0.5rem 0 0.75rem;
 	padding: 0.5rem 0.75rem;
 	border: 1px solid var(--border-soft);
 	border-radius: var(--radius-sm);

@@ -268,7 +268,7 @@ border-left:2px solid var(--border-soft);border-radius:0 var(--radius-sm) var(--
 .sense-variants{margin:.35rem 0 0;font-size:var(--fs-sm);color:var(--text-muted);line-height:1.5}
 .sense-variants span+span{margin-left:.9rem}
 /* Variant forms — JMdict reading↔kanji bindings + ke_inf labels. */
-.variants{margin:.5rem 0 0;padding:.5rem .75rem;border:1px solid var(--border-soft);
+.variants{margin:.5rem 0 .75rem;padding:.5rem .75rem;border:1px solid var(--border-soft);
 border-radius:var(--radius-sm);background:var(--surface-soft)}
 .variants-title{margin:0 0 .3rem;font-family:var(--font-mono);font-size:var(--fs-2xs);
 font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-faint)}
