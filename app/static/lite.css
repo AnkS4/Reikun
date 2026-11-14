@@ -106,15 +106,16 @@ align-items:center;gap:.15rem}
 .controls .icon-link{display:inline-flex;align-items:center;justify-content:center;
 width:2rem;height:2rem;border-radius:999px;color:var(--text-muted)}
 .controls .icon-link:hover{color:var(--text)}
-/* Control glyphs come from a tiny icon font (5 glyphs, <1 kB, embedded as
-   a data URI so it ships inside the cached stylesheet) — the SPA's own
-   Lucide icons (sun, moon, layout-dashboard, languages, database) traced
-   to outlines by scripts/build_lite_icons.py; source woff2 lives in
-   app/static/lite-icons.woff2 (Lucide is ISC-licensed). A font renders
-   everywhere SVG is disabled (svg.disabled blanks inline SVG for exactly
-   the no-JS visitors lite serves), and currentColor keeps state tinting
-   and hover colors working. */
-@font-face{font-family:'reikun-icons';font-display:block;src:url(data:font/woff2;base64,d09GMgABAAAAAAUkAAoAAAAACZgAAATaAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAABmAAXAqLcIlUATYCJAMUCxQABCAFgh0HfBu2ByAuBmM3zUZYoPP+/4dFcJfmNJimq7Srudy9y/+XiBUyJZVIinRVXacOAIUBQB54LvdvgN3xtYZu4gQ7agn3Al2eFxZYImPS/VX31rnF6/n5RL/Anu7pWcuxbgsGUN2XyCmq6ZRF/r9aUxtEI94HfSYqTmT8A+19gLBArIGFq1EA5OtrZFVVbVVsa+LgbRZO9Gc/FWh0EfQAD2P1kCJ28RaCR/ydabQAsWIKclnAbGb4/p0EIQT/Hj3/r/Xr5Fvsx0IxwCNCvyHJExMRLRBJEZ4SuAFaNcJAxoqMhuIfkBnYAEMahxDCR0URE0+FXD85KXshMeGKa7xETUkJKdUyN9VeSkZajKtz2FNcG7BtyB2f6tjffrLTRtoTIEKU853zM3Oagc9t2+K8VrSdFRFp46SdMzOyW51JXsuyK3cdsB2nxDx8BbEHpzsPdTGfA2w0Rm0HBzvOdFmJGh+0dR7YhSNyAn2QclFWZCgjxZgkBTGGgfMHIcZy3RRS4ekpUTnNwHLbpsfgILGow4VenkqzW2eKt5u6WBsXc2nvr5sZHDg9v9N91jVJneuMgvalXac37Bc6OsUujnV20PZbZEpvaw9y7cAMUeSpqEf0E5QIiKWFGroC7q6ONMGbL0+l5aqrEvGaZBvG+hGbwZf6qUQlbGtfVKe661e5a6G763w39wUubotc3a9MKwiY/9i08CpXGLwoyzgdsZ14srgo6fKX3P7f10CLE6hKLby1Fnz8xLJkUalg72yYv98tc5VSuGEUnkjv+NDHTvS6oVzFbprYU9ldfzFLzk7CX+X85VfWX2VL1Z+bvtYZKxMCbMeO/DyYAXm6leLgl/iy17LcelseyHV3rzCgrXf6jBX/aNMZ//JCfxXSTtIiImsOts64RTRsrksXfH6ebE89mMCkONd6k5PPnsmZl7VBfWzcf/6J5IPNJFJPSXNkbROkayehT6i0h9DmPH4P5QlqAjv76HaVKdCjAjw/OhruaBcivKPCGLg5/vy8bOv3pesmjosn3pr87g0xrgvJ7sm6vmOd7n0xAV+M/Ww0londM8xkT9NYFN88Ni3JaGgan/XS3fMG9SlB1l/d4JdxSCRX4jJkS3UwW2TInDPkS7WASzCNMf5pVGpUFqY4IdM9GRmXAOETPBXXpnriAD4rHQ0UmfSOhifN4+Zz0/bPn5cSdq/e02vbw/HQnVkAYeMq27w8678AI18P4HB6PCyLctVEFHQoOOuFcdXlfrPBsBMZTU1G4xGGqS8T9fh7TRaLibxKUK7FeDRpNvx+eB1QqLvoezH9zxthv0zAL2NI+5Qc8tHsh+Dl5ceQOae0D42N0BWL/Ha/Dn6M9PoY7LDodeMY8qLjIvBxB8ezMMFZQOLW7wH0+PNnUL8+TkBrFNVPGRRqpUg6vgoF9AKA8+y8vdhSpRbtjiMAihxIUhlhf4do+uWSOakFO+wACIslvAGxdotohnQk5pkRBACdMEqarJiR62X5xAhmjIXzSuwtRkgIwigdCWJG3oT4hwycLlmxasta1zdJ/6aP1GPQuf8ehe6iR4lGqrkGlcuSp0CVYuaKOUMJ7sThkJMOK5SmnAiFGSrBuYfMJym1XLW2QKwvEgYYIkUGechHAQqhsNDFDLl6WFZWeCq8FN4KH4Wvwg/5AwA=) format('woff2')}
+/* Control/browse glyphs come from a tiny icon font (8 glyphs, ~1.3 kB,
+   served from /lite/static/lite-icons.woff2 — a real file, since some
+   hardened browsers drop data: URI fonts) — the SPA's own Lucide icons
+   (sun, moon, layout-dashboard, languages, database, pencil, school,
+   sparkles) traced to outlines by scripts/build_lite_icons.py (Lucide is
+   ISC-licensed). A font renders everywhere SVG is disabled
+   (svg.disabled blanks inline SVG for exactly the no-JS visitors lite
+   serves), and currentColor keeps state tinting and hover colors
+   working. The ?v= hash is substituted by app/lite/assets.py. */
+@font-face{font-family:'reikun-icons';font-display:block;src:url(/lite/static/lite-icons.woff2?v=__FONT_HASH__) format('woff2')}
 .controls .icon{display:inline-flex;align-items:center;justify-content:center;
 width:1rem;height:1rem;flex:none;font:.94rem/1 'reikun-icons',sans-serif}
 .icon-sun::before{content:"\f5a2"}

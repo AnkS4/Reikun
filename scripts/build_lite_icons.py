@@ -2,13 +2,14 @@
 """Build the Lite control-icon font (app/static/lite-icons.woff2).
 
 The five glyphs are the SPA's Lucide icons (sun, moon, layout-dashboard,
-languages, database), traced from their 24x24 stroke SVG paths: each path is
+languages, database) plus the browse-tile icons (pencil, school,
+sparkles), traced from their 24x24 stroke SVG paths: each path is
 stroked (width 2, round caps/joins — matching the Lucide stroke attributes),
 the stroke outlines are unioned, converted to quadratic outlines and embedded
 in a tiny TrueType-flavored woff2 at private-use codepoints. The font is
-inlined into lite.css as a data URI by an @font-face rule, so it ships inside
-the cached stylesheet and renders even where svg.disabled blanks inline SVG
-(Tor/LibreWolf "Safest").
+served at /lite/static/lite-icons.woff2 and referenced from lite.css (a real
+file, not a data URI, since some hardened browsers drop data: fonts); it
+renders even where svg.disabled blanks inline SVG (Tor/LibreWolf "Safest").
 
 Regenerate after changing an icon:
     uv run --with skia-pathops --with fonttools --with brotli \

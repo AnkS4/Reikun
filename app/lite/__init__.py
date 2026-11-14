@@ -68,7 +68,7 @@ from app.render import furigana_parts, kanji_card, kanji_group_cards, related_wo
 from app.retrieval import MAX_JA_QUERY_CHARS, SearchResponse, is_headword, search
 from app.telemetry import telemetry
 
-from .assets import _LITE_CSS_HASH, _LITE_CSS_TEXT, _LITE_CSS_URL
+from .assets import _LITE_CSS_HASH, _LITE_CSS_TEXT, _LITE_CSS_URL, _LITE_FONT_BYTES, _LITE_FONT_HASH
 from .i18n import _t
 
 logger = logging.getLogger("reikun.lite")
@@ -161,6 +161,18 @@ def lite_static_css() -> Response:
         headers={
             "Cache-Control": "public, max-age=31536000, immutable",
             "ETag": f'\"{_LITE_CSS_HASH}\"',
+        },
+    )
+
+
+@router.get("/lite/static/lite-icons.woff2", include_in_schema=False)
+def lite_static_font() -> Response:
+    return Response(
+        content=_LITE_FONT_BYTES,
+        media_type="font/woff2",
+        headers={
+            "Cache-Control": "public, max-age=31536000, immutable",
+            "ETag": f'\"{_LITE_FONT_HASH}\"',
         },
     )
 
