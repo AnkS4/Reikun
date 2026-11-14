@@ -527,6 +527,19 @@ def test_result_card_variant_forms() -> None:
     assert "kana only" in html_out and "クチナシ" in html_out
 
 
+def test_result_card_etymology_links_borrowed_words() -> None:
+    result = _bare_result(
+        lsource=[{"lang": "chi", "text": "你好"}],
+    )
+    html_out = lite._result_card("", result, True, "en")
+    # The "From Chinese" label links to that language's borrowed-words page.
+    assert 'class="etym-link"' in html_out
+    assert 'href="/lite/loanwords/chi"' in html_out
+    assert "From Chinese" in html_out
+    # The source form keeps its own lang tag and stays plain text.
+    assert 'class="etym-src" lang="zh"' in html_out and "你好" in html_out
+
+
 def test_result_card_sense_form_restrictions() -> None:
     result = _bare_result(
         senses=[{

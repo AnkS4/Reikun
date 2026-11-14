@@ -1038,7 +1038,12 @@ def _result_card(query: str, result: dict, furi: bool, lang: str) -> str:
     etym_sources = enrich_lsource(result.get("lsource"))
     if etym_sources:
         etym_html = "; ".join(
-            esc(src["label"])
+            (
+                f'<a class="etym-link" href="/lite/loanwords/{quote(src["lang"], safe="")}">'
+                f'{esc(src["label"])}</a>'
+                if src.get("lang")
+                else esc(src["label"])
+            )
             + (
                 f' — <span class="etym-src" lang="{esc(src["tag"])}">{esc(src["text"])}</span>'
                 if src["text"]

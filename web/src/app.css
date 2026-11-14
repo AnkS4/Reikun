@@ -1444,6 +1444,25 @@ a.kanji-tip {
 	font-style: italic;
 }
 
+/* Etymology language tag — links to the borrowed-words browse for that
+   source language (/loanwords?lang=…). */
+.etym-link {
+	display: inline-block;
+	padding: 0.05rem 0.5rem;
+	border: 1px solid var(--border-soft);
+	border-radius: var(--radius-pill, 999px);
+	background: var(--surface-soft);
+	color: var(--text);
+	text-decoration: none;
+	transition:
+		border-color 0.15s var(--ease),
+		background 0.15s var(--ease);
+}
+.etym-link:hover {
+	background: var(--surface);
+	border-color: var(--border-hover);
+}
+
 /* Example rows inside cards */
 .example-section {
 	margin-top: 0.85rem;

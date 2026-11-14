@@ -216,6 +216,10 @@ ruby rt{font-size:.6em;font-weight:500;letter-spacing:0;color:var(--text-muted)}
 .gloss{margin:.5rem 0 .85rem;font-size:var(--fs-body);line-height:1.5;color:var(--text-muted)}
 .etymology{margin:-.2rem 0 .85rem;font-size:var(--fs-md);color:var(--text-muted)}
 .etym-src{font-style:italic}
+.etym-link{display:inline-block;padding:.05rem .5rem;border:1px solid var(--border-soft);
+border-radius:var(--radius-pill,999px);background:var(--surface-soft);color:var(--text);
+text-decoration:none}
+.etym-link:hover{background:var(--surface);border-color:var(--border-hover)}
 .reading-note,.muted{color:var(--text-muted);font-size:var(--fs-md)}
 .inflection-bar{font-size:var(--fs-sm);color:var(--text-muted);margin:-.2rem 0 .35rem}
 .inflection-bar [lang=ja]{color:var(--text);font-size:var(--fs-base)}

@@ -139,7 +139,7 @@
 		<!-- Etymology ("From Portuguese — espada"): JMdict-authored English like
 		     the glosses; the source form carries its BCP-47 lang tag. -->
 		<p class="etymology">
-			{#each result.lsource as src, i (src.lang + '-' + i)}{i > 0 ? '; ' : ''}{src.label}{#if src.text} — <span class="etym-src" lang={src.tag ?? undefined}>{src.text}</span>{/if}{/each}
+			{#each result.lsource as src, i (src.lang + '-' + i)}{i > 0 ? '; ' : ''}{#if src.lang}<a class="etym-link" href="/loanwords?lang={encodeURIComponent(src.lang)}">{src.label}</a>{:else}{src.label}{/if}{#if src.text} — <span class="etym-src" lang={src.tag ?? undefined}>{src.text}</span>{/if}{/each}
 		</p>
 	{/if}
 	{#if searched && result.inflection}
