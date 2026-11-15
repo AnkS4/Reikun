@@ -28,8 +28,7 @@
 	let {
 		ex,
 		level,
-		onpick
-	}: { ex: ExampleSentence; level: Level; onpick?: (char: string) => void } = $props();
+	}: { ex: ExampleSentence; level: Level } = $props();
 
 	let expl = $state.raw<{
 		level: string;
@@ -40,11 +39,15 @@
 	} | null>(null);
 	let streaming = $state(false);
 	let streamText = $state('');
+	let failed = $state(false);
+	let errorText = $state('');
 
 	async function explain() {
 		const lvl = level; // pinned: a mid-stream level change mustn't relabel this expl.
 		streaming = true;
 		streamText = '';
+		failed = false;
+		errorText = '';
 		try {
 			await loadMd();
 			const done = await explainStream(
@@ -59,13 +62,10 @@
 				model: done.model ?? ''
 			};
 		} catch (e) {
-			expl = {
-				level: lvl,
-				text: t('explanationError', { error: e instanceof Error ? e.message : String(e) }),
-				id: null,
-				provider: '',
-				model: ''
-			};
+			// Keep whatever streamed so far in streamText — discarding it would throw away
+			// content the user already read. The partial block renders with role="alert".
+			errorText = e instanceof Error ? e.message : String(e);
+			failed = true;
 		} finally {
 			streaming = false;
 		}
@@ -74,7 +74,7 @@
 
 <div class="example-row">
 	<div class="example-body">
-		<p class="sentence" lang="ja"><KanjiText text={ex.japanese} {onpick} /></p>
+		<p class="sentence" lang="ja"><KanjiText text={ex.japanese} /></p>
 		{#if ex.english}<p class="en">{ex.english}</p>{/if}
 	</div>
 	<div class="example-actions">
@@ -94,7 +94,19 @@
 	</div>
 </div>
 {#if streaming}
-	<div class="explain-out"><pre class="stream-text">{streamText}</pre><span class="spinner"></span></div>
+	<div class="explain-out" role="status" aria-live="polite" aria-busy="true">
+		<pre class="stream-text">{streamText}</pre><span class="spinner" aria-hidden="true"></span>
+	</div>
+{:else if failed}
+	<div class="explain-out explain-failed" role="alert">
+		{#if streamText.trim()}
+			{#if md}{@html md(streamText.trim())}{:else}<pre class="stream-text">{streamText}</pre>{/if}
+		{/if}
+		<p class="explain-error">
+			<Icon name="warning" size={16} />
+			<span>{t('explanationFailed')}{errorText ? ` ${errorText}` : ''}</span>
+		</p>
+	</div>
 {:else if expl}
 	<div class="explain-out">
 		{#if md}{@html md(expl.text)}{:else}<pre class="stream-text">{expl.text}</pre>{/if}

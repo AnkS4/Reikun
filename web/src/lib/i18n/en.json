@@ -103,7 +103,7 @@
 	"explainTitle": "JLPT-calibrated grammar explanation for this sentence",
 	"aiGenerated": "AI-generated for {level}",
 	"explanationUnavailable": "Explanation unavailable.",
-	"explanationError": "**Explanation unavailable:** {error}",
+	"explanationFailed": "Explanation failed — the text above is partial.",
 	"rateSearch": "Rate this search",
 	"rateExplanation": "Rate this explanation",
 	"helpful": "Helpful",

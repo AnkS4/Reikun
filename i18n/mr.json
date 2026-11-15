@@ -103,7 +103,7 @@
 	"explainTitle": "या वाक्यासाठी JLPT स्तरानुसार व्याकरण स्पष्टीकरण",
 	"aiGenerated": "AI द्वारे {level} साठी तयार केले",
 	"explanationUnavailable": "स्पष्टीकरण उपलब्ध नाही.",
-	"explanationError": "**स्पष्टीकरण उपलब्ध नाही:** {error}",
+	"explanationFailed": "स्पष्टीकरण अयशस्वी — वरचा मजकूर आंशिक आहे",
 	"rateSearch": "या शोधाचे मूल्यांकन करा",
 	"rateExplanation": "या स्पष्टीकरणाचे मूल्यांकन करा",
 	"helpful": "उपयुक्त",

@@ -103,7 +103,7 @@
 	"explainTitle": "Explicación gramatical adaptada al nivel JLPT para esta frase",
 	"aiGenerated": "Generado por IA para {level}",
 	"explanationUnavailable": "No hay explicación disponible.",
-	"explanationError": "**Explicación no disponible:** {error}",
+	"explanationFailed": "Falló la explicación; el texto de arriba es parcial.",
 	"rateSearch": "Valora esta búsqueda",
 	"rateExplanation": "Valora esta explicación",
 	"helpful": "Útil",

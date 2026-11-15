@@ -103,7 +103,7 @@
 	"explainTitle": "この文に関するJLPT基準に基づいた文法解説",
 	"aiGenerated": "{level}向けにAIが生成",
 	"explanationUnavailable": "解説を取得できませんでした。",
-	"explanationError": "**解説を取得できませんでした:** {error}",
+	"explanationFailed": "解説に失敗しました（上のテキストは部分表示です）",
 	"rateSearch": "この検索を評価",
 	"rateExplanation": "この解説を評価",
 	"helpful": "役に立った",
