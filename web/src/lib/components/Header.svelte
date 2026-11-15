@@ -150,7 +150,7 @@
 					<span class="opt-check" aria-hidden="true"
 						>{#if i18n.locale === code}<Icon name="check" size={12} />{/if}</span
 					>
-					<span>{LOCALE_NAMES[code]}</span>
+					<span lang={code}>{LOCALE_NAMES[code]}</span>
 				</button>
 			{/each}
 		</div>
