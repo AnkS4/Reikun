@@ -15,8 +15,6 @@
 	"statusAriaReady": "शब्दकोश तयार आहे — {count} नोंदी",
 	"statusAriaOffline": "शब्दकोश ऑफलाइन — {msg}",
 	"apiUnreachable": "API ला पोहोचता येत नाही",
-	"appearanceTitle": "दृश्यस्वरूप — शैली",
-	"appearance": "दृश्यस्वरूप",
 	"theme": "शैली",
 	"themeSystem": "प्रणाली",
 	"themeLight": "हलकी",

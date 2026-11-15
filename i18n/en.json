@@ -15,8 +15,6 @@
 	"statusAriaReady": "Dictionary ready — {count} entries",
 	"statusAriaOffline": "Dictionary offline — {msg}",
 	"apiUnreachable": "API unreachable",
-	"appearanceTitle": "Appearance — theme",
-	"appearance": "Appearance",
 	"theme": "Theme",
 	"themeSystem": "System",
 	"themeLight": "Light",
