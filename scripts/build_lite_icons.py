@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Build the Lite control-icon font (app/static/lite-icons.woff2).
 
-The five glyphs are the SPA's Lucide icons (sun, moon, layout-dashboard,
+The nine glyphs are the SPA's Lucide icons (sun, moon, layout-dashboard,
 languages, database) plus the browse-tile icons (pencil, school,
 award, import), traced from their 24x24 stroke SVG paths: each path is
 stroked (width 2, round caps/joins — matching the Lucide stroke attributes),
