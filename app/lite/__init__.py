@@ -641,7 +641,7 @@ def lite_home(request: Request) -> HTMLResponse:
     browse_tiles = (
         ("/lite/kanji/group", {"by": "strokes"}, "pencil", "browseStrokes", "browseStrokesDesc"),
         ("/lite/kanji/group", {"by": "grade"}, "school", "browseGrade", "browseGradeDesc"),
-        ("/lite/kanji/group", {"by": "jlpt"}, "sparkles", "browseJlpt", "browseJlptDesc"),
+        ("/lite/kanji/group", {"by": "jlpt"}, "award", "browseJlpt", "browseJlptDesc"),
         ("/lite/loanwords", {}, "lang", "browseLoanwords", "browseLoanwordsDesc"),
     )
     browse = (
@@ -1366,7 +1366,7 @@ def _kg_value_label(by: str, value: int, lang: str) -> str:
 _KG_BROWSE = {
     "strokes": ("pencil", "browseStrokes", "browseStrokesDesc"),
     "grade": ("school", "browseGrade", "browseGradeDesc"),
-    "jlpt": ("sparkles", "browseJlpt", "browseJlptDesc"),
+    "jlpt": ("award", "browseJlpt", "browseJlptDesc"),
 }
 
 

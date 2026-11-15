@@ -622,7 +622,7 @@
 				<span class="browse-desc">{t('browseGradeDesc')}</span>
 			</a>
 			<a class="browse-tile" href="/kanji-group?by=jlpt">
-				<span class="browse-icon"><Icon name="sparkles" size={18} /></span>
+				<span class="browse-icon"><Icon name="award" size={18} /></span>
 				<span class="browse-name">{t('browseJlpt')}</span>
 				<span class="browse-desc">{t('browseJlptDesc')}</span>
 			</a>

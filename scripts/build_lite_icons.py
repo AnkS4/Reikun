@@ -3,7 +3,7 @@
 
 The five glyphs are the SPA's Lucide icons (sun, moon, layout-dashboard,
 languages, database) plus the browse-tile icons (pencil, school,
-sparkles), traced from their 24x24 stroke SVG paths: each path is
+award), traced from their 24x24 stroke SVG paths: each path is
 stroked (width 2, round caps/joins — matching the Lucide stroke attributes),
 the stroke outlines are unioned, converted to quadratic outlines and embedded
 in a tiny TrueType-flavored woff2 at private-use codepoints. The font is
@@ -78,11 +78,10 @@ _ICONS = {
         "M6 12.5v4.5c0 1.4 2.7 2.5 6 2.5s6-1.1 6-2.5v-4.5",
         "M22 10v6",
     ),
-    # sparkles — browse tile: kanji by JLPT level
+    # award (rosette) — browse tile: kanji by JLPT level
     "F103": (
-        "m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21"
-        "l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3z",
-        "M5 3v4", "M19 17v4", "M3 5h4", "M17 19h4",
+        "M18 8a6 6 0 1 1-12 0 6 6 0 1 1 12 0",  # circle(12,8,6)
+        "M15.477 12.89 17 22l-5-3-5 3 1.523-9.11",
     ),
 }
 

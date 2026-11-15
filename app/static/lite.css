@@ -110,7 +110,7 @@ width:2rem;height:2rem;border-radius:999px;color:var(--text-muted)}
    served from /lite/static/lite-icons.woff2 — a real file, since some
    hardened browsers drop data: URI fonts) — the SPA's own Lucide icons
    (sun, moon, layout-dashboard, languages, database, pencil, school,
-   sparkles) traced to outlines by scripts/build_lite_icons.py (Lucide is
+   award) traced to outlines by scripts/build_lite_icons.py (Lucide is
    ISC-licensed). A font renders everywhere SVG is disabled
    (svg.disabled blanks inline SVG for exactly the no-JS visitors lite
    serves), and currentColor keeps state tinting and hover colors
@@ -126,7 +126,7 @@ font:.94rem/1 'reikun-icons',sans-serif}
 .icon-db::before{content:"\f8c4"}
 .icon-pencil::before{content:"\f101"}
 .icon-school::before{content:"\f102"}
-.icon-sparkles::before{content:"\f103"}
+.icon-award::before{content:"\f103"}
 .controls .status-dot{display:inline-flex;align-items:center;justify-content:center;
 width:2rem;height:2rem;border-radius:999px;color:var(--text-faint);cursor:default}
 .controls .status-dot.ok{color:var(--ok)}
