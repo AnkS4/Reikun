@@ -642,7 +642,7 @@ def lite_home(request: Request) -> HTMLResponse:
         ("/lite/kanji/group", {"by": "strokes"}, "pencil", "browseStrokes", "browseStrokesDesc"),
         ("/lite/kanji/group", {"by": "grade"}, "school", "browseGrade", "browseGradeDesc"),
         ("/lite/kanji/group", {"by": "jlpt"}, "award", "browseJlpt", "browseJlptDesc"),
-        ("/lite/loanwords", {}, "lang", "browseLoanwords", "browseLoanwordsDesc"),
+        ("/lite/loanwords", {}, "import", "browseLoanwords", "browseLoanwordsDesc"),
     )
     browse = (
         f'<p class="pills-label">{esc(_t(lang, "browse"))}</p>'

@@ -627,7 +627,7 @@
 				<span class="browse-desc">{t('browseJlptDesc')}</span>
 			</a>
 			<a class="browse-tile" href="/loanwords">
-				<span class="browse-icon"><Icon name="languages" size={18} /></span>
+				<span class="browse-icon"><Icon name="import" size={18} /></span>
 				<span class="browse-name">{t('browseLoanwords')}</span>
 				<span class="browse-desc">{t('browseLoanwordsDesc')}</span>
 			</a>
