@@ -60,6 +60,9 @@ Thumbs.db
 # be tracked or committed; they live only on developer machines.
 local/
 
+# Visual smoke captures — generated on demand by `npm run smoke` (web/tools/screenshot-smoke.mjs)
+docs/screenshots/smoke/
+
 # Agent scratch (plan/review notes from the coding harness)
 .agents/
 
