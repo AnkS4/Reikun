@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **Borrowed-words pages 502 on a fresh collection**: the loanwords index scroll filters `must_not is_empty lsource`, and Qdrant rejects `is_empty` on a field with no payload index ("Index required but not found") — the index was never created by ingest, so `/loanwords` and `/loanwords/{lang}` returned 502 on any collection built from scratch. `lsource` is now in ingest's keyword-index list: the index stores no values (the field holds arrays of objects) but satisfies the filter's index requirement. The index has been created on the live local and cloud collections; `/loanwords` verified returning all facets again.
+
 ## [1.3.0] - 2026-11-15
 
 Minor release: Spanish, Marathi and Hindi join English and Japanese across both variants; dictionary metadata surfaces on result cards — etymology lines, a borrowed-words browser, POS/register/dialect badges, cross-reference chips, per-sense blocks and variant-form pairings; the homepage gains browse tiles with kanji-group pickers; Lite moves its chrome to a subset icon font with no-JS `<details>` menus and a localized SEO head; plus a deep-review fix pass and non-Latin typography corrections.

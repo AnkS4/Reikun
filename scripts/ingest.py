@@ -111,8 +111,12 @@ def _point_sigs(client) -> dict[int, str | None]:
             return sigs
 
 
+# lsource is an array of objects — a keyword index on it stores no values, but
+# its presence is what Qdrant's is_empty filter requires (the loanwords index
+# scrolls must_not is_empty lsource). Without it every /loanwords request 502s.
 _INDEX_FIELDS = ("kanji_form", "reading", "gloss_keys", "primary_gloss_keys",
-                 "head_gloss_keys", "kanji_forms", "readings", "infl_forms")
+                 "head_gloss_keys", "kanji_forms", "readings", "infl_forms",
+                 "lsource")
 
 # wf_score/commonness feed the FormulaQuery mult expressions — strict mode
 # (Qdrant Cloud default) requires an index on every filtered/formula field.
