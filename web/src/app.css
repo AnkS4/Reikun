@@ -26,7 +26,7 @@
 	--ok-soft: rgba(38, 115, 79, 0.10);
 	--err: #b83232;
 	--err-soft: rgba(184, 50, 50, 0.10);
-	--warn: #b87728;
+	--warn: #9c6116;
 	--warn-soft: rgba(184, 119, 40, 0.10);
 	--warn-border: rgba(184, 119, 40, 0.25);
 
@@ -72,10 +72,11 @@
 	/* Motion: one easing for all transitions (was a mix of ease / two cubics). */
 	--ease: cubic-bezier(0.16, 1, 0.3, 1);
 
-	/* Z-index ladder (documented; values used as-is across the app):
-	   1 base inline, 2 raised inline, 10 dropdowns/popovers, 40 sticky
-	   search row, 50 result cards hover, 60 tooltips, 80 sticky header,
-	   90 modal backdrop, 95 modal, 100 skip link, 200 top-right controls. */
+	/* Z-index ladder (values as used in this file; see Design.md → Common →
+	   Layering for the canonical table): 1 inline, 2 stroke-art, 10 replay,
+	   40 popovers, 50 tooltips/stats, 60 hovered cards, 80 search row,
+	   90 floating buttons, 95 wake banner, 100 brand kanji tip, 200 header
+	   controls, 1000 skip link. */
 
 	/* Conjugation chip (same names as lite) and kanji meta badges */
 	--conj: #4338ca;
@@ -270,6 +271,13 @@ html {
 	font-family: var(--font);
 	text-size-adjust: 100%;
 	scroll-behavior: smooth;
+}
+
+/* Japanese line breaking: strict kinsoku, phrase-aware wrapping where supported.
+   Progressive enhancement — unsupported engines fall back to `normal`. */
+:lang(ja) {
+	line-break: strict;
+	word-break: auto-phrase;
 }
 
 body {
@@ -501,7 +509,7 @@ ruby rt {
 	background: transparent;
 	border: none;
 	cursor: help;
-	transition: all 0.15s var(--ease);
+	transition: color 0.15s var(--ease), background-color 0.15s var(--ease), background 0.15s var(--ease), border-color 0.15s var(--ease), box-shadow 0.15s var(--ease), opacity 0.15s var(--ease), transform 0.15s var(--ease);
 }
 
 /* Friendly status tooltip — plain-language connection info on hover */
@@ -597,7 +605,6 @@ ruby rt {
 	background: transparent;
 	/* Above hovered cards (z-60) — their tooltips stay behind the bar */
 	z-index: 80;
-	transition: padding 0.2s var(--ease);
 }
 
 .search-pair {
@@ -854,7 +861,7 @@ ruby rt {
 	border-radius: calc(var(--radius-sm) - 3px);
 	cursor: pointer;
 	text-align: center;
-	transition: all 0.15s var(--ease);
+	transition: color 0.15s var(--ease), background-color 0.15s var(--ease), background 0.15s var(--ease), border-color 0.15s var(--ease), box-shadow 0.15s var(--ease), opacity 0.15s var(--ease), transform 0.15s var(--ease);
 }
 
 .segmented button:hover:not(.sel) {
@@ -907,7 +914,7 @@ ruby rt {
 	border-radius: calc(var(--radius-sm) - 3px);
 	cursor: pointer;
 	text-align: left;
-	transition: all 0.15s var(--ease);
+	transition: color 0.15s var(--ease), background-color 0.15s var(--ease), background 0.15s var(--ease), border-color 0.15s var(--ease), box-shadow 0.15s var(--ease), opacity 0.15s var(--ease), transform 0.15s var(--ease);
 }
 
 /* All five endonyms render at the same font-size — script glyphs differ in
@@ -985,7 +992,7 @@ ruby rt {
 	border: 1px solid var(--border-soft);
 	color: var(--text-muted);
 	letter-spacing: 0.02em;
-	transition: all 0.15s var(--ease);
+	transition: color 0.15s var(--ease), background-color 0.15s var(--ease), background 0.15s var(--ease), border-color 0.15s var(--ease), box-shadow 0.15s var(--ease), opacity 0.15s var(--ease), transform 0.15s var(--ease);
 }
 
 .btn:hover .level-indicator {
@@ -1012,7 +1019,7 @@ ruby rt {
 	color: var(--text-muted);
 	cursor: pointer;
 	box-shadow: var(--shadow-sm);
-	transition: all 0.15s var(--ease);
+	transition: color 0.15s var(--ease), background-color 0.15s var(--ease), background 0.15s var(--ease), border-color 0.15s var(--ease), box-shadow 0.15s var(--ease), opacity 0.15s var(--ease), transform 0.15s var(--ease);
 	display: inline-flex;
 	align-items: center;
 	gap: 0.35rem;
@@ -1080,7 +1087,7 @@ ruby rt {
 	border-radius: var(--radius-sm);
 	cursor: pointer;
 	text-align: center;
-	transition: all 0.15s var(--ease);
+	transition: color 0.15s var(--ease), background-color 0.15s var(--ease), background 0.15s var(--ease), border-color 0.15s var(--ease), box-shadow 0.15s var(--ease), opacity 0.15s var(--ease), transform 0.15s var(--ease);
 }
 
 .seg:hover,
@@ -1102,7 +1109,7 @@ ruby rt {
 
 .seg:focus-visible {
 	outline: 2px solid var(--primary);
-	outline-offset: 1px;
+	outline-offset: 2px;
 }
 
 .seg.approx {
@@ -1241,7 +1248,7 @@ a.kanji-tip {
 	border: 1px solid var(--border-soft);
 	border-radius: var(--radius-xs);
 	text-decoration: none;
-	transition: all 0.15s var(--ease);
+	transition: color 0.15s var(--ease), background-color 0.15s var(--ease), background 0.15s var(--ease), border-color 0.15s var(--ease), box-shadow 0.15s var(--ease), opacity 0.15s var(--ease), transform 0.15s var(--ease);
 }
 
 .tip-go:hover {
@@ -1616,7 +1623,7 @@ a.kanji-tip {
 	font-weight: 500;
 	cursor: pointer;
 	text-decoration: none;
-	transition: all 0.15s var(--ease);
+	transition: color 0.15s var(--ease), background-color 0.15s var(--ease), background 0.15s var(--ease), border-color 0.15s var(--ease), box-shadow 0.15s var(--ease), opacity 0.15s var(--ease), transform 0.15s var(--ease);
 }
 
 .conj-toggle:hover {
@@ -1759,7 +1766,6 @@ a.kanji-tip {
 	font-size: var(--fs-sm);
 	color: var(--text-faint);
 	margin: 0.5rem 0 0;
-	font-style: italic;
 }
 
 /* AI Grammar explanation drawer */
@@ -1782,6 +1788,21 @@ a.kanji-tip {
 
 .explain-out p:last-child, .explain-out ul:last-child {
 	margin-bottom: 0.25rem;
+}
+
+/* Streamed explanation failed: content stays, error line is unmistakable */
+.explain-failed {
+	border-left-color: var(--err);
+}
+
+.explain-error {
+	display: flex;
+	align-items: center;
+	gap: 0.4rem;
+	margin: 0.4rem 0 0;
+	color: var(--err);
+	font-size: var(--fs-sm);
+	line-height: 1.5;
 }
 
 .stream-text {
@@ -1819,7 +1840,7 @@ a.kanji-tip {
 	color: var(--text-faint);
 	border-radius: var(--radius-xs);
 	display: inline-flex;
-	transition: all 0.15s var(--ease);
+	transition: color 0.15s var(--ease), background-color 0.15s var(--ease), background 0.15s var(--ease), border-color 0.15s var(--ease), box-shadow 0.15s var(--ease), opacity 0.15s var(--ease), transform 0.15s var(--ease);
 }
 
 .feedback-row button:hover {
@@ -1871,7 +1892,7 @@ a.kanji-tip {
 	background: transparent;
 	color: var(--text-faint);
 	cursor: help;
-	transition: all 0.15s var(--ease);
+	transition: color 0.15s var(--ease), background-color 0.15s var(--ease), background 0.15s var(--ease), border-color 0.15s var(--ease), box-shadow 0.15s var(--ease), opacity 0.15s var(--ease), transform 0.15s var(--ease);
 }
 
 .stats-info:hover {
@@ -2012,7 +2033,7 @@ a.kanji-tip {
 	background: var(--surface-soft);
 	color: var(--text-muted);
 	cursor: help;
-	transition: all 0.15s var(--ease);
+	transition: color 0.15s var(--ease), background-color 0.15s var(--ease), background 0.15s var(--ease), border-color 0.15s var(--ease), box-shadow 0.15s var(--ease), opacity 0.15s var(--ease), transform 0.15s var(--ease);
 }
 
 .meta-badge:hover {
@@ -2391,7 +2412,7 @@ html:lang(hi) .opt-list button {
 	border-radius: var(--radius-sm);
 	background: var(--surface-soft);
 	border: 1px solid var(--border-soft);
-	transition: all 0.15s var(--ease);
+	transition: color 0.15s var(--ease), background-color 0.15s var(--ease), background 0.15s var(--ease), border-color 0.15s var(--ease), box-shadow 0.15s var(--ease), opacity 0.15s var(--ease), transform 0.15s var(--ease);
 }
 
 .kanji-word-row:hover {
@@ -2596,7 +2617,7 @@ html:lang(hi) .opt-list button {
 	display: inline-flex;
 	z-index: 10;
 	box-shadow: var(--shadow-sm);
-	transition: all 0.15s var(--ease);
+	transition: color 0.15s var(--ease), background-color 0.15s var(--ease), background 0.15s var(--ease), border-color 0.15s var(--ease), box-shadow 0.15s var(--ease), opacity 0.15s var(--ease), transform 0.15s var(--ease);
 }
 
 .stroke-replay:hover {
@@ -3145,7 +3166,7 @@ html:lang(hi) .opt-list button {
 	border: 1px solid var(--glass-border);
 	box-shadow: inset 0 1px 2px var(--glass-edge), inset 0 -1px 2px var(--glass-shade);
 	pointer-events: none;
-	transition: background 120ms var(--ease), border-color 120ms var(--ease), box-shadow 120ms var(--ease), inset 120ms var(--ease);
+	transition: background 120ms var(--ease), border-color 120ms var(--ease), box-shadow 120ms var(--ease), transform 120ms var(--ease);
 }
 
 /* Sheen effect — diagonal highlight on the glass */
@@ -3232,7 +3253,7 @@ html:lang(hi) .opt-list button {
 .search-row .btn-3d:hover::before,
 .search-row .btn-3d-primary:hover::before,
 .search-row .popover-wrap > .btn:hover::before {
-	inset: var(--lip) 0 0 0;
+	transform: translateY(var(--lip));
 	border-color: var(--border-hover);
 }
 
@@ -3280,7 +3301,7 @@ html:lang(hi) .opt-list button {
 .search-row .btn-3d:active::before,
 .search-row .btn-3d-primary:active::before,
 .search-row .popover-wrap > .btn:active::before {
-	inset: var(--lip) 0 0 0;
+	transform: translateY(var(--lip));
 }
 
 .btn-3d:active::after,
@@ -3366,7 +3387,8 @@ html:lang(hi) .opt-list button {
 .skip-link {
 	position: absolute;
 	left: 1rem;
-	top: -4rem;
+	top: 1rem;
+	transform: translateY(calc(-100% - 1.5rem));
 	z-index: 1000;
 	padding: 0.6rem 1rem;
 	background: var(--surface);
@@ -3375,11 +3397,11 @@ html:lang(hi) .opt-list button {
 	border-radius: var(--radius-md);
 	box-shadow: var(--shadow-lg);
 	font-weight: 500;
-	transition: top 0.15s var(--ease);
+	transition: transform 0.15s var(--ease);
 }
 
 .skip-link:focus {
-	top: 1rem;
+	transform: none;
 }
 
 main:focus {
@@ -3686,7 +3708,7 @@ button, a, input, summary {
 	background: linear-gradient(180deg, var(--cta-glass-hi), var(--cta-glass-lo));
 	border: 1px solid var(--cta-glass-border);
 	box-shadow: inset 0 1px 1px var(--cta-glass-edge), inset 0 -1px 2px var(--cta-glass-shade);
-	transition: inset 120ms var(--ease);
+	transition: transform 120ms var(--ease);
 }
 
 /* Sheen */
@@ -3701,7 +3723,7 @@ button, a, input, summary {
 	filter: brightness(1.1) saturate(1.05);
 	box-shadow: inset 0 calc(var(--lip) * -1) 0 0 var(--cta-lip), 0 3px 14px -3px var(--cta-glow);
 }
-.search-submit:hover::before { inset: 1px 0 calc(var(--lip) - 1px) 0; }
+.search-submit:hover::before { transform: translateY(1px); }
 .search-submit:hover::after  { opacity: 0.8; }
 
 /* Press: glass and label sink by one lip */
@@ -3709,7 +3731,7 @@ button, a, input, summary {
 	filter: brightness(0.96);
 	padding: var(--lip) 0.8rem 0;
 }
-.search-submit:active::before { inset: var(--lip) 0 0 0; }
+.search-submit:active::before { transform: translateY(var(--lip)); }
 .search-submit:active::after  { opacity: 0.3; }
 
 .search-submit:focus-visible {
@@ -3741,7 +3763,7 @@ button, a, input, summary {
 
 .search-row .btn-3d:hover::before,
 .search-row .popover-wrap > .btn:hover::before {
-	inset: 1px 0 calc(var(--lip) - 1px) 0;
+	transform: translateY(1px);
 	border-color: var(--border-hover);
 }
 
@@ -3753,7 +3775,7 @@ button, a, input, summary {
 /* :active rules stay AFTER :hover so a pressed button wins */
 .search-row .btn-3d:active::before,
 .search-row .popover-wrap > .btn:active::before {
-	inset: var(--lip) 0 0 0;
+	transform: translateY(var(--lip));
 }
 
 .search-row .btn-3d:active::after,
@@ -3773,7 +3795,7 @@ button, a, input, summary {
 }
 
 .example-actions .btn-3d:hover::before {
-	inset: 1px 0 calc(var(--lip) - 1px) 0;
+	transform: translateY(1px);
 	border-color: var(--border-hover);
 }
 
@@ -3782,7 +3804,7 @@ button, a, input, summary {
 }
 
 .example-actions .btn-3d:active::before {
-	inset: var(--lip) 0 0 0;
+	transform: translateY(var(--lip));
 }
 
 .example-actions .btn-3d:active::after {
@@ -3801,7 +3823,7 @@ main .btn-3d:hover {
 }
 
 main .btn-3d:hover::before {
-	inset: 1px 0 calc(var(--lip) - 1px) 0;
+	transform: translateY(1px);
 	border-color: var(--border-hover);
 }
 
@@ -3810,7 +3832,7 @@ main .btn-3d:hover::after {
 }
 
 main .btn-3d:active::before {
-	inset: var(--lip) 0 0 0;
+	transform: translateY(var(--lip));
 }
 
 main .btn-3d:active::after {
@@ -3829,7 +3851,7 @@ main .btn-3d:active::after {
 }
 
 .floating-buttons .floating-btn:hover::before {
-	inset: 1px 0 calc(var(--lip) - 1px) 0;
+	transform: translateY(1px);
 	border-color: var(--border-hover);
 }
 
@@ -3838,7 +3860,7 @@ main .btn-3d:active::after {
 }
 
 .floating-buttons .floating-btn:active::before {
-	inset: var(--lip) 0 0 0;
+	transform: translateY(var(--lip));
 }
 
 .floating-buttons .floating-btn:active::after {
