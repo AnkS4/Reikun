@@ -119,7 +119,7 @@
 	{:else if listing}
 		<p class="kgroup-sub">{t('loanwordsFromTagline', { name: listing.name })}</p>
 		{#each listing.results as r, i (`${r.id ?? r.text}-${i}`)}
-			<ResultCard result={r} {level} onPickKanji={searchWord} onSearchWord={searchWord} style={`animation-delay: ${Math.min(i, 8) * 40}ms`} />
+			<ResultCard result={r} {level} onSearchWord={searchWord} style={`animation-delay: ${Math.min(i, 8) * 40}ms`} />
 		{/each}
 		{#if pages > 1}
 			<nav class="kg-pager" aria-label={t('groupPages')}>

@@ -40,7 +40,6 @@
 	let {
 		result,
 		level,
-		onPickKanji,
 		onSearchWord,
 		active = false,
 		searched = null,
@@ -48,7 +47,6 @@
 	}: {
 		result: SearchResult;
 		level: Level;
-		onPickKanji: (c: string) => void;
 		onSearchWord?: (q: string, ref?: { seq?: string; sno?: string | null }) => void;
 		active?: boolean;
 		searched?: string | null;
@@ -123,7 +121,7 @@
 
 <div class="result-card" {style} class:kbd-active={active}>
 	<div class="result-head">
-		<span class="headword" lang="ja"><Ruby parts={result.ruby} onpick={onPickKanji} /></span>
+		<span class="headword" lang="ja"><Ruby parts={result.ruby} /></span>
 		{#if result.is_common}<span class="badge">{t('common')}</span>{/if}
 		<button
 			type="button"
@@ -227,7 +225,7 @@
 				{#if sense.examples?.length}
 					<div class="example-section">
 						{#each sense.examples as ex, i (ex.japanese + i)}
-							<ExampleRow {ex} {level} onpick={onPickKanji} />
+							<ExampleRow {ex} {level} />
 						{/each}
 					</div>
 				{/if}
@@ -238,7 +236,7 @@
 		{#if flatExamples.length}
 			<div class="example-section">
 				{#each flatExamples.slice(0, 3) as ex, i (ex.japanese + i)}
-					<ExampleRow {ex} {level} onpick={onPickKanji} />
+					<ExampleRow {ex} {level} />
 				{/each}
 			</div>
 		{/if}

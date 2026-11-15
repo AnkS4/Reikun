@@ -557,7 +557,6 @@
 			result={r}
 			{level}
 			searched={committed}
-			onPickKanji={commit}
 			onSearchWord={commit}
 			active={i === activeCard}
 			style={`animation-delay: ${Math.min(i, 8) * 40}ms`}

@@ -1,14 +1,19 @@
 <script lang="ts">
 	import { page } from '$app/state';
+	import { building } from '$app/env';
 	import { hovers, wantKanji } from '#lib/hover.svelte.ts';
 	import { clampTip } from '#lib/tooltip.ts';
 	import { t } from '#lib/i18n.svelte.ts';
-	let { char, onpick }: { char: string; onpick?: (char: string) => void } = $props();
+	let { char }: { char: string } = $props();
+	const uid = $props.id();
 
 	// The back-context this tip's link threads to the kanji page: the searched
 	// word on the home page (`?q=`), the kanji being viewed on a kanji page
 	// (path, so the chain names the page you were just on), else `from`.
+	// During prerender builds `url.searchParams` is unavailable — emit the bare
+	// path there; the client re-derives with the real context on hydration.
 	const ctxFrom = $derived.by(() => {
+		if (building) return '';
 		const u = page.url;
 		const q = u.searchParams.get('q');
 		if (q) return q;
@@ -34,6 +39,15 @@
 		hovered = true;
 	}
 	function onleave() {
+		hovered = false;
+	}
+	function onfocus(e: FocusEvent) {
+		// Keyboard parity with hover: tabbing onto the kanji opens the tip too.
+		if (anchorEl?.contains(e.target as Node)) hovered = true;
+	}
+	function onblur(e: FocusEvent) {
+		// Focus moving into the tip's own link keeps it open.
+		if (anchorEl?.contains(e.relatedTarget as Node)) return;
 		hovered = false;
 	}
 	function toggle(e: Event) {
@@ -82,7 +96,7 @@
      the window listeners exist only while this tip is showing — not once per kanji. -->
 
 {#snippet body()}
-	<span class="kanji-tip-body" role="tooltip">
+	<span class="kanji-tip-body" role="tooltip" id={uid}>
 		<span class="big">{char}</span>
 		{#if d?.meanings.length}
 			<div class="tip-meanings"><b>{t('tipMeanings')}</b> {d.meanings.join(', ')}</div>
@@ -111,20 +125,21 @@
 		tabindex="0"
 		aria-expanded={pinned}
 		aria-label={t('tipAria', { char })}
+		aria-describedby={visible ? uid : undefined}
 		bind:this={anchorEl}
 		{@attach clampTip}
 		onpointerenter={onenter}
 		onpointerleave={onleave}
+		onfocus={onfocus}
+		onblur={onblur}
 		onclick={toggle}
 		onkeydown={keyToggle}
 	>
 		{char}{#if visible}{@render body()}{/if}
 	</span>
-{:else if onpick}
-	<!-- hover data still loading/failed — keep plain-link navigation -->
+{:else}
+	<!-- hover data still loading or failed — keep plain-link navigation -->
 	<a class="kanji-tip" href={kanjiHref} onclick={() => close()} {@attach clampTip}
 		>{char}</a
 	>
-{:else}
-	{char}
 {/if}
