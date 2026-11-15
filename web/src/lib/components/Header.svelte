@@ -138,7 +138,7 @@
 	</Popover>
 	<Popover icon="languages" title={t('languageTitle')}>
 		<p class="popover-title">{t('language')}</p>
-		<div class="opt-list" role="listbox" aria-label={t('languageTitle')}>
+		<div class="opt-list opt-langs" role="listbox" aria-label={t('languageTitle')}>
 			{#each LOCALES as code (code)}
 				<button
 					type="button"
