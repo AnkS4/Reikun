@@ -153,6 +153,7 @@
 	"grade": "学年",
 	"jlpt": "JLPTレベル",
 	"kanjiSuffix": "漢字",
+	"wordsSuffix": "語",
 	"unknownGroup": "不明なグループです。漢字カードのバッジ（画数・学年・JLPT）から選んでください。",
 	"groupSubtitle": "同じ{group}の漢字を頻度順に並べています。クリックすると読み・筆順・語句を含むカードが開きます。",
 	"openKanji": "「{char}」を開く",

@@ -1673,15 +1673,18 @@ def lite_loanwords(request: Request) -> Response:
             _controls(request),
             lang,
         )
-    chips = " ".join(
-        f'<a class="chip" href="/lite/loanwords/{quote(src["lang"], safe="")}">'
-        f'{esc(src["name"])} · {src["count"]:,}</a>'
+    # Same card grid the kanji-group value pickers use: language name in the
+    # glyph slot, count + unit in the mono meta line.
+    cards_html = "".join(
+        f'<li class="kg-card"><a href="/lite/loanwords/{quote(src["lang"], safe="")}">'
+        f'<span class="kv-value">{esc(src["name"])}</span>'
+        f'<span class="kg-meta">{src["count"]:,} {esc(_t(lang, "wordsSuffix"))}</span></a></li>'
         for src in facets
     )
     body = (
-        f'<h1>{esc(_t(lang, "loanwordsTitle"))}</h1>'
-        f'<p class="muted">{esc(_t(lang, "loanwordsTagline"))}</p>'
-        f'<div class="related-row" aria-label="{esc(_t(lang, "loanwordsTitle"))}">{chips}</div>'
+        f'<h1 class="kgroup-title">{esc(_t(lang, "loanwordsTitle"))}</h1>'
+        f'<p class="kgroup-sub">{esc(_t(lang, "loanwordsTagline"))}</p>'
+        f'<ul class="kg-grid">{cards_html}</ul>'
     )
     return _page(
         _t(lang, "loanwordsTitle"),
@@ -1729,9 +1732,7 @@ def lite_loanwords_lang(
     furi = _read_furi(request)
     cards = "".join(_result_card("", result, furi, ui_lang) for result in page["results"])
 
-    nav = [
-        f'<a class="chip" href="/lite/loanwords">← {esc(_t(ui_lang, "loanwordsAll"))}</a>'
-    ]
+    nav = []
     if start > 0:
         nav.append(
             f'<a class="btn" href="{_href("/lite/loanwords/" + quote(lang, safe=""), offset=max(start - size, 0))}">'
@@ -1748,13 +1749,17 @@ def lite_loanwords_lang(
             1,
             f'<span class="kg-pager-label">{esc(_t(ui_lang, "pageOf", page=start // size + 1, pages=pages))}</span>',
         )
-    pagination = f'<nav class="kg-pager" aria-label="pages">{" ".join(nav)}</nav>'
+    pagination = (
+        f'<nav class="kg-pager" aria-label="pages">{" ".join(nav)}</nav>' if nav else ""
+    )
 
     body = (
         f'<h1 class="kgroup-title">{esc(page["name"])} '
         f'<span class="kgroup-total">{page["total"]:,}</span></h1>'
         f'<p class="kgroup-sub">{esc(_t(ui_lang, "loanwordsFromTagline", name=page["name"]))}</p>'
         f'{cards}{pagination}'
+        f'<div class="kgroup-bottom-actions">'
+        f'<a class="btn" href="/lite/loanwords">← {esc(_t(ui_lang, "loanwordsAll"))}</a></div>'
     )
     return _page(
         _t(ui_lang, "loanwordsTitle"),

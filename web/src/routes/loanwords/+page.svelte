@@ -115,7 +115,7 @@
 		<p class="error-banner"><Icon name="warning" size={16} /> {error}</p>
 	{:else if notFound}
 		<p class="notice"><Icon name="info" size={16} /> {t('loanwordsUnknownMsg')}</p>
-		<p><a class="btn-3d" href="/loanwords">← {t('loanwordsAll')}</a></p>
+		<div class="kgroup-bottom-actions"><a class="btn-3d" href="/loanwords">← {t('loanwordsAll')}</a></div>
 	{:else if listing}
 		<p class="kgroup-sub">{t('loanwordsFromTagline', { name: listing.name })}</p>
 		{#each listing.results as r, i (`${r.id ?? r.text}-${i}`)}
@@ -128,13 +128,15 @@
 				{#if pageNo + 1 < pages}<a class="btn-3d" href={pageHref(pageNo + 1)}>{t('next')}</a>{/if}
 			</nav>
 		{/if}
-		<p><a class="btn-3d" href="/loanwords">← {t('loanwordsAll')}</a></p>
+		<div class="kgroup-bottom-actions"><a class="btn-3d" href="/loanwords">← {t('loanwordsAll')}</a></div>
 	{:else if facets}
-		<div class="lw-chips">
+		<!-- Same card grid the kanji-group value pickers use: facet label in
+		     the glyph slot, count + unit in the mono meta line. -->
+		<div class="kg-grid">
 			{#each facets.sources as src (src.lang)}
-				<a class="pill lw-chip" href="/loanwords?lang={encodeURIComponent(src.lang)}">
-					<span>{src.name}</span>
-					<span class="lw-count">{src.count.toLocaleString()}</span>
+				<a class="kg-card" href="/loanwords?lang={encodeURIComponent(src.lang)}">
+					<span class="kv-value">{src.name}</span>
+					<span class="kg-meta">{src.count.toLocaleString()} {t('wordsSuffix')}</span>
 				</a>
 			{/each}
 		</div>

@@ -153,6 +153,7 @@
 	"grade": "grade",
 	"jlpt": "JLPT level",
 	"kanjiSuffix": "kanji",
+	"wordsSuffix": "words",
 	"unknownGroup": "Unknown group — pick one from any kanji card's badges (strokes, grade or JLPT).",
 	"groupSubtitle": "Every kanji with the same {group}, frequency-ranked most-common first. Click one to open its full card with readings, stroke order and words.",
 	"openKanji": "Open {char}",

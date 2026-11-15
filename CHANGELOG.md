@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **Borrowed-words browse uses the kanji-group card grid**: `/loanwords` (SPA) and `/lite/loanwords` now render each source language as a `.kg-card` — name in the facet-label slot, `{count} words` in the mono meta line — the same grid the kanji-group value pickers use, replacing the pill-chip row. The per-language listing's "all languages" link moves into the shared bottom-actions row, matching the kanji-group results page. New `wordsSuffix` i18n key across all five locales.
+
 ### Fixed
 - **Borrowed-words pages 502 on a fresh collection**: the loanwords index scroll filters `must_not is_empty lsource`, and Qdrant rejects `is_empty` on a field with no payload index ("Index required but not found") — the index was never created by ingest, so `/loanwords` and `/loanwords/{lang}` returned 502 on any collection built from scratch. `lsource` is now in ingest's keyword-index list: the index stores no values (the field holds arrays of objects) but satisfies the filter's index requirement. The index has been created on the live local and cloud collections; `/loanwords` verified returning all facets again.
 

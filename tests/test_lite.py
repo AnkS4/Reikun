@@ -459,8 +459,8 @@ def test_loanwords_facet_page(monkeypatch: pytest.MonkeyPatch) -> None:
     )
     r = client.get("/lite/loanwords")
     assert r.status_code == 200
-    assert "Borrowed words" in r.text and "Spanish · 164" in r.text
-    assert 'href="/lite/loanwords/spa"' in r.text
+    assert "Borrowed words" in r.text and "Spanish" in r.text and "164 words" in r.text
+    assert 'class="kg-card"' in r.text and 'href="/lite/loanwords/spa"' in r.text
 
 
 def test_loanwords_lang_page(monkeypatch: pytest.MonkeyPatch) -> None:

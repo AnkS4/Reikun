@@ -153,6 +153,7 @@
 	"grade": "curso",
 	"jlpt": "Nivel JLPT",
 	"kanjiSuffix": "kanji",
+	"wordsSuffix": "palabras",
 	"unknownGroup": "Grupo desconocido: elige una etiqueta de cualquier ficha de kanji (trazos, curso o JLPT).",
 	"groupSubtitle": "Todos los kanji con el mismo {group}, ordenados por frecuencia, de más común a menos común. Haz clic en uno para abrir su ficha completa con lecturas, orden de trazos y palabras.",
 	"openKanji": "Abrir {char}",

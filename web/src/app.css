@@ -2208,24 +2208,6 @@ a.kanji-tip {
 	color: var(--text-muted);
 }
 
-/* Loanwords browse — source-language facet chips (name + count). */
-.lw-chips {
-	display: flex;
-	flex-wrap: wrap;
-	gap: 0.5rem;
-	margin-top: 0.5rem;
-}
-
-.lw-chip {
-	text-decoration: none;
-}
-
-.lw-count {
-	font-family: var(--font-mono);
-	font-size: var(--fs-xs);
-	color: var(--text-faint);
-}
-
 .kanji-section {
 	margin-bottom: 1rem;
 }
@@ -2298,9 +2280,6 @@ html:lang(hi) .popover-title {
 	font-size: var(--fs-xs);
 }
 
-html:lang(ja) .lw-count,
-html:lang(mr) .lw-count,
-html:lang(hi) .lw-count,
 html:lang(ja) .caption,
 html:lang(mr) .caption,
 html:lang(hi) .caption,
