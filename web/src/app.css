@@ -879,11 +879,17 @@ ruby rt {
 
 /* Vertical option list for header popovers (theme, language): with five
    locales the horizontal segmented row overflowed, so options stack like
-   Lite's <details> menu. */
+   Lite's <details> menu. The list wears the segmented control's language —
+   soft-surface tray, 3px padding, 2px gaps, raised surface chip when
+   selected — just rotated vertical. */
 .opt-list {
 	display: flex;
 	flex-direction: column;
 	gap: 2px;
+	background: var(--surface-soft);
+	border: 1px solid var(--border-soft);
+	border-radius: var(--radius-sm);
+	padding: 3px;
 }
 
 .opt-list button {
@@ -897,7 +903,7 @@ ruby rt {
 	border: none;
 	background: transparent;
 	color: var(--text-muted);
-	padding: 0.32rem 0.55rem;
+	padding: 0.35rem 0.6rem;
 	border-radius: calc(var(--radius-sm) - 3px);
 	cursor: pointer;
 	text-align: left;
@@ -932,21 +938,18 @@ ruby rt {
 	color: var(--primary);
 }
 
+/* Hover only deepens the text, like .segmented button — the tray's
+   surface-soft fill is already the hover colour, so a background here
+   would be invisible. */
 .opt-list button:hover:not(.sel) {
 	color: var(--text);
-	background: var(--surface-soft);
 }
 
-/* Selected row: primary wash + check, not primary text — the accent stays
-   reserved for the search submit per the design language. */
+/* Selected row: the segmented control's raised surface chip + check. */
 .opt-list button.sel {
 	color: var(--text);
-	font-weight: 600;
-	background: var(--primary-light);
-}
-
-.opt-list button.sel:hover {
-	background: color-mix(in srgb, var(--primary) 16%, transparent);
+	background: var(--surface);
+	box-shadow: var(--shadow-sm);
 }
 
 /* The 17rem panel minimum was sized for horizontal segmented rows; a
