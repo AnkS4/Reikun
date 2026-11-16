@@ -134,17 +134,17 @@
 }
 
 [data-theme='dark'] {
-	/* Canvas & Surfaces — Midnight Indigo (deep aizome navy-slate, distinct from OLED black) */
-	--bg: #0f1620;
-	--surface: #1b2636;
-	--surface-soft: #233248;
-	--surface-active: #2d3f5a;
-	--hover-bg: rgba(160, 195, 240, 0.07);
+	/* Canvas & Surfaces — Neutral graphite (OLED-adjacent; replaced midnight-indigo 2026-11-16) */
+	--bg: #141414;
+	--surface: #1f1f1f;
+	--surface-soft: #292929;
+	--surface-active: #333333;
+	--hover-bg: rgba(255, 255, 255, 0.06);
 
-	/* Text hierarchy — Cool moonlit off-white / slate blue */
-	--text: #eef3fa;
-	--text-muted: #9fb0c4;
-	--text-faint: #8fa1b7;
+	/* Text hierarchy — Neutral off-white / grays */
+	--text: #ededed;
+	--text-muted: #a8a8a8;
+	--text-faint: #858585;
 
 	/* Brand & Semantic Accents — Sky indigo */
 	--primary: #7cb3f0;
@@ -166,15 +166,15 @@
 	--coral: #fb8496;
 	--coral-soft: rgba(251, 132, 150, 0.15);
 
-	/* Hairline borders — Cool blue-tinted hairlines */
-	--border: rgba(160, 195, 240, 0.12);
-	--border-soft: rgba(160, 195, 240, 0.06);
-	--border-hover: rgba(160, 195, 240, 0.22);
+	/* Hairline borders — Neutral */
+	--border: rgba(237, 237, 237, 0.11);
+	--border-soft: rgba(237, 237, 237, 0.05);
+	--border-hover: rgba(237, 237, 237, 0.18);
 
-	/* Shadows — deep navy-tinted */
-	--shadow-sm: 0 1px 3px rgba(2, 8, 20, 0.4);
-	--shadow-md: 0 4px 18px rgba(2, 8, 20, 0.5);
-	--shadow-lg: 0 12px 36px rgba(2, 8, 20, 0.65);
+	/* Shadows — neutral */
+	--shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.45);
+	--shadow-md: 0 4px 18px rgba(0, 0, 0, 0.55);
+	--shadow-lg: 0 12px 36px rgba(0, 0, 0, 0.7);
 
 	/* Conjugation chip (same names as lite) and kanji meta badges */
 	--conj: #c7d2fe;
@@ -3070,14 +3070,14 @@ html:lang(hi) .opt-list button {
 
 [data-theme='dark'] {
 	--lip: 4px;
-	--btn-base: #1a2b42;
-	--btn-base-2: #26405e;
-	--btn-base-shadow: #0e1b2b;
-	--glass-hi: rgba(180, 210, 255, 0.28);
-	--glass-lo: rgba(120, 165, 220, 0.10);
-	--glass-edge: rgba(210, 230, 255, 0.45);
-	--glass-shade: rgba(0, 0, 0, 0.38);
-	--glass-border: rgba(160, 195, 240, 0.28);
+	--btn-base: #242424;
+	--btn-base-2: #2e2e2e;
+	--btn-base-shadow: #1a1a1a;
+	--glass-hi: rgba(255, 255, 255, 0.14);
+	--glass-lo: rgba(255, 255, 255, 0.06);
+	--glass-edge: rgba(255, 255, 255, 0.24);
+	--glass-shade: rgba(0, 0, 0, 0.45);
+	--glass-border: rgba(255, 255, 255, 0.14);
 
 	--primary-btn-base: #3a6a9a;
 	--primary-btn-base-2: #4a85b8;
