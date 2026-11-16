@@ -2962,11 +2962,6 @@ html:lang(hi) .opt-list button {
 }
 
 
-/* Busy 3D buttons: show progress and keep the spinner legible on the glass face */
-.btn-3d:disabled {
-	cursor: progress;
-}
-
 /* Random-kanji button: no press dip — clicking it triggers a full page
    transition (hero collapse + results), so the 3px translateY reads as a
    jitter on top of that. */
@@ -3220,7 +3215,8 @@ html:lang(hi) .opt-list button {
 	box-shadow: inset 0 2px 4px var(--primary-glass-edge), inset 0 -2px 4px var(--primary-glass-shade);
 }
 
-/* States — hover: glass sinks to bottom (one layer), active: glass fully seated */
+/* States — hover never happens on touch; sinks half a lip at rest-hover, fully on :active */
+@media (hover: hover) {
 .btn-3d:hover,
 .btn-3d-primary:hover,
 .btn.primary:hover,
@@ -3230,15 +3226,17 @@ html:lang(hi) .opt-list button {
 .search-row .btn-3d:hover,
 .search-row .btn-3d-primary:hover,
 .search-row .popover-wrap > .btn:hover {
-	transform: translateY(var(--lip));
-	box-shadow: 0 0 0 0 var(--btn-base-shadow, var(--btn-base)), var(--shadow-sm);
+	transform: translateY(calc(var(--lip) / 2));
+	box-shadow: 0 calc(var(--lip) / 2) 0 0 var(--btn-base-shadow, var(--btn-base)), var(--shadow-sm);
 }
 
 .btn-3d-primary:hover,
 .btn.primary:hover {
-	box-shadow: 0 0 0 0 var(--primary-btn-shadow, var(--primary-btn-base)), var(--shadow-sm);
+	box-shadow: 0 calc(var(--lip) / 2) 0 0 var(--primary-btn-shadow, var(--primary-btn-base)), var(--shadow-sm);
+}
 }
 
+@media (hover: hover) {
 .btn-3d:hover::before,
 .btn-3d-primary:hover::before,
 .btn.primary:hover::before,
@@ -3248,10 +3246,12 @@ html:lang(hi) .opt-list button {
 .search-row .btn-3d:hover::before,
 .search-row .btn-3d-primary:hover::before,
 .search-row .popover-wrap > .btn:hover::before {
-	transform: translateY(var(--lip));
+	transform: translateY(calc(var(--lip) / 2));
 	border-color: var(--border-hover);
 }
+}
 
+@media (hover: hover) {
 .btn-3d:hover::after,
 .btn-3d-primary:hover::after,
 .btn.primary:hover::after,
@@ -3263,7 +3263,9 @@ html:lang(hi) .opt-list button {
 .search-row .popover-wrap > .btn:hover::after {
 	opacity: 0.8;
 }
+}
 
+@media (hover: hover) {
 .btn-3d-primary:hover::before,
 .btn.primary:hover::before {
 	border-color: var(--primary-glass-edge);
@@ -3272,6 +3274,7 @@ html:lang(hi) .opt-list button {
 .btn-3d-primary:hover::after,
 .btn.primary:hover::after {
 	opacity: 0.9;
+}
 }
 
 .btn-3d:active,
@@ -3333,8 +3336,10 @@ html:lang(hi) .opt-list button {
 	transition: transform 120ms var(--ease), box-shadow 120ms var(--ease), color 120ms var(--ease), opacity 200ms var(--ease);
 }
 
+@media (hover: hover) {
 .floating-btn:hover {
 	--fg: var(--text);
+}
 }
 
 .floating-btn.visible {
@@ -3444,6 +3449,14 @@ button, a, input, summary {
 		--text-muted: color-mix(in srgb, var(--text) 50%, var(--text-muted));
 		--text-faint: color-mix(in srgb, var(--text) 60%, var(--text-faint));
 	}
+	/* CTA flattens: solid primary, no gradient/glow (plain borders, AA) */
+	.search-submit {
+		background: var(--primary);
+		color: var(--btn-primary-text);
+		box-shadow: none;
+	}
+	.search-submit::before, .search-submit::after { display: none; }
+	.search-submit:hover { filter: none; }
 }
 
 /* ---------- Search feel & reading flow ---------- */
@@ -3714,12 +3727,14 @@ button, a, input, summary {
 }
 
 /* Hover: brighten and let the glass settle 1px. The button itself never moves. */
+@media (hover: hover) {
 .search-submit:hover {
 	filter: brightness(1.1) saturate(1.05);
 	box-shadow: inset 0 calc(var(--lip) * -1) 0 0 var(--cta-lip), 0 3px 14px -3px var(--cta-glow);
 }
 .search-submit:hover::before { transform: translateY(1px); }
 .search-submit:hover::after  { opacity: 0.8; }
+}
 
 /* Press: glass and label sink by one lip */
 .search-submit:active {
@@ -3743,28 +3758,39 @@ button, a, input, summary {
 
 /* No translateY on hover/press — the old drop-by-lip is what pushed the lip
    outside the bar's bottom edge. The glass layer does the moving instead. */
+@media (hover: hover) {
 .search-row .btn-3d:hover,
-.search-row .popover-wrap > .btn:hover,
+.search-row .popover-wrap > .btn:hover {
+	transform: none;
+	box-shadow: inset 0 calc(var(--lip) * -1) 0 0 var(--btn-base-shadow), var(--shadow-sm);
+}
+}
 .search-row .btn-3d:active,
 .search-row .popover-wrap > .btn:active {
 	transform: none;
 	box-shadow: inset 0 calc(var(--lip) * -1) 0 0 var(--btn-base-shadow), var(--shadow-sm);
 }
 
+@media (hover: hover) {
 .search-row .btn-3d:hover,
 .search-row .popover-wrap > .btn:hover {
 	filter: brightness(1.06);
 }
+}
 
+@media (hover: hover) {
 .search-row .btn-3d:hover::before,
 .search-row .popover-wrap > .btn:hover::before {
 	transform: translateY(1px);
 	border-color: var(--border-hover);
 }
+}
 
+@media (hover: hover) {
 .search-row .btn-3d:hover::after,
 .search-row .popover-wrap > .btn:hover::after {
 	opacity: 0.8;
+}
 }
 
 /* :active rules stay AFTER :hover so a pressed button wins */
@@ -3779,23 +3805,28 @@ button, a, input, summary {
 }
 
 /* ---------- Example row buttons: same behavior as search row (no translateY) ---------- */
-.example-actions .btn-3d:hover,
+@media (hover: hover) {
+.example-actions .btn-3d:hover {
+	transform: none;
+	box-shadow: inset 0 calc(var(--lip) * -1) 0 0 var(--btn-base-shadow), var(--shadow-sm);
+}
+}
 .example-actions .btn-3d:active {
 	transform: none;
 	box-shadow: inset 0 calc(var(--lip) * -1) 0 0 var(--btn-base-shadow), var(--shadow-sm);
 }
 
+@media (hover: hover) {
 .example-actions .btn-3d:hover {
 	filter: brightness(1.06);
 }
-
 .example-actions .btn-3d:hover::before {
 	transform: translateY(1px);
 	border-color: var(--border-hover);
 }
-
 .example-actions .btn-3d:hover::after {
 	opacity: 0.8;
+}
 }
 
 .example-actions .btn-3d:active::before {
@@ -3807,23 +3838,28 @@ button, a, input, summary {
 }
 
 /* ---------- Show more button: same behavior as search row (no translateY) ---------- */
-main .btn-3d:hover,
+@media (hover: hover) {
+main .btn-3d:hover {
+	transform: none;
+	box-shadow: inset 0 calc(var(--lip) * -1) 0 0 var(--btn-base-shadow), var(--shadow-sm);
+}
+}
 main .btn-3d:active {
 	transform: none;
 	box-shadow: inset 0 calc(var(--lip) * -1) 0 0 var(--btn-base-shadow), var(--shadow-sm);
 }
 
+@media (hover: hover) {
 main .btn-3d:hover {
 	filter: brightness(1.06);
 }
-
 main .btn-3d:hover::before {
 	transform: translateY(1px);
 	border-color: var(--border-hover);
 }
-
 main .btn-3d:hover::after {
 	opacity: 0.8;
+}
 }
 
 main .btn-3d:active::before {
@@ -3835,23 +3871,28 @@ main .btn-3d:active::after {
 }
 
 /* ---------- Floating buttons: same behavior as search row (no translateY) ---------- */
-.floating-buttons .floating-btn:hover,
+@media (hover: hover) {
+.floating-buttons .floating-btn:hover {
+	transform: none;
+	box-shadow: inset 0 calc(var(--lip) * -1) 0 0 var(--btn-base-shadow), var(--shadow-sm);
+}
+}
 .floating-buttons .floating-btn:active {
 	transform: none;
 	box-shadow: inset 0 calc(var(--lip) * -1) 0 0 var(--btn-base-shadow), var(--shadow-sm);
 }
 
+@media (hover: hover) {
 .floating-buttons .floating-btn:hover {
 	filter: brightness(1.06);
 }
-
 .floating-buttons .floating-btn:hover::before {
 	transform: translateY(1px);
 	border-color: var(--border-hover);
 }
-
 .floating-buttons .floating-btn:hover::after {
 	opacity: 0.8;
+}
 }
 
 .floating-buttons .floating-btn:active::before {
@@ -3874,3 +3915,36 @@ main .btn-3d:active::after {
 	}
 }
 
+
+/* Disabled/busy 3D buttons — dead: flat gray placeholder, no glass, no sink */
+.btn-3d:disabled,
+.btn-3d-primary:disabled,
+.search-submit:disabled,
+.search-row .btn-3d:disabled,
+.search-row .btn-3d-primary:disabled,
+.search-row .popover-wrap > .btn:disabled,
+.example-actions .btn-3d:disabled,
+main .btn-3d:disabled,
+.floating-buttons .floating-btn:disabled {
+	opacity: 0.5;
+	cursor: progress;
+	transform: none;
+	filter: saturate(.7);
+	background: var(--surface-soft);
+	background-image: none;
+	border: 1px solid var(--border-soft);
+	color: var(--text-muted);
+	box-shadow: none;
+}
+
+.btn-3d:disabled::before, .btn-3d:disabled::after,
+.btn-3d-primary:disabled::before, .btn-3d-primary:disabled::after,
+.search-submit:disabled::before, .search-submit:disabled::after,
+.search-row .btn-3d:disabled::before, .search-row .btn-3d:disabled::after,
+.search-row .btn-3d-primary:disabled::before, .search-row .btn-3d-primary:disabled::after,
+.search-row .popover-wrap > .btn:disabled::before, .search-row .popover-wrap > .btn:disabled::after,
+.example-actions .btn-3d:disabled::before, .example-actions .btn-3d:disabled::after,
+main .btn-3d:disabled::before, main .btn-3d:disabled::after,
+.floating-buttons .floating-btn:disabled::before, .floating-buttons .floating-btn:disabled::after {
+	display: none;
+}
