@@ -75,7 +75,7 @@ html{font-family:var(--font);-webkit-text-size-adjust:100%;scroll-behavior:smoot
 scrollbar-gutter:stable}
 body{margin:0 auto;padding:1.25rem 1.25rem var(--space-8);max-width:50rem;min-height:100vh;min-height:100dvh;
 display:flex;flex-direction:column;background:var(--bg);color:var(--text);
-font:16px/1.6 var(--font);-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;
+font:16px/1.8 var(--font);-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;
 text-rendering:optimizeLegibility}
 [lang=ja],ruby rt{font-family:var(--font-japanese)}
 [lang=mr],[lang=hi]{font-family:var(--font-devanagari)}
@@ -273,7 +273,7 @@ margin:0 var(--space-1) var(--space-1) 0;text-decoration:none}
 .entry h2 .badge{background:var(--ok-soft);border-color:transparent;color:var(--ok)}
 .example-section{margin-top:.85rem;border-top:1px solid var(--border-soft);padding-top:.85rem}
 .example{margin:var(--space-3) 0;padding:var(--space-2) 0;font-size:var(--fs-lg)}
-.example p{margin:0;font-weight:500;line-height:1.6}
+.example p{margin:0;font-weight:500;line-height:1.8}
 .example p+p{margin:var(--space-1) 0 0;font-size:var(--fs-md);font-weight:400;line-height:1.45;color:var(--text-muted)}
 /* Related words — mono-micro-label chips sharing kanji with the headword,
    mirroring the SPA's .related-row / .related-pill (rendered as links in Lite). */

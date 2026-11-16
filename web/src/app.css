@@ -299,7 +299,7 @@ body {
 	margin: 0;
 	background: var(--bg);
 	color: var(--text);
-	line-height: 1.6;
+	line-height: 1.8;
 	-webkit-font-smoothing: antialiased;
 	-moz-osx-font-smoothing: grayscale;
 	text-rendering: optimizeLegibility;
@@ -1761,7 +1761,7 @@ a.kanji-tip {
 	margin: 0;
 	font-size: var(--fs-lg);
 	font-weight: 500;
-	line-height: 1.6;
+	line-height: 1.8;
 	color: var(--text);
 }
 
@@ -1789,7 +1789,7 @@ a.kanji-tip {
 	background: var(--surface-soft);
 	border-radius: 0 var(--radius-md) var(--radius-md) 0;
 	font-size: var(--fs-base);
-	line-height: 1.6;
+	line-height: 1.8;
 }
 
 .explain-out p:first-child, .explain-out ul:first-child {
@@ -1819,7 +1819,7 @@ a.kanji-tip {
 	font-family: var(--font);
 	white-space: pre-wrap;
 	margin: 0.2rem 0;
-	line-height: 1.6;
+	line-height: 1.8;
 }
 
 .caption {
