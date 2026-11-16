@@ -23,7 +23,19 @@
 	}
 
 	async function share() {
-		// Always copy the URL to clipboard on desktop
+		// Native share sheet when the browser/OS provides one (typically mobile);
+		// clipboard everywhere else. Same canonical ?q= link either way.
+		if (typeof navigator.share === 'function') {
+			try {
+				await navigator.share({ title: document.title, text: query, url });
+				return; // the OS announces the outcome; nothing to flash
+			} catch (e) {
+				// User cancelled the sheet — not an error, do not copy instead.
+				if (e instanceof DOMException && e.name === 'AbortError') return;
+				// Anything else (e.g., disallowed by policy): fall through to clipboard.
+			}
+		}
+		// Desktop path: always copy the URL to the clipboard
 		try {
 			await navigator.clipboard.writeText(url);
 			flash();
