@@ -206,7 +206,7 @@ border:1px solid var(--border-soft);border-radius:var(--radius-md);
 padding:.55rem .95rem;font-size:var(--fs-md);font-weight:500;background:var(--surface-soft);
 ;text-decoration:none;white-space:nowrap;color:var(--text);
 }
-.furi.off{opacity:.55;text-decoration:line-through;text-decoration-thickness:2px;color:var(--text-muted)}
+.furi.off{opacity:.55;color:var(--text-muted)}
 .pills{display:flex;flex-wrap:wrap;gap:.45rem;margin:1.125rem 0 0;padding:0;justify-content:center}
 .pill{display:inline-flex;align-items:center;gap:.35rem;border:1px solid var(--border-soft);
 border-radius:var(--radius-pill);padding:.375rem .85rem;text-decoration:none;font-size:var(--fs-md);

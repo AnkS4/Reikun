@@ -976,11 +976,6 @@ ruby rt {
 	opacity: 0.55;
 }
 
-.furi-toggle.off .furi-kana {
-	text-decoration: line-through;
-	text-decoration-thickness: 2px;
-}
-
 /* Level badge indicator inside buttons */
 .level-indicator {
 	font-family: var(--font-mono);

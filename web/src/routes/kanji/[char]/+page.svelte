@@ -126,7 +126,7 @@
 		aria-pressed={furigana.on}
 		onclick={() => furigana.toggle()}
 	>
-		<span class="furi-glyph" aria-hidden="true">あ</span>
+		<span class="furi-kana" aria-hidden="true">あ</span>
 	</button>
 	<Popover label={level} title={t('jlptTitle')} buttonClass="btn-3d jlpt-trigger">
 		<p class="popover-title">{t('jlptLevel')}</p>
