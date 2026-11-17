@@ -80,7 +80,7 @@
 								title={m.tip}
 							>
 								{#if m.group.by === 'strokes'}
-									<Icon name="pencil" size={12} />
+									<Icon name="pen-line" size={12} />
 								{:else if m.group.by === 'grade'}
 									<Icon name="school" size={12} />
 								{:else if m.group.by === 'jlpt'}

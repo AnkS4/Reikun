@@ -2,7 +2,7 @@
 """Build the Lite control-icon font (app/static/lite-icons.woff2).
 
 The nine glyphs are the SPA's Lucide icons (sun, moon, layout-dashboard,
-languages, database) plus the browse-tile icons (pencil, school,
+languages, database) plus the browse-tile icons (pen-line, school,
 award, import), traced from their 24x24 stroke SVG paths: each path is
 stroked (width 2, round caps/joins — matching the Lucide stroke attributes),
 the stroke outlines are unioned, converted to quadratic outlines and embedded
@@ -70,8 +70,13 @@ _ICONS = {
         "M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5",
         "M3 12c0 1.66 4 3 9 3s9-1.34 9-3",
     ),
-    # pencil — browse tile: kanji by stroke count
-    "F101": ("M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z",),
+    # pen-line — browse tile: kanji by stroke count
+    "F101": (
+        "M13 21h8",  # underline
+        # nib (single Lucide path, wrapped at whitespace)
+        "M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 "
+        "4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z",
+    ),
     # school (graduation cap) — browse tile: kanji by school grade
     "F102": (
         "M22 10 12 5 2 10l10 5 10-5z",

@@ -196,7 +196,7 @@
 			<p class="kgroup-sub">{t('pickGroupSub')}</p>
 			<div class="browse-grid pick-grid">
 				<a class="browse-tile" href="/kanji-group?by=strokes">
-					<span class="browse-icon"><Icon name="pencil" size={18} /></span>
+					<span class="browse-icon"><Icon name="pen-line" size={18} /></span>
 					<span class="browse-name">{t('browseStrokes')}</span>
 					<span class="browse-desc">{t('browseStrokesDesc')}</span>
 				</a>

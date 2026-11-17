@@ -611,7 +611,7 @@
 		<p class="popover-title">{t('browse')}</p>
 		<div class="browse-grid">
 			<a class="browse-tile" href="/kanji-group?by=strokes">
-				<span class="browse-icon"><Icon name="pencil" size={18} /></span>
+				<span class="browse-icon"><Icon name="pen-line" size={18} /></span>
 				<span class="browse-name">{t('browseStrokes')}</span>
 				<span class="browse-desc">{t('browseStrokesDesc')}</span>
 			</a>

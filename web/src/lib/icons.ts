@@ -52,7 +52,7 @@ export const icons = {
 	close: '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
 	'arrow-up': '<path d="m5 12 7-7 7 7"/><path d="M12 19V5"/>',
 	'arrow-right': '<path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>',
-	pencil: '<path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>',
+	'pen-line': '<path d="M13 21h8"/><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/>',
 	'book-open':
 		'<path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>',
 	feather:

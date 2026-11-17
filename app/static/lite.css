@@ -116,7 +116,7 @@ width:2rem;height:2rem;border-radius:999px;color:var(--text-muted)}
 /* Control/browse glyphs come from a tiny icon font (9 glyphs, ~1.4 kB,
    served from /lite/static/lite-icons.woff2 — a real file, since some
    hardened browsers drop data: URI fonts) — the SPA's own Lucide icons
-   (sun, moon, layout-dashboard, languages, database, pencil, school,
+   (sun, moon, layout-dashboard, languages, database, pen-line, school,
    award, import) traced to outlines by scripts/build_lite_icons.py (Lucide is
    ISC-licensed). A font renders everywhere SVG is disabled
    (svg.disabled blanks inline SVG for exactly the no-JS visitors lite
@@ -131,7 +131,7 @@ font:.94rem/1 'reikun-icons',sans-serif}
 .icon-full::before{content:"\f3f9"}
 .icon-lang::before{content:"\f658"}
 .icon-db::before{content:"\f8c4"}
-.icon-pencil::before{content:"\f101"}
+.icon-pen-line::before{content:"\f101"}
 .icon-school::before{content:"\f102"}
 .icon-award::before{content:"\f103"}
 .icon-import::before{content:"\f104"}
