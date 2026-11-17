@@ -442,7 +442,7 @@ ruby rt {
 }
 
 .hero .tagline {
-	font-size: var(--fs-lg);
+	font-size: calc(var(--fs-lg) + 0.05rem);
 	color: var(--text-muted);
 	margin: var(--space-3) auto 0;
 	max-width: 38rem;
@@ -942,10 +942,13 @@ ruby rt {
    reads more consistently than per-script optical scaling. */
 
 /* Language names are proper nouns, not mono data labels — the proportional
-   UI stack gives each script its designed face (Inter / Noto Sans JP /
-   Nirmala UI) instead of mono Latin next to proportional CJK. */
+   UI stack gives each script its designed face (IBM Plex Sans / IBM
+   Plex Sans JP / IBM Plex Sans Devanagari) instead of mono Latin next to proportional CJK.
+   Both layouts pin line-height to the same value, so the slightly larger
+   endonyms stay on even rows. */
 .opt-langs button {
 	font-family: var(--font);
+	font-size: var(--fs-md);
 }
 
 /* Row height must not depend on the script's font metrics: a proportional
@@ -2282,80 +2285,6 @@ a.kanji-tip {
 	color: var(--text-faint);
 	margin: 0 0 0.35rem;
 	font-weight: 500;
-}
-
-/* CJK and Indic glyphs sit lower than Latin caps at the same size — nudge
-   the section titles up a step in those locales. */
-html:lang(ja) .kanji-section-title,
-html:lang(mr) .kanji-section-title,
-html:lang(hi) .kanji-section-title {
-	font-size: var(--fs-base);
-}
-
-/* Same nudge for every other localized title and micro-label: page h1s
-   (UA default 2em → 2.2em), the hero tagline, and the mono labels —
-   each stepped up one size in the type scale. */
-html:lang(ja) .kgroup-title,
-html:lang(mr) .kgroup-title,
-html:lang(hi) .kgroup-title,
-html:lang(ja) .conj-page-title,
-html:lang(mr) .conj-page-title,
-html:lang(hi) .conj-page-title {
-	font-size: 2.2em;
-}
-
-html:lang(ja) .tagline,
-html:lang(mr) .tagline,
-html:lang(hi) .tagline {
-	font-size: var(--fs-xl);
-}
-
-html:lang(ja) .seg-title,
-html:lang(mr) .seg-title,
-html:lang(hi) .seg-title,
-html:lang(ja) .tip-label,
-html:lang(mr) .tip-label,
-html:lang(hi) .tip-label,
-html:lang(ja) .variant-note,
-html:lang(mr) .variant-note,
-html:lang(hi) .variant-note,
-html:lang(ja) .badge,
-html:lang(mr) .badge,
-html:lang(hi) .badge,
-html:lang(ja) .meta-badge,
-html:lang(mr) .meta-badge,
-html:lang(hi) .meta-badge,
-html:lang(ja) .kg-meta,
-html:lang(mr) .kg-meta,
-html:lang(hi) .kg-meta,
-html:lang(ja) .conj-count,
-html:lang(mr) .conj-count,
-html:lang(hi) .conj-count,
-html:lang(ja) .popover-title,
-html:lang(mr) .popover-title,
-html:lang(hi) .popover-title {
-	font-size: var(--fs-xs);
-}
-
-html:lang(ja) .caption,
-html:lang(mr) .caption,
-html:lang(hi) .caption,
-html:lang(ja) .stats-meta,
-html:lang(mr) .stats-meta,
-html:lang(hi) .stats-meta {
-	font-size: var(--fs-sm);
-}
-
-html:lang(ja) .kg-pager-label,
-html:lang(mr) .kg-pager-label,
-html:lang(hi) .kg-pager-label,
-html:lang(ja) .stats-line,
-html:lang(mr) .stats-line,
-html:lang(hi) .stats-line,
-html:lang(ja) .opt-list button,
-html:lang(mr) .opt-list button,
-html:lang(hi) .opt-list button {
-	font-size: var(--fs-base);
 }
 
 .meanings {
