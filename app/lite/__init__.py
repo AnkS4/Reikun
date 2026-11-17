@@ -140,11 +140,11 @@ _FURI_COOKIE = "lite_furi"
 _THEME_COOKIE = "lite_theme"
 _RECENT_COOKIE = "lite_recent"
 _LANG_COOKIE = "lite_lang"
-_LANGS = ("en", "ja", "es", "mr", "hi")
+_LANGS = ("en", "es", "hi", "ja", "mr")
 # Endonyms — a language is always named in itself, never translated.
 _LANG_NAMES = {
-    "en": "English", "ja": "日本語", "es": "Español",
-    "mr": "मराठी", "hi": "हिन्दी",
+    "en": "English", "es": "Español", "hi": "हिन्दी",
+    "ja": "日本語", "mr": "मराठी",
 }
 _COOKIE_MAX_AGE = 2_592_000
 MAX_RECENT = 8

@@ -14,27 +14,27 @@
 import { browser } from '$app/env';
 import { safeStorage } from './storage.ts';
 import en from './i18n/en.json';
-import ja from './i18n/ja.json';
 import es from './i18n/es.json';
-import mr from './i18n/mr.json';
 import hi from './i18n/hi.json';
+import ja from './i18n/ja.json';
+import mr from './i18n/mr.json';
 
-export const LOCALES = ['en', 'ja', 'es', 'mr', 'hi'] as const;
+export const LOCALES = ['en', 'es', 'hi', 'ja', 'mr'] as const;
 export type Locale = (typeof LOCALES)[number];
 export const LOCALE_NAMES: Record<Locale, string> = {
 	en: 'English',
-	ja: '日本語',
 	es: 'Español',
-	mr: 'मराठी',
-	hi: 'हिन्दी'
+	hi: 'हिन्दी',
+	ja: '日本語',
+	mr: 'मराठी'
 };
 /** BCP 47 tags used for locale-aware number formatting. */
 export const LOCALE_TAGS: Record<Locale, string> = {
 	en: 'en',
-	ja: 'ja-JP',
 	es: 'es',
-	mr: 'mr-IN',
-	hi: 'hi-IN'
+	hi: 'hi-IN',
+	ja: 'ja-JP',
+	mr: 'mr-IN'
 };
 
 const KEY = 'reikun-locale';
