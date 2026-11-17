@@ -3968,3 +3968,12 @@ main .btn-3d:disabled::before, main .btn-3d:disabled::after,
 .floating-buttons .floating-btn:disabled::before, .floating-buttons .floating-btn:disabled::after {
 	display: none;
 }
+
+/* ---------- Devanagari: no tracking ----------
+   The shirorekha (headstroke) is drawn per glyph, so any letter-spacing
+   inserts gaps that split it. Mono/uppercase label styles add tracking for
+   Latin — strip it for the Devanagari locales (search: letter-spacing). */
+:lang(mr) *,
+:lang(hi) * {
+	letter-spacing: normal;
+}
