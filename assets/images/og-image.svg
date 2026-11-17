@@ -1,7 +1,7 @@
 <svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg">
 	<!-- Reikun OG image — 1200×630 (Open Graph / Twitter card)
 	     Brand lockup mirrors the homepage hero: the emblem sits inline with
-	     "Reikun (例訓)" — "Reikun" in Space Grotesk 500, the kanji in Noto Sans
+	     "Reikun (例訓)" — "Reikun" in IBM Plex Sans 500, the kanji in IBM Plex Sans JP
 	     JP 400 at 0.72em in the muted ink, exactly as .hero-heading renders it —
 	     the brand subtext rides the mono badge pill (.hero-badge-tag), and the
 	     feature lines are centred beneath for a symmetric frame. Palette:
@@ -12,7 +12,7 @@
 
 	<!-- Subtext badge (homepage .hero-badge-tag: mono, uppercase, cream pill) -->
 	<rect x="162" y="142" width="876" height="48" rx="24" fill="#EFECE1"/>
-	<text x="600" y="175" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-weight="500" font-size="21" letter-spacing="4" fill="#665F56">SEMANTIC JAPANESE DICTIONARY &amp; READING ASSISTANT</text>
+	<text x="600" y="175" text-anchor="middle" font-family="'IBM Plex Mono', monospace" font-weight="500" font-size="21" letter-spacing="4" fill="#665F56">SEMANTIC JAPANESE DICTIONARY &amp; READING ASSISTANT</text>
 
 	<!-- Emblem (assets/emblems/emblem.svg, 248→128, 1.1em of the title like .brand-icon) -->
 	<g transform="translate(216 204) scale(0.516)" fill="none">
@@ -25,7 +25,7 @@
 	</g>
 
 	<!-- Wordmark + kanji, inline like the homepage h1 (366px + 247px) -->
-	<text x="370" y="310" font-family="'Space Grotesk', sans-serif" font-weight="500" font-size="118" letter-spacing="-3" fill="#19262C">Reikun<tspan x="736" font-family="'Noto Sans JP', sans-serif" font-weight="400" font-size="85" letter-spacing="0" fill="#665F56"> (例訓)</tspan></text>
+	<text x="370" y="310" font-family="'IBM Plex Sans', sans-serif" font-weight="500" font-size="118" letter-spacing="-3" fill="#19262C">Reikun<tspan x="736" font-family="'IBM Plex Sans JP', sans-serif" font-weight="400" font-size="85" letter-spacing="0" fill="#665F56"> (例訓)</tspan></text>
 
 	<!-- Feature lines -->
 	<text x="600" y="427" text-anchor="middle" font-family="'Inter', sans-serif" font-weight="400" font-size="27" fill="#665F56">English or Japanese search<tspan fill="#EF3C19"> · </tspan>furigana sentence breakdowns</text>
