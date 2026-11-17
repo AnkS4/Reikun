@@ -46,27 +46,22 @@
 		<link rel="icon" type="image/png" sizes="16x16" href="%sveltekit.assets%/favicons/favicon-16.png" />
 		<link rel="apple-touch-icon" sizes="180x180" href="%sveltekit.assets%/icons/apple-touch-icon.png" />
 		<link rel="manifest" href="%sveltekit.assets%/site.webmanifest" />
-		<link rel="preconnect" href="https://fonts.googleapis.com" />
-		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-		<!-- Only the weights app.css uses (Space Grotesk 500, Inter 400/500/600,
-		     JetBrains Mono 400/500, Noto Sans JP + Devanagari 400/500). Loaded without blocking
-		     first paint: media=print until it arrives, then swapped to all. -->
+		<!-- Self-hosted fonts — IBM/plex upstream archives only, no
+		     Google dependencies: tools/fetch-fonts.mjs mirrors them into
+		     static/fonts/. Selection: IBM Plex Sans 400/500/600 (body and
+		     display), IBM Plex Mono 400/500 (labels), IBM Plex Sans JP
+		     400/500/600 (Japanese), IBM Plex Sans Devanagari 400/500/600
+		     (Devanagari). unicode-range subsets keep downloads lazy per
+		     script. Loaded without blocking first paint. -->
+		<link rel="preload" href="%sveltekit.assets%/fonts/fonts.css" as="style" />
 		<link
-			rel="preload"
-			href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Noto+Sans+JP:wght@400;500&family=Noto+Sans+Devanagari:wght@400;500&display=swap"
-			as="style"
-		/>
-		<link
-			href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Noto+Sans+JP:wght@400;500&family=Noto+Sans+Devanagari:wght@400;500&display=swap"
+			href="%sveltekit.assets%/fonts/fonts.css"
 			rel="stylesheet"
 			media="print"
 			onload="this.media='all'"
 		/>
 		<noscript>
-			<link
-				href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Noto+Sans+JP:wght@400;500&family=Noto+Sans+Devanagari:wght@400;500&display=swap"
-				rel="stylesheet"
-			/>
+			<link href="%sveltekit.assets%/fonts/fonts.css" rel="stylesheet" />
 		</noscript>
 		<script>
 			// Apply persisted theme before first paint to avoid a flash.

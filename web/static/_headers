@@ -3,6 +3,14 @@
 /_app/immutable/*
   Cache-Control: public, max-age=31536000, immutable
 
+# Self-hosted fonts: woff2 filenames carry a content hash — immutable. The
+# manifest itself is unhashed, so keep it short-lived.
+/fonts/files/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/fonts/fonts.css
+  Cache-Control: public, max-age=3600
+
 /*
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin

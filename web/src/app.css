@@ -58,16 +58,21 @@
 	--tip-w: 290px;
 	/* Script stacks trail the Latin faces so ja/mr/hi glyphs resolve to a
 	   proper font instead of an arbitrary system fallback at a smaller
-	   effective size — same fix as .kanji-section-title, applied globally. */
-	--font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
-		var(--font-japanese), var(--font-devanagari), sans-serif;
-	--font-display: 'Space Grotesk', 'Inter', -apple-system, BlinkMacSystemFont,
-		'Segoe UI', Roboto, var(--font-japanese), var(--font-devanagari), sans-serif;
-	--font-japanese: 'Noto Sans JP', 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Yu Gothic', sans-serif;
-	--font-devanagari: 'Nirmala UI', 'Noto Sans Devanagari', 'Mangal', 'Lohit Devanagari',
-		system-ui, sans-serif;
-	--font-mono: 'JetBrains Mono', 'DM Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
-		var(--font-japanese), var(--font-devanagari), monospace;
+	   effective size — same fix as .kanji-section-title, applied globally.
+	   Generic families (sans-serif, -apple-system, ui-monospace, …) must only
+	   appear at the END of a stack: mid-list they match per-glyph through
+	   system fallback and would steal ja/mr/hi text before the script faces
+	   are reached. The script vars therefore carry no trailing generics. */
+	--font: 'IBM Plex Sans', 'Segoe UI', Roboto,
+		var(--font-japanese), var(--font-devanagari),
+		-apple-system, BlinkMacSystemFont, sans-serif;
+	--font-display: 'IBM Plex Sans', 'Segoe UI', Roboto,
+		var(--font-japanese), var(--font-devanagari),
+		-apple-system, BlinkMacSystemFont, sans-serif;
+	--font-japanese: 'IBM Plex Sans JP', 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Yu Gothic';
+	--font-devanagari: 'IBM Plex Sans Devanagari', 'Nirmala UI', 'Mangal', 'Lohit Devanagari';
+	--font-mono: 'IBM Plex Mono', 'DM Mono', SFMono-Regular, Menlo, Monaco, Consolas,
+		var(--font-japanese), var(--font-devanagari), ui-monospace, monospace;
 
 	/* Motion: one easing for all transitions (was a mix of ease / two cubics). */
 	--ease: cubic-bezier(0.16, 1, 0.3, 1);
