@@ -627,6 +627,12 @@ export interface components {
             /** Tip */
             tip: string;
             group?: components["schemas"]["MetaBadgeGroup"] | null;
+            /** Key */
+            key?: string | null;
+            /** N */
+            n?: number | null;
+            /** Level */
+            level?: string | null;
         };
         /**
          * MetaBadgeGroup

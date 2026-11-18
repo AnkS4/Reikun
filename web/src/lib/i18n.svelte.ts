@@ -37,6 +37,12 @@ export const LOCALE_TAGS: Record<Locale, string> = {
 	mr: 'mr-IN'
 };
 
+/** Locale-aware number rendering (Devanagari digits and Indian grouping
+ *  for mr/hi, matching Intl with the LOCALE_TAGS). */
+export function formatNumber(value: number): string {
+	return new Intl.NumberFormat(LOCALE_TAGS[i18n.locale]).format(value);
+}
+
 const KEY = 'reikun-locale';
 /**
  * Shared with the lite UI (app/lite.py's `lite_lang` cookie): cookies are not

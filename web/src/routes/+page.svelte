@@ -17,7 +17,7 @@
 	import { loadRecent, pushRecent, clearRecent } from '#lib/recent.ts';
 	import { furigana } from '#lib/furigana.svelte.ts';
 	import { typewriter } from '#lib/typewriter.svelte.ts';
-	import { t } from '#lib/i18n.svelte.ts';
+	import { formatNumber, t } from '#lib/i18n.svelte.ts';
 	import { BRAND_TITLE } from '#lib/brand.ts';
 
 	// Floating button state
@@ -115,10 +115,10 @@
 		meta?.embed_ms == null
 			? ''
 			: [
-					meta.rewrite_ms ? t('phaseRewrite', { ms: meta.rewrite_ms }) : '',
-					t('phaseEmbed', { ms: meta.embed_ms }),
-					t('phaseRetrieve', { ms: meta.retrieve_ms ?? 0 }),
-					meta.segment_ms != null ? t('phaseParse', { ms: meta.segment_ms }) : '',
+					meta.rewrite_ms ? t('phaseRewrite', { ms: formatNumber(meta.rewrite_ms) }) : '',
+					t('phaseEmbed', { ms: formatNumber(meta.embed_ms) }),
+					t('phaseRetrieve', { ms: formatNumber(meta.retrieve_ms ?? 0) }),
+					meta.segment_ms != null ? t('phaseParse', { ms: formatNumber(meta.segment_ms) }) : '',
 				]
 					.filter(Boolean)
 					.join(' · '),
@@ -163,7 +163,7 @@
 				: resp
 					? resp.results.length === 1
 						? t('resultsForOne', { query: committed })
-						: t('resultsForMany', { count: resp.results.length, query: committed })
+						: t('resultsForMany', { count: formatNumber(resp.results.length), query: committed })
 					: ''
 	);
 	// The getter lets the typewriter stop entirely once results take over the
@@ -336,7 +336,7 @@
 		}
 	}
 
-	function showMore() {
+	function showNext() {
 		// wantResults is part of urlKey — the effect refires with the larger n.
 		wantResults = Math.min(wantResults + PAGE_RESULTS, MAX_RESULTS);
 	}
@@ -489,7 +489,7 @@
 	{/if}
 
 	<div class="stats-line">
-		<span class="stats-count">{resp.results.length === 1 ? t('entryOne') : t('entryMany', { count: resp.results.length })}</span>
+		<span class="stats-count">{resp.results.length === 1 ? t('entryOne') : t('entryMany', { count: formatNumber(resp.results.length) })}</span>
 		<Feedback kind="search" refId={resp.search_id ?? null} query={committed} />
 		{#if committed}<ShareButton query={committed} />{/if}
 		<span class="stats-details">
@@ -510,7 +510,7 @@
 						? ` · ${meta.route}`
 						: ''}</span
 				>
-				<span class="stats-meta"><span class="stats-label">{t('total')}</span>{resp.latency_ms} ms</span>
+				<span class="stats-meta"><span class="stats-label">{t('total')}</span>{formatNumber(resp.latency_ms)} ms</span>
 				{#if meta?.cached}
 					<span class="stats-meta"><span class="stats-label">{t('cache')}</span>{t('cacheHit')}</span>
 				{:else if phases}
@@ -536,9 +536,9 @@
 			<div class="warning">
 				<Icon name="warning" size={16} />
 				{#if meta.too_long === MAX_JA_QUERY_CHARS}
-					{t('tooLongJa', { shown, max: MAX_JA_QUERY_CHARS })}
+					{t('tooLongJa', { shown, max: formatNumber(MAX_JA_QUERY_CHARS) })}
 				{:else}
-					{t('tooLong', { shown, max: MAX_QUERY_CHARS })}
+					{t('tooLong', { shown, max: formatNumber(MAX_QUERY_CHARS) })}
 				{/if}
 			</div>
 		{:else if kanjiChar}
@@ -567,10 +567,10 @@
 		<button
 			type="button"
 			class="btn-3d"
-			onclick={showMore}
+			onclick={showNext}
 			title={t('showMoreTitle', { max: MAX_RESULTS })}
 		>
-			<Icon name="expand-more" size={12} /> {t('showMore', { count: PAGE_RESULTS })}
+			<Icon name="expand-more" size={12} /> {t('showNext', { count: PAGE_RESULTS })}
 		</button>
 	{/if}
 {:else if !searching && !error}
@@ -622,7 +622,7 @@
 			</a>
 			<a class="browse-tile" href="/kanji-group?by=jlpt">
 				<span class="browse-icon"><Icon name="award" size={18} /></span>
-				<span class="browse-name">{t('browseJlpt')}</span>
+				<span class="browse-name">{t('jlptLevel')}</span>
 				<span class="browse-desc">{t('browseJlptDesc')}</span>
 			</a>
 			<a class="browse-tile" href="/loanwords">

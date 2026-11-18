@@ -1,29 +1,27 @@
-<script module lang="ts">
-	// Reading categories — label, furigana, hover explanation
-	const READING_TYPES = [
-		{
-			key: 'on' as const,
-			text: '音読み',
-			reading: 'おんよみ',
-			tipKey: 'onTip' as const
-		},
-		{
-			key: 'kun' as const,
-			text: '訓読み',
-			reading: 'くんよみ',
-			tipKey: 'kunTip' as const
-		}
-	];
-</script>
-
 <script lang="ts">
 	import { ApiError, apiKanjiCard, type KanjiCard as Card } from '#lib/api.ts';
 	import { clampTip } from '#lib/tooltip.ts';
 	import Ruby from './Ruby.svelte';
 	import StrokeSvg from './StrokeSvg.svelte';
 	import Icon from './Icon.svelte';
-	import { t } from '#lib/i18n.svelte.ts';
+	import { formatNumber, i18n, t } from '#lib/i18n.svelte.ts';
 	import { furigana } from '#lib/furigana.svelte.ts';
+	// Reading categories — label, furigana, hover explanation. Text comes from
+	// the shared tables so the chips localize with the UI language.
+	const READING_TYPES = $derived([
+		{
+			key: 'on' as const,
+			text: t('readingOn'),
+			reading: 'おんよみ',
+			tipKey: 'onTip' as const
+		},
+		{
+			key: 'kun' as const,
+			text: t('readingKun'),
+			reading: 'くんよみ',
+			tipKey: 'kunTip' as const
+		}
+	]);
 	interface InitialData {
 		card: Card | null;
 		missing: boolean;
@@ -35,6 +33,14 @@
 	let fetchedCard = $state.raw<Card | null>(null);
 	let fetchedMissing = $state(false);
 	let fetchedError = $state('');
+
+	// Meta badges come from the API with a structured `key` so they render in
+	// the UI language; `label` stays a fallback for un-keyed consumers.
+	const badgeLabel = (m: Card['meta'][number]): string => {
+		if (!m.key) return m.label;
+		if (m.key === 'jlptBadge') return t('jlptBadge', { level: m.level ?? '' });
+		return t(m.key as 'strokesCount' | 'gradeCount' | 'freq', { n: formatNumber(m.n ?? 0) });
+	};
 
 	// When the route's load() already fetched the card (SSR / client
 	// navigation), use it directly — no client fetch, no loading flash.
@@ -86,11 +92,11 @@
 								{:else if m.group.by === 'jlpt'}
 									<Icon name="award" size={12} />
 								{/if}
-								<span>{m.label}</span>
+								<span>{badgeLabel(m)}</span>
 								<Icon name="arrow-right" size={12} />
 							</a>
 						{:else}
-							<span class="meta-badge" title={m.tip}>{m.label}</span>
+							<span class="meta-badge" title={m.tip}>{badgeLabel(m)}</span>
 						{/if}
 					{/each}
 				</div>
@@ -117,7 +123,7 @@
 						<div class="reading-row">
 							<!-- svelte-ignore a11y_no_noninteractive_tabindex -->
 							<span class="rlabel kanji-tip" tabindex="0" {@attach clampTip}
-								>{#if furigana.on}<ruby>{rt.text}<rt>{rt.reading}</rt></ruby>{:else}{rt.text}{/if}<span
+								>{#if furigana.on && i18n.locale === 'ja'}<ruby>{rt.text}<rt>{rt.reading}</rt></ruby>{:else}{rt.text}{/if}<span
 									class="kanji-tip-body">{t(rt.tipKey)}</span
 								></span
 							>

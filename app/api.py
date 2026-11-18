@@ -342,6 +342,12 @@ class MetaBadge(BaseModel):
     label: str
     tip: str
     group: MetaBadgeGroup | None = None
+    # Localization-grade discriminator for the frontend — both variants render
+    # the badge from `key` + `n` (formatted per locale) instead of the baked
+    # English `label`, which stays as a fallback for un-keyed consumers.
+    key: str | None = None
+    n: int | None = None
+    level: str | None = None
 
 
 class StrokeNumber(BaseModel):

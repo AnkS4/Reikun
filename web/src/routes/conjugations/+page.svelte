@@ -80,7 +80,7 @@
 	});
 
 	const rows = $derived(stateRows ?? fetchedRows ?? []);
-	const heading = $derived(word || fetchedHeadword || t('conjugationFallback'));
+	const heading = $derived(word || fetchedHeadword || t('conjugations'));
 	const displayReading = $derived(reading && reading !== word ? reading : '');
 </script>
 
@@ -101,7 +101,7 @@
 		<h1 class="conj-page-title" lang="ja">
 			{heading}
 			{#if displayReading}<span class="conj-page-reading">【{displayReading}】</span>{/if}
-			<span class="conj-page-label">{t('conjugationsLabel')}</span>
+			<span class="conj-page-label">{t('conjugations')}</span>
 			{#if rows.length}<span class="kgroup-total">{rows.length}</span>{/if}
 		</h1>
 		<p class="conj-page-sub">

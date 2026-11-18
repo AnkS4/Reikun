@@ -24,6 +24,26 @@ _LOCALES = tuple(
 )
 _I18N: dict[str, dict[str, str]] = {lang: _load(lang) for lang in _LOCALES}
 
+_DEVANAGARI_DIGITS = str.maketrans("0123456789", "०१२३४५६७८९")
+
+
+def _fmt_count(n: int, lang: str) -> str:
+    """Locale-aware number rendering: Devanagari digits for hi/mr (Indian
+    grouping, matching Intl.NumberFormat with mr-IN/hi-IN), western grouping
+    otherwise."""
+    if lang in ("hi", "mr"):
+        s = str(n)
+        if len(s) <= 3:
+            out = s
+        else:
+            head, tail, parts = s[:-3], s[-3:], []
+            while head:
+                parts.append(head[-2:])
+                head = head[:-2]
+            out = ",".join(reversed(parts)) + "," + tail
+        return out.translate(_DEVANAGARI_DIGITS)
+    return f"{n:,}"
+
 
 def _t(lang: str, key: str, **vars: object) -> str:
     """Translate a chrome string; interpolation is ``{name}``. A plain

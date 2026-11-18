@@ -142,7 +142,7 @@
 	const BROWSE_KEY = {
 		strokes: 'browseStrokes',
 		grade: 'browseGrade',
-		jlpt: 'browseJlpt'
+		jlpt: 'jlptLevel'
 	} as const;
 	function browseLabel(by: GroupKey): string {
 		return t(BROWSE_KEY[by]);
@@ -207,7 +207,7 @@
 				</a>
 				<a class="browse-tile" href="/kanji-group?by=jlpt">
 					<span class="browse-icon"><Icon name="award" size={18} /></span>
-					<span class="browse-name">{t('browseJlpt')}</span>
+					<span class="browse-name">{t('jlptLevel')}</span>
 					<span class="browse-desc">{t('browseJlptDesc')}</span>
 				</a>
 			</div>

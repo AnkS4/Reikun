@@ -63,10 +63,12 @@ def meta_parts(d: dict) -> list[dict]:
     if d.get("stroke_count"):
         parts.append({"label": f"{d['stroke_count']} strokes",
                       "tip": "Number of strokes in the standard stroke order",
-                      "group": {"by": "strokes", "value": d["stroke_count"]}})
+                      "group": {"by": "strokes", "value": d["stroke_count"]},
+                      "key": "strokesCount", "n": d["stroke_count"]})
     if d.get("grade"):
         parts.append({**_grade_badge(d["grade"]),
-                      "group": {"by": "grade", "value": d["grade"]}})
+                      "group": {"by": "grade", "value": d["grade"]},
+                      "key": "gradeCount", "n": d["grade"]})
     if d.get("jlpt_level"):
         # kanji_table stores KANJIDIC2's former 4-level scale (4 elementary →
         # 1 advanced); old level 2 spans N2-N3 so it can't be shown as one level.
@@ -74,10 +76,12 @@ def meta_parts(d: dict) -> list[dict]:
         parts.append({"label": f"JLPT {label}",
                       "tip": "Japanese Language Proficiency Test level this kanji is expected at "
                              "(N5 easiest, N1 hardest)",
-                      "group": {"by": "jlpt", "value": d["jlpt_level"]}})
+                      "group": {"by": "jlpt", "value": d["jlpt_level"]},
+                      "key": "jlptBadge", "level": label})
     if d.get("freq"):
         parts.append({"label": f"Freq #{d['freq']}",
-                      "tip": "Frequency rank among the 2,500 most-used kanji in newspapers (1 = most common)"})
+                      "tip": "Frequency rank among the 2,500 most-used kanji in newspapers (1 = most common)",
+                      "key": "freq", "n": d["freq"]})
     return parts
 
 

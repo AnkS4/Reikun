@@ -22,7 +22,7 @@
 	/** Misc tags that render as badges; register/name tags stay capture-only. */
 	const MISC_LABEL: Record<string, MessageKey> = {
 		'on-mim': 'miscOnom',
-		kana: 'miscKana',
+		kana: 'kana',
 		abbr: 'miscAbbr',
 		idiom: 'miscIdiom'
 	};

@@ -99,7 +99,7 @@
 	<span class="kanji-tip-body" role="tooltip" id={uid}>
 		<span class="big">{char}</span>
 		{#if d?.meanings.length}
-			<div class="tip-meanings"><b>{t('tipMeanings')}</b> {d.meanings.join(', ')}</div>
+			<div class="tip-meanings"><b>{t('meanings')}</b> {d.meanings.join(', ')}</div>
 		{/if}
 		{#if d?.on_yomi.length}
 			<div class="tip-readings"><span class="tip-label">{t('tipOn')}</span>{d.on_yomi.join('、')}</div>

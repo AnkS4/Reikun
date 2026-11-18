@@ -69,7 +69,7 @@ from app.retrieval import MAX_JA_QUERY_CHARS, SearchResponse, is_headword, searc
 from app.telemetry import telemetry
 
 from .assets import _LITE_CSS_HASH, _LITE_CSS_TEXT, _LITE_CSS_URL, _LITE_FONT_BYTES, _LITE_FONT_HASH
-from .i18n import _t
+from .i18n import _fmt_count, _t
 
 logger = logging.getLogger("reikun.lite")
 
@@ -223,8 +223,15 @@ def _ruby(parts: list[dict], furi: bool = True) -> str:
     return "".join(out)
 
 
-def _badge(badge: dict, from_word: str = "") -> str:
-    label = esc(badge.get("label"))
+def _badge(badge: dict, from_word: str = "", lang: str = "en") -> str:
+    key = badge.get("key")
+    n = badge.get("n")
+    if key == "jlptBadge":
+        label = esc(_t(lang, "jlptBadge", level=badge.get("level") or ""))
+    elif key and isinstance(n, int):
+        label = esc(_t(lang, key, n=_fmt_count(n, lang)))
+    else:
+        label = esc(badge.get("label"))
     tip = esc(badge.get("tip"))
     group = badge.get("group")
     if group:
@@ -641,7 +648,7 @@ def lite_home(request: Request) -> HTMLResponse:
     browse_tiles = (
         ("/lite/kanji/group", {"by": "strokes"}, "pen-line", "browseStrokes", "browseStrokesDesc"),
         ("/lite/kanji/group", {"by": "grade"}, "school", "browseGrade", "browseGradeDesc"),
-        ("/lite/kanji/group", {"by": "jlpt"}, "award", "browseJlpt", "browseJlptDesc"),
+        ("/lite/kanji/group", {"by": "jlpt"}, "award", "jlptLevel", "browseJlptDesc"),
         ("/lite/loanwords", {}, "import", "browseLoanwords", "browseLoanwordsDesc"),
     )
     browse = (
@@ -876,11 +883,12 @@ def _results_html(request: Request, query: str, resp: SearchResponse, lang: str)
             f'{esc(_t(lang, "searchedForAfter"))}</p>'
         )
 
-    too_long = resp.meta.get("too_long")
+    too_long_raw = resp.meta.get("too_long")
+    too_long = too_long_raw if isinstance(too_long_raw, int) else None
     if too_long:
         shown = query if len(query) <= 24 else f"{query[:24]}…"
         key = "tooLongJa" if too_long == MAX_JA_QUERY_CHARS else "tooLong"
-        parts.append(f'<p class="warn">{esc(_t(lang, key, shown=shown, max=too_long))}</p>')
+        parts.append(f'<p class="warn">{esc(_t(lang, key, shown=shown, max=_fmt_count(too_long, lang)))}</p>')
 
     char = query if is_kanji(query) else ""
     if char:
@@ -917,15 +925,18 @@ def _results_html(request: Request, query: str, resp: SearchResponse, lang: str)
 
     results = resp.results
     if results:
-        noun = _t(lang, "entryOne") if len(results) == 1 else _t(lang, "entryMany", count=len(results))
+        if len(results) == 1:
+            noun = _t(lang, "entryOne")
+        else:
+            noun = _t(lang, "entryMany", count=_fmt_count(len(results), lang))
         parts.append(
             f'<p class="stats-line"><span class="stats-count">{esc(noun)}</span>'
-            f'<span class="stats-meta">{esc(resp.latency_ms)} ms</span></p>'
+            f'<span class="stats-meta">{esc(_fmt_count(int(resp.latency_ms or 0), lang))} ms</span></p>'
         )
         parts.extend(_result_card(query, result, furi, lang) for result in results)
     elif not too_long:
         if char:
-            parts.append(f'<p class="warn">{esc(_t(lang, "lite_notAWord", char=char))}</p>')
+            parts.append(f'<p class="warn">{esc(_t(lang, "notAWord", char=char))}</p>')
         else:
             parts.append(f'<p>{esc(_t(lang, "nothingFound"))}</p>')
 
@@ -941,7 +952,7 @@ _POS_LABEL_KEYS = {
     "intj": "posIntj", "other": "posOther",
 }
 _MISC_LABEL_KEYS = {
-    "on-mim": "miscOnom", "kana": "miscKana", "abbr": "miscAbbr", "idiom": "miscIdiom",
+    "on-mim": "miscOnom", "kana": "kana", "abbr": "miscAbbr", "idiom": "miscIdiom",
 }
 # ke_inf per-form labels → i18n keys (codes from scripts/build_chunks.py).
 _KE_INF_KEYS = {
@@ -1118,7 +1129,7 @@ def _result_card(query: str, result: dict, furi: bool, lang: str) -> str:
             f"{esc(char)}</a>"
             for char in kanji_chars
         )
-        parts.append(f'<p class="reading-note">{esc(_t(lang, "lite_kanjiLabel"))}: {links}</p>')
+        parts.append(f'<p class="reading-note">{esc(_t(lang, "kanjiBold"))}: {links}</p>')
 
     # Variant forms: JMdict's reading→kanji bindings (re_restr/re_nokanji)
     # plus per-form ke_inf labels — which spelling goes with which reading.
@@ -1343,13 +1354,13 @@ def _kg_meta(card: dict, lang: str) -> str:
     parts = []
     sc = card.get("stroke_count")
     if sc:
-        parts.append(_t(lang, "strokesCount", n=sc))
+        parts.append(_t(lang, "strokesCount", n=_fmt_count(int(sc), lang)))
     jlpt = card.get("jlpt_level")
     if jlpt:
         parts.append({4: "N5", 3: "N4", 2: "N2-N3", 1: "N1"}.get(jlpt, f"N{jlpt}"))
     freq = card.get("freq")
     if freq:
-        parts.append(_t(lang, "freq", n=freq))
+        parts.append(_t(lang, "freq", n=_fmt_count(int(freq), lang)))
     return " · ".join(parts)
 
 
@@ -1357,16 +1368,16 @@ def _kg_value_label(by: str, value: int, lang: str) -> str:
     """Picker chip label for one facet value — mirrors the SPA's valueLabel:
     localized stroke/grade counts, JLPT's internal 4→1 scale as N-levels."""
     if by == "strokes":
-        return _t(lang, "strokesCount", n=value)
+        return _t(lang, "strokesCount", n=_fmt_count(int(value), lang))
     if by == "grade":
-        return _t(lang, "gradeCount", n=value)
+        return _t(lang, "gradeCount", n=_fmt_count(int(value), lang))
     return {4: "N5", 3: "N4", 2: "N2-N3", 1: "N1"}.get(value, f"N{value}")
 
 
 _KG_BROWSE = {
     "strokes": ("pen-line", "browseStrokes", "browseStrokesDesc"),
     "grade": ("school", "browseGrade", "browseGradeDesc"),
-    "jlpt": ("award", "browseJlpt", "browseJlptDesc"),
+    "jlpt": ("award", "jlptLevel", "browseJlptDesc"),
 }
 
 
@@ -1391,7 +1402,8 @@ def _kg_pick_page(request: Request, by: str, lang: str, theme: str) -> Response:
         items = "".join(
             f'<li class="kg-card"><a href="{_href("/lite/kanji/group", by=by, value=v["value"])}">'
             f'<span class="kv-value">{esc(_kg_value_label(by, v["value"], lang))}</span>'
-            f'<span class="kg-meta">{v["count"]:,} {esc(_t(lang, "kanjiSuffix"))}</span></a></li>'
+            f'<span class="kg-meta">{esc(_fmt_count(int(v["count"]), lang))} '
+            f'{esc(_t(lang, "kanjiSuffix"))}</span></a></li>'
             for v in kanji_group_facets()[by]
         )
         disp = _t(lang, name_key)
@@ -1483,7 +1495,7 @@ def lite_kanji_group(request: Request, by: str = "", value: str = "", n: str = "
     )
     group_label = esc(cards["label"])
     suffix = esc(_t(lang, "kanjiSuffix"))
-    subtitle = esc(_t(lang, "lite_groupSubtitle", group=group_label.lower() if lang in ("en", "es") else group_label))
+    subtitle = esc(_t(lang, "groupSubtitle", group=group_label.lower() if lang in ("en", "es") else group_label))
     body = f"""<h1 class="kgroup-title">{group_label} {suffix}
 <span class="kgroup-total">{cards["total"]}</span></h1>
 <p class="kgroup-sub">{subtitle}</p>
@@ -1512,7 +1524,7 @@ def _kanji_body(request: Request, card: dict, from_word: str = "") -> str:
     lang = _read_lang(request)
     char = card.get("literal") or ""
 
-    badges = " ".join(_badge(badge, from_word) for badge in card.get("meta") or [])
+    badges = " ".join(_badge(badge, from_word, lang) for badge in card.get("meta") or [])
 
     def _chips(key: str) -> str:
         chips = []
@@ -1524,11 +1536,14 @@ def _kanji_body(request: Request, card: dict, from_word: str = "") -> str:
 
     # Reading labels carry furigana themselves — honouring the same toggle.
     reading_rows = ""
-    for label, label_rt, chips in (("音読み", "おんよみ", _chips("on")), ("訓読み", "くんよみ", _chips("kun"))):
+    for key, label_rt, chips in (("readingOn", "おんよみ", _chips("on")), ("readingKun", "くんよみ", _chips("kun"))):
         if not chips:
             continue
+        label = _t(lang, key)
+        lang_attr = ' lang="ja"' if lang == "ja" else ""
         shown = (
-            f"<ruby lang=\"ja\">{label}<rt>{label_rt}</rt></ruby>" if furi else f'<span lang="ja">{label}</span>'
+            f"<ruby lang=\"ja\">{label}<rt>{label_rt}</rt></ruby>" if furi and lang == "ja"
+            else f'<span{lang_attr}>{esc(label)}</span>'
         )
         reading_rows += f'<div class="rrow"><span class="rlabel">{shown}</span>{chips}</div>'
 
@@ -1678,7 +1693,8 @@ def lite_loanwords(request: Request) -> Response:
     cards_html = "".join(
         f'<li class="kg-card"><a href="/lite/loanwords/{quote(src["lang"], safe="")}">'
         f'<span class="kv-value">{esc(src["name"])}</span>'
-        f'<span class="kg-meta">{src["count"]:,} {esc(_t(lang, "wordsSuffix"))}</span></a></li>'
+        f'<span class="kg-meta">{esc(_fmt_count(int(src["count"]), lang))} '
+        f'{esc(_t(lang, "wordsSuffix"))}</span></a></li>'
         for src in facets
     )
     body = (
