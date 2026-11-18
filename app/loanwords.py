@@ -41,7 +41,10 @@ _loaded_at = 0.0
 
 def _build() -> dict[str, list[dict]]:
     """Scroll every lsource-bearing point once and group the result dicts by
-    source language, best-first (wf_score desc — the same prior search uses)."""
+    source language, best-first: JMdict's ``is_common`` headwords first, then
+    ``wf_score`` desc (the same prior search uses), then headword and reading
+    alphabetical as a deterministic tie-break — scroll order isn't guaranteed,
+    so raw frequency ties must not reshuffle between index builds."""
     out: dict[str, list[dict]] = {}
     offset = None
     while True:
@@ -67,7 +70,10 @@ def _build() -> dict[str, list[dict]]:
         if offset is None:
             break
     for entries in out.values():
-        entries.sort(key=lambda d: -(d.get("score") or 0.0))
+        entries.sort(key=lambda d: (not d.get("is_common"),
+                                    -(d.get("score") or 0.0),
+                                    str(d.get("kanji_form") or d.get("reading") or ""),
+                                    str(d.get("reading") or "")))
     return out
 
 
