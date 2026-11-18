@@ -42,8 +42,16 @@ eval/results/
 README.md
 docs/
 
-# Frontend (SvelteKit — separate build, not part of the API image)
-web/
+# Frontend (SvelteKit) — root context; keep the lightweight source, not the
+# build state or secrets (the web image builds from this root context, so the
+# old web/.dockerignore is folded in here and that file is gone).
+web/node_modules/
+web/.svelte-kit/
+web/build/
+web/.vite/
+web/.env
+web/.env.*
+!web/.env.example
 
 # IDE & editor files
 .vscode/

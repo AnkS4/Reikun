@@ -48,8 +48,8 @@ services:
 
   web:
     build:
-      context: ./web
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: web/Dockerfile
       # Build-time arg: PUBLIC_API_BASE is baked into the static bundle the
       # *browser* loads — the value must be reachable from the host, i.e. the
       # app service's published loopback port, not the container-network

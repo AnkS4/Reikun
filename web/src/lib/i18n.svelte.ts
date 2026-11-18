@@ -13,11 +13,11 @@
  */
 import { browser } from '$app/env';
 import { safeStorage } from './storage.ts';
-import en from './i18n/en.json';
-import es from './i18n/es.json';
-import hi from './i18n/hi.json';
-import ja from './i18n/ja.json';
-import mr from './i18n/mr.json';
+import en from '../../../i18n/en.json';
+import es from '../../../i18n/es.json';
+import hi from '../../../i18n/hi.json';
+import ja from '../../../i18n/ja.json';
+import mr from '../../../i18n/mr.json';
 
 export const LOCALES = ['en', 'es', 'hi', 'ja', 'mr'] as const;
 export type Locale = (typeof LOCALES)[number];

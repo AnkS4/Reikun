@@ -10,8 +10,8 @@ LABEL org.opencontainers.image.title="Reikun Web" \
 
 WORKDIR /app
 
-# Copy package files
-COPY package*.json ./
+# Copy package files (context is the repo root in this build)
+COPY web/package*.json ./
 
 # Install dependencies. npm's optional-deps resolution can drop the
 # platform-specific rolldown native binding on musl (npm/cli#4828), so install
@@ -20,8 +20,11 @@ RUN npm ci \
     && npm install --no-save \
        "@rolldown/binding-linux-x64-musl@$(node -p "require('rolldown/package.json').optionalDependencies['@rolldown/binding-linux-x64-musl'] || require('rolldown/package.json').version")"
 
-# Copy source
-COPY . .
+# Copy source, plus the shared UI strings the SPA imports at build time.
+# i18n/ sits at /i18n so web's relative '../../../i18n/*.json' imports from both
+# this image and a local repo build resolve the same way (sibling of the web root).
+COPY web/ ./
+COPY i18n/ /i18n/
 
 # PUBLIC_API_BASE is baked into the static bundle ($app/env/public declares it
 # `static: true`) — pass it as a build arg (docker-compose's web service does)
