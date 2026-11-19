@@ -135,6 +135,17 @@
 	--fs-lg: 1.05rem;
 	--fs-xl: 1.15rem;
 	--fs-2xl: 1.25rem;
+
+	/* Icon size scale (px, passed to Icon.svelte's size prop). Keep icons on
+	   these four rungs so both variants stay in step:
+	   16 — inline chips/labels (conj chip, share/copy, show-next)
+	   18 — control & header chrome (popovers, header cluster, banners,
+	        feedback, stroke replay, card badges)
+	   20 — the search action row (search submit, random-kanji, notices in
+	        the results flow) and browse-tile-adjacent readouts
+	   22 — browse tiles & kanji-group pickers
+	   Lite mirrors: .controls .icon 18px, .browse-icon .icon 22px,
+	   .furi-kana/--fs-lg for the あ text glyph. */
 	color-scheme: light;
 }
 
