@@ -154,7 +154,7 @@
 				onclick={openConj}
 				title={t('conjugationsTitle')}
 			>
-				<Icon name="replace" size={12} />
+				<Icon name="split" size={12} />
 				<span class="conj-label">{t('conjugations')}</span>
 				<span class="conj-count">{result.inflected_forms.length}</span>
 				<Icon name="arrow-right" size={12} />
