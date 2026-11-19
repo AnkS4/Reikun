@@ -630,6 +630,11 @@
 				<span class="browse-name">{t('browseLoanwords')}</span>
 				<span class="browse-desc">{t('browseLoanwordsDesc')}</span>
 			</a>
+			<a class="browse-tile" href="/kana">
+				<span class="browse-icon"><Icon name="type" size={18} /></span>
+				<span class="browse-name">{t('browseKana')}</span>
+				<span class="browse-desc">{t('browseKanaDesc')}</span>
+			</a>
 		</div>
 	</div>
 {/if}

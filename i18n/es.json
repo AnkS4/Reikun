@@ -248,5 +248,15 @@
 	"browseLoanwordsDesc": "Palabras tomadas de otros idiomas",
 	"jlptBadge": "JLPT {level}",
 	"readingOn": "On'yomi",
-	"readingKun": "Kun'yomi"
+	"readingKun": "Kun'yomi",
+	"browseKana": "Kana",
+	"browseKanaDesc": "Hiragana y katakana",
+	"kanaTitle": "Kana",
+	"kanaSub": "El silabario japonés moderno, en orden gojūon.",
+	"kanaBasic": "Básico",
+	"kanaDakuten": "Dakuten",
+	"kanaHandakuten": "Handakuten",
+	"kanaHiragana": "Hiragana",
+	"kanaKatakana": "Katakana",
+	"kanaScript": "Escritura"
 }

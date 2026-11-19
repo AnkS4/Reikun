@@ -131,6 +131,7 @@ font:.94rem/1 'reikun-icons',sans-serif}
 .icon-full::before{content:"\f3f9"}
 .icon-lang::before{content:"\f658"}
 .icon-db::before{content:"\f8c4"}
+.icon-type::before{content:"\f106"}
 .icon-pen-line::before{content:"\f101"}
 .icon-school::before{content:"\f102"}
 .icon-award::before{content:"\f103"}
@@ -435,6 +436,19 @@ text-decoration:none;color:inherit}
 .kg-card:hover{border-color:var(--border-hover)}
 .kg-glyph{font-family:var(--font-japanese);color:var(--text);font-size:2.6rem;line-height:1.15}
 .kg-gloss{color:var(--text-muted);font-size:var(--fs-sm);min-height:2em;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+/* Kana chart page — mirrors the SPA's /kana (fixed 5-col gojūon grid). */
+.kana-tabs{display:inline-flex;gap:2px;padding:2px;margin:var(--space-2) 0 var(--space-5);background:var(--surface-soft);border:1px solid var(--border-soft);border-radius:var(--radius-sm)}
+.kana-tab{display:inline-flex;align-items:center;justify-content:center;min-height:2.25rem;padding:0 1.1rem;border-radius:calc(var(--radius-sm) - 2px);font-size:var(--fs-md);font-weight:500;color:var(--text-muted);text-decoration:none;transition:color .1s,background-color .1s,box-shadow .1s}
+.kana-tab.sel{background:var(--surface);color:var(--text);box-shadow:var(--shadow-sm)}
+/* Section headings inside /lite/kana — mirrors the SPA's .kanji-section-title. */
+.kana-section-title{font-family:var(--font-mono),var(--font-japanese);font-size:var(--fs-sm);font-weight:500;text-transform:uppercase;letter-spacing:.08em;color:var(--text-faint);margin:0 0 .35rem}
+.kana-section{margin-bottom:var(--space-5)}
+.kana-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:var(--space-2);max-width:30rem}
+.kana-cell{cursor:default;padding:.6rem .4rem;box-shadow:none}
+.kana-cell .kg-glyph{font-size:2.4rem;line-height:1.15}
+.kana-cell .kg-meta{font-size:var(--fs-sm);letter-spacing:.06em}
+.kana-cell-empty{border:1px dashed var(--border-soft);border-radius:var(--radius-md);min-height:4.5rem;visibility:hidden}
+@media (max-width:560px){.kana-cell .kg-glyph{font-size:2rem}.kana-cell-empty{min-height:3.9rem}}
 .kg-meta{display:block;font-family:var(--font-mono);color:var(--text-faint);font-size:var(--fs-2xs);
 line-height:1.15;white-space:normal;word-break:break-word}
 /* Value-picker cards reuse .kg-card; the facet label takes the glyph's

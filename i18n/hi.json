@@ -248,5 +248,15 @@
 	"browseLoanwordsDesc": "अन्य भाषाओं से उधार लिए गए शब्द",
 	"jlptBadge": "JLPT {level}",
 	"readingOn": "ओन्'योमी",
-	"readingKun": "कुन्'योमी"
+	"readingKun": "कुन्'योमी",
+	"browseKana": "काना",
+	"browseKanaDesc": "हिरागाना और काताकाना",
+	"kanaTitle": "काना",
+	"kanaSub": "गोजूऑन क्रम में आधुनिक जापानी अक्षरमाला।",
+	"kanaBasic": "मूल",
+	"kanaDakuten": "डाकुटेन",
+	"kanaHandakuten": "हैंडाकुटेन",
+	"kanaHiragana": "हिरागाना",
+	"kanaKatakana": "काताकाना",
+	"kanaScript": "लिपि"
 }

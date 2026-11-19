@@ -248,5 +248,15 @@
 	"browseLoanwordsDesc": "他言語から借りた言葉",
 	"jlptBadge": "JLPT {level}",
 	"readingOn": "音読み",
-	"readingKun": "訓読み"
+	"readingKun": "訓読み",
+	"browseKana": "かな",
+	"browseKanaDesc": "ひらがな・カタカナ",
+	"kanaTitle": "かな",
+	"kanaSub": "現代のひらがな・カタカナを五十音順に並べた表。",
+	"kanaBasic": "基本",
+	"kanaDakuten": "濁音",
+	"kanaHandakuten": "半濁音",
+	"kanaHiragana": "ひらがな",
+	"kanaKatakana": "カタカナ",
+	"kanaScript": "文字"
 }

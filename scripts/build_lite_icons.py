@@ -70,6 +70,10 @@ _ICONS = {
         "M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5",
         "M3 12c0 1.66 4 3 9 3s9-1.34 9-3",
     ),
+    # type — browse tile: kana
+    "F106": (
+        "M12 4v16", "M4 7V5a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v2", "M9 20h6",
+    ),
     # pen-line — browse tile: kanji by stroke count
     "F101": (
         "M13 21h8",  # underline

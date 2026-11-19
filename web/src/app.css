@@ -2274,6 +2274,86 @@ a.kanji-tip {
 	color: var(--text-muted);
 }
 
+/* Kana chart page (/kana) — a fixed five-column grid of gojūon cells. */
+.kana-page {}
+
+.kana-tabs {
+	display: inline-flex;
+	gap: 2px;
+	padding: 2px;
+	margin: var(--space-2) 0 var(--space-5);
+	background: var(--surface-soft);
+	border: 1px solid var(--border-soft);
+	border-radius: var(--radius-sm);
+}
+
+.kana-tab {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-height: 2.25rem;
+	padding: 0 1.1rem;
+	border-radius: calc(var(--radius-sm) - 2px);
+	font-size: var(--fs-md);
+	font-weight: 500;
+	color: var(--text-muted);
+	text-decoration: none;
+	transition: color var(--dur-fast) var(--ease), background-color var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease);
+}
+
+.kana-tab.sel {
+	background: var(--surface);
+	color: var(--text);
+	box-shadow: var(--shadow-sm);
+}
+
+.kana-section {
+	margin-bottom: var(--space-5);
+}
+
+.kana-grid {
+	display: grid;
+	grid-template-columns: repeat(5, 1fr);
+	gap: var(--space-2);
+	max-width: 30rem;
+}
+
+.kana-cell {
+	/* Match the kanji-group card so the two browse pages feel like one family;
+	   visibility wins over the link affordance — the page is not a link. */
+	cursor: default;
+	user-select: text;
+	box-shadow: none;
+	transform: none;
+}
+
+.kana-cell .kg-glyph {
+	font-family: var(--font-japanese);
+	font-size: 2.4rem;
+	font-weight: 400;
+}
+
+.kana-cell .kg-meta {
+	font-size: var(--fs-sm);
+	letter-spacing: 0.06em;
+}
+
+.kana-cell-empty {
+	border: 1px dashed var(--border-soft);
+	border-radius: var(--radius-md);
+	min-height: 4.5rem;
+	visibility: hidden;
+}
+
+@media (max-width: 560px) {
+	.kana-cell .kg-glyph {
+		font-size: 2rem;
+	}
+	.kana-cell-empty {
+		min-height: 3.9rem;
+	}
+}
+
 .kanji-section {
 	margin-bottom: var(--space-4);
 }

@@ -37,7 +37,7 @@ def test_home_browse_links() -> None:
     home = client.get("/lite").text
     # Same four browse tiles as the SPA homepage grid — kanji glyph, title,
     # description and link.
-    assert home.count('class="browse-tile"') == 4
+    assert home.count('class="browse-tile"') == 5
     assert 'href="/lite/kanji/group?by=strokes"' in home
     assert 'href="/lite/kanji/group?by=grade"' in home
     assert 'href="/lite/kanji/group?by=jlpt"' in home

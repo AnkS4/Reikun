@@ -70,6 +70,7 @@ from app.telemetry import telemetry
 
 from .assets import _LITE_CSS_HASH, _LITE_CSS_TEXT, _LITE_CSS_URL, _LITE_FONT_BYTES, _LITE_FONT_HASH
 from .i18n import _fmt_count, _t
+from .kana import HIRAGANA, KATAKANA
 
 logger = logging.getLogger("reikun.lite")
 
@@ -444,6 +445,11 @@ def _full_switch_url(request: Request) -> str:
         if query:
             url += f"?{query}"
         return url
+    if path == "/lite/kana":
+        url = f"{base}/kana"
+        if query:
+            url += f"?{query}"
+        return url
     if path == "/lite/loanwords":
         return f"{base}/loanwords"
     if path.startswith("/lite/loanwords/"):
@@ -650,6 +656,7 @@ def lite_home(request: Request) -> HTMLResponse:
         ("/lite/kanji/group", {"by": "grade"}, "school", "browseGrade", "browseGradeDesc"),
         ("/lite/kanji/group", {"by": "jlpt"}, "award", "jlptLevel", "browseJlptDesc"),
         ("/lite/loanwords", {}, "import", "browseLoanwords", "browseLoanwordsDesc"),
+        ("/lite/kana", {}, "type", "browseKana", "browseKanaDesc"),
     )
     browse = (
         f'<p class="pills-label">{esc(_t(lang, "browse"))}</p>'
@@ -1786,6 +1793,77 @@ def lite_loanwords_lang(
         lang=ui_lang,
         furi=furi,
         canonical=f"/lite/loanwords/{lang}",
+    )
+
+
+# ── Kana ──────────────────────────────────────────────────────────────────────
+# Mirrors the SPA's /kana chart: gojūon order, basic + dakuten + handakuten,
+# hiragana/katakana toggle via ?variant=hiragana|katakana. All 71 cells fit
+# on one page, no pagination needed.
+
+@router.get("/lite/kana", response_class=HTMLResponse)
+def lite_kana(request: Request, variant: str = "") -> Response:
+    theme = _read_theme(request)
+    lang = _read_lang(request)
+    if variant not in ("", "hiragana", "katakana"):
+        return _error_page(
+            _t(lang, "kanaTitle"),
+            _t(lang, "lite_searchUnavailable"),
+            400,
+            theme,
+            _controls(request),
+            lang,
+        )
+    chart_src = KATAKANA if variant == "katakana" else HIRAGANA
+    title = _t(lang, "kanaTitle")
+    tabs = (
+        '<nav class="kana-tabs" aria-label="{}"><a class="kana-tab{}" href="/lite/kana?variant=hiragana">{}</a>'
+        '<a class="kana-tab{}" href="/lite/kana?variant=katakana">{}</a></nav>'.format(
+            esc(_t(lang, "kanaScript")),
+            " sel" if variant != "katakana" else "",
+            esc(_t(lang, "kanaHiragana")),
+            " sel" if variant == "katakana" else "",
+            esc(_t(lang, "kanaKatakana")),
+        )
+    )
+    sections = []
+    sections_iter = (
+        ("kanaBasic", chart_src["basic"]),
+        ("kanaDakuten", chart_src["dakuten"]),
+        ("kanaHandakuten", chart_src["handakuten"]),
+    )
+    for section_key, rows in sections_iter:
+
+        cells = []
+        for row in rows:
+            for cell in row:
+                if cell:
+                    kana, romaji = cell
+                    cells.append(
+                        f'<div class="kg-card kana-cell"><span class="kg-glyph" lang="ja">{kana}</span>'
+                        f'<span class="kg-meta">{romaji}</span></div>'
+                    )
+                else:
+                    cells.append('<div class="kana-cell-empty" aria-hidden="true"></div>')
+        sections.append(
+            f'<div class="kana-section"><p class="kana-section-title">{esc(_t(lang, section_key))}</p>'
+            f'<div class="kana-grid">{"".join(cells)}</div></div>'
+        )
+    body = (
+        f'<h1 class="kgroup-title">{esc(title)}</h1>'
+        f'<p class="kgroup-sub">{esc(_t(lang, "kanaSub"))}</p>'
+        f'{tabs}{"".join(sections)}'
+        f'<div class="kgroup-bottom-actions">'
+        f'<a class="btn" href="/">← {esc(_t(lang, "backToSearch"))}</a></div>'
+    )
+    return _page(
+        title,
+        body,
+        cache=_CACHE_STATIC,
+        controls=_controls(request),
+        theme=theme,
+        lang=lang,
+        canonical="/lite/kana",
     )
 
 
