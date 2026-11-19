@@ -1,10 +1,14 @@
 import adapter from '@sveltejs/adapter-static';
 import { sveltekit } from '@sveltejs/kit/vite';
 import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
-import { defineConfig } from 'vite';
+import { defineConfig, loadEnv } from 'vite';
 import pkg from './package.json' with { type: 'json' };
 
-export default defineConfig({
+export default defineConfig(({ mode }) => {
+	// VITE_* values from the environment or a .env file (host default: local API).
+	const env = loadEnv(mode, '.', 'VITE_API_PROXY_');
+	const proxyTarget = env.VITE_API_PROXY_TARGET ?? 'http://127.0.0.1:8000';
+	return {
 	// Build-time app version for the About page (`__APP_VERSION__` global,
 	// declared in src/app.d.ts). The release checklist keeps web/package.json
 	// equal to pyproject.toml, so this is the same version the API reports —
@@ -13,12 +17,12 @@ export default defineConfig({
 	preview: {
 		proxy: {
 			'/api': {
-				target: process.env.VITE_API_PROXY_TARGET ?? 'http://127.0.0.1:8000',
+				target: proxyTarget,
 				changeOrigin: true,
 				rewrite: (path) => path.replace(/^\/api/, '')
 			},
 			'/lite': {
-				target: process.env.VITE_API_PROXY_TARGET ?? 'http://127.0.0.1:8000',
+				target: proxyTarget,
 				changeOrigin: true
 			}
 		}
@@ -68,4 +72,5 @@ export default defineConfig({
 			}
 		})
 	]
+	};
 });
