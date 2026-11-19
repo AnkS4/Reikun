@@ -127,7 +127,7 @@ width:2rem;height:2rem;border-radius:999px;color:var(--text-muted)}
 @font-face{font-family:'reikun-icons';font-display:block;src:url(/lite/static/lite-icons.woff2?v=__FONT_HASH__) format('woff2')}
 .icon{display:inline-flex;align-items:center;justify-content:center;
 font:.94rem/1 'reikun-icons',sans-serif}
-.controls .icon{width:1rem;height:1rem;flex:none}
+.controls .icon{width:1.125rem;height:1.125rem;flex:none}
 .icon-sun::before{content:"\f5a2"}
 .icon-moon::before{content:"\f497"}
 .icon-full::before{content:"\f3f9"}

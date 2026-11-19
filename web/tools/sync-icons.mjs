@@ -24,7 +24,7 @@ const iconsDir = pathMod.join(webRoot, 'node_modules/lucide-static/icons');
 
 const MAP = {
 	search: 'search',
-	'dice-5': 'dice-5',
+	dices: 'dices',
 	languages: 'languages',
 	school: 'school',
 	palette: 'palette',
