@@ -76,6 +76,26 @@ def test_kanji_group() -> None:
     assert client.get("/kanji/group", params={"by": "strokes", "value": 51}).status_code == 422
 
 
+def test_kanji_group_freq_ceiling() -> None:
+    # by=freq accepts a cumulative top-N bound up to 3000.
+    r = client.get("/kanji/group", params={"by": "freq", "value": 3000, "n": 1})
+    assert r.status_code == 200
+    data = r.json()
+    assert data["total"] > 0
+
+    # 3001 exceeds the declared bound → 422 in the validator envelope shape.
+    r = client.get("/kanji/group", params={"by": "freq", "value": 3001})
+    assert r.status_code == 422
+    assert isinstance(r.json()["detail"], list)
+    assert r.json()["detail"][0]["loc"] == ["query", "value"]
+
+    # Non-freq groupings cap at 50 — with the validator-style envelope
+    # (consistent with query-validator 422s), not the detail-string shape.
+    r = client.get("/kanji/group", params={"by": "strokes", "value": 51})
+    assert r.status_code == 422
+    assert isinstance(r.json()["detail"], list)
+
+
 def test_kanji_groups_facets() -> None:
     r = client.get("/kanji/groups")
     assert r.status_code == 200
