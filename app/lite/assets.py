@@ -41,3 +41,25 @@ _LITE_CSS_TEXT = _LITE_CSS_TEXT.replace("__FONT_HASH__", _LITE_FONT_HASH)
 _LITE_CSS_HASH = hashlib.sha256(_LITE_CSS_TEXT.encode("utf-8")).hexdigest()[:12]
 _LITE_CSS_URL = f"/lite/static/lite.css?v={_LITE_CSS_HASH}"
 _LITE_FONT_URL = f"/lite/static/lite-icons.woff2?v={_LITE_FONT_HASH}"
+
+# ── Self-hosted fonts (shared with the SPA mirror) ───────────────────────
+# Lite serves the same IBM Plex WOFF2 subsets the SPA ships: the mirror is
+# committed under web/static/fonts (repo) and COPYed into the image at the
+# same relative path (Dockerfile), so the resolver is identical in both.
+# If the files are missing the UI still works — the CSS falls back to the
+# system stacks, which is the pre-Plex behaviour.
+_WEB_FONTS_DIR = Path(__file__).resolve().parents[2] / "web" / "static" / "fonts"
+_FONTS_CSS_PATH = _WEB_FONTS_DIR / "fonts.css"
+_FONTS_FILES_DIR = _WEB_FONTS_DIR / "files"
+try:
+    _FONTS_CSS = _FONTS_CSS_PATH.read_bytes()
+    _FONTS_CSS_HASH = hashlib.sha256(_FONTS_CSS).hexdigest()[:12]
+    _FONTS_CSS_URL = f"/lite/fonts/fonts.css?v={_FONTS_CSS_HASH}"
+    _FONTS_LINK = f'<link rel="stylesheet" href="{_FONTS_CSS_URL}">'
+except OSError:
+    _FONTS_CSS = b""
+    _FONTS_CSS_HASH = ""
+    _FONTS_CSS_URL = ""
+    _FONTS_LINK = ""
+
+_FONT_NAME_RE = re.compile(r"^[a-z0-9-]+\.woff2$")

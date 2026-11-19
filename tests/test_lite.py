@@ -46,6 +46,28 @@ def test_home_browse_links() -> None:
     assert 'icon-book-open-text' in home and 'icon-lang' in home
 
 
+def test_lite_serves_the_plex_mirror() -> None:
+    client.cookies.clear()
+    css = client.get("/lite/fonts/fonts.css")
+    assert css.status_code == 200
+    assert css.headers["cache-control"] == "public, max-age=31536000, immutable"
+    body = css.text
+    assert "@font-face" in body
+    assert "ibm-plex-sans-jp-w400-japanese" in body
+    home = client.get("/lite").text
+    marker = '<link rel="stylesheet" href="/lite/fonts/fonts.css'
+    assert marker in home
+    # The mirror is declared before the lite stylesheet (faces first).
+    assert home.index(marker) < home.index('<link rel="stylesheet" href="/lite/static/lite.css')
+    sample = client.get("/lite/fonts/files/ibm-plex-sans-jp-w400-japanese-e5e9ee94.woff2")
+    assert sample.status_code == 200
+    assert sample.headers["content-type"].startswith("font/woff2")
+    assert sample.content[:4] == b"wOF2"
+    # Traversal and unknown shapes never leave the files dir.
+    assert client.get("/lite/fonts/files/../../app/lite/__init__.py").status_code == 404
+    assert client.get("/lite/fonts/files/fonts.css").status_code == 404
+
+
 def test_kana_page_lists_gojuon() -> None:
     client.cookies.clear()
     r = client.get("/lite/kana")

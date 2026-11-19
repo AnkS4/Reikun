@@ -68,7 +68,18 @@ from app.render import furigana_parts, kanji_card, kanji_group_cards, related_wo
 from app.retrieval import MAX_JA_QUERY_CHARS, SearchResponse, is_headword, search
 from app.telemetry import telemetry
 
-from .assets import _LITE_CSS_HASH, _LITE_CSS_TEXT, _LITE_CSS_URL, _LITE_FONT_BYTES, _LITE_FONT_HASH
+from .assets import (
+    _FONT_NAME_RE,
+    _FONTS_CSS,
+    _FONTS_CSS_HASH,
+    _FONTS_FILES_DIR,
+    _FONTS_LINK,
+    _LITE_CSS_HASH,
+    _LITE_CSS_TEXT,
+    _LITE_CSS_URL,
+    _LITE_FONT_BYTES,
+    _LITE_FONT_HASH,
+)
 from .i18n import _fmt_count, _t
 from .kana import HIRAGANA, KATAKANA
 
@@ -176,6 +187,42 @@ def lite_static_font() -> Response:
             "ETag": f'\"{_LITE_FONT_HASH}\"',
         },
     )
+
+
+# The self-hosted Plex subsets the SPA uses — plain stylesheet, no JS (lite),
+# missing files just 404 and the CSS falls back to the system stacks.
+@router.get("/lite/fonts/fonts.css", include_in_schema=False)
+def lite_fonts_css() -> Response:
+    if not _FONTS_CSS:
+        return Response(status_code=404)
+    return Response(
+        content=_FONTS_CSS,
+        media_type="text/css",
+        headers={
+            "Cache-Control": "public, max-age=31536000, immutable",
+            "ETag": f'"{_FONTS_CSS_HASH}"',
+        },
+    )
+
+
+@router.get("/lite/fonts/files/{name}", include_in_schema=False)
+def lite_font_file(name: str) -> Response:
+    # Strict whitelist — this is the only way files reach the browser.
+    if not _FONT_NAME_RE.fullmatch(name):
+        return Response(status_code=404)
+    try:
+        data = (_FONTS_FILES_DIR / name).read_bytes()
+    except OSError:
+        return Response(status_code=404)
+    return Response(
+        content=data,
+        media_type="font/woff2",
+        headers={
+            "Cache-Control": "public, max-age=31536000, immutable",
+            "ETag": f'"{hashlib.sha256(data).hexdigest()[:12]}"',
+        },
+    )
+
 
 
 # The footer stays in English even when the rest of the site is Japanese: the
@@ -516,7 +563,7 @@ def _page(
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light dark">
 <title>{esc(title)} · Reikun Lite</title>
-{head_extras}<link rel="stylesheet" href="{_LITE_CSS_URL}">
+{head_extras}{_FONTS_LINK}<link rel="stylesheet" href="{_LITE_CSS_URL}">
 </head>
 <body>
 {_header(hero, lang)}

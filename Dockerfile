@@ -51,6 +51,9 @@ COPY --chown=app:app \
 
 # shared UI strings — app/lite/i18n.py resolves i18n/ two levels above itself
 COPY --chown=app:app i18n/ i18n/
+# self-hosted IBM Plex mirror (committed at web/static/fonts, served under
+# /lite/fonts; identical in the image and in a repo checkout)
+COPY --chown=app:app web/static/fonts/ web/static/fonts/
 
 RUN python -m compileall -q app scripts
 
