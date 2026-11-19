@@ -20,11 +20,13 @@ RUN npm ci \
     && npm install --no-save \
        "@rolldown/binding-linux-x64-musl@$(node -p "require('rolldown/package.json').optionalDependencies['@rolldown/binding-linux-x64-musl'] || require('rolldown/package.json').version")"
 
-# Copy source, plus the shared UI strings the SPA imports at build time.
-# i18n/ sits at /i18n so web's relative '../../../i18n/*.json' imports from both
-# this image and a local repo build resolve the same way (sibling of the web root).
+# Copy source, plus the shared data the SPA imports at build time.
+# i18n/ and kana.json sit at / so web's relative '../../../i18n/*.json' and
+# '../../../kana.json' imports from both this image and a local repo build
+# resolve the same way (sibling of the web root).
 COPY web/ ./
 COPY i18n/ /i18n/
+COPY kana.json /kana.json
 
 # PUBLIC_API_BASE is baked into the static bundle ($app/env/public declares it
 # `static: true`) — pass it as a build arg (docker-compose's web service does)

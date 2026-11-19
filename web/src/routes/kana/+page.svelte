@@ -10,7 +10,7 @@
 
 	// Columns: a · i · u · e · o (kana reading order) — rows: Basic, Dakuten, Handakuten.
 	const SECTIONS = $derived([
-		{ key: 'kanaBasic', rows: chart.bss },
+		{ key: 'kanaBasic', rows: chart.basic },
 		{ key: 'kanaDakuten', rows: chart.dakuten },
 		{ key: 'kanaHandakuten', rows: chart.handakuten }
 	] as const);

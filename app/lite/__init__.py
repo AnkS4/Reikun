@@ -1914,7 +1914,7 @@ def lite_kana(request: Request, variant: str = "") -> Response:
         for row in rows:
             for cell in row:
                 if cell:
-                    kana, romaji = cell
+                    kana, romaji = cell["kana"], cell["romaji"]
                     meta = kana_meta_label(romaji, lang)
                     meta_lang = ' lang="mr"' if lang == 'mr' else (' lang="hi"' if lang == 'hi' else '')
                     cells.append(
