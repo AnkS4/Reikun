@@ -32,6 +32,19 @@ def test_home_is_html_without_javascript() -> None:
     assert "<script" not in r.text.lower()
 
 
+def test_kanji_group_freq_page_labels(monkeypatch) -> None:
+    """The freq listing renders the localized Top-N label (en) and cards."""
+    fake_cards = {
+        "by": "freq", "value": 100, "label": "Top 100", "total": 2500, "offset": 0,
+        "kanjis": [{"literal": "日", "meanings": ["sun"], "on_yomi": ["ニチ"], "kun_yomi": [],
+                    "stroke_count": 4, "freq": 1, "jlpt_level": 4, "meta": []}],
+    }
+    monkeypatch.setattr(lite, "kanji_group_cards", lambda *a, **k: fake_cards)
+    r = client.get("/lite/kanji/group", params={"by": "freq", "value": 100})
+    assert r.status_code == 200
+    assert "Top 100" in r.text
+
+
 def test_home_browse_links() -> None:
     client.cookies.clear()
     home = client.get("/lite").text
@@ -81,9 +94,10 @@ def test_kana_page_lists_gojuon() -> None:
     assert 'href="/lite"' in r.text and 'href="/kana"' not in r.text
     kata = client.get("/lite/kana?variant=katakana").text
     assert ">ア<" in kata and ">ン<" in kata and ">ポ<" in kata
-    # Unknown variant → the 400 error page, not a crash.
+    # Unknown variant → silent fallback to hiragana (SPA parity), not a 400.
     bad = client.get("/lite/kana?variant=romaji")
-    assert bad.status_code == 400
+    assert bad.status_code == 200
+    assert "あ" in bad.text and "ア" not in bad.text
 
 
 def test_home_mirrors_spa_hero_and_examples() -> None:

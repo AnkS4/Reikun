@@ -38,6 +38,11 @@ _LITE_FONT_PATH = Path(__file__).resolve().parent.parent / "static" / "lite-icon
 _LITE_FONT_BYTES = _LITE_FONT_PATH.read_bytes()
 _LITE_FONT_HASH = hashlib.sha256(_LITE_FONT_BYTES).hexdigest()[:12]
 _LITE_CSS_TEXT = _LITE_CSS_TEXT.replace("__FONT_HASH__", _LITE_FONT_HASH)
+# If lite.css loses the __FONT_HASH__ placeholder, the icon @font-face would
+# silently serve a literal __FONT_HASH__ URL and the glyphs would tofu-fail
+# with no error anywhere — fail loudly at import instead.
+assert "__FONT_HASH__" not in _LITE_CSS_TEXT, "app/static/lite.css lost its __FONT_HASH__ placeholder"
+assert _LITE_CSS_TEXT.count(_LITE_FONT_HASH) == 1, "unexpected icon-font URL multiplicity in lite.css"
 _LITE_CSS_HASH = hashlib.sha256(_LITE_CSS_TEXT.encode("utf-8")).hexdigest()[:12]
 _LITE_CSS_URL = f"/lite/static/lite.css?v={_LITE_CSS_HASH}"
 _LITE_FONT_URL = f"/lite/static/lite-icons.woff2?v={_LITE_FONT_HASH}"

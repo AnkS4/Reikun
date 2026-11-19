@@ -21,7 +21,7 @@ import time
 from contextlib import asynccontextmanager
 from typing import Annotated, Literal, cast, get_args
 
-from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException, Query, Response
+from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException, Query, Request, Response
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
@@ -116,6 +116,27 @@ app = FastAPI(
 app.add_middleware(GZipMiddleware, minimum_size=1024)
 
 _origins = [o.strip() for o in CORS_ORIGINS.split(",") if o.strip()] or ["*"]
+# Security headers for the server-rendered surface and the API, mirroring
+# the static bundle's _headers. Added with setdefault so a handler can still
+# override; runs outermost, which is fine — it only sets headers.
+_LITE_SECURITY_HEADERS = {
+    "X-Content-Type-Options": "nosniff",
+    "Referrer-Policy": "strict-origin-when-cross-origin",
+    "X-Frame-Options": "DENY",
+    "Content-Security-Policy": "frame-ancestors 'none'",
+    "Permissions-Policy": "camera=(), microphone=(), geolocation=(), payment=()",
+    "Cross-Origin-Opener-Policy": "same-origin",
+}
+
+
+@app.middleware("http")
+async def security_headers(request: Request, call_next):
+    response = await call_next(request)
+    for name, value in _LITE_SECURITY_HEADERS.items():
+        response.headers.setdefault(name, value)
+    return response
+
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_origins,

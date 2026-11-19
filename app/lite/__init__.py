@@ -453,8 +453,8 @@ def _lang_toggle(lang: str, next_url: str) -> str:
     label = _t(lang, "languageTitle")
     return (
         f'<details class="lang-menu"><summary class="icon-link"'
-        f' title="{esc(label)}: {_LANG_NAMES[lang]}"'
-        f' aria-label="{esc(label)}: {_LANG_NAMES[lang]}">{_icon("lang")}</summary>'
+        f' title="{esc(label)}: {esc(_LANG_NAMES[lang])}"'
+        f' aria-label="{esc(label)}: {esc(_LANG_NAMES[lang])}">{_icon("lang")}</summary>'
         f'<ul class="lang-list">{"".join(items)}</ul></details>'
     )
 
@@ -566,10 +566,10 @@ def _page(
 {head_extras}{_FONTS_LINK}<link rel="stylesheet" href="{_LITE_CSS_URL}">
 </head>
 <body>
+<a class="skip-link" href="#main">{esc(_t(lang, "skipToContent"))}</a>
 {_header(hero, lang)}
 {controls}
-<a class="skip-link" href="#main">Skip to content</a>
-<main id="main">
+<main id="main" tabindex="-1">
 {body}
 </main>
 {_FOOTER}
@@ -632,7 +632,7 @@ def _search_form(
     """The search row, mirroring the SPA: input, then three text buttons —
     Search, random kanji (a plain ``formaction`` redirect target, no JS) and
     the furigana toggle (a link that flips the preference cookie, then
-    redirects back). Strikethrough marks furigana as off."""
+    redirects back). Dimmed styling marks furigana as off."""
     focus = " autofocus" if autofocus else ""
     toggle_title = _t(lang, "furiganaShown" if furi else "furiganaHidden")
     toggle = f"/lite/furigana?next={quote(next_url, safe='')}"
@@ -751,7 +751,8 @@ def lite_search(
     if not query:
         return _page(
             _t(lang, "search"),
-            _search_form(lang=lang, autofocus=True),
+            '<h1 class="sr-only">' + esc(_t(lang, "search")) + "</h1>"
+            + _search_form(lang=lang, furi=_read_furi(request), next_url=_current_path(request), autofocus=True),
             controls=_controls(request),
             theme=_read_theme(request),
             lang=lang,
@@ -769,6 +770,7 @@ def lite_search(
             recent_value,
             max_age=_COOKIE_MAX_AGE,
             samesite="lax",
+            secure=_secure_cookie(request),
         )
         return page
 
@@ -817,7 +819,13 @@ def lite_furigana(request: Request, next: str = "") -> Response:
     """Flip the furigana preference cookie, then go back where we came from —
     the no-JS furigana toggle behind the Furigana button in the search row."""
     response = RedirectResponse(_safe_next(next), status_code=303, headers={"Cache-Control": "no-store"})
-    response.set_cookie(_FURI_COOKIE, "0" if _read_furi(request) else "1", max_age=_COOKIE_MAX_AGE, samesite="lax")
+    response.set_cookie(
+        _FURI_COOKIE,
+        "0" if _read_furi(request) else "1",
+        max_age=_COOKIE_MAX_AGE,
+        samesite="lax",
+        secure=_secure_cookie(request),
+    )
     return response
 
 
@@ -828,7 +836,7 @@ def lite_theme(request: Request, v: str = "", next: str = "") -> Response:
     the page follows the system preference, so unknown values leave it alone."""
     response = RedirectResponse(_safe_next(next), status_code=303, headers={"Cache-Control": "no-store"})
     if v in _THEMES:
-        response.set_cookie(_THEME_COOKIE, v, max_age=_COOKIE_MAX_AGE, samesite="lax")
+        response.set_cookie(_THEME_COOKIE, v, max_age=_COOKIE_MAX_AGE, samesite="lax", secure=_secure_cookie(request))
     return response
 
 
@@ -839,12 +847,12 @@ def lite_lang(request: Request, v: str = "", next: str = "") -> Response:
     (web/src/lib/i18n.svelte.ts), so one choice follows you across variants."""
     response = RedirectResponse(_safe_next(next), status_code=303, headers={"Cache-Control": "no-store"})
     if v in _LANGS:
-        response.set_cookie(_LANG_COOKIE, v, max_age=_COOKIE_MAX_AGE, samesite="lax")
+        response.set_cookie(_LANG_COOKIE, v, max_age=_COOKIE_MAX_AGE, samesite="lax", secure=_secure_cookie(request))
     return response
 
 
 @router.get("/lite/recent/clear")
-def lite_recent_clear(next: str = "") -> Response:
+def lite_recent_clear(request: Request, next: str = "") -> Response:
     """Empty the recent-searches cookie — the pills row's Clear link. Writes "
     "[]\" instead of deleting the cookie: the shared list is read by the web UI
     too (web/src/lib/recent.ts keeps its own localStorage fallback for when
@@ -852,8 +860,14 @@ def lite_recent_clear(next: str = "") -> Response:
     use your local copy" — which would resurrect this history. An explicitly
     empty list clears every reader."""
     response = RedirectResponse(_safe_next(next), status_code=303, headers={"Cache-Control": "no-store"})
-    response.set_cookie(_RECENT_COOKIE, "[]", max_age=_COOKIE_MAX_AGE, samesite="lax")
+    response.set_cookie(_RECENT_COOKIE, "[]", max_age=_COOKIE_MAX_AGE, samesite="lax", secure=_secure_cookie(request))
     return response
+
+
+def _secure_cookie(request: Request) -> bool:
+    """First-party preference cookies don't need HttpOnly (the SPA reads them),
+    but in production they must ride HTTPS."""
+    return request.url.scheme == "https"
 
 
 def _int(value: str, default: int) -> int:
@@ -904,8 +918,14 @@ def _recent_cookie_value(current: str, query: str) -> str:
         previous = [item for item in json.loads(unquote(current or "[]")) if isinstance(item, str)]
     except Exception:
         previous = []
-    items = [query, *(item for item in previous if item != query and 0 < len(item) <= _RECENT_MAX_CHARS)]
-    items = [item for item in dict.fromkeys(items) if item][:MAX_RECENT]
+    items = [item for item in previous if item != query and 0 < len(item) <= _RECENT_MAX_CHARS]
+    # Only prepend the fresh entry if it alone fits the budget — an over-long
+    # paste must not produce a Set-Cookie the browser rejects wholesale.
+    if 0 < len(query) <= _RECENT_MAX_CHARS:
+        single = quote(json.dumps([query], separators=(",", ":")), safe="")
+        if len(single) <= _RECENT_COOKIE_BUDGET:
+            items.insert(0, query)
+    items = list(dict.fromkeys(items))[:MAX_RECENT]
     encoded = quote(json.dumps(items, separators=(",", ":")), safe="")
     while len(encoded) > _RECENT_COOKIE_BUDGET and len(items) > 1:
         items.pop()  # oldest last
@@ -1113,9 +1133,16 @@ def _xref_href(x: dict) -> str:
     """Search link for an xref chip; appends the #r<seq>-s<sno> fragment so
     the browser lands on the target entry's sense block natively (no JS)."""
     href = _href("/lite/search", q=x.get("text") or "")
-    seq = x.get("seq")
+    try:
+        seq = int(str(x.get("seq") or 0))
+    except (TypeError, ValueError):
+        seq = None
     if seq:
         sno = x.get("sno")
+        try:
+            sno = int(str(sno)) if sno else None
+        except (TypeError, ValueError):
+            sno = None
         href += f"#r{seq}" + (f"-s{sno}" if sno else "")
     return href
 
@@ -1387,7 +1414,11 @@ def lite_kanji_random(
             char = random_kanji()
     except Exception:
         logger.warning("lite kanji random failed; using unchecked pick", exc_info=True)
-        char = random_kanji()
+        try:
+            char = random_kanji()
+        except Exception:
+            logger.error("kanji table unavailable entirely; using literal", exc_info=True)
+            char = "日"
     # New page's chain = the current page's predecessor list (chn), NOT
     # including the current char — that becomes the new page's `from`.
     new_chain = chn
@@ -1406,6 +1437,7 @@ def lite_kanji_random(
         _recent_cookie_value(request.cookies.get(_RECENT_COOKIE, ""), char),
         max_age=_COOKIE_MAX_AGE,
         samesite="lax",
+        secure=_secure_cookie(request),
     )
     return response
 
@@ -1586,6 +1618,7 @@ def lite_kanji_group(request: Request, by: str = "", value: str = "", n: str = "
         theme=theme,
         lang=lang,
         canonical="/lite/kanji/group",
+        furi=_read_furi(request),
     )
 
 
@@ -1786,6 +1819,7 @@ def lite_loanwords(request: Request) -> Response:
         theme=theme,
         lang=lang,
         canonical="/lite/loanwords",
+        furi=_read_furi(request),
     )
 
 
@@ -1881,24 +1915,18 @@ def lite_kana(request: Request, variant: str = "") -> Response:
     # cache private (the _page downgrade check reads it) — same contract as
     # every other lite page.
     furi = _read_furi(request)
-    if variant not in ("", "hiragana", "katakana"):
-        return _error_page(
-            _t(lang, "kanaTitle"),
-            _t(lang, "lite_searchUnavailable"),
-            400,
-            theme,
-            _controls(request),
-            lang,
-        )
+    variant = "katakana" if variant == "katakana" else "hiragana"
     chart_src = KATAKANA if variant == "katakana" else HIRAGANA
     title = _t(lang, "kanaTitle")
     tabs = (
-        '<nav class="kana-tabs" aria-label="{}"><a class="kana-tab{}" href="/lite/kana?variant=hiragana">{}</a>'
-        '<a class="kana-tab{}" href="/lite/kana?variant=katakana">{}</a></nav>'.format(
+        '<nav class="kana-tabs" aria-label="{}"><a class="kana-tab{}"{} href="/lite/kana?variant=hiragana">{}</a>'
+        '<a class="kana-tab{}"{} href="/lite/kana?variant=katakana">{}</a></nav>'.format(
             esc(_t(lang, "kanaScript")),
             " sel" if variant != "katakana" else "",
+            ' aria-current="page"' if variant != "katakana" else "",
             esc(_t(lang, "kanaHiragana")),
             " sel" if variant == "katakana" else "",
+            ' aria-current="page"' if variant == "katakana" else "",
             esc(_t(lang, "kanaKatakana")),
         )
     )

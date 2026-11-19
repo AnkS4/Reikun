@@ -7,6 +7,7 @@ between surfaces were renamed on the Lite side (e.g. ``lite_noConjData``).
 """
 
 import json
+import re
 from pathlib import Path
 
 # app/lite/i18n.py -> repo root locally, /app in the container image
@@ -50,6 +51,13 @@ def _t(lang: str, key: str, **vars: object) -> str:
     ``str.replace`` keeps user text literal (no replacement-pattern expansion
     like JavaScript's ``$&``)."""
     out = _I18N.get(lang, _I18N["en"]).get(key) or _I18N["en"][key]
-    for name, value in vars.items():
-        out = out.replace("{" + name + "}", str(value))
-    return out
+    if not vars:
+        return out
+    # Single pass: a substituted value containing "{other}" must not be
+    # re-matched by a later variable's placeholder.
+    pattern = re.compile("|".join(re.escape("{" + name + "}") for name in vars))
+
+    def _sub(match: re.Match[str]) -> str:
+        return str(vars[match.group(0)[1:-1]])
+
+    return pattern.sub(_sub, out)

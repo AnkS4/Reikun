@@ -36,6 +36,7 @@ TOKENS = [
     "--radius-lg",
     "--radius-xl",
     "--radius-pill",
+    "--shadow-sm",
     "--fs-2xs",
     "--fs-xs",
     "--fs-sm",
