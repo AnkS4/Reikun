@@ -115,7 +115,7 @@
 			{/if}
 		</span>
 	</span>
-	<Popover icon="palette" title={t('theme')}>
+	<Popover icon="contrast" title={t('theme')}>
 		<p class="popover-title">{t('theme')}</p>
 		<div class="opt-list" role="listbox" aria-label={t('theme')}>
 			{#each THEME_OPTIONS as option (option.v)}

@@ -426,10 +426,10 @@
 				searchInput?.focus();
 			}}
 		>
-			<Icon name="close" size={18} />
+			<Icon name="close" size={20} />
 		</button>
 		<button type="submit" class="search-submit" aria-label={t('search')} title={t('search')}>
-			<Icon name="search" size={18} />
+			<Icon name="search" size={20} />
 		</button>
 	</div>
 	<button
@@ -441,7 +441,7 @@
 		disabled={randomBusy}
 		onclick={randomKanji}
 	>
-		{#if randomBusy}<span class="spinner" aria-hidden="true"></span>{:else}<Icon name="dices" size={18} />{/if}
+		{#if randomBusy}<span class="spinner" aria-hidden="true"></span>{:else}<Icon name="dices" size={20} />{/if}
 	</button>
 	<!-- Furigana toggle: visible one-click control (the Appearance popover in
 	     the Header is the secondary location). Reads are on by default; the あ
@@ -478,7 +478,7 @@
 	</div>
 {/if}
 {#if error}
-	<div class="error-banner" role="alert"><Icon name="warning" size={18} /> {error}</div>
+	<div class="error-banner" role="alert"><Icon name="warning" size={20} /> {error}</div>
 {/if}
 
 {#if resp}
@@ -501,7 +501,7 @@
 				aria-label={t('statsInfo')}
 				aria-describedby={infoId}
 			>
-				<Icon name="info" size={18} />
+				<Icon name="info" size={20} />
 			</span>
 			<span class="stats-pop" role="tooltip" id={infoId}>
 				<span class="popover-title">{t('technicalInfo')}</span>
@@ -534,7 +534,7 @@
 		{#if meta?.too_long}
 			{@const shown = committed.length > 24 ? committed.slice(0, 24) + '…' : committed}
 			<div class="warning">
-				<Icon name="warning" size={18} />
+				<Icon name="warning" size={20} />
 				{#if meta.too_long === MAX_JA_QUERY_CHARS}
 					{t('tooLongJa', { shown, max: formatNumber(MAX_JA_QUERY_CHARS) })}
 				{:else}
@@ -543,11 +543,11 @@
 			</div>
 		{:else if kanjiChar}
 			<div class="notice">
-				<Icon name="info" size={18} /> {t('notAWord', { char: kanjiChar })}
+				<Icon name="info" size={20} /> {t('notAWord', { char: kanjiChar })}
 			</div>
 		{:else}
 			<div class="warning">
-				<Icon name="warning" size={18} /> {t('nothingFound')}
+				<Icon name="warning" size={20} /> {t('nothingFound')}
 			</div>
 		{/if}
 	{/if}
@@ -639,7 +639,7 @@
 			title={t('scrollTop')}
 			aria-label={t('scrollTop')}
 		>
-			<Icon name="arrow-up" size={18} />
+			<Icon name="arrow-up" size={20} />
 		</button>
 	</div>
 {/if}
