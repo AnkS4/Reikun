@@ -12,7 +12,9 @@
  * an icon — Lucide has none). Spinners and status marks are CSS-drawn.
  * (The stroke-order diagram is StrokeSvg.svelte — KanjiVG data, not an
  * icon.) The `kana` glyph is Tabler's language-hiragana (MIT) — Lucide has
- * no kana face; Tabler's is the same 24×24 2px-stroke language as ours. Lite keeps its own uniform language instead — text labels, a CSS
+ * no kana face; Tabler's is the same 24×24 2px-stroke language as ours,
+ * and it is the set's single non-Lucide glyph.
+ * Lite keeps its own uniform language instead — text labels, a CSS
  * dot and typographic arrows — because hardened browsers with
  * svg.disabled (Tor/LibreWolf "Safest") blank inline SVG; see the note
  * above the glyph constants in app/lite/__init__.py.
