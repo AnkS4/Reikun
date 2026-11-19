@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { page } from '$app/state';
 	import Header from '#lib/components/Header.svelte';
-	import { HIRAGANA, KATAKANA, type KanaChart } from '#lib/kana.ts';
-	import { t } from '#lib/i18n.svelte.ts';
+	import { HIRAGANA, KATAKANA, kanaMetaLabel, type KanaChart } from '#lib/kana.ts';
+	import { i18n, t } from '#lib/i18n.svelte.ts';
 
 	const variant = $derived.by((): 'hiragana' | 'katakana' =>
 		page.url.searchParams.get('variant') === 'katakana' ? 'katakana' : 'hiragana');
@@ -40,7 +40,7 @@
 						{#if cell}
 							<div class="kg-card kana-cell">
 								<span class="kg-glyph" lang="ja">{cell.kana}</span>
-								<span class="kg-meta">{cell.romaji}</span>
+								<span class="kg-meta" lang={i18n.locale === 'hi' || i18n.locale === 'mr' ? i18n.locale : undefined}>{kanaMetaLabel(cell.romaji, i18n.locale)}</span>
 							</div>
 						{:else}
 							<div class="kana-cell-empty" aria-hidden="true"></div>

@@ -81,7 +81,7 @@ from .assets import (
     _LITE_FONT_HASH,
 )
 from .i18n import _fmt_count, _t
-from .kana import HIRAGANA, KATAKANA
+from .kana import HIRAGANA, KATAKANA, kana_meta_label
 
 logger = logging.getLogger("reikun.lite")
 
@@ -1915,9 +1915,11 @@ def lite_kana(request: Request, variant: str = "") -> Response:
             for cell in row:
                 if cell:
                     kana, romaji = cell
+                    meta = kana_meta_label(romaji, lang)
+                    meta_lang = ' lang="mr"' if lang == 'mr' else (' lang="hi"' if lang == 'hi' else '')
                     cells.append(
                         f'<div class="kg-card kana-cell"><span class="kg-glyph" lang="ja">{kana}</span>'
-                        f'<span class="kg-meta">{romaji}</span></div>'
+                        f'<span class="kg-meta"{meta_lang}>{esc(meta)}</span></div>'
                     )
                 else:
                     cells.append('<div class="kana-cell-empty" aria-hidden="true"></div>')

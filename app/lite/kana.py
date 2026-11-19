@@ -4,6 +4,33 @@ each other's files, so the tables exist in both). Three sections each in
 gojūon reading order: Basic (46), Dakuten (20), Handakuten (5) — empty
 gojūon slots are kept so the five-column grid stays visually aligned."""
 
+ROMAJI_TO_DEVANAGARI = {
+    "a": "आ", "i": "ई", "u": "ऊ", "e": "ए", "o": "ओ",
+    "ka": "का", "ki": "की", "ku": "कू", "ke": "के", "ko": "को",
+    "sa": "सा", "shi": "शी", "su": "सू", "se": "से", "so": "सो",
+    "ta": "ता", "chi": "ची", "tsu": "त्सू", "te": "ते", "to": "तो",
+    "na": "ना", "ni": "नी", "nu": "नू", "ne": "ने", "no": "नो",
+    "ha": "हा", "hi": "ही", "fu": "फ़ू", "he": "हे", "ho": "हो",
+    "ma": "मा", "mi": "मी", "mu": "मू", "me": "मे", "mo": "मो",
+    "ya": "या", "yu": "यू", "yo": "यो",
+    "ra": "रा", "ri": "री", "ru": "रू", "re": "रे", "ro": "रो",
+    "wa": "वा", "wo": "ओ", "n": "न्",
+    "ga": "गा", "gi": "गी", "gu": "गू", "ge": "गे", "go": "गो",
+    "za": "ज़ा", "ji": "ज़ी", "zu": "ज़ू", "ze": "ज़े", "zo": "ज़ो",
+    "da": "दा", "de": "दे", "do": "दो",
+    "ba": "बा", "bi": "बी", "bu": "बू", "be": "बे", "bo": "बो",
+    "pa": "पा", "pi": "पी", "pu": "पू", "pe": "पे", "po": "पो",
+}
+
+
+def kana_meta_label(romaji: str, lang: str) -> str:
+    """The kana chart's meta label for one cell — Devanagari under hi/mr,
+    Latin romaji otherwise (same phonetic content, the chart's own script)."""
+    if lang in ("hi", "mr"):
+        return ROMAJI_TO_DEVANAGARI.get(romaji, romaji)
+    return romaji
+
+
 HIRAGANA = {
     "basic": [
         [("あ", "a"), ("い", "i"), ("う", "u"), ("え", "e"), ("お", "o")],

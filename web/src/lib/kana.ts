@@ -7,6 +7,37 @@
  * empty gojūon slots kept in place so the chart keeps its shape (they render
  * as invisible placeholders to hold the 5-column grid).
  */
+/**
+ * Devanagari rendering of the romaji column labels — the Hindi/Marathi
+ * equivalent of the Latin transliteration (same phonetic content, native
+ * script). Only the vowels shift length (आ = long a like Japanese /a/);
+ * everything else maps one-to-one. No UI copy changes: the chart's meta
+ * line just reads the script the reader learns in.
+ */
+export const ROMAJI_TO_DEVANAGARI: Record<string, string> = {
+"a": "आ", "i": "ई", "u": "ऊ", "e": "ए", "o": "ओ",
+    "ka": "का", "ki": "की", "ku": "कू", "ke": "के", "ko": "को",
+    "sa": "सा", "shi": "शी", "su": "सू", "se": "से", "so": "सो",
+    "ta": "ता", "chi": "ची", "tsu": "त्सू", "te": "ते", "to": "तो",
+    "na": "ना", "ni": "नी", "nu": "नू", "ne": "ने", "no": "नो",
+    "ha": "हा", "hi": "ही", "fu": "फ़ू", "he": "हे", "ho": "हो",
+    "ma": "मा", "mi": "मी", "mu": "मू", "me": "मे", "mo": "मो",
+    "ya": "या", "yu": "यू", "yo": "यो",
+    "ra": "रा", "ri": "री", "ru": "रू", "re": "रे", "ro": "रो",
+    "wa": "वा", "wo": "ओ", "n": "न्",
+    "ga": "गा", "gi": "गी", "gu": "गू", "ge": "गे", "go": "गो",
+    "za": "ज़ा", "ji": "ज़ी", "zu": "ज़ू", "ze": "ज़े", "zo": "ज़ो",
+    "da": "दा", "de": "दे", "do": "दो",
+    "ba": "बा", "bi": "बी", "bu": "बू", "be": "बे", "bo": "बो",
+    "pa": "पा", "pi": "पी", "pu": "पू", "pe": "पे", "po": "पो",
+};
+
+/** Localized meta label for one kana cell. */
+export function kanaMetaLabel(romaji: string, locale: 'en' | 'ja' | 'es' | 'hi' | 'mr'): string {
+	if (locale === 'hi' || locale === 'mr') return ROMAJI_TO_DEVANAGARI[romaji] ?? romaji;
+	return romaji;
+}
+
 export type KanaRow = Array<{ kana: string; romaji: string } | null>;
 
 export type KanaChart = {
