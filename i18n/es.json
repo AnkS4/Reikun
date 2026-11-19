@@ -236,6 +236,7 @@
 	"loanwordsBrowse": "Explorar por idioma →",
 	"browse": "Explorar",
 	"browseKanji": "Explorar kanji",
+	"browseKanjiDesc": "Por trazos, grado escolar y nivel JLPT",
 	"pickGroupSub": "Elige una categoría",
 	"pickValueSub": "Elige {group}",
 	"gradeCount": "Curso {n}",

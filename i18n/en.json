@@ -236,6 +236,7 @@
 	"loanwordsBrowse": "Browse by language →",
 	"browse": "Browse",
 	"browseKanji": "Browse Kanji",
+	"browseKanjiDesc": "Stroke counts, school grade and JLPT level",
 	"pickGroupSub": "Pick a category",
 	"pickValueSub": "Pick {group}",
 	"gradeCount": "Grade {n}",

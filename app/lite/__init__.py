@@ -652,9 +652,7 @@ def lite_home(request: Request) -> HTMLResponse:
     # Browse tiles — same four destinations as the SPA homepage grid, drawn
     # from the same subset icon font as the top-right controls.
     browse_tiles = (
-        ("/lite/kanji/group", {"by": "strokes"}, "pen-line", "browseStrokes", "browseStrokesDesc"),
-        ("/lite/kanji/group", {"by": "grade"}, "school", "browseGrade", "browseGradeDesc"),
-        ("/lite/kanji/group", {"by": "jlpt"}, "award", "jlptLevel", "browseJlptDesc"),
+        ("/lite/kanji/group", {}, "book-open-text", "browseKanji", "browseKanjiDesc"),
         ("/lite/loanwords", {}, "import", "browseLoanwords", "browseLoanwordsDesc"),
         ("/lite/kana", {}, "kana", "browseKana", "browseKanaDesc"),
     )

@@ -236,6 +236,7 @@
 	"loanwordsBrowse": "言語別に見る →",
 	"browse": "一覧",
 	"browseKanji": "漢字一覧",
+	"browseKanjiDesc": "画数・学年・JLPTレベルで探す",
 	"pickGroupSub": "分類を選んでください",
 	"pickValueSub": "{group}を選んでください",
 	"gradeCount": "{n}学年",

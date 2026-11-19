@@ -236,6 +236,7 @@
 	"loanwordsBrowse": "भाषेनुसार पाहा →",
 	"browse": "ब्राउझ करा",
 	"browseKanji": "कांजी ब्राउझ करा",
+	"browseKanjiDesc": "स्ट्रोक, ग्रेड आणि JLPT स्तरानुसार",
 	"pickGroupSub": "एक श्रेणी निवडा",
 	"pickValueSub": "{group} निवडा",
 	"gradeCount": "ग्रेड {n}",
