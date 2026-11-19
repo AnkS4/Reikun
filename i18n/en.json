@@ -256,7 +256,7 @@
 	"kanaBasic": "Basic",
 	"kanaDakuten": "Dakuten",
 	"kanaHandakuten": "Handakuten",
-	"kanaHiragana": "Hiragana",
-	"kanaKatakana": "Katakana",
+	"kanaHiragana": "Hiragana ひらがな",
+	"kanaKatakana": "Katakana カタカナ",
 	"kanaScript": "Script"
 }

@@ -131,7 +131,7 @@ font:.94rem/1 'reikun-icons',sans-serif}
 .icon-full::before{content:"\f3f9"}
 .icon-lang::before{content:"\f658"}
 .icon-db::before{content:"\f8c4"}
-.icon-type::before{content:"\f106"}
+.icon-kana::before{content:"\f106"}
 .icon-pen-line::before{content:"\f101"}
 .icon-school::before{content:"\f102"}
 .icon-award::before{content:"\f103"}

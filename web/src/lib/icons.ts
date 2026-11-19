@@ -11,7 +11,8 @@
  * in link text (←, →) and the あ furigana button (a language character, not
  * an icon — Lucide has none). Spinners and status marks are CSS-drawn.
  * (The stroke-order diagram is StrokeSvg.svelte — KanjiVG data, not an
- * icon.) Lite keeps its own uniform language instead — text labels, a CSS
+ * icon.) The `kana` glyph is Tabler's language-hiragana (MIT) — Lucide has
+ * no kana face; Tabler's is the same 24×24 2px-stroke language as ours. Lite keeps its own uniform language instead — text labels, a CSS
  * dot and typographic arrows — because hardened browsers with
  * svg.disabled (Tor/LibreWolf "Safest") blank inline SVG; see the note
  * above the glyph constants in app/lite/__init__.py.
@@ -57,8 +58,7 @@ export const icons = {
 		'<path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>',
 	feather:
 		'<path d="M14.086 18.412A2 2 0 0112.67 19H5v-7.672a2 2 0 01.586-1.414L11.75 3.75a6 6 0 118.49 8.49z"/><path d="M16 8 2 22"/><path d="M17.488 15H9"/>',
-	type:
-		'<path d="M12 4v16"/><path d="M4 7V5a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v2"/><path d="M9 20h6"/>'
+	kana: '<path d="M4 5h7"/><path d="M7 4c0 4.846 0 7 .5 8"/><path d="M10 8.5c0 2.286 -2 4.5 -3.5 4.5s-2.5 -1.135 -2.5 -2c0 -2 1 -3 3 -3s5 .57 5 2.857c0 1.524 -.667 2.571 -2 3.143"/><path d="M12 20l4 -9l4 9"/><path d="M19.1 18h-6.2"/>'
 };
 
 export type IconName = keyof typeof icons;

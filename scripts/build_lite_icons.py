@@ -70,9 +70,11 @@ _ICONS = {
         "M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5",
         "M3 12c0 1.66 4 3 9 3s9-1.34 9-3",
     ),
-    # type — browse tile: kana
+    # kana (Tabler language-hiragana, MIT) — browse tile: kana chart
     "F106": (
-        "M12 4v16", "M4 7V5a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v2", "M9 20h6",
+        "M4 5h7", "M7 4c0 4.846 0 7 .5 8",
+        "M10 8.5c0 2.286 -2 4.5 -3.5 4.5s-2.5 -1.135 -2.5 -2c0 -2 1 -3 3 -3s5 .57 5 2.857c0 1.524 -.667 2.571 -2 3.143",
+        "M12 20l4 -9l4 9", "M19.1 18h-6.2",
     ),
     # pen-line — browse tile: kanji by stroke count
     "F101": (
