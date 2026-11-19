@@ -43,6 +43,7 @@ def main() -> int:
     subsetter = Subsetter(options=opts)
     subsetter.populate(unicodes=want)
     subsetter.subset(font)
+    font.flavor = opts.flavor  # Subsetter does not propagate this; save() uses it
     font.save(dst)
     return 0
 
