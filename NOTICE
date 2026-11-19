@@ -1,32 +1,38 @@
-Reikun (例訓)
-Copyright 2026 Aniket Satbhai
+Reikun — NOTICE
 
-This project includes dictionary and linguistic data that remains under
-the licenses of its original sources:
+This product distributes, incorporates or is built upon the
+following third-party software and data. Each is the property of its
+respective owner and is used under the licence shown.
 
-- JMdict — Japanese-Multilingual Dictionary, (c) Jim Breen and the
-  Electronic Dictionary Research and Development Group (EDRDG).
-  https://www.edrdg.org/wiki/index.php/JMdict-EDICT_Dictionary_Project
-  Licensed under CC BY-SA 4.0
-  https://creativecommons.org/licenses/by-sa/4.0/
-  EDRDG licence: https://www.edrdg.org/edrdg/licence.html
+Icons — Tabler Icons
+    https://github.com/tabler/tabler-icons
+    MIT License — Copyright © 2020 Paweł Kuna and Tabler contributors
+    Inline SVG bodies in web/src/lib/icons.ts; a compiled subset ships in
+    app/static/lite-icons.woff2. Both trace the same 24×24, 1.5px-stroke
+    glyph outlines.
 
-- KANJIDIC2 — kanji dictionary, (c) Jim Breen and EDRDG.
-  https://www.edrdg.org/wiki/index.php/KANJIDIC_Project
-  Licensed under CC BY-SA 4.0
-  https://creativecommons.org/licenses/by-sa/4.0/
+Fonts — IBM Plex Sans, IBM Plex Sans JP, IBM Plex Mono, IBM Plex Sans Devanagari
+    https://github.com/IBM/plex
+    SIL Open Font License 1.1 — Copyright © IBM Corp. with Reserved Font Name "Plex"
+    Subset WOFF2 files under web/static/fonts/files/* (~6.8 MB);
+    the licence text is reproduced at web/static/fonts/OFL.txt.
 
-- Tatoeba Corpus (Tanaka Corpus) — example sentences.
-  https://tatoeba.org
-  https://www.edrdg.org/wiki/index.php/Tanaka_Corpus
-  Licensed under CC BY 2.0 FR
-  https://creativecommons.org/licenses/by/2.0/fr/
+Dictionary data — JMdict and KANJIDIC2
+    https://www.edrdg.org/wiki/index.php/JMdict-EDICT_Dictionary_Project
+    https://www.edrdg.org/wiki/index.php/KANJIDIC_Project
+    Creative Commons Attribution-ShareAlike 4.0 (CC BY-SA 4.0) —
+    property of the Electronic Dictionary Research and Development Group (EDRDG)
+    The ingested dictionary, kanji table and stroke-order data are derived from this data.
 
-- KanjiVG — kanji stroke-order data, (c) Ulrich Apel.
-  https://kanjivg.tagaini.net/
-  Licensed under CC BY-SA 3.0
-  https://creativecommons.org/licenses/by-sa/3.0/
+Examples — Tanaka Corpus
+    https://www.edrdg.org/wiki/index.php/Tanaka_Corpus
+    Creative Commons Attribution 2.0 France (CC-BY 2.0 FR) — Tatoeba / Tanaka Corpus
 
-Files under data/ derived from these sources (e.g. chunks.json,
-kanji_table.json, data/kanjivg/) are distributed under their original
-licenses, not the Apache-2.0 license covering the code.
+Stroke-order diagrams — KanjiVG
+    https://kanjivg.tagaini.net/
+    Creative Commons Attribution-ShareAlike 3.0 (CC BY-SA 3.0) — Ulrich Apel
+    The inline stroke-order diagrams and data/processed/strokes.json are derived from KanjiVG data.
+
+Runtime dependencies
+    npm packages under web/ (see web/package.json) and Python packages
+    (see pyproject.toml and uv.lock) remain under their own licences.

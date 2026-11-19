@@ -94,6 +94,14 @@
 	</section>
 
 	<section>
+		<h2>{t('credits')}</h2>
+		<p>
+			{t('creditsLine')} —
+			<a href="https://github.com/AnkS4/Reikun/blob/main/NOTICE" target="_blank" rel="noopener noreferrer">{t('creditsMore')}</a>
+		</p>
+	</section>
+
+	<section>
 		<h2>{t('version')}</h2>
 		<p class="version">Reikun v{version}</p>
 	</section>

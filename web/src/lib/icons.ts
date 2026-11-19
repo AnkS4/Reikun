@@ -1,68 +1,51 @@
 /**
- * Inline SVG icon bodies (24×24, stroke-based, Lucide-style). Static data
- * rendered via {@html} in Icon.svelte; safe because the strings are
+ * Inline SVG icon bodies (24×24, 1.5px stroke, Tabler Icons — MIT). Static
+ * data rendered via {@html} in Icon.svelte; safe because the strings are
  * compile-time constants.
  *
- * This dict is the SPA's single icon language: every icon in the web UI
- * renders through `Icon.svelte` from this dict — same 24×24 grid, 2px
- * strokes, `currentColor`, `aria-hidden` (meaning lives in title/aria-label).
+ * This dict is the SPA's single icon source: every icon renders through
+ * `Icon.svelte` from here — same 24×24 grid, `stroke-width="1.5"`,
+ * `currentColor`, `aria-hidden` (meaning lives in title/aria-label).
  * Do not add icon SVGs anywhere else, and don't mix in emoji or
  * unicode-symbol "icons"; the deliberate exceptions are typographic arrows
- * in link text (←, →) and the あ furigana button (a language character, not
- * an icon — Lucide has none). Spinners and status marks are CSS-drawn.
- * (The stroke-order diagram is StrokeSvg.svelte — KanjiVG data, not an
- * icon.) The `kana` glyph is Tabler's language-hiragana (MIT) — Lucide has
- * no kana face; Tabler's is the same 24×24 2px-stroke language as ours,
- * and it is the set's single non-Lucide glyph.
- * Lite keeps its own uniform language instead — text labels, a CSS
- * dot and typographic arrows — because hardened browsers with
- * svg.disabled (Tor/LibreWolf "Safest") blank inline SVG; see the note
- * above the glyph constants in app/lite/__init__.py.
+ * in link text (←, →) and the あ furigana button (a language character,
+ * not an icon — no icon set ships a kana face; ours is Tabler's
+ * `language-hiragana`, same as every other glyph here). Spinners and
+ * status marks are CSS-drawn. (The stroke-order diagram is StrokeSvg.svelte
+ * — KanjiVG data, not an icon.)
+ * Lite keeps its own uniform language instead — text labels, a CSS dot and
+ * typographic arrows — because hardened browsers with svg.disabled
+ * (Tor/LibreWolf "Safest") blank inline SVG; see the note above the glyph
+ * constants in app/lite/__init__.py.
  */
 export const icons = {
-	search: '<circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/>',
-	languages:
-		'<path d="m5 8 6 6"/><path d="m4 14 6-6 2-3"/><path d="M2 5h12"/><path d="M7 2h1"/><path d="m22 22-5-10-5 10"/><path d="M14 18h6"/>',
-	shuffle:
-		'<path d="M16 3h5v5"/><path d="M4 20 21 3"/><path d="M21 16v5h-5"/><path d="m15 15 6 6"/><path d="m4 4 5 5"/>',
-	school:
-		'<path d="M22 10 12 5 2 10l10 5 10-5z"/><path d="M6 12.5v4.5c0 1.4 2.7 2.5 6 2.5s6-1.1 6-2.5v-4.5"/><path d="M22 10v6"/>',
-	palette:
-		'<circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/><circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.93 0 1.65-.75 1.65-1.69 0-.44-.18-.84-.44-1.13-.29-.29-.44-.65-.44-1.12a1.64 1.64 0 0 1 1.67-1.67h2c3.05 0 5.55-2.5 5.55-5.55C21.97 6.01 17.46 2 12 2z"/>',
-	replay:
-		'<path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/>',
-	database:
-		'<ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/><path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3"/>',
-	'thumbs-up':
-		'<path d="M7 10v12"/><path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2a3.13 3.13 0 0 1 3 3.88Z"/>',
-	'thumbs-down':
-		'<path d="M17 14V2"/><path d="M9 18.12 10 14H4.17a2 2 0 0 1-1.92-2.56l2.33-8A2 2 0 0 1 6.5 2H20a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2.76a2 2 0 0 0-1.79 1.11L12 22a3.13 3.13 0 0 1-3-3.88Z"/>',
-	'expand-more': '<path d="m6 9 6 6 6-6"/>',
-	info: '<circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>',
-	award:
-		'<circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/>',
-	import:
-		'<path d="M12 3v12"/><path d="m8 11 4 4 4-4"/><path d="M8 5H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-4"/>',
-	bot: '<rect width="16" height="12" x="4" y="8" rx="2"/><path d="M12 8V4H8"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/>',
-	split:
-		'<path d="M16 3h5v5"/><path d="M8 3H3v5"/><path d="M12 22v-8.3a4 4 0 0 0-1.172-2.872L3 3"/><path d="m15 9 6-6"/>',
-	copy: '<rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>',
-	check: '<path d="M20 6 9 17l-5-5"/>',
-	share:
-		'<path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="m16 6-4-4-4 4"/><path d="M12 2v13"/>',
-	warning:
-		'<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/>',
-	close: '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
-	'arrow-up': '<path d="m5 12 7-7 7 7"/><path d="M12 19V5"/>',
-	'arrow-right': '<path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>',
-	'pen-line': '<path d="M13 21h8"/><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/>',
-	'book-open':
-		'<path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>',
-	'book-open-text':
-		'<path d="M12 5v16m4-8h2m-2-4h2m2.001 10A2 2 0 0 0 22 17V5a2 2 0 0 0-1.999-2L16 3.002A5 5 0 0 0 12 5a5 5 0 0 0-4-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 1.999 2H8a5 5 0 0 1 4 2a5 5 0 0 1 4-2zM6 13h2M6 9h2"/>',
-	feather:
-		'<path d="M14.086 18.412A2 2 0 0112.67 19H5v-7.672a2 2 0 01.586-1.414L11.75 3.75a6 6 0 118.49 8.49z"/><path d="M16 8 2 22"/><path d="M17.488 15H9"/>',
-	kana: '<path d="M4 5h7"/><path d="M7 4c0 4.846 0 7 .5 8"/><path d="M10 8.5c0 2.286 -2 4.5 -3.5 4.5s-2.5 -1.135 -2.5 -2c0 -2 1 -3 3 -3s5 .57 5 2.857c0 1.524 -.667 2.571 -2 3.143"/><path d="M12 20l4 -9l4 9"/><path d="M19.1 18h-6.2"/>'
+	'search': '<path stroke-linecap="round" stroke-linejoin="round" d="M3 10a7 7 0 1 0 14 0a7 7 0 1 0-14 0m18 11l-6-6"/>',
+	'languages': '<path d="M9 6.371C9 10.789 6.761 13 4 13m0-6.629h7"/><path d="M5 9c0 2.144 2.252 3.908 6 4m1 7l4-9l4 9m-.9-2h-6.2M6.694 3l.793.582"/>',
+	'shuffle': '<path d="m18 4l3 3l-3 3m0 10l3-3l-3-3"/><path d="M3 7h3a5 5 0 0 1 5 5a5 5 0 0 0 5 5h5m0-10h-5a4.98 4.98 0 0 0-3 1m-4 8a5 5 0 0 1-3 1H3"/>',
+	'school': '<path d="M22 9L12 5L2 9l10 4zv6"/><path d="M6 10.6V16a6 3 0 0 0 12 0v-5.4"/>',
+	'palette': '<path d="M12 21a9 9 0 0 1 0-18c4.97 0 9 3.582 9 8c0 1.06-.474 2.078-1.318 2.828S17.693 15 16.5 15H14a2 2 0 0 0-1 3.75A1.3 1.3 0 0 1 12 21"/><path d="M7.5 10.5a1 1 0 1 0 2 0a1 1 0 1 0-2 0m4-3a1 1 0 1 0 2 0a1 1 0 1 0-2 0m4 3a1 1 0 1 0 2 0a1 1 0 1 0-2 0"/>',
+	'replay': '<path stroke-linecap="round" stroke-linejoin="round" d="M19.95 11a8 8 0 1 0-.5 4m.5 5v-5h-5"/>',
+	'database': '<path d="M4 6a8 3 0 1 0 16 0A8 3 0 1 0 4 6"/><path d="M4 6v6a8 3 0 0 0 16 0V6"/><path d="M4 12v6a8 3 0 0 0 16 0v-6"/>',
+	'thumbs-up': '<path stroke-linecap="round" stroke-linejoin="round" d="M7 11v8a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-7a1 1 0 0 1 1-1za4 4 0 0 0 4-4V6a2 2 0 0 1 4 0v5h3a2 2 0 0 1 2 2l-1 5a2 3 0 0 1-2 2h-7a3 3 0 0 1-3-3"/>',
+	'thumbs-down': '<path stroke-linecap="round" stroke-linejoin="round" d="M7 13V5a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v7a1 1 0 0 0 1 1za4 4 0 0 1 4 4v1a2 2 0 0 0 4 0v-5h3a2 2 0 0 0 2-2l-1-5a2 3 0 0 0-2-2h-7a3 3 0 0 0-3 3"/>',
+	'expand-more': '<path stroke-linecap="round" stroke-linejoin="round" d="m6 9l6 6l6-6"/>',
+	'info': '<path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0-18 0m9-3h.01"/><path d="M11 12h1v4h1"/>',
+	'award': '<path d="M6 9a6 6 0 1 0 12 0A6 6 0 1 0 6 9"/><path d="m12 15l3.4 5.89l1.598-3.233l3.598.232l-3.4-5.889M6.802 12l-3.4 5.89L7 17.657l1.598 3.232l3.4-5.889"/>',
+	'import': '<path stroke-linecap="round" stroke-linejoin="round" d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2M7 11l5 5l5-5m-5-7v12"/>',
+	'bot': '<path stroke-linecap="round" stroke-linejoin="round" d="M6 6a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2zm6-4v2m-3 8v9m6-9v9M5 16l4-2m6 0l4 2M9 18h6M10 8v.01M14 8v.01"/>',
+	'split': '<path d="M21 17h-8l-3.5-5H3m18-5h-8l-3.495 5"/><path d="m18 10l3-3l-3-3m0 16l3-3l-3-3"/>',
+	'copy': '<path d="M7 9.667A2.667 2.667 0 0 1 9.667 7h8.666A2.667 2.667 0 0 1 21 9.667v8.666A2.667 2.667 0 0 1 18.333 21H9.667A2.667 2.667 0 0 1 7 18.333z"/><path d="M4.012 16.737A2 2 0 0 1 3 15V5c0-1.1.9-2 2-2h10c.75 0 1.158.385 1.5 1"/>',
+	'check': '<path stroke-linecap="round" stroke-linejoin="round" d="m5 12l5 5L20 7"/>',
+	'share': '<path stroke-linecap="round" stroke-linejoin="round" d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2M7 9l5-5l5 5m-5-5v12"/>',
+	'warning': '<path stroke-linecap="round" stroke-linejoin="round" d="M12 9v4m-1.637-9.409L2.257 17.125a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636-2.87L13.637 3.59a1.914 1.914 0 0 0-3.274 0M12 16h.01"/>',
+	'close': '<path stroke-linecap="round" stroke-linejoin="round" d="M18 6L6 18M6 6l12 12"/>',
+	'arrow-up': '<path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14m6-8l-6-6m-6 6l6-6"/>',
+	'arrow-right': '<path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14m-6 6l6-6m-6-6l6 6"/>',
+	'pen-line': '<path stroke-linecap="round" stroke-linejoin="round" d="M4 20h4L18.5 9.5a2.828 2.828 0 1 0-4-4L4 16zm9.5-13.5l4 4"/>',
+	'book-open': '<path stroke-linecap="round" stroke-linejoin="round" d="M3 19a9 9 0 0 1 9 0a9 9 0 0 1 9 0M3 6a9 9 0 0 1 9 0a9 9 0 0 1 9 0M3 6v13m9-13v13m9-13v13"/>',
+	'book-open-text': '<path d="M19 4v16H7a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/><path d="M19 16H7a2 2 0 0 0-2 2M9 8h6"/>',
+	'feather': '<path d="m4 20l10-10m0-5v5h5m-9-1v5h5m-9-1v5h5m-5-5l4-4l4-4"/><path d="M19 10c.638-.636 1-1.515 1-2.486A3.515 3.515 0 0 0 16.483 4c-.97 0-1.847.367-2.483 1m-3 13l4-4l4-4"/>',
+	'kana': '<path d="M4 5h7M7 4c0 4.846 0 7 .5 8"/><path d="M10 8.5c0 2.286-2 4.5-3.5 4.5S4 11.865 4 11q0-3 3-3c3 0 5 .57 5 2.857q0 2.286-2 3.143m2 6l4-9l4 9m-.9-2h-6.2"/>',
 };
 
 export type IconName = keyof typeof icons;

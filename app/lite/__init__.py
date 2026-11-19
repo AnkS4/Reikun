@@ -1950,6 +1950,11 @@ def lite_about(request: Request) -> HTMLResponse:
         '<a href="https://kanjivg.tagaini.net/" target="_blank" rel="noopener noreferrer">KanjiVG</a>'
         f'{esc(_t(lang, "dataAfter3"))}'
     )
+    notice_url = "https://github.com/AnkS4/Reikun/blob/main/NOTICE"
+    credits_para = (
+        f'{esc(_t(lang, "creditsLine"))} — '
+        f'<a href="{notice_url}" target="_blank" rel="noopener noreferrer">{esc(_t(lang, "creditsMore"))}</a>'
+    )
     source_para = (
         f'{esc(_t(lang, "sourceBefore"))}'
         '<a href="https://github.com/AnkS4/Reikun" target="_blank" rel="noopener noreferrer">'
@@ -1978,6 +1983,8 @@ def lite_about(request: Request) -> HTMLResponse:
 <p><a href="/lite/privacy">{esc(_t(lang, "privacyMore"))}</a></p>
 <h2>{esc(_t(lang, "source"))}</h2>
 <p>{source_para}</p>
+<h2>{esc(_t(lang, "credits"))}</h2>
+<p>{credits_para}</p>
 <h2>{esc(_t(lang, "version"))}</h2>
 <p class="muted">Reikun v{esc(APP_VERSION)}</p>
 </article>"""

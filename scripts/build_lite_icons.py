@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """Build the Lite control-icon font (app/static/lite-icons.woff2).
 
-The nine glyphs are the SPA's Lucide icons (sun, moon, layout-dashboard,
-languages, database) plus the browse-tile icons (pen-line, school,
-award, import), traced from their 24x24 stroke SVG paths: each path is
-stroked (width 2, round caps/joins — matching the Lucide stroke attributes),
+The eleven glyphs are the Tabler icons (MIT) the SPA ships (sun, moon,
+layout-dashboard, languages, database) plus the browse-tile icons (pen-line,
+school, award, import, book-open-text, kana), traced from their 24x24 stroke
+SVG paths: each path is
+stroked (width 1.5, round caps/joins — matching the SPA's stroke attributes),
 the stroke outlines are unioned, converted to quadratic outlines and embedded
 in a tiny TrueType-flavored woff2 at private-use codepoints. The font is
 served at /lite/static/lite-icons.woff2 and referenced from lite.css (a real
@@ -42,72 +43,64 @@ OUT = Path(__file__).resolve().parent.parent / "app" / "static" / "lite-icons.wo
 # restarts its coordinate context at 0,0). circle/ellipse/rect primitives
 # are pre-converted to equivalent absolute path data.
 _ICONS = {
-    # sun
+    # sun — top-right chrome: theme light (tabler:sun, MIT)
     "F5A2": (
-        "M8 12a4 4 0 1 0 8 0 4 4 0 1 0-8 0",  # circle(12,12,4)
-        "M12 2v2", "M12 20v2",
-        "m4.93 4.93 1.41 1.41", "m17.66 17.66 1.41 1.41",
-        "M2 12h2", "M20 12h2",
-        "m6.34 17.66-1.41 1.41", "m19.07 4.93-1.41 1.41",
+        "M8 12a4 4 0 1 0 8 0a4 4 0 1 0-8 0m-5 0h1m8-9v1m8 8h1m-9 8v1M5.6 5.6l.7.7m12.1-.7l-.7.7m0 "
+        "11.4l.7.7m-12.1-.7l-.7.7",
     ),
-    # moon
-    "F497": ("M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z",),
-    # layout-dashboard: four rounded panels (rects pre-converted, rx=1)
+    # moon — top-right chrome: theme dark (tabler:moon, MIT)
+    "F497": (
+        "M12 3h.393a7.5 7.5 0 0 0 7.92 12.446A9 9 0 1 1 12 2.992z",
+    ),
+    # layout-dashboard — top-right corner: switch to the full version (tabler:layout-dashboard, MIT)
     "F3F9": (
-        "M4 3H9A1 1 0 0 1 10 4V11A1 1 0 0 1 9 12H4A1 1 0 0 1 3 11V4A1 1 0 0 1 4 3Z",
-        "M15 3H20A1 1 0 0 1 21 4V7A1 1 0 0 1 20 8H15A1 1 0 0 1 14 7V4A1 1 0 0 1 15 3Z",
-        "M15 12H20A1 1 0 0 1 21 13V20A1 1 0 0 1 20 21H15A1 1 0 0 1 14 20V13A1 1 0 0 1 15 12Z",
-        "M4 16H9A1 1 0 0 1 10 17V20A1 1 0 0 1 9 21H4A1 1 0 0 1 3 20V17A1 1 0 0 1 4 16Z",
+        "M5 4h4a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1m0 12h4a1 1 0 0 1 1 "
+        "1v2a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-2a1 1 0 0 1 1-1m10-4h4a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1h-4a1 "
+        "1 0 0 1-1-1v-6a1 1 0 0 1 1-1m0-8h4a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1V5a1 1 0 0 "
+        "1 1-1",
     ),
-    # languages: the 文/A character pair (six original path elements)
+    # languages — top-right chrome: language menu trigger (tabler:language, MIT)
     "F658": (
-        "m5 8 6 6", "m4 14 6-6 2-3", "M2 5h12", "M7 2h1",
-        "m22 22-5-10-5 10", "M14 18h6",
+        "M9 6.371C9 10.789 6.761 13 4 13m0-6.629h7",
+        "M5 9c0 2.144 2.252 3.908 6 4m1 7l4-9l4 9m-.9-2h-6.2M6.694 3l.793.582",
     ),
-    # database: cylinder (ellipse pre-converted) with mid line
+    # database — top-right chrome: dictionary status (tabler:database, MIT)
     "F8C4": (
-        "M3 5a9 3 0 1 0 18 0 9 3 0 1 0-18 0",  # ellipse(12,5,9,3)
-        "M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5",
-        "M3 12c0 1.66 4 3 9 3s9-1.34 9-3",
+        "M4 6a8 3 0 1 0 16 0A8 3 0 1 0 4 6",
+        "M4 6v6a8 3 0 0 0 16 0V6",
+        "M4 12v6a8 3 0 0 0 16 0v-6",
     ),
-    # kana (Tabler language-hiragana, MIT) — browse tile: kana chart
+    # kana — browse tile: kana chart (tabler:language-hiragana, MIT)
     "F106": (
-        "M4 5h7", "M7 4c0 4.846 0 7 .5 8",
-        "M10 8.5c0 2.286 -2 4.5 -3.5 4.5s-2.5 -1.135 -2.5 -2c0 -2 1 -3 3 -3s5 .57 5 2.857c0 1.524 -.667 2.571 -2 3.143",
-        "M12 20l4 -9l4 9", "M19.1 18h-6.2",
+        "M4 5h7M7 4c0 4.846 0 7 .5 8",
+        "M10 8.5c0 2.286-2 4.5-3.5 4.5S4 11.865 4 11q0-3 3-3c3 0 5 .57 5 2.857q0 2.286-2 3.143m2 "
+        "6l4-9l4 9m-.9-2h-6.2",
     ),
-    # pen-line — browse tile: kanji by stroke count
+    # pen-line — browse tile: kanji by stroke count (tabler:pencil, MIT)
     "F101": (
-        "M13 21h8",  # underline
-        # nib (single Lucide path, wrapped at whitespace)
-        "M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 "
-        "4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z",
+        "M4 20h4L18.5 9.5a2.828 2.828 0 1 0-4-4L4 16zm9.5-13.5l4 4",
     ),
-    # school (graduation cap) — browse tile: kanji by school grade
+    # school — browse tile: kanji by school grade (tabler:school, MIT)
     "F102": (
-        "M22 10 12 5 2 10l10 5 10-5z",
-        "M6 12.5v4.5c0 1.4 2.7 2.5 6 2.5s6-1.1 6-2.5v-4.5",
-        "M22 10v6",
+        "M22 9L12 5L2 9l10 4zv6",
+        "M6 10.6V16a6 3 0 0 0 12 0v-5.4",
     ),
-    # award (rosette) — browse tile: kanji by JLPT level
+    # award — browse tile: kanji by JLPT level (tabler:award, MIT)
     "F103": (
-        "M18 8a6 6 0 1 1-12 0 6 6 0 1 1 12 0",  # circle(12,8,6)
-        "M15.477 12.89 17 22l-5-3-5 3 1.523-9.11",
+        "M6 9a6 6 0 1 0 12 0A6 6 0 1 0 6 9",
+        "m12 15l3.4 5.89l1.598-3.233l3.598.232l-3.4-5.889M6.802 12l-3.4 5.89L7 17.657l1.598 "
+        "3.232l3.4-5.889",
     ),
-    # import (download arrow into tray) — browse tile: borrowed words
+    # import — browse tile: borrowed words (tabler:download, MIT)
     "F104": (
-        "M12 3v12", "m8 11 4 4 4-4",
-        "M8 5H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-4",
+        "M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2M7 11l5 5l5-5m-5-7v12",
     ),
-    # book-open-text — browse tile: grouped kanji (strokes / grade / JLPT)
+    # book-open-text — browse tile: grouped kanji (strokes / grade / JLPT) (tabler:book-2, MIT)
     "F107": (
-        "M12 5v16m4-8h2m-2-4h2m2.001 10A2 2 0 0 0 22 17V5a2 2 0 0 0-1.999-2L16 3.002A5 5 0 0 0 12 "
-        "5a5 5 0 0 0-4-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 1.999 2H8a5 5 0 0 1 4 2a5 5 0 0 1 4-2zM6 "
-        "13h2M6 9h2",
+        "M19 4v16H7a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z",
+        "M19 16H7a2 2 0 0 0-2 2M9 8h6",
     ),
 }
-
-
 def _stroked_paths(ds: tuple[str, ...]):
     """Stroke each Lucide subpath (24x24 space) into pathops outlines."""
     out = []
