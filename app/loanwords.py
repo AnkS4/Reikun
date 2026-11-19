@@ -96,11 +96,17 @@ def _loanwords() -> dict[str, list[dict]]:
 
 
 def loanword_facets() -> list[dict[str, Any]]:
-    """[{lang, name, count}] sorted by count desc — the chip row."""
+    """[{lang, name, count}] sorted by count desc — the chip row.
+
+    The wasei pseudo-bucket is deliberately excluded: wasei-eigo lives in
+    its own dedicated section (the home-grid tile and /loanwords?lang=wasei)
+    rather than alongside the source languages.
+    """
     idx = _loanwords()
     return [
         {"lang": lang, "name": lang_name(lang), "count": len(entries)}
         for lang, entries in sorted(idx.items(), key=lambda kv: -len(kv[1]))
+        if lang != "wasei"
     ]
 
 

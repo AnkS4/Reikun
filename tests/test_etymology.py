@@ -78,6 +78,8 @@ def _fixture_index() -> dict[str, list[dict]]:
     return {
         "eng": [entry(1, "コンピュータ", 5.0, "eng"), entry(2, "スマホ", 4.0, "eng")],
         "spa": [entry(3, "タバコ", 3.0, "spa")],
+        # pseudo-bucket: must be hidden from the facet grid, still listable
+        "wasei": [entry(4, "サラリーマン", 2.0, "eng"), entry(1, "コンピュータ", 5.0, "eng")],
     }
 
 
@@ -86,6 +88,15 @@ def test_loanword_facets_sorted_by_count(monkeypatch) -> None:
     facets = loanwords.loanword_facets()
     assert [(f["lang"], f["count"]) for f in facets] == [("eng", 2), ("spa", 1)]
     assert facets[0]["name"] == "English"
+
+
+def test_wasei_pseudo_bucket_listable_but_not_a_facet(monkeypatch) -> None:
+    monkeypatch.setattr(loanwords, "_loanwords", _fixture_index)
+    facets = loanwords.loanword_facets()
+    assert "wasei" not in [f["lang"] for f in facets]
+    page = loanwords.loanwords_page("wasei", offset=0, limit=10)
+    assert page is not None and page["total"] == 2
+    assert "サラリーマン" in [r["kanji_form"] for r in page["results"]]
 
 
 def test_loanwords_page_slices_and_404s_unknown(monkeypatch) -> None:
