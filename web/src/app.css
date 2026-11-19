@@ -90,7 +90,7 @@
 
 	/* Motion durations — fast = colour/press fills, base = popover/tooltip open &
 	   colour transitions (the 150 ms default), slow = reserved, no current user. */
-	--dur-fast: 100ms; --dur-base: var(--dur-base); --dur-slow: 250ms;
+	--dur-fast: 100ms; --dur-base: 150ms; --dur-slow: 250ms;
 
 	/* Z-index ladder (values as used in this file; see Design.md → Common →
 	   Layering for the canonical table): 1 inline, 2 stroke-art, 10 replay,
