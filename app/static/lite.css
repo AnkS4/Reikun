@@ -51,26 +51,9 @@
    finds a repo checkout). Plain stylesheet, no JS. If the mirror is missing
    or a system won't decode WOFF2, every face above falls back to the system
    stacks below — lite then behaves exactly like it did before the mirror. */
-:root{--font:'IBM Plex Sans','Segoe UI',Roboto,var(--font-japanese),var(--font-devanagari),
--apple-system,BlinkMacSystemFont,'Helvetica Neue',Arial,system-ui,sans-serif;
---font-japanese:'IBM Plex Sans JP','Hiragino Sans','Hiragino Kaku Gothic ProN','Yu Gothic',
-'Meiryo','Noto Sans CJK JP','Noto Sans JP',system-ui,sans-serif;
---font-devanagari:'IBM Plex Sans Devanagari','Nirmala UI','Mangal','Lohit Devanagari',
-system-ui,sans-serif;
---font-mono:'IBM Plex Mono','DM Mono',Menlo,Monaco,Consolas,'Courier New',
-var(--font-japanese),var(--font-devanagari),ui-monospace,monospace;
-/* Same name as the SPA's display face. */
---font-display:var(--font);
-/* Radius and type scales — same names and values as web/src/app.css. */
---radius-xs:4px;--radius-sm:8px;--radius-md:12px;--radius-lg:16px;--radius-xl:22px;--radius-pill:9999px;
---fs-2xs:.72rem;--fs-xs:.78rem;--fs-sm:.85rem;--fs-md:.9rem;--fs-base:.95rem;--fs-body:1rem;
---fs-lg:1.05rem;--fs-xl:1.15rem;--fs-2xl:1.25rem;
-/* Spacing scale — 4 px base (mirror of the SPA's tokens) */
---space-1:.25rem;--space-2:.5rem;--space-3:.75rem;--space-4:1rem;--space-5:1.5rem;--space-6:2rem;--space-7:3rem;--space-8:4rem;
-/* Z-index ladder — same rungs as the SPA */
---z-search:80;--z-floating:90;--z-header:200;--z-skip:1000;
-/* Motion durations — reserved; lite animates nothing today */
---dur-fast:100ms;--dur-base:150ms;--dur-slow:250ms}
+/* >>> generated from web/src/app.css (scripts/sync_lite_tokens.py) — do not edit */
+:root{--font:'IBM Plex Sans', 'Segoe UI', Roboto, var(--font-japanese), var(--font-devanagari), -apple-system, BlinkMacSystemFont, sans-serif;--font-display:'IBM Plex Sans', 'Segoe UI', Roboto, var(--font-japanese), var(--font-devanagari), -apple-system, BlinkMacSystemFont, sans-serif;--font-japanese:'IBM Plex Sans JP', 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Yu Gothic';--font-devanagari:'IBM Plex Sans Devanagari', 'Nirmala UI', 'Mangal', 'Lohit Devanagari';--font-mono:'IBM Plex Mono', 'DM Mono', SFMono-Regular, Menlo, Monaco, Consolas, var(--font-japanese), var(--font-devanagari), ui-monospace, monospace;--radius-xs:4px;--radius-sm:8px;--radius-md:12px;--radius-lg:16px;--radius-xl:22px;--radius-pill:9999px;--fs-2xs:0.72rem;--fs-xs:0.78rem;--fs-sm:0.85rem;--fs-md:0.9rem;--fs-base:0.95rem;--fs-body:1rem;--fs-lg:1.05rem;--fs-xl:1.15rem;--fs-2xl:1.25rem;--space-1:0.25rem;--space-2:0.5rem;--space-3:0.75rem;--space-4:1rem;--space-5:1.5rem;--space-6:2rem;--space-7:3rem;--space-8:4rem;--z-search:80;--z-floating:90;--z-header:200;--z-skip:1000;--dur-fast:100ms;--dur-base:150ms;--dur-slow:250ms;}
+/* <<< generated from web/src/app.css */
 /* Body metrics mirror the SPA's main container (web/src/app.css): 50rem
    column, same side padding and bottom scroll room — more air, same rhythm. */
 html{font-family:var(--font);-webkit-text-size-adjust:100%;scroll-behavior:smooth;
