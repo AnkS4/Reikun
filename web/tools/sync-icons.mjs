@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /* Regenerates web/src/lib/icons.ts from the installed lucide-static package.
  *
- * The 26 SPA glyphs inline the upstream Lucide bodies verbatim (modulo SVG
+ * The 27 SPA glyphs inline the upstream Lucide bodies verbatim (modulo SVG
  * comment/wrapper stripping and currentColor passthrough), so an upstream
  * update is:
  *

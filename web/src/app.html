@@ -23,6 +23,7 @@
 			content="Search English or Japanese words and sentences, break them down word-by-word, see meanings and furigana, inspect kanji, and get grammar explanations tuned to your JLPT level."
 		/>
 		<meta name="twitter:image" content="https://reikun.app/images/og-image.png" />
+		<!-- Paired with the sha256-96O4ANVx5qN/vB/eYqW/7eBVA7RBWLIFsIwfLNI09Ak= hash in vite.config.ts — if you edit this block, re-compute the hash or crawlers stop seeing it. -->
 		<script type="application/ld+json">
 			{
 				"@context": "https://schema.org",
@@ -63,44 +64,7 @@
 		<noscript>
 			<link href="%sveltekit.assets%/fonts/fonts.css" rel="stylesheet" />
 		</noscript>
-		<script>
-			// Apply persisted theme before first paint to avoid a flash.
-			(function () {
-				var t = 'system';
-				// The lite_theme cookie is the shared channel with the lite UI and is
-				// authoritative: whichever variant you switched last wins (see
-				// stored() in theme.svelte.ts). lite's single dark maps onto the
-				// oled canvas unless this end already prefers dark/oled.
-				var c = document.cookie.match(/(?:^|;\s*)lite_theme=(light|dark)(?:;|$)/)?.[1];
-				if (c === 'light') t = 'light';
-				else if (c === 'dark') {
-					var local;
-					try {
-						local = localStorage.getItem('reikun-theme');
-					} catch (e) {}
-					t = local === 'dark' || local === 'oled' ? local : 'oled';
-				} else {
-					// No cookie — follow this variant's own choice. localStorage can
-					// throw (Safari "Block all cookies", in-app webviews, sandboxed
-					// iframes) — fall back to the OS preference, never abort.
-					try {
-						t = localStorage.getItem('reikun-theme');
-					} catch (e) {}
-					if (t === 'amoled') t = 'oled'; // legacy value
-					if (t !== 'light' && t !== 'dark' && t !== 'oled') t = 'system';
-				}
-				var resolved = t;
-				if (t === 'system') {
-					// NOTE: 'oled' is intentionally the default dark resolution for system preference (not 'dark').
-					resolved = matchMedia('(prefers-color-scheme: dark)').matches ? 'oled' : 'light';
-				}
-				document.documentElement.dataset.theme = resolved;
-				// Keep in sync with --bg in app.css and CHROME_COLOR in theme.svelte.ts.
-				var bg = { light: '#fcfaf6', dark: '#0f1620', oled: '#000000' }[resolved] || '#fcfaf6';
-				var meta = document.getElementById('theme-color');
-				if (meta) meta.setAttribute('content', bg);
-			})();
-		</script>
+		<script src="%sveltekit.assets%/theme-init.js"></script>
 		%sveltekit.head%
 	</head>
 	<body data-sveltekit-preload-data="hover">

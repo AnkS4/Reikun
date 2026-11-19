@@ -131,12 +131,15 @@
 	// navigation doesn't re-search — this effect owns the scroll/highlight.
 	const focusSeq = $derived(browser ? page.url.searchParams.get('seq') : null);
 	const focusSense = $derived(browser ? page.url.searchParams.get('sense') : null);
+	const committedQuery = $derived(browser ? (page.url.searchParams.get('q') ?? '') : '');
 	let focusedKey = '';
-	let lastResp: SearchResponse | null = null;
+	let lastQuery: string | null = null;
 	$effect(() => {
-		// New result set → fresh DOM → allow the same deep link to fire again.
-		if (resp !== lastResp) {
-			lastResp = resp;
+		// A fresh search resets the deep-link state — but paging through more
+		// results of the SAME search ("Show next") must not scroll the user
+		// back to the anchor.
+		if (committedQuery !== lastQuery) {
+			lastQuery = committedQuery;
 			focusedKey = '';
 		}
 		const seq = focusSeq;

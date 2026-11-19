@@ -45,7 +45,7 @@ export function formatNumber(value: number): string {
 
 const KEY = 'reikun-locale';
 /**
- * Shared with the lite UI (app/lite.py's `lite_lang` cookie): cookies are not
+ * Shared with the lite UI (app/lite/'s `lite_lang` cookie): cookies are not
  * port-scoped, so one language choice follows you across both variants. The
  * cookie is authoritative in both directions, like the furigana preference.
  */

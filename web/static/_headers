@@ -11,6 +11,18 @@
 /fonts/fonts.css
   Cache-Control: public, max-age=3600
 
+/theme-init.js
+  Cache-Control: no-cache
+
+/
+  Cache-Control: no-cache
+
+/about
+  Cache-Control: no-cache
+
+/privacy
+  Cache-Control: no-cache
+
 /*
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin

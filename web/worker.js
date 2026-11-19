@@ -62,6 +62,12 @@ export default {
 		// unlike index.html, which is the prerendered home page). Served with a
 		// 200 so the client router can take over the requested URL.
 		const shell = await env.ASSETS.fetch(new URL("/200.html", request.url));
+		if (!shell.ok) {
+			return new Response("Service unavailable — the app shell is missing.", {
+				status: 503,
+				headers: { "content-type": "text/plain; charset=utf-8", "cache-control": "no-store" },
+			});
+		}
 		const headers = new Headers(shell.headers);
 		headers.set("content-type", "text/html; charset=utf-8");
 		headers.set("cache-control", "no-cache");

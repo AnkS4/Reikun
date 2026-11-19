@@ -41,8 +41,24 @@
 			return `${base}/lite`;
 		}
 		if (path === '/about') return `${base}/lite/about`;
+		if (path === '/privacy') return `${base}/lite/privacy`;
+		if (path === '/kana') {
+			const variant = page.url.searchParams.get('variant') === 'katakana' ? '?variant=katakana' : '';
+			return `${base}/lite/kana${variant}`;
+		}
 		if (path.startsWith('/kanji/')) return `${base}/lite${path}${search}`;
-		if (path === '/kanji-group') return `${base}/lite/kanji/group${search}`;
+		if (path === '/kanji-group') {
+			// SPA pages by ?page= (48/page); lite pages by ?n=&offset= (items).
+			const kgPage = Number(page.url.searchParams.get('page') ?? 0);
+			const params = new URLSearchParams();
+			const by = page.url.searchParams.get('by');
+			const value = page.url.searchParams.get('value');
+			if (by) params.set('by', by);
+			if (value) params.set('value', value);
+			params.set('n', '48');
+			if (Number.isInteger(kgPage) && kgPage > 0) params.set('offset', String(kgPage * 48));
+			return `${base}/lite/kanji/group?${params}`;
+		}
 		if (path === '/conjugations') return `${base}/lite/conjugations${search}`;
 		if (path === '/loanwords') {
 			if (!lwLang) return `${base}/lite/loanwords`;

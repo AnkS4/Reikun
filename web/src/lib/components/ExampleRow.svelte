@@ -14,7 +14,14 @@
 				}
 			);
 		}
-		await mdPromise;
+		try {
+			await mdPromise;
+		} catch (err) {
+			// A rejected import stays rejected forever otherwise — reset it so
+			// the next Explain click retries instead of failing for the session.
+			mdPromise = null;
+			throw err;
+		}
 	}
 </script>
 

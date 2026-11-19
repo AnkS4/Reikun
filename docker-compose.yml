@@ -50,13 +50,20 @@ services:
     build:
       context: .
       dockerfile: web/Dockerfile
-      # Build-time arg: PUBLIC_API_BASE is baked into the static bundle the
-      # *browser* loads — the value must be reachable from the host, i.e. the
-      # app service's published loopback port, not the container-network
-      # `app` hostname (only containers resolve that, never browsers).
+      # Build-time arg: PUBLIC_API_BASE=/api bakes same-origin requests —
+      # the browser's /api calls hit the vite preview server, which proxies
+      # them to the app container (VITE_API_PROXY_TARGET below). Same shape
+      # as production, where the Cloudflare Worker proxies /api to Cloud Run.
       args:
-        PUBLIC_API_BASE: http://127.0.0.1:${APP_PORT:-8000}
+        # Same-origin /api (and /lite) via the preview proxy in vite.config.ts —
+        # the same shape as production (Worker proxy). VITE_API_PROXY_TARGET
+        # moves the upstream if the API port is remapped.
+        PUBLIC_API_BASE: /api
     image: reikun-web:latest
+    environment:
+      # The preview proxy runs inside this container: point it at the app
+      # service over the container network, not at 127.0.0.1.
+      VITE_API_PROXY_TARGET: http://app:8000
     ports:
       - "127.0.0.1:5173:5173"
     depends_on:
