@@ -42,6 +42,37 @@ jobs:
       # Shared SPA/Lite string tables: key + placeholder parity.
       - run: uv run python scripts/check_i18n.py
 
+      # The font supply chain: a renamed non-WOFF2 payload shipped silently
+      # before (see "every self-hosted font face was silently broken" in the
+      # 1.4.0 changelog). Gate on the magic bytes and on lite's subset
+      # icon font rebuilding byte-identically.
+      - name: Self-hosted fonts are genuine WOFF2 + consistent with fonts.css
+        run: |
+          python3 - <<'EOF'
+          import glob
+          import re
+          import sys
+
+          files = glob.glob('web/static/fonts/files/*.woff2')
+          bad = [f for f in files if open(f, 'rb').read(4) != b'wOF2']
+          if bad:
+              print('not WOFF2:', bad)
+              sys.exit(1)
+          css = open('web/static/fonts/fonts.css').read()
+          urls = set(re.findall(r'url\((files/[^)]+)\)', css))
+          on_disk = {'files/' + f.split('/')[-1] for f in files}
+          if urls != on_disk:
+              print('fonts.css ↔ files mismatch:', sorted(urls ^ on_disk))
+              sys.exit(1)
+          print(f'{len(files)} woff2 faces OK; css ↔ files consistent')
+          EOF
+
+      - name: Lite icon font rebuilds byte-identically
+        run: |
+          uv run --with skia-pathops==0.9.2 --with fonttools==4.68.0 --with brotli==1.2.1 \
+            python scripts/build_lite_icons.py
+          git diff --exit-code app/static/lite-icons.woff2
+
       - name: OpenAPI schema is up to date
         run: |
           uv run python scripts/export_openapi.py
