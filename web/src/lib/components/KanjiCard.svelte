@@ -86,14 +86,14 @@
 								title={m.tip}
 							>
 								{#if m.group.by === 'strokes'}
-									<Icon name="pen-line" size={14} />
+									<Icon name="pen-line" size={16} />
 								{:else if m.group.by === 'grade'}
-									<Icon name="school" size={14} />
+									<Icon name="school" size={16} />
 								{:else if m.group.by === 'jlpt'}
-									<Icon name="award" size={14} />
+									<Icon name="award" size={16} />
 								{/if}
 								<span>{badgeLabel(m)}</span>
-								<Icon name="arrow-right" size={14} />
+								<Icon name="arrow-right" size={16} />
 							</a>
 						{:else}
 							<span class="meta-badge" title={m.tip}>{badgeLabel(m)}</span>
@@ -157,9 +157,9 @@
 		</div>
 	</div>
 {:else if missing}
-	<div class="notice"><Icon name="info" size={16} /> {t('noKanjiEntry', { char })}</div>
+	<div class="notice"><Icon name="info" size={18} /> {t('noKanjiEntry', { char })}</div>
 {:else if loadError}
-	<div class="error-banner"><Icon name="warning" size={16} /> {loadError}</div>
+	<div class="error-banner"><Icon name="warning" size={18} /> {loadError}</div>
 {:else}
 	<div class="kanji-card">
 		<div class="kanji-card-left"><p class="kanji-big">{char}</p></div>

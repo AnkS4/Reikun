@@ -187,7 +187,7 @@
 					{/each}
 				</div>
 			{:else if facetsError}
-				<p class="error-banner"><Icon name="warning" size={16} /> {facetsError}</p>
+				<p class="error-banner"><Icon name="warning" size={18} /> {facetsError}</p>
 			{:else}
 				<div class="kgroup-loading"><span class="spinner"></span></div>
 			{/if}
@@ -198,17 +198,17 @@
 			<p class="kgroup-sub">{t('pickGroupSub')}</p>
 			<div class="browse-grid pick-grid">
 				<a class="browse-tile" href="/kanji-group?by=strokes">
-					<span class="browse-icon"><Icon name="pen-line" size={20} /></span>
+					<span class="browse-icon"><Icon name="pen-line" size={22} /></span>
 					<span class="browse-name">{t('browseStrokes')}</span>
 					<span class="browse-desc">{t('browseStrokesDesc')}</span>
 				</a>
 				<a class="browse-tile" href="/kanji-group?by=grade">
-					<span class="browse-icon"><Icon name="school" size={20} /></span>
+					<span class="browse-icon"><Icon name="school" size={22} /></span>
 					<span class="browse-name">{t('browseGrade')}</span>
 					<span class="browse-desc">{t('browseGradeDesc')}</span>
 				</a>
 				<a class="browse-tile" href="/kanji-group?by=jlpt">
-					<span class="browse-icon"><Icon name="award" size={20} /></span>
+					<span class="browse-icon"><Icon name="award" size={22} /></span>
 					<span class="browse-name">{t('jlptLevel')}</span>
 					<span class="browse-desc">{t('browseJlptDesc')}</span>
 				</a>
@@ -226,7 +226,7 @@
 		{#if busy}
 			<div class="kgroup-loading"><span class="spinner"></span></div>
 		{:else if error}
-			<p class="error-banner"><Icon name="warning" size={16} /> {error}</p>
+			<p class="error-banner"><Icon name="warning" size={18} /> {error}</p>
 		{:else if data}
 			<div class="kg-grid">
 				{#each data.kanjis as k (k.literal)}

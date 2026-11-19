@@ -69,7 +69,7 @@
 	aria-label={copied ? t('linkCopied') : t('shareTitle')}
 	onclick={share}
 >
-	<Icon name={copied ? 'check' : 'share'} size={14} />
+	<Icon name={copied ? 'check' : 'share'} size={16} />
 	<span>{copied ? t('linkCopied') : t('share')}</span>
 </button>
 <span class="sr-only" role="status">{copied ? t('linkCopiedSr') : ''}</span>

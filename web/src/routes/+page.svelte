@@ -426,10 +426,10 @@
 				searchInput?.focus();
 			}}
 		>
-			<Icon name="close" size={16} />
+			<Icon name="close" size={18} />
 		</button>
 		<button type="submit" class="search-submit" aria-label={t('search')} title={t('search')}>
-			<Icon name="search" size={16} />
+			<Icon name="search" size={18} />
 		</button>
 	</div>
 	<button
@@ -441,7 +441,7 @@
 		disabled={randomBusy}
 		onclick={randomKanji}
 	>
-		{#if randomBusy}<span class="spinner" aria-hidden="true"></span>{:else}<Icon name="shuffle" size={16} />{/if}
+		{#if randomBusy}<span class="spinner" aria-hidden="true"></span>{:else}<Icon name="dice-5" size={18} />{/if}
 	</button>
 	<!-- Furigana toggle: visible one-click control (the Appearance popover in
 	     the Header is the secondary location). Reads are on by default; the あ
@@ -478,7 +478,7 @@
 	</div>
 {/if}
 {#if error}
-	<div class="error-banner" role="alert"><Icon name="warning" size={16} /> {error}</div>
+	<div class="error-banner" role="alert"><Icon name="warning" size={18} /> {error}</div>
 {/if}
 
 {#if resp}
@@ -501,7 +501,7 @@
 				aria-label={t('statsInfo')}
 				aria-describedby={infoId}
 			>
-				<Icon name="info" size={16} />
+				<Icon name="info" size={18} />
 			</span>
 			<span class="stats-pop" role="tooltip" id={infoId}>
 				<span class="popover-title">{t('technicalInfo')}</span>
@@ -534,7 +534,7 @@
 		{#if meta?.too_long}
 			{@const shown = committed.length > 24 ? committed.slice(0, 24) + '…' : committed}
 			<div class="warning">
-				<Icon name="warning" size={16} />
+				<Icon name="warning" size={18} />
 				{#if meta.too_long === MAX_JA_QUERY_CHARS}
 					{t('tooLongJa', { shown, max: formatNumber(MAX_JA_QUERY_CHARS) })}
 				{:else}
@@ -543,11 +543,11 @@
 			</div>
 		{:else if kanjiChar}
 			<div class="notice">
-				<Icon name="info" size={16} /> {t('notAWord', { char: kanjiChar })}
+				<Icon name="info" size={18} /> {t('notAWord', { char: kanjiChar })}
 			</div>
 		{:else}
 			<div class="warning">
-				<Icon name="warning" size={16} /> {t('nothingFound')}
+				<Icon name="warning" size={18} /> {t('nothingFound')}
 			</div>
 		{/if}
 	{/if}
@@ -570,7 +570,7 @@
 			onclick={showNext}
 			title={t('showMoreTitle', { max: formatNumber(MAX_RESULTS) })}
 		>
-			<Icon name="expand-more" size={14} /> {t('showNext', { count: formatNumber(PAGE_RESULTS) })}
+			<Icon name="expand-more" size={16} /> {t('showNext', { count: formatNumber(PAGE_RESULTS) })}
 		</button>
 	{/if}
 {:else if !searching && !error}
@@ -578,7 +578,7 @@
 	<div class="pills" aria-label={t('exampleSearches')}>
 		{#each EXAMPLES as ex (ex)}
 			<button type="button" class="pill" onclick={() => commit(ex)}>
-				<Icon name="search" size={14} />
+				<Icon name="search" size={16} />
 				<span>{ex}</span>
 			</button>
 		{/each}
@@ -600,7 +600,7 @@
 			<div class="pills" aria-label={t('recentSearches')}>
 				{#each recent as q (q)}
 					<button type="button" class="pill" onclick={() => commit(q)}>
-						<Icon name="search" size={14} />
+						<Icon name="search" size={16} />
 						<span lang="ja">{q}</span>
 					</button>
 				{/each}
@@ -611,17 +611,17 @@
 		<p class="popover-title">{t('browse')}</p>
 		<div class="browse-grid">
 			<a class="browse-tile" href="/kanji-group">
-				<span class="browse-icon"><Icon name="book-open-text" size={20} /></span>
+				<span class="browse-icon"><Icon name="book-open-text" size={22} /></span>
 				<span class="browse-name">{t('browseKanji')}</span>
 				<span class="browse-desc">{t('browseKanjiDesc')}</span>
 			</a>
 			<a class="browse-tile" href="/loanwords">
-				<span class="browse-icon"><Icon name="import" size={20} /></span>
+				<span class="browse-icon"><Icon name="import" size={22} /></span>
 				<span class="browse-name">{t('browseLoanwords')}</span>
 				<span class="browse-desc">{t('browseLoanwordsDesc')}</span>
 			</a>
 			<a class="browse-tile" href="/kana">
-				<span class="browse-icon"><Icon name="kana" size={20} /></span>
+				<span class="browse-icon browse-kana" lang="ja" aria-hidden="true">あ</span>
 				<span class="browse-name">{t('browseKana')}</span>
 				<span class="browse-desc">{t('browseKanaDesc')}</span>
 			</a>
@@ -639,7 +639,7 @@
 			title={t('scrollTop')}
 			aria-label={t('scrollTop')}
 		>
-			<Icon name="arrow-up" size={16} />
+			<Icon name="arrow-up" size={18} />
 		</button>
 	</div>
 {/if}

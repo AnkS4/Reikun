@@ -86,7 +86,7 @@
 				onclick={explain}
 				title={t('explainTitle')}
 			>
-				<Icon name="bot" size={14} />
+				<Icon name="bot" size={16} />
 				<span>{expl ? t('explainAgain') : t('explain')}</span>
 				<span class="level-indicator">{level}</span>
 			</button>
@@ -103,7 +103,7 @@
 			{#if md}{@html md(streamText.trim())}{:else}<pre class="stream-text">{streamText}</pre>{/if}
 		{/if}
 		<p class="explain-error">
-			<Icon name="warning" size={16} />
+			<Icon name="warning" size={18} />
 			<span>{t('explanationFailed')}{errorText ? ` ${errorText}` : ''}</span>
 		</p>
 	</div>

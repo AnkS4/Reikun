@@ -4,12 +4,15 @@ This product distributes, incorporates or is built upon the
 following third-party software and data. Each is the property of its
 respective owner and is used under the licence shown.
 
-Icons — Tabler Icons
-    https://github.com/tabler/tabler-icons
-    MIT License — Copyright © 2020 Paweł Kuna and Tabler contributors
+Icons — Lucide Icons
+    https://github.com/lucide-icons/lucide (package: lucide-static)
+    ISC License — Copyright © Lucide Contributors
     Inline SVG bodies in web/src/lib/icons.ts; a compiled subset ships in
-    app/static/lite-icons.woff2. Both trace the same 24×24, 1.5px-stroke
+    app/static/lite-icons.woff2. Both trace the same 24×24, 2px-stroke
     glyph outlines.
+
+The kana tile and the furigana button render the character あ in IBM Plex
+Sans JP (see the fonts entry below) — no icon face for kana.
 
 Fonts — IBM Plex Sans, IBM Plex Sans JP, IBM Plex Mono, IBM Plex Sans Devanagari
     https://github.com/IBM/plex

@@ -188,7 +188,7 @@
 	"sourceLink": "on GitHub",
 	"sourceAfter": " under the Apache-2.0 license.",
 	"credits": "Licenses & credits",
-	"creditsLine": "Icons: Tabler Icons (MIT) · Fonts: IBM Plex (OFL-1.1) · Licences & data attributions: see NOTICE",
+	"creditsLine": "Icons: Lucide Icons (ISC) · Fonts: IBM Plex (OFL-1.1) · Licences & data attributions: see NOTICE",
 	"creditsMore": "See NOTICE",
 	"version": "Version",
 	"errorUnreachable": "Can't reach the dictionary server. It may still be waking up — try again in a few seconds.",

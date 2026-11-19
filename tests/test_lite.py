@@ -36,11 +36,12 @@ def test_home_browse_links() -> None:
     client.cookies.clear()
     home = client.get("/lite").text
     # Same three browse tiles as the SPA homepage grid — glyph, title,
-    # description and link.
+    # description and link. The kana tile is the Plex JP あ (text, no icon face).
     assert home.count('class="browse-tile"') == 3
     assert 'href="/lite/kanji/group"' in home
     assert 'href="/lite/loanwords"' in home
     assert 'href="/lite/kana"' in home
+    assert 'class="browse-icon tile-kana"' in home
     # Tiles draw from the subset icon font like the top-right controls.
     assert home.count('class="icon icon-') >= 4
     assert 'icon-book-open-text' in home and 'icon-lang' in home

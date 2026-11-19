@@ -85,7 +85,7 @@
 	     uses the book glyph), matched in height and form with the status dot /
 	     appearance / language controls. -->
 	<a class="btn tertiary header-lite" href={LITE_URL} title={t('liteSwitch')} aria-label={t('liteSwitch')} rel="noopener">
-		<Icon name="feather" size={16} />
+		<Icon name="feather" size={18} />
 	</a>
 	<!-- svelte-ignore a11y_no_noninteractive_tabindex — focusable so keyboard users can open the status tooltip -->
 	<span
@@ -100,7 +100,7 @@
 				? t('statusAriaReady', { count: count(status.entries) })
 				: t('statusAriaOffline', { msg: status.error ?? '' })}
 	>
-		<Icon name="database" size={16} />
+		<Icon name="database" size={18} />
 		<span class="status-pop" role="tooltip">
 			<span class="popover-title">{t('statusTitle')}</span>
 			{#if status === null}
@@ -127,7 +127,7 @@
 					onclick={() => theme.set(option.v)}
 				>
 					<span class="opt-check" aria-hidden="true"
-						>{#if theme.choice === option.v}<Icon name="check" size={14} />{/if}</span
+						>{#if theme.choice === option.v}<Icon name="check" size={16} />{/if}</span
 					>
 					<span>{t(option.key)}</span>
 				</button>
@@ -148,7 +148,7 @@
 					onclick={() => i18n.set(code)}
 				>
 					<span class="opt-check" aria-hidden="true"
-						>{#if i18n.locale === code}<Icon name="check" size={14} />{/if}</span
+						>{#if i18n.locale === code}<Icon name="check" size={16} />{/if}</span
 					>
 					<span lang={code}>{LOCALE_NAMES[code]}</span>
 				</button>
@@ -161,7 +161,7 @@
 	<div class="header-title" class:hero>
 		{#if hero}
 			<div class="hero-badge-tag">
-				<Icon name="book-open" size={14} />
+				<Icon name="book-open" size={16} />
 				<span>{BRAND_SUBTEXT}</span>
 			</div>
 		{/if}

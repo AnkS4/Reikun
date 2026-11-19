@@ -188,7 +188,7 @@
 	"sourceLink": "GitHub",
 	"sourceAfter": "上に公開されており、Apache-2.0ライセンスの下で提供されています。",
 	"credits": "ライセンスとクレジット",
-	"creditsLine": "Icons: Tabler Icons (MIT) · Fonts: IBM Plex (OFL-1.1) · Licences & data attributions: see NOTICE",
+	"creditsLine": "Icons: Lucide Icons (ISC) · Fonts: IBM Plex (OFL-1.1) · Licences & data attributions: see NOTICE",
 	"creditsMore": "See NOTICE",
 	"version": "バージョン",
 	"errorUnreachable": "辞書サーバーに接続できません。まだ起動中の可能性があります。数秒後に再度お試しください。",

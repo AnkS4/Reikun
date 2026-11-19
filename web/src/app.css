@@ -995,6 +995,14 @@ ruby rt {
 	line-height: 1;
 }
 
+/* Kana browse tile uses IBM Plex Sans JP's あ directly — no icon face needed */
+.browse-kana {
+	font-family: var(--font-japanese);
+	font-size: 1.5rem;
+	font-weight: 600;
+	line-height: 1;
+}
+
 .furi-toggle.off {
 	opacity: 0.55;
 }

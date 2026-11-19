@@ -134,7 +134,6 @@ font:.94rem/1 'reikun-icons',sans-serif}
 .icon-lang::before{content:"\f658"}
 .icon-db::before{content:"\f8c4"}
 .icon-book-open-text::before{content:"\f107"}
-.icon-kana::before{content:"\f106"}
 .icon-pen-line::before{content:"\f101"}
 .icon-school::before{content:"\f102"}
 .icon-award::before{content:"\f103"}
@@ -520,3 +519,5 @@ button[type=submit],.btn{border:1px solid ButtonText}
 form.search button[type=submit],form.search .btn{min-height:2.75rem}
 .pill{min-height:2.75rem}
 .kbadges a.badge{display:inline-flex;align-items:center;min-height:2.75rem;padding-block:.3rem}
+/* Kana browse tile: Plex JP's あ directly — no icon face (the mirror ships IBM Plex Sans JP) */
+.tile-kana{font-family:var(--font-japanese);font-size:1.5rem;font-weight:600;line-height:1;display:inline-flex;align-items:center;justify-content:center}

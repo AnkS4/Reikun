@@ -96,7 +96,7 @@
 		</button>
 	</nav>
 	{#if !word}
-		<p class="notice"><Icon name="info" size={16} /> {t('noWord')}</p>
+		<p class="notice"><Icon name="info" size={18} /> {t('noWord')}</p>
 	{:else}
 		<h1 class="conj-page-title" lang="ja">
 			{heading}
@@ -111,7 +111,7 @@
 		{#if busy}
 			<div class="kgroup-loading"><span class="spinner"></span></div>
 		{:else if error}
-			<p class="error-banner"><Icon name="warning" size={16} /> {error}</p>
+			<p class="error-banner"><Icon name="warning" size={18} /> {error}</p>
 		{:else if rows.length}
 			<table class="conj-page-table">
 				<thead>

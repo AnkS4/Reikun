@@ -698,21 +698,28 @@ def lite_home(request: Request) -> HTMLResponse:
 
     # Browse tiles — same four destinations as the SPA homepage grid, drawn
     # from the same subset icon font as the top-right controls.
+    # The kana tile carries the Plex JP あ directly (like the SPA) — no icon
+    # glyph needed; the subset font stays for the chrome controls.
     browse_tiles = (
         ("/lite/kanji/group", {}, "book-open-text", "browseKanji", "browseKanjiDesc"),
         ("/lite/loanwords", {}, "import", "browseLoanwords", "browseLoanwordsDesc"),
         ("/lite/kana", {}, "kana", "browseKana", "browseKanaDesc"),
     )
+    def _tile(path, params, icon, name_key, desc_key):
+        icon_html = (
+            '<span class="browse-icon tile-kana" lang="ja" aria-hidden="true">あ</span>'
+            if icon == "kana"
+            else f'<span class="browse-icon">{_icon(icon)}</span>'
+        )
+        return f'<a class="browse-tile" href="{_href(path, **params)}">' + icon_html + (
+            f'<span class="browse-name">{esc(_t(lang, name_key))}</span>'
+            f'<span class="browse-desc">{esc(_t(lang, desc_key))}</span></a>'
+        )
+
     browse = (
         f'<p class="pills-label">{esc(_t(lang, "browse"))}</p>'
         '<div class="browse-grid">'
-        + "".join(
-            f'<a class="browse-tile" href="{_href(path, **params)}">'
-            f'<span class="browse-icon">{_icon(icon)}</span>'
-            f'<span class="browse-name">{esc(_t(lang, name_key))}</span>'
-            f'<span class="browse-desc">{esc(_t(lang, desc_key))}</span></a>'
-            for path, params, icon, name_key, desc_key in browse_tiles
-        )
+        + "".join(_tile(p_, prm, ic, nk, dk) for p_, prm, ic, nk, dk in browse_tiles)
         + "</div>"
     )
 

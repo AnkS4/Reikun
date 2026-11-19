@@ -112,9 +112,9 @@
 	{#if busy}
 		<div class="kgroup-loading"><span class="spinner"></span></div>
 	{:else if error}
-		<p class="error-banner"><Icon name="warning" size={16} /> {error}</p>
+		<p class="error-banner"><Icon name="warning" size={18} /> {error}</p>
 	{:else if notFound}
-		<p class="notice"><Icon name="info" size={16} /> {t('loanwordsUnknownMsg')}</p>
+		<p class="notice"><Icon name="info" size={18} /> {t('loanwordsUnknownMsg')}</p>
 		<div class="kgroup-bottom-actions"><a class="btn-3d" href="/loanwords">← {t('loanwordsAll')}</a></div>
 	{:else if listing}
 		<p class="kgroup-sub">{t('loanwordsFromTagline', { name: listing.name })}</p>

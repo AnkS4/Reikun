@@ -25,7 +25,7 @@
 		</div>
 	{:else if down}
 		<div class="wake-banner down">
-			<Icon name="warning" size={16} />
+			<Icon name="warning" size={18} />
 			<p>
 				<span class="wake-title">{t('wakeDownTitle')}</span>
 				<span class="wake-sub">{t('wakeDownSub')}</span>
