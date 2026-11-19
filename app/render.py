@@ -229,6 +229,7 @@ def kanji_group_cards(by: str, value: str, n: int = 40, offset: int = 0) -> dict
         "strokes": f"{v} strokes",
         "grade": f"Grade {v}",
         "jlpt": {4: "N5", 3: "N4", 2: "N2-N3", 1: "N1"}.get(v, f"N{v}"),
+        "freq": f"Top {v}",
     }.get(by, by)
     return {"by": by, "value": v, "label": label, "total": total, "offset": offset, "kanjis": kanjis}
 

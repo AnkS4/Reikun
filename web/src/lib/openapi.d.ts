@@ -533,7 +533,7 @@ export interface components {
              * By
              * @enum {string}
              */
-            by: "strokes" | "grade" | "jlpt";
+            by: "strokes" | "grade" | "jlpt" | "freq";
             /** Value */
             value: number;
             /** Label */
@@ -547,8 +547,9 @@ export interface components {
         };
         /**
          * KanjiGroupValue
-         * @description One selectable value of a /kanji/group facet (stroke count, grade or
-         *     JLPT level) with its kanji count — drives the browse pickers.
+         * @description One selectable value of a /kanji/group facet (stroke count, grade,
+         *     JLPT level or a cumulative frequency band) with its kanji count — drives
+         *     the browse pickers.
          */
         KanjiGroupValue: {
             /** Value */
@@ -564,6 +565,8 @@ export interface components {
             grade: components["schemas"]["KanjiGroupValue"][];
             /** Jlpt */
             jlpt: components["schemas"]["KanjiGroupValue"][];
+            /** Freq */
+            freq: components["schemas"]["KanjiGroupValue"][];
         };
         /**
          * KanjiHover
@@ -1185,8 +1188,8 @@ export interface operations {
         parameters: {
             query: {
                 /** @description Kanji metadata grouping key */
-                by: "strokes" | "grade" | "jlpt";
-                /** @description Group value (stroke count, KANJIDIC2 grade, or old-scale JLPT level) */
+                by: "strokes" | "grade" | "jlpt" | "freq";
+                /** @description Group value — stroke count (1–34), KANJIDIC2 grade (1–6), old-scale JLPT level (1–4), or a cumulative frequency band (top-N kanji by corpus rank, for by=freq) */
                 value: number;
                 n?: number;
                 offset?: number;

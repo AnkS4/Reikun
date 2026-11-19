@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Build the Lite control-icon font (app/static/lite-icons.woff2).
 
-The ten glyphs are the Lucide icons (ISC) the SPA ships (sun, moon,
+The eleven glyphs are the Lucide icons (ISC) the SPA ships (sun, moon,
 layout-dashboard, languages, database) plus the browse-tile icons (pen-line,
-school, award, import, book-open-text), traced from their 24x24 stroke
+school, award, import, book-open-text, chart-line), traced from their 24x24 stroke
 SVG paths: each path is
 stroked (width 2.0, round caps/joins — matching the SPA's stroke attributes),
 the stroke outlines are unioned, converted to quadratic outlines and embedded
@@ -113,6 +113,11 @@ _ICONS = {
         "M12 3v12",
         "m8 11 4 4 4-4",
         "M8 5H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-4",
+    ),
+    # chart-line — browse tile: kanji by frequency rank (lucide:chart-line, ISC)
+    "F108": (
+        "M3 3v16a2 2 0 0 0 2 2h16",
+        "m19 9-5 5-4-4-3 3",
     ),
     # book-open-text — browse tile: grouped kanji (strokes / grade / JLPT) (lucide:book-open-text, ISC)
     "F107": (

@@ -297,6 +297,18 @@ def test_kanji_page_rejects_non_kanji() -> None:
     assert client.get("/lite/kanji/x").status_code == 400
 
 
+def test_kanji_group_freq_band() -> None:
+    # Cumulative Top-N semantics: value=100 → exactly the 100 most frequent
+    # kanji; labels localize and the back-context still works.
+    r = client.get("/lite/kanji/group", params={"by": "freq", "value": 100})
+    assert r.status_code == 200
+    assert "/lite/kanji/" in r.text
+    assert "100" in r.text
+    r = client.get("/lite/kanji/group", params={"by": "freq", "value": "abc"})
+    assert r.status_code == 200  # non-integer falls back to the picker, not 422
+    assert "by=freq&amp;value=100" in r.text  # freq value picker, not a 422
+
+
 def test_kanji_group_page() -> None:
     r = client.get("/lite/kanji/group", params={"by": "strokes", "value": 10})
     assert r.status_code == 200
@@ -309,10 +321,11 @@ def test_kanji_group_category_picker() -> None:
     for params in ({}, {"by": "color"}):
         r = client.get("/lite/kanji/group", params=params)
         assert r.status_code == 200
-        assert r.text.count('class="browse-tile"') == 3
+        assert r.text.count('class="browse-tile"') == 4
         assert 'href="/lite/kanji/group?by=strokes"' in r.text
         assert 'href="/lite/kanji/group?by=grade"' in r.text
         assert 'href="/lite/kanji/group?by=jlpt"' in r.text
+        assert 'href="/lite/kanji/group?by=freq"' in r.text
 
 
 def test_kanji_group_value_picker() -> None:

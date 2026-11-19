@@ -83,6 +83,9 @@ def test_kanji_groups_facets() -> None:
     # Stroke counts run 1-34 with no kanji at 31; jlpt is the internal 4→1 scale.
     assert [v["value"] for v in data["strokes"]] == [n for n in range(1, 35) if n != 31]
     assert [v["value"] for v in data["jlpt"]] == [4, 3, 2, 1]
+    # Frequency bands are cumulative top-N counts across the ranked set.
+    assert [v["value"] for v in data["freq"]] == [100, 250, 500, 1000, 1500, 2000, 2500]
+    assert [v["count"] for v in data["freq"]] == [100, 250, 500, 1000, 1500, 2000, 2500]
     assert all(v["count"] > 0 for group in data.values() for v in group)
 
 

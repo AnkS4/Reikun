@@ -99,7 +99,7 @@ def kanji_group(by: str, value: str, n: int = 40, offset: int = 0) -> tuple[tupl
         v = int(value)
     except ValueError:
         return None
-    if by not in ("strokes", "grade", "jlpt"):
+    if by not in ("strokes", "grade", "jlpt", "freq"):
         return None
 
     pool = _kanji_pool(by, v)  # cached — static table, stable ordering
@@ -108,9 +108,17 @@ def kanji_group(by: str, value: str, n: int = 40, offset: int = 0) -> tuple[tupl
 
 @cache
 def _kanji_pool(by: str, v: int) -> tuple[dict, ...]:
-    """The full ordered kanji pool of one group. Static table + pure keys →
-    process-wide cache; each browse page slice comes free off this tuple."""
+    """The full ordered kanji pool of one group. For freq, `value` is an upper
+    bound on the KANJIDIC2 frequency rank — cumulative top-N. Static table +
+    pure keys → process-wide cache; each browse page slice comes free off this
+    tuple."""
     table = _load_kanji_table()
+    if by == "freq":
+        return tuple(
+            table[c]
+            for c in sorted(table, key=lambda c: (table[c].get("freq") or 10**9, c))
+            if table[c].get("freq") is not None and table[c]["freq"] <= v
+        )
     pred = {
         "strokes": lambda d: d.get("stroke_count") == v,
         "grade": lambda d: d.get("grade") == v,
@@ -138,15 +146,25 @@ def kanji_group_facets() -> dict[str, list[dict]]:
             v = d.get(field)
             if v:
                 counts[by][v] = counts[by].get(v, 0) + 1
+    freq_vals = [v for v in (d.get("freq") for d in table.values()) if v]
+
+    def _top(n: int) -> int:
+        return sum(1 for f in freq_vals if f <= n)
+
     ordered = {
         "strokes": sorted(counts["strokes"]),
         "grade": sorted(counts["grade"]),
         "jlpt": sorted(counts["jlpt"], reverse=True),
     }
-    return {
+    out = {
         by: [{"value": v, "count": counts[by][v]} for v in ordered[by]]
         for by in counts
     }
+    out["freq"] = [
+        {"value": n, "count": _top(n)}
+        for n in (100, 250, 500, 1000, 1500, 2000, 2500)
+    ]
+    return out
 
 
 # ── Stroke order ─────────────────────────────────────────────────────────────

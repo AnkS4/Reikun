@@ -23,11 +23,13 @@
 	// `value` → value chips) instead of a fetch.
 	const byParam = $derived.by((): GroupKey | null => {
 		const raw = page.url.searchParams.get('by');
-		return raw === 'strokes' || raw === 'grade' || raw === 'jlpt' ? raw : null;
+		return raw === 'strokes' || raw === 'grade' || raw === 'jlpt' || raw === 'freq' ? raw : null;
 	});
 	const valueParam = $derived.by(() => {
 		const value = Number(page.url.searchParams.get('value') ?? NaN);
-		return Number.isInteger(value) && value >= 1 && value <= 50 ? value : null;
+		// Freq bands run past 50 (top-100 … top-2500); others stay ≤50.
+		const cap = byParam === 'freq' ? 3000 : 50;
+		return Number.isInteger(value) && value >= 1 && value <= cap ? value : null;
 	});
 	const pageParam = $derived.by(() => {
 		const pageNo = Number(page.url.searchParams.get('page') ?? 0);
@@ -126,7 +128,7 @@
 	});
 
 	function groupLabel(by: GroupKey): string {
-		return t(by === 'jlpt' ? 'jlpt' : by);
+		return t(by === 'jlpt' ? 'jlpt' : by === 'freq' ? 'freq' : by);
 	}
 
 	// Picker chip label for one facet value — stroke counts and grades are
@@ -134,6 +136,7 @@
 	function valueLabel(by: GroupKey, v: number): string {
 		if (by === 'strokes') return t('strokesCount', { n: formatNumber(v) });
 		if (by === 'grade') return t('gradeCount', { n: formatNumber(v) });
+		if (by === 'freq') return t('freqBand', { n: formatNumber(v) });
 		return { 4: 'N5', 3: 'N4', 2: 'N2-N3', 1: 'N1' }[v] ?? `N${v}`;
 	}
 
@@ -142,7 +145,8 @@
 	const BROWSE_KEY = {
 		strokes: 'browseStrokes',
 		grade: 'browseGrade',
-		jlpt: 'jlptLevel'
+		jlpt: 'jlptLevel',
+		freq: 'browseFreq'
 	} as const;
 	function browseLabel(by: GroupKey): string {
 		return t(BROWSE_KEY[by]);
@@ -175,8 +179,12 @@
 			<!-- Value picker: `?by=X` without a usable value lists every
 			     available value as a card with its kanji count, in the same
 			     grid the results use. -->
-			<h1 class="kgroup-title">{browseLabel(byParam)} {cap(t('kanjiSuffix'))}</h1>
-			<p class="kgroup-sub">{t('pickValueSub', { group: groupLabel(byParam) })}</p>
+			<h1 class="kgroup-title">
+				{byParam === 'freq' ? browseLabel(byParam) : `${browseLabel(byParam)} ${cap(t('kanjiSuffix'))}`}
+			</h1>
+			<p class="kgroup-sub">
+				{byParam === 'freq' ? t('freqPickSub') : t('pickValueSub', { group: groupLabel(byParam) })}
+			</p>
 			{#if facets}
 				<div class="kg-grid">
 					{#each facets[byParam] ?? [] as v (v.value)}
@@ -193,7 +201,7 @@
 			{/if}
 		{:else}
 			<!-- Category picker: bare /kanji-group (or a bad `by`) offers the
-			     three kanji groupings as the same tiles the homepage uses. -->
+			     four kanji groupings as tiles. -->
 			<h1 class="kgroup-title">{t('browseKanji')}</h1>
 			<p class="kgroup-sub">{t('pickGroupSub')}</p>
 			<div class="browse-grid pick-grid">
@@ -212,6 +220,11 @@
 					<span class="browse-name">{t('jlptLevel')}</span>
 					<span class="browse-desc">{t('browseJlptDesc')}</span>
 				</a>
+				<a class="browse-tile" href="/kanji-group?by=freq">
+					<span class="browse-icon"><Icon name="chart-line" size={22} /></span>
+					<span class="browse-name">{t('browseFreq')}</span>
+					<span class="browse-desc">{t('browseFreqDesc')}</span>
+				</a>
 			</div>
 		{/if}
 	{:else}
@@ -220,7 +233,9 @@
 			{#if data}<span class="kgroup-total">{formatNumber(data.total)}</span>{/if}
 		</h1>
 		<p class="kgroup-sub">
-			{t('groupSubtitle', { group: groupLabel(req.by) })}
+			{req.by === 'freq'
+				? t('freqSubtitle', { n: formatNumber(req.value) })
+				: t('groupSubtitle', { group: groupLabel(req.by) })}
 		</p>
 
 		{#if busy}

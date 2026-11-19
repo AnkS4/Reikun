@@ -1425,11 +1425,14 @@ def _kg_meta(card: dict, lang: str) -> str:
 
 def _kg_value_label(by: str, value: int, lang: str) -> str:
     """Picker chip label for one facet value — mirrors the SPA's valueLabel:
-    localized stroke/grade counts, JLPT's internal 4→1 scale as N-levels."""
+    localized stroke/grade counts, JLPT's internal 4→1 scale as N-levels,
+    cumulative frequency bands as Top-N."""
     if by == "strokes":
         return _t(lang, "strokesCount", n=_fmt_count(int(value), lang))
     if by == "grade":
         return _t(lang, "gradeCount", n=_fmt_count(int(value), lang))
+    if by == "freq":
+        return _t(lang, "freqBand", n=_fmt_count(int(value), lang))
     return {4: "N5", 3: "N4", 2: "N2-N3", 1: "N1"}.get(value, f"N{value}")
 
 
@@ -1437,14 +1440,15 @@ _KG_BROWSE = {
     "strokes": ("pen-line", "browseStrokes", "browseStrokesDesc"),
     "grade": ("school", "browseGrade", "browseGradeDesc"),
     "jlpt": ("award", "jlptLevel", "browseJlptDesc"),
+    "freq": ("chart-line", "browseFreq", "browseFreqDesc"),
 }
 
 
 def _kg_pick_page(request: Request, by: str, lang: str, theme: str) -> Response:
-    """The /lite/kanji/group picker states — no `by` lists the three groupings
+    """The /lite/kanji/group picker states — no `by` lists the four groupings
     as browse tiles, a `by` without a usable value lists every available
     value + count."""
-    if by not in ("strokes", "grade", "jlpt"):
+    if by not in ("strokes", "grade", "jlpt", "freq"):
         tiles = "".join(
             f'<a class="browse-tile" href="{_href("/lite/kanji/group", by=key)}">'
             f'<span class="browse-icon">{_icon(icon)}</span>'
@@ -1467,9 +1471,12 @@ def _kg_pick_page(request: Request, by: str, lang: str, theme: str) -> Response:
         )
         disp = _t(lang, name_key)
         suffix = _t(lang, "kanjiSuffix")
-        title = f'{disp} {suffix[:1].upper() + suffix[1:]}'
-        group = _t(lang, by)
-        sub = esc(_t(lang, "pickValueSub", group=group.lower() if lang in ("en", "es") else group))
+        title = disp if by == "freq" else f'{disp} {suffix[:1].upper() + suffix[1:]}'
+        if by == "freq":
+            sub = esc(_t(lang, "freqPickSub"))
+        else:
+            group = _t(lang, by)
+            sub = esc(_t(lang, "pickValueSub", group=group.lower() if lang in ("en", "es") else group))
         grid = f'<ul class="kg-grid">{items}</ul>'
         canonical = f"/lite/kanji/group?by={quote(by)}"
     body = f'<h1 class="kgroup-title">{esc(title)}</h1><p class="kgroup-sub">{sub}</p>{grid}'
@@ -1491,7 +1498,7 @@ def lite_kanji_group(request: Request, by: str = "", value: str = "", n: str = "
     # A non-integer `value` must reach the HTML error page below (not a bare
     # FastAPI 422 JSON body) — lite pages are always HTML.
     _int_value = _int(value, 0)
-    if by not in ("strokes", "grade", "jlpt"):
+    if by not in ("strokes", "grade", "jlpt", "freq"):
         return _kg_pick_page(request, "", lang, theme)
     if _int_value < 1:
         return _kg_pick_page(request, by, lang, theme)
@@ -1560,7 +1567,10 @@ def lite_kanji_group(request: Request, by: str = "", value: str = "", n: str = "
     )
     group_label = esc(value_label)
     suffix = esc(_t(lang, "kanjiSuffix"))
-    subtitle = esc(_t(lang, "groupSubtitle", group=group_label.lower() if lang in ("en", "es") else group_label))
+    if by == "freq":
+        subtitle = esc(_t(lang, "freqSubtitle", n=_fmt_count(_int_value, lang)))
+    else:
+        subtitle = esc(_t(lang, "groupSubtitle", group=group_label.lower() if lang in ("en", "es") else group_label))
     body = f"""<h1 class="kgroup-title">{group_label} {suffix}
 <span class="kgroup-total">{_fmt_count(int(cards["total"]), lang)}</span></h1>
 <p class="kgroup-sub">{subtitle}</p>

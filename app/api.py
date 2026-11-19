@@ -378,8 +378,9 @@ class KanjiGroupEntry(BaseModel):
 
 
 class KanjiGroupValue(BaseModel):
-    """One selectable value of a /kanji/group facet (stroke count, grade or
-    JLPT level) with its kanji count — drives the browse pickers."""
+    """One selectable value of a /kanji/group facet (stroke count, grade,
+    JLPT level or a cumulative frequency band) with its kanji count — drives
+    the browse pickers."""
     value: int
     count: int
 
@@ -388,10 +389,11 @@ class KanjiGroupsResponse(BaseModel):
     strokes: list[KanjiGroupValue]
     grade: list[KanjiGroupValue]
     jlpt: list[KanjiGroupValue]
+    freq: list[KanjiGroupValue]
 
 
 class KanjiGroupResponse(BaseModel):
-    by: Literal["strokes", "grade", "jlpt"]
+    by: Literal["strokes", "grade", "jlpt", "freq"]
     value: int
     label: str
     total: int
@@ -642,7 +644,7 @@ def kanji_random_endpoint(
         return {"kanji": random_kanji(within=pool)}
 
 
-GroupKey = Literal["strokes", "grade", "jlpt"]
+GroupKey = Literal["strokes", "grade", "jlpt", "freq"]
 
 
 @app.get(
@@ -663,7 +665,12 @@ def kanji_group_endpoint(
     response: Response,
     by: Annotated[GroupKey, Query(description="Kanji metadata grouping key")],
     value: Annotated[
-        int, Query(ge=1, le=50, description="Group value (stroke count, KANJIDIC2 grade, or old-scale JLPT level)")
+        int,
+        Query(
+            ge=1,
+            le=3000,
+            description="Group value — stroke count (1–34), KANJIDIC2 grade (1–6), old-scale JLPT level (1–4), or a cumulative frequency band (top-N kanji by corpus rank, for by=freq)",
+        ),
     ],
     n: Annotated[int, Query(ge=1, le=100)] = 40,
     offset: Annotated[int, Query(ge=0)] = 0,
@@ -671,6 +678,10 @@ def kanji_group_endpoint(
     """Browse the KANJI of one metadata group — the click target of the kanji
     card's badges ("8 strokes", "Grade 3", "JLPT N4"). Pages of characters,
     frequency-ranked most-common first; `total` drives Prev/Next pagination."""
+    if by != "freq" and value > 50:
+        # Stroke counts are ≤34, grades ≤6, JLPT ≤4 — 50 is a generous ceiling.
+        # Frequencies are cumulative top-N up to the ranked set size.
+        raise HTTPException(422, f"value={value} is out of range for by={by}")
     cards = kanji_group_cards(by, str(value), n, offset)
     if cards is None or cards["total"] == 0:
         raise HTTPException(404, f"No kanji in group {by}={value}")

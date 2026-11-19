@@ -177,7 +177,7 @@ export function apiRandomKanji(level: Level): Promise<string> {
 	});
 }
 
-export type GroupKey = 'strokes' | 'grade' | 'jlpt';
+export type GroupKey = 'strokes' | 'grade' | 'jlpt' | 'freq';
 export type KanjiGroupsResponse = components['schemas']['KanjiGroupsResponse'];
 
 export function apiKanjiGroups(): Promise<KanjiGroupsResponse> {
