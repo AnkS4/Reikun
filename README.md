@@ -36,14 +36,14 @@
 - **Sentence Breakdown**: Paste Japanese text and Sudachi splits it into word units — furigana on top, gloss underneath, full breakdown on hover. Inflection tails merge into single chips and adjacent segments re-resolve into JMdict compounds
 - **Kanji Lookup**: Deterministic kanji information (no LLM) — stroke-order diagrams (KanjiVG), readings, meanings, and common compound words
 - **Grammar Explanations**: AI-generated explanations calibrated to your JLPT level (N5–N1) via a configurable LLM provider, on demand only, with a smaller fallback model if the primary is exhausted
-- **Feedback & Telemetry**: Thumbs-up/down feedback and query telemetry as JSON events (stdout sink, picked up by platform logs) or a local SQLite file; search queries are logged verbatim (feedback/explanation text stays SHA-256-only; `QUERY_LOG=hash` redacts query text to hashes in both sinks) and SQLite rows are kept indefinitely by default (`TELEMETRY_RETENTION_DAYS` adds an automatic purge window when set)
-- **Interface**: Search-first landing page, furigana (`<ruby>`) headwords, animated stroke order, light/dark themes, English/Japanese UI chrome, shareable URLs (`?q=猫&level=N3`), one-click level-aware grammar explanations
-- **JavaScript-free UI**: A server-rendered `lite` variant at `/lite` (`app/lite.py`) mirroring the main interface — same hero, example/recent search pills, random-kanji button and furigana toggle (all cookie/form/link based, no scripts), light/dark themes with a system default (the choice is shared with the full version via the `lite_theme` cookie, so switching variants keeps your look), `<ruby>` furigana and static stroke diagrams, no client bundle; usable without JavaScript, in text browsers and on slow connections. Each variant shows a switch link for the other (top-right in both; the lite side needs `WEB_BASE_URL`, which docker-compose sets)
+- **Feedback & Telemetry**: Thumbs-up/down feedback and query telemetry as JSON events (stdout sink, picked up by platform logs) or a local SQLite file; search queries are logged verbatim (feedback/explanation text stays SHA-256-only; `QUERY_LOG=hash` redacts query text to hashes in both sinks) and SQLite rows are kept indefinitely by default (`TELEMETRY_RETENTION_DAYS` adds an automatic purge window when set). Cloudflare Web Analytics is supported but off by default (`PUBLIC_CF_ANALYTICS_TOKEN`); when enabled, it loads the cookieless beacon from `static.cloudflareinsights.com` — the only third-party request the app can make, and it is disabled unless the token is set
+- **Interface**: Search-first landing page, furigana (`<ruby>`) headwords, animated stroke order, light/dark themes, five-locale UI chrome (en/es/hi/ja/mr), shareable URLs (`?q=猫&level=N3`), one-click level-aware grammar explanations
+- **JavaScript-free UI**: A server-rendered `lite` variant at `/lite` (`app/lite/`) mirroring the main interface — same hero, example/recent search pills, random-kanji button and furigana toggle (all cookie/form/link based, no scripts), light/dark themes with a system default (the choice is shared with the full version via the `lite_theme` cookie, so switching variants keeps your look), `<ruby>` furigana and static stroke diagrams, no client bundle; usable without JavaScript, in text browsers and on slow connections. Each variant shows a switch link for the other (top-right in both; the lite side needs `WEB_BASE_URL`, which docker-compose sets)
 - **HTTP API**: FastAPI layer (`app/api.py`) over the same pipeline — SSE streaming for explanations and JSON-shaped rendering (ruby parts, kanji card, segment chips, stroke data) for the web frontend
 
 ## Tech Stack
 
-- **Frontend**: SvelteKit static SPA (`web/`, adapter-static); Inter + Noto Sans JP web fonts
+- **Frontend**: SvelteKit static SPA (`web/`, adapter-static); self-hosted IBM Plex subset web fonts (in-repo, OFL-1.1)
 - **API**: FastAPI + Uvicorn (the production serving process; one worker)
 - **Vector Database**: Qdrant (named dense + sparse vectors, server-side RRF hybrid)
 - **Embeddings**: FastEmbed — `all-MiniLM-L6-v2` (dense, 384-dim) + `Qdrant/bm25` (sparse), ONNX-quantized for CPU
@@ -141,6 +141,8 @@ For local development without Docker:
    ```bash
    uv run ruff check .
    uv run pytest -q                        # API + telemetry tests; no Qdrant needed
+   uv run python scripts/check_i18n.py    # shared i18n key/placeholder parity
+   uv run python scripts/export_openapi.py && git diff --exit-code docs/api/openapi.json
    ```
 
 ### URL parameters
