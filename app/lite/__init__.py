@@ -703,7 +703,7 @@ def lite_home(request: Request) -> HTMLResponse:
     browse_tiles = (
         ("/lite/kanji/group", {}, "book-open-text", "browseKanji", "browseKanjiDesc"),
         ("/lite/loanwords", {}, "import", "browseLoanwords", "browseLoanwordsDesc"),
-        ("/lite/loanwords/wasei", {}, "paintbrush", "browseWasei", "browseWaseiDesc"),
+        ("/lite/loanwords/wasei", {}, "share", "browseWasei", "browseWaseiDesc"),
         ("/lite/kana", {}, "kana", "browseKana", "browseKanaDesc"),
     )
     def _tile(path, params, icon, name_key, desc_key):

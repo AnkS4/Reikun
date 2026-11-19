@@ -3,7 +3,7 @@
 
 The twelve glyphs are the Lucide icons (ISC) the SPA ships (sun, moon,
 layout-dashboard, languages, database) plus the browse-tile icons (pen-line,
-school, award, import, book-open-text, chart-line, paintbrush), traced from their 24x24 stroke
+school, award, import, book-open-text, chart-line, share), traced from their 24x24 stroke
 SVG paths: each path is
 stroked (width 2.0, round caps/joins — matching the SPA's stroke attributes),
 the stroke outlines are unioned, converted to quadratic outlines and embedded
@@ -114,14 +114,12 @@ _ICONS = {
         "m8 11 4 4 4-4",
         "M8 5H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-4",
     ),
-    # paintbrush — browse tile: Japanese-made English coinages (lucide:paintbrush, ISC)
+    # share — browse tile: Japanese-made English coinages; tray + up chevron,
+    # the visual mirror of the loanwords tile's import glyph (lucide:share, ISC)
     "F109": (
-        "m14.622 17.897-10.68-2.913",
-        "M18.376 2.622a1 1 0 1 1 3.002 3.002L17.36 9.643a.5.5 0 0 0 0 .707l.944.944a2.41 2.41 0 0 "
-        "1 0 3.408l-.944.944a.5.5 0 0 1-.707 0L8.354 7.348a.5.5 0 0 1 0-.707l.944-.944a2.41 2.41 "
-        "0 0 1 3.408 0l.944.944a.5.5 0 0 0 .707 0z",
-        "M9 8c-1.804 2.71-3.97 3.46-6.583 3.948a.507.507 0 0 0-.302.819l7.32 8.883a1 1 0 0 0 "
-        "1.185.204C12.735 20.405 16 16.792 16 15",
+        "M12 2v13",
+        "m16 6-4-4-4 4",
+        "M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8",
     ),
     # chart-line — browse tile: kanji by frequency rank (lucide:chart-line, ISC)
     "F108": (

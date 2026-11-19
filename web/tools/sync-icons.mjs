@@ -46,7 +46,6 @@ const MAP = {
 	close: 'x',
 	'arrow-up': 'arrow-up',
 	'arrow-right': 'arrow-right',
-	paintbrush: 'paintbrush',
 	'pen-line': 'pen-line',
 	'book-open': 'book-open',
 	'book-open-text': 'book-open-text',
