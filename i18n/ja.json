@@ -260,6 +260,8 @@
 	"readingKun": "訓読み",
 	"browseKana": "かな",
 	"browseKanaDesc": "ひらがな・カタカナ",
+	"browseWasei": "和製英語",
+	"browseWaseiDesc": "日本が作った英語",
 	"kanaTitle": "かな",
 	"kanaSub": "現代のひらがな・カタカナを五十音順に並べた表。",
 	"kanaBasic": "基本",

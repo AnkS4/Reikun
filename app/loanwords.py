@@ -67,6 +67,11 @@ def _build() -> dict[str, list[dict]]:
                     continue
                 seen.add(src["lang"])
                 out.setdefault(src["lang"], []).append(d)
+            # Wasei entries — regardless of source lang — also join the
+            # pseudo-bucket so /loanwords?lang=wasei lists them. An entry with
+            # several wasei tags still counts once.
+            if any(src.get("wasei") for src in d["lsource"]):
+                out.setdefault("wasei", []).append(d)
         if offset is None:
             break
     for entries in out.values():

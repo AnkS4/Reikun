@@ -288,10 +288,10 @@
               "type": "integer",
               "maximum": 3000,
               "minimum": 1,
-              "description": "Group value — stroke count (1–34), KANJIDIC2 grade (1–6), old-scale JLPT level (1–4), or a cumulative frequency band (top-N kanji by corpus rank, for by=freq)",
+              "description": "Group value - stroke count (1-34), KANJIDIC2 grade (1-6), old-scale JLPT level (1-4), or a cumulative frequency band (top-N kanji by corpus rank, for by=freq)",
               "title": "Value"
             },
-            "description": "Group value — stroke count (1–34), KANJIDIC2 grade (1–6), old-scale JLPT level (1–4), or a cumulative frequency band (top-N kanji by corpus rank, for by=freq)"
+            "description": "Group value - stroke count (1-34), KANJIDIC2 grade (1-6), old-scale JLPT level (1-4), or a cumulative frequency band (top-N kanji by corpus rank, for by=freq)"
           },
           {
             "name": "n",

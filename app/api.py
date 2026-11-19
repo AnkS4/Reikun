@@ -669,7 +669,11 @@ def kanji_group_endpoint(
         Query(
             ge=1,
             le=3000,
-            description="Group value — stroke count (1–34), KANJIDIC2 grade (1–6), old-scale JLPT level (1–4), or a cumulative frequency band (top-N kanji by corpus rank, for by=freq)",
+            description=(
+                "Group value - stroke count (1-34), KANJIDIC2 grade (1-6), "
+                "old-scale JLPT level (1-4), or a cumulative frequency band "
+                "(top-N kanji by corpus rank, for by=freq)"
+            ),
         ),
     ],
     n: Annotated[int, Query(ge=1, le=100)] = 40,

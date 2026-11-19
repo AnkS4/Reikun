@@ -1189,7 +1189,7 @@ export interface operations {
             query: {
                 /** @description Kanji metadata grouping key */
                 by: "strokes" | "grade" | "jlpt" | "freq";
-                /** @description Group value — stroke count (1–34), KANJIDIC2 grade (1–6), old-scale JLPT level (1–4), or a cumulative frequency band (top-N kanji by corpus rank, for by=freq) */
+                /** @description Group value - stroke count (1-34), KANJIDIC2 grade (1-6), old-scale JLPT level (1-4), or a cumulative frequency band (top-N kanji by corpus rank, for by=freq) */
                 value: number;
                 n?: number;
                 offset?: number;

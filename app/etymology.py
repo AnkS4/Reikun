@@ -37,6 +37,10 @@ LANG_NAMES = {
     "tam": "Tamil", "tgk": "Tajik", "tgl": "Tagalog", "tha": "Thai",
     "tib": "Tibetan", "tuk": "Turkmen", "tur": "Turkish", "ukr": "Ukrainian",
     "urd": "Urdu", "uzb": "Uzbek", "vie": "Vietnamese", "yid": "Yiddish",
+
+    # Not a language — a pseudo-source for JMdict \`lsource\` entries tagged
+    # with wasei (Japanese-made foreign words, almost always English-shaped).
+    "wasei": "Wasei-eigo",
 }
 
 # JMdict code → BCP-47 language tag for the `lang` attribute. Bibliographic
