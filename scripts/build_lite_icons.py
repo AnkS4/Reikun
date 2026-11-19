@@ -165,6 +165,10 @@ def main() -> None:
             "psName": "reikun-icons",
         }
     )
+    # Byte-reproducible builds: pin the head timestamps so the same source
+    # always emits the same font (no churn for a no-op rebuild).
+    fb.font["head"].created = 0
+    fb.font["head"].modified = 0
     fb.font.flavor = "woff2"
     fb.save(OUT)
     print(f"wrote {OUT} ({OUT.stat().st_size} bytes, {len(_ICONS)} glyphs)")
