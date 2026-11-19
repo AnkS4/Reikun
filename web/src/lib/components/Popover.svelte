@@ -55,7 +55,7 @@
 		aria-controls={open ? panelId : undefined}
 		bind:this={trigger}
 	>
-		{#if icon}<Icon name={icon} size={15} />{/if}
+		{#if icon}<Icon name={icon} size={16} />{/if}
 		{#if label}<span class="level-indicator">{label}</span>{/if}
 	</button>
 	{#if open}

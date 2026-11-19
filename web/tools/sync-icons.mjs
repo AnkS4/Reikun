@@ -89,7 +89,10 @@ for (const [ourName, upName] of Object.entries(MAP)) {
 	const body = svg.match(/<svg[^>]*>([\s\S]*?)<\/svg>/)[1]
 		// strip the upstream comment block with tags/unicode (keeps output byte-small)
 		.replace(/<!--[\s\S]*?-->/g, '')
-		// normalise attribute order we rely on (drop fill/stroke, keep d)
+		// drop the upstream hit-target rectangle (24×24 bounding box) — Icon.svelte
+		// supplies the stroke, so a stripped-stroke rect renders as a square frame
+		.replace(/<path\s+[^>]*d="M0 0h24v24H0z"[^>]*\/>\s*/g, '')
+		// keep only the visible paths, verbatim (d attributes are ours untouched)
 		.replace(/<path\s+([^>]*)\/>/g, (_m, attrs) => {
 			const d = attrs.match(/\bd="([^"]*)"/);
 			if (!d) throw new Error(`${upName}: path without d`);

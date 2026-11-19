@@ -426,10 +426,10 @@
 				searchInput?.focus();
 			}}
 		>
-			<Icon name="close" size={15} />
+			<Icon name="close" size={16} />
 		</button>
 		<button type="submit" class="search-submit" aria-label={t('search')} title={t('search')}>
-			<Icon name="search" size={15} />
+			<Icon name="search" size={16} />
 		</button>
 	</div>
 	<button
@@ -441,7 +441,7 @@
 		disabled={randomBusy}
 		onclick={randomKanji}
 	>
-		{#if randomBusy}<span class="spinner" aria-hidden="true"></span>{:else}<Icon name="shuffle" size={15} />{/if}
+		{#if randomBusy}<span class="spinner" aria-hidden="true"></span>{:else}<Icon name="shuffle" size={16} />{/if}
 	</button>
 	<!-- Furigana toggle: visible one-click control (the Appearance popover in
 	     the Header is the secondary location). Reads are on by default; the あ
@@ -501,7 +501,7 @@
 				aria-label={t('statsInfo')}
 				aria-describedby={infoId}
 			>
-				<Icon name="info" size={15} />
+				<Icon name="info" size={16} />
 			</span>
 			<span class="stats-pop" role="tooltip" id={infoId}>
 				<span class="popover-title">{t('technicalInfo')}</span>
@@ -570,7 +570,7 @@
 			onclick={showNext}
 			title={t('showMoreTitle', { max: formatNumber(MAX_RESULTS) })}
 		>
-			<Icon name="expand-more" size={12} /> {t('showNext', { count: formatNumber(PAGE_RESULTS) })}
+			<Icon name="expand-more" size={14} /> {t('showNext', { count: formatNumber(PAGE_RESULTS) })}
 		</button>
 	{/if}
 {:else if !searching && !error}
@@ -578,7 +578,7 @@
 	<div class="pills" aria-label={t('exampleSearches')}>
 		{#each EXAMPLES as ex (ex)}
 			<button type="button" class="pill" onclick={() => commit(ex)}>
-				<Icon name="search" size={12} />
+				<Icon name="search" size={14} />
 				<span>{ex}</span>
 			</button>
 		{/each}
@@ -600,7 +600,7 @@
 			<div class="pills" aria-label={t('recentSearches')}>
 				{#each recent as q (q)}
 					<button type="button" class="pill" onclick={() => commit(q)}>
-						<Icon name="search" size={12} />
+						<Icon name="search" size={14} />
 						<span lang="ja">{q}</span>
 					</button>
 				{/each}
@@ -611,17 +611,17 @@
 		<p class="popover-title">{t('browse')}</p>
 		<div class="browse-grid">
 			<a class="browse-tile" href="/kanji-group">
-				<span class="browse-icon"><Icon name="book-open-text" size={18} /></span>
+				<span class="browse-icon"><Icon name="book-open-text" size={20} /></span>
 				<span class="browse-name">{t('browseKanji')}</span>
 				<span class="browse-desc">{t('browseKanjiDesc')}</span>
 			</a>
 			<a class="browse-tile" href="/loanwords">
-				<span class="browse-icon"><Icon name="import" size={18} /></span>
+				<span class="browse-icon"><Icon name="import" size={20} /></span>
 				<span class="browse-name">{t('browseLoanwords')}</span>
 				<span class="browse-desc">{t('browseLoanwordsDesc')}</span>
 			</a>
 			<a class="browse-tile" href="/kana">
-				<span class="browse-icon"><Icon name="kana" size={18} /></span>
+				<span class="browse-icon"><Icon name="kana" size={20} /></span>
 				<span class="browse-name">{t('browseKana')}</span>
 				<span class="browse-desc">{t('browseKanaDesc')}</span>
 			</a>
@@ -639,7 +639,7 @@
 			title={t('scrollTop')}
 			aria-label={t('scrollTop')}
 		>
-			<Icon name="arrow-up" size={15} />
+			<Icon name="arrow-up" size={16} />
 		</button>
 	</div>
 {/if}

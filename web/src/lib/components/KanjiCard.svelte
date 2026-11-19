@@ -86,14 +86,14 @@
 								title={m.tip}
 							>
 								{#if m.group.by === 'strokes'}
-									<Icon name="pen-line" size={12} />
+									<Icon name="pen-line" size={14} />
 								{:else if m.group.by === 'grade'}
-									<Icon name="school" size={12} />
+									<Icon name="school" size={14} />
 								{:else if m.group.by === 'jlpt'}
-									<Icon name="award" size={12} />
+									<Icon name="award" size={14} />
 								{/if}
 								<span>{badgeLabel(m)}</span>
-								<Icon name="arrow-right" size={12} />
+								<Icon name="arrow-right" size={14} />
 							</a>
 						{:else}
 							<span class="meta-badge" title={m.tip}>{badgeLabel(m)}</span>

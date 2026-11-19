@@ -130,7 +130,7 @@
 			aria-label={copied ? t('copied') : t('copyWordAria')}
 			onclick={copyWord}
 		>
-			<Icon name={copied ? 'check' : 'copy'} size={15} />
+			<Icon name={copied ? 'check' : 'copy'} size={16} />
 		</button>
 	</div>
 	{#if result.lsource?.length}
@@ -154,10 +154,10 @@
 				onclick={openConj}
 				title={t('conjugationsTitle')}
 			>
-				<Icon name="split" size={12} />
+				<Icon name="split" size={14} />
 				<span class="conj-label">{t('conjugations')}</span>
 				<span class="conj-count">{result.inflected_forms.length}</span>
-				<Icon name="arrow-right" size={12} />
+				<Icon name="arrow-right" size={14} />
 			</a>
 		</div>
 	{/if}

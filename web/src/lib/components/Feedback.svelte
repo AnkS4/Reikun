@@ -37,7 +37,7 @@
 		aria-label={t('helpful')}
 		onclick={() => pick(1)}
 	>
-		<Icon name="thumbs-up" size={15} />
+		<Icon name="thumbs-up" size={16} />
 	</button>
 	<button
 		type="button"
@@ -48,6 +48,6 @@
 		aria-label={t('notHelpful')}
 		onclick={() => pick(-1)}
 	>
-		<Icon name="thumbs-down" size={15} />
+		<Icon name="thumbs-down" size={16} />
 	</button>
 </span>

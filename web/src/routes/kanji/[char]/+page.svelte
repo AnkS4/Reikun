@@ -97,10 +97,10 @@
 				searchInput?.focus();
 			}}
 		>
-			<Icon name="close" size={15} />
+			<Icon name="close" size={16} />
 		</button>
 		<button type="submit" class="search-submit" aria-label={t('search')} title={t('search')}>
-			<Icon name="search" size={15} />
+			<Icon name="search" size={16} />
 		</button>
 	</div>
 	<button
@@ -112,7 +112,7 @@
 		disabled={randomBusy}
 		onclick={randomKanji}
 	>
-		{#if randomBusy}<span class="spinner" aria-hidden="true"></span>{:else}<Icon name="shuffle" size={15} />{/if}
+		{#if randomBusy}<span class="spinner" aria-hidden="true"></span>{:else}<Icon name="shuffle" size={16} />{/if}
 	</button>
 	<!-- Furigana toggle: visible one-click control (the Appearance popover in
 	     the Header is the secondary location). Reads are on by default; the あ

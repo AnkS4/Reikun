@@ -198,17 +198,17 @@
 			<p class="kgroup-sub">{t('pickGroupSub')}</p>
 			<div class="browse-grid pick-grid">
 				<a class="browse-tile" href="/kanji-group?by=strokes">
-					<span class="browse-icon"><Icon name="pen-line" size={18} /></span>
+					<span class="browse-icon"><Icon name="pen-line" size={20} /></span>
 					<span class="browse-name">{t('browseStrokes')}</span>
 					<span class="browse-desc">{t('browseStrokesDesc')}</span>
 				</a>
 				<a class="browse-tile" href="/kanji-group?by=grade">
-					<span class="browse-icon"><Icon name="school" size={18} /></span>
+					<span class="browse-icon"><Icon name="school" size={20} /></span>
 					<span class="browse-name">{t('browseGrade')}</span>
 					<span class="browse-desc">{t('browseGradeDesc')}</span>
 				</a>
 				<a class="browse-tile" href="/kanji-group?by=jlpt">
-					<span class="browse-icon"><Icon name="award" size={18} /></span>
+					<span class="browse-icon"><Icon name="award" size={20} /></span>
 					<span class="browse-name">{t('jlptLevel')}</span>
 					<span class="browse-desc">{t('browseJlptDesc')}</span>
 				</a>
