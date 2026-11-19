@@ -31,7 +31,11 @@ def main() -> int:
     want = set(unicodes)
     tt = TTFont(src)
     covered = set(tt.getBestCmap().keys())
-    if not (want & covered):
+    # Require (nearly) full coverage of the requested range, not "any overlap":
+    # clipping a couple of overlapping codepoints produced faces that claimed
+    # the whole range while holding nothing (IBM Plex Sans/JP/Mono
+    # "devanagari" splits with zero Devanagari letters), serving tofu.
+    if len(want & covered) < 0.9 * len(want):
         return 2
     opts = subset.Options()
     opts.hinting = False          # TrueType hinting carries no value for woff2
