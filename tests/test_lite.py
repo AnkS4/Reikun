@@ -47,6 +47,22 @@ def test_home_browse_links() -> None:
     assert 'icon-pen-line' in home and 'icon-lang' in home
 
 
+def test_kana_page_lists_gojuon() -> None:
+    client.cookies.clear()
+    r = client.get("/lite/kana")
+    assert r.status_code == 200
+    # Both tabs, hiragana chart by default, back-link stays inside lite.
+    assert 'href="/lite/kana?variant=hiragana"' in r.text
+    assert 'href="/lite/kana?variant=katakana"' in r.text
+    assert ">あ<" in r.text and ">ん<" in r.text and ">ぽ<" in r.text
+    assert 'href="/lite"' in r.text and 'href="/kana"' not in r.text
+    kata = client.get("/lite/kana?variant=katakana").text
+    assert ">ア<" in kata and ">ン<" in kata and ">ポ<" in kata
+    # Unknown variant → the 400 error page, not a crash.
+    bad = client.get("/lite/kana?variant=romaji")
+    assert bad.status_code == 400
+
+
 def test_home_mirrors_spa_hero_and_examples() -> None:
     r = client.get("/lite")
     # Same brand subtext and tagline as the Svelte hero (brand.ts / i18n),

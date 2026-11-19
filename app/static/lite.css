@@ -444,7 +444,8 @@ text-decoration:none;color:inherit}
 .kana-section-title{font-family:var(--font-mono),var(--font-japanese);font-size:var(--fs-sm);font-weight:500;text-transform:uppercase;letter-spacing:.08em;color:var(--text-faint);margin:0 0 .35rem}
 .kana-section{margin-bottom:var(--space-5)}
 .kana-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:var(--space-2);max-width:30rem}
-.kana-cell{cursor:default;padding:.6rem .4rem;box-shadow:none}
+.kana-cell{cursor:default;padding:.6rem .4rem}
+.kana-cell:hover{border-color:var(--border-soft);transform:none;box-shadow:none}
 .kana-cell .kg-glyph{font-size:2.4rem;line-height:1.15}
 .kana-cell .kg-meta{font-size:var(--fs-sm);letter-spacing:.06em}
 .kana-cell-empty{border:1px dashed var(--border-soft);border-radius:var(--radius-md);min-height:4.5rem;visibility:hidden}

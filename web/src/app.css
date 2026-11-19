@@ -2275,7 +2275,6 @@ a.kanji-tip {
 }
 
 /* Kana chart page (/kana) — a fixed five-column grid of gojūon cells. */
-.kana-page {}
 
 .kana-tabs {
 	display: inline-flex;
@@ -2320,11 +2319,15 @@ a.kanji-tip {
 
 .kana-cell {
 	/* Match the kanji-group card so the two browse pages feel like one family;
-	   visibility wins over the link affordance — the page is not a link. */
+	   the cells are not links — no hover affordance either. */
 	cursor: default;
 	user-select: text;
-	box-shadow: none;
+}
+
+.kana-cell:hover {
+	border-color: var(--border-soft);
 	transform: none;
+	box-shadow: none;
 }
 
 .kana-cell .kg-glyph {

@@ -1805,6 +1805,10 @@ def lite_loanwords_lang(
 def lite_kana(request: Request, variant: str = "") -> Response:
     theme = _read_theme(request)
     lang = _read_lang(request)
+    # The page renders no furigana, but the cookie still forces the shared
+    # cache private (the _page downgrade check reads it) — same contract as
+    # every other lite page.
+    furi = _read_furi(request)
     if variant not in ("", "hiragana", "katakana"):
         return _error_page(
             _t(lang, "kanaTitle"),
@@ -1854,7 +1858,7 @@ def lite_kana(request: Request, variant: str = "") -> Response:
         f'<p class="kgroup-sub">{esc(_t(lang, "kanaSub"))}</p>'
         f'{tabs}{"".join(sections)}'
         f'<div class="kgroup-bottom-actions">'
-        f'<a class="btn" href="/">← {esc(_t(lang, "backToSearch"))}</a></div>'
+        f'<a class="btn" href="/lite">← {esc(_t(lang, "backToSearch"))}</a></div>'
     )
     return _page(
         title,
@@ -1863,6 +1867,7 @@ def lite_kana(request: Request, variant: str = "") -> Response:
         controls=_controls(request),
         theme=theme,
         lang=lang,
+        furi=furi,
         canonical="/lite/kana",
     )
 
