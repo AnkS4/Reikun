@@ -28,6 +28,6 @@
 	<text x="370" y="310" font-family="'IBM Plex Sans', sans-serif" font-weight="500" font-size="118" letter-spacing="-3" fill="#19262C">Reikun<tspan x="736" font-family="'IBM Plex Sans JP', sans-serif" font-weight="400" font-size="85" letter-spacing="0" fill="#665F56"> (例訓)</tspan></text>
 
 	<!-- Feature lines -->
-	<text x="600" y="427" text-anchor="middle" font-family="'Inter', sans-serif" font-weight="400" font-size="27" fill="#665F56">English or Japanese search<tspan fill="#EF3C19"> · </tspan>furigana sentence breakdowns</text>
-	<text x="600" y="473" text-anchor="middle" font-family="'Inter', sans-serif" font-weight="400" font-size="27" fill="#665F56">kanji &amp; stroke order<tspan fill="#EF3C19"> · </tspan>conjugation tables<tspan fill="#EF3C19"> · </tspan>JLPT grammar</text>
+	<text x="600" y="427" text-anchor="middle" font-family="'IBM Plex Sans', sans-serif" font-weight="400" font-size="27" fill="#665F56">English or Japanese search<tspan fill="#EF3C19"> · </tspan>furigana sentence breakdowns</text>
+	<text x="600" y="473" text-anchor="middle" font-family="'IBM Plex Sans', sans-serif" font-weight="400" font-size="27" fill="#665F56">kanji &amp; stroke order<tspan fill="#EF3C19"> · </tspan>conjugation tables<tspan fill="#EF3C19"> · </tspan>JLPT grammar</text>
 </svg>
