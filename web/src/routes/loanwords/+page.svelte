@@ -13,7 +13,7 @@
 	import Header from '#lib/components/Header.svelte';
 	import Icon from '#lib/components/Icon.svelte';
 	import ResultCard from '#lib/components/ResultCard.svelte';
-	import { t } from '#lib/i18n.svelte.ts';
+	import { formatNumber, t } from '#lib/i18n.svelte.ts';
 
 	const PAGE_SIZE = 50;
 
@@ -105,7 +105,7 @@
 <div class="kgroup-wrap">
 	<h1 class="kgroup-title">
 		{#if listing}{listing.name}{:else}{t('loanwordsTitle')}{/if}
-		{#if listing}<span class="kgroup-total">{listing.total.toLocaleString()}</span>{/if}
+		{#if listing}<span class="kgroup-total">{formatNumber(listing.total)}</span>{/if}
 	</h1>
 	<p class="kgroup-sub">{t('loanwordsTagline')}</p>
 
@@ -124,7 +124,7 @@
 		{#if pages > 1}
 			<nav class="kg-pager" aria-label={t('groupPages')}>
 				{#if pageNo > 0}<a class="btn-3d" href={pageHref(pageNo - 1)}>{t('previous')}</a>{/if}
-				<span class="kg-pager-label">{t('pageOf', { page: pageNo + 1, pages })}</span>
+				<span class="kg-pager-label">{t('pageOf', { page: formatNumber(pageNo + 1), pages: formatNumber(pages) })}</span>
 				{#if pageNo + 1 < pages}<a class="btn-3d" href={pageHref(pageNo + 1)}>{t('next')}</a>{/if}
 			</nav>
 		{/if}
@@ -136,7 +136,7 @@
 			{#each facets.sources as src (src.lang)}
 				<a class="kg-card" href="/loanwords?lang={encodeURIComponent(src.lang)}">
 					<span class="kv-value">{src.name}</span>
-					<span class="kg-meta">{src.count.toLocaleString()} {t('wordsSuffix')}</span>
+					<span class="kg-meta">{formatNumber(src.count)} {t('wordsSuffix')}</span>
 				</a>
 			{/each}
 		</div>

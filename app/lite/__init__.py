@@ -331,9 +331,9 @@ def _status_chip(lang: str) -> str:
     elif ok:
         state = "ok"
         line = _t(lang, "statusConnected")
-        sub = _t(lang, "statusReadyWords", count=f"{count or 0:,}")
+        sub = _t(lang, "statusReadyWords", count=_fmt_count(count or 0, lang))
         mark = "ok"
-        aria = _t(lang, "statusAriaReady", count=f"{count or 0:,}")
+        aria = _t(lang, "statusAriaReady", count=_fmt_count(count or 0, lang))
     else:
         state = "err"
         line = _t(lang, "statusOffline")
@@ -1297,7 +1297,7 @@ def lite_conjugations(request: Request, word: str = "", reading: str = "") -> Re
     body = f"""<div class="conj-page"><nav class="conj-nav">{back}</nav>
 <h1 lang="ja" class="conj-title">{shown_reading}
 <span class="conj-label">{esc(_t(lang, "conjugations"))}</span>
-<span class="kgroup-total">{len(rows)}</span></h1>
+<span class="kgroup-total">{_fmt_count(len(rows), lang)}</span></h1>
 <p class="conj-sub">{_t(lang, "lite_conjSub", word=f'<span lang="ja">{esc(headword)}</span>')}</p>
 <table class="conj">
 {table_head}
@@ -1445,6 +1445,7 @@ def lite_kanji_group(request: Request, by: str = "", value: str = "", n: str = "
         return _kg_pick_page(request, by, lang, theme)
     size = min(max(_int(n, 60), 1), 100)
     start = max(_int(offset, 0), 0)
+    value_label = _kg_value_label(by, _int_value, lang)
     cards = kanji_group_cards(by, str(_int_value), size, start)
     if cards is None or cards["total"] == 0:
         return _error_page(
@@ -1466,7 +1467,7 @@ def lite_kanji_group(request: Request, by: str = "", value: str = "", n: str = "
     items = "".join(
         f'<li class="kg-card">'
         f'<a href="/lite/kanji/{esc(quote(card["literal"], safe=""))}'
-        f'?from={quote(cards["label"], safe="")}&amp;gq={gq_enc}">'
+        f'?from={quote(value_label, safe="")}&amp;gq={gq_enc}">'
         f'<span class="kg-glyph" lang="ja">{esc(card["literal"])}</span>'
         f'<span class="kg-gloss">{esc((card.get("meanings") or ["—"])[0])}</span>'
         f'<span class="kg-meta">{esc(_kg_meta(card, lang))}</span></a></li>'
@@ -1485,7 +1486,12 @@ def lite_kanji_group(request: Request, by: str = "", value: str = "", n: str = "
         nav.append(f'<a class="btn" href="{following}">{esc(_t(lang, "next"))}</a>')
     if nav:
         pages = (cards["total"] + size - 1) // size
-        label = _t(lang, "pageOf", page=start // size + 1, pages=pages)
+        label = _t(
+            lang,
+            "pageOf",
+            page=_fmt_count(start // size + 1, lang),
+            pages=_fmt_count(pages, lang),
+        )
         nav.insert(1, f'<span class="kg-pager-label">{esc(label)}</span>')
         pagination = f'<nav class="kg-pager" aria-label="pages">{" ".join(nav)}</nav>'
     else:
@@ -1500,17 +1506,17 @@ def lite_kanji_group(request: Request, by: str = "", value: str = "", n: str = "
     back_label = (
         f"← {esc(_t(lang, 'backTo', word=frm))}" if frm else f"← {esc(_t(lang, 'backToSearch'))}"
     )
-    group_label = esc(cards["label"])
+    group_label = esc(value_label)
     suffix = esc(_t(lang, "kanjiSuffix"))
     subtitle = esc(_t(lang, "groupSubtitle", group=group_label.lower() if lang in ("en", "es") else group_label))
     body = f"""<h1 class="kgroup-title">{group_label} {suffix}
-<span class="kgroup-total">{cards["total"]}</span></h1>
+<span class="kgroup-total">{_fmt_count(int(cards["total"]), lang)}</span></h1>
 <p class="kgroup-sub">{subtitle}</p>
 <ul class="kg-grid">{items}</ul>
 {pagination}
 <div class="kgroup-bottom-actions"><a href="{back_href}" class="btn">{back_label}</a></div>"""
     return _page(
-        cards["label"],
+        f"{value_label} {_t(lang, 'kanjiSuffix')}",
         body,
         cache=_CACHE_STATIC,
         controls=_controls(request),
@@ -1768,17 +1774,20 @@ def lite_loanwords_lang(
         )
     if page["total"] > size:
         pages = (page["total"] + size - 1) // size
-        nav.insert(
-            1,
-            f'<span class="kg-pager-label">{esc(_t(ui_lang, "pageOf", page=start // size + 1, pages=pages))}</span>',
+        page_label = _t(
+            ui_lang,
+            "pageOf",
+            page=_fmt_count(start // size + 1, ui_lang),
+            pages=_fmt_count(pages, ui_lang),
         )
+        nav.insert(1, f'<span class="kg-pager-label">{esc(page_label)}</span>')
     pagination = (
         f'<nav class="kg-pager" aria-label="pages">{" ".join(nav)}</nav>' if nav else ""
     )
 
     body = (
         f'<h1 class="kgroup-title">{esc(page["name"])} '
-        f'<span class="kgroup-total">{page["total"]:,}</span></h1>'
+        f'<span class="kgroup-total">{_fmt_count(int(page["total"]), ui_lang)}</span></h1>'
         f'<p class="kgroup-sub">{esc(_t(ui_lang, "loanwordsFromTagline", name=page["name"]))}</p>'
         f'{cards}{pagination}'
         f'<div class="kgroup-bottom-actions">'

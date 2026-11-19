@@ -10,7 +10,7 @@
 	} from '#lib/api.ts';
 	import Header from '#lib/components/Header.svelte';
 	import Icon from '#lib/components/Icon.svelte';
-	import { t } from '#lib/i18n.svelte.ts';
+	import { formatNumber, t } from '#lib/i18n.svelte.ts';
 
 	// One page of the grid; eight columns of six rows on desktop, and the
 	// API cap keeps a foulest-offset request from doing more work than this.
@@ -132,8 +132,8 @@
 	// Picker chip label for one facet value — stroke counts and grades are
 	// localized counts, JLPT maps the internal 4→1 scale to N-levels.
 	function valueLabel(by: GroupKey, v: number): string {
-		if (by === 'strokes') return t('strokesCount', { n: v });
-		if (by === 'grade') return t('gradeCount', { n: v });
+		if (by === 'strokes') return t('strokesCount', { n: formatNumber(v) });
+		if (by === 'grade') return t('gradeCount', { n: formatNumber(v) });
 		return { 4: 'N5', 3: 'N4', 2: 'N2-N3', 1: 'N1' }[v] ?? `N${v}`;
 	}
 
@@ -153,9 +153,9 @@
 
 	function metaLine(k: KanjiGroupResponse['kanjis'][number]): string {
 		return [
-			k.stroke_count ? t('strokesCount', { n: k.stroke_count }) : '',
+			k.stroke_count ? t('strokesCount', { n: formatNumber(k.stroke_count) }) : '',
 			k.jlpt_level ? { 4: 'N5', 3: 'N4', 2: 'N2-N3', 1: 'N1' }[k.jlpt_level] : '',
-			k.freq ? t('freq', { n: k.freq }) : ''
+			k.freq ? t('freq', { n: formatNumber(k.freq) }) : ''
 		]
 			.filter(Boolean)
 			.join(' · ');
@@ -163,7 +163,9 @@
 </script>
 
 <svelte:head>
-	<title>{data ? `${data.label} ${t('kanjiSuffix')} — Reikun` : 'Reikun'}</title>
+	<title>
+		{req ? `${valueLabel(req.by, req.value)} ${t('kanjiSuffix')} — Reikun` : 'Reikun'}
+	</title>
 </svelte:head>
 
 <Header />
@@ -180,7 +182,7 @@
 					{#each facets[byParam] ?? [] as v (v.value)}
 						<a class="kg-card kv-card" href="/kanji-group?by={byParam}&value={v.value}">
 							<span class="kv-value">{valueLabel(byParam, v.value)}</span>
-							<span class="kg-meta">{v.count.toLocaleString()} {t('kanjiSuffix')}</span>
+							<span class="kg-meta">{formatNumber(v.count)} {t('kanjiSuffix')}</span>
 						</a>
 					{/each}
 				</div>
@@ -214,8 +216,8 @@
 		{/if}
 	{:else}
 		<h1 class="kgroup-title">
-			{data?.label ?? groupLabel(req.by)} {t('kanjiSuffix')}
-			{#if data}<span class="kgroup-total">{data.total}</span>{/if}
+			{valueLabel(req.by, req.value)} {t('kanjiSuffix')}
+			{#if data}<span class="kgroup-total">{formatNumber(data.total)}</span>{/if}
 		</h1>
 		<p class="kgroup-sub">
 			{t('groupSubtitle', { group: groupLabel(req.by) })}
@@ -230,7 +232,7 @@
 				{#each data.kanjis as k (k.literal)}
 					<a
 					class="kg-card"
-					href="/kanji/{encodeURIComponent(k.literal)}?from={encodeURIComponent(data.label)}&gq={gq}"
+					href="/kanji/{encodeURIComponent(k.literal)}?from={encodeURIComponent(valueLabel(req.by, req.value))}&gq={gq}"
 					title={t('openKanji', { char: k.literal })}
 				>
 						<span class="kg-glyph" lang="ja">{k.literal}</span>
@@ -242,7 +244,7 @@
 			{#if pages > 1}
 				<nav class="kg-pager" aria-label={t('groupPages')}>
 					{#if pageNo > 1}<a class="btn-3d" href={pageHref(pageNo - 2)}>{t('previous')}</a>{/if}
-					<span class="kg-pager-label">{t('pageOf', { page: pageNo, pages })}</span>
+					<span class="kg-pager-label">{t('pageOf', { page: formatNumber(pageNo), pages: formatNumber(pages) })}</span>
 					{#if pageNo < pages}<a class="btn-3d" href={pageHref(pageNo)}>{t('next')}</a>{/if}
 				</nav>
 			{/if}

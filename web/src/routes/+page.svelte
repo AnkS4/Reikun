@@ -568,9 +568,9 @@
 			type="button"
 			class="btn-3d"
 			onclick={showNext}
-			title={t('showMoreTitle', { max: MAX_RESULTS })}
+			title={t('showMoreTitle', { max: formatNumber(MAX_RESULTS) })}
 		>
-			<Icon name="expand-more" size={12} /> {t('showNext', { count: PAGE_RESULTS })}
+			<Icon name="expand-more" size={12} /> {t('showNext', { count: formatNumber(PAGE_RESULTS) })}
 		</button>
 	{/if}
 {:else if !searching && !error}
