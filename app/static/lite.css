@@ -126,8 +126,8 @@ width:2rem;height:2rem;border-radius:999px;color:var(--text-muted)}
    working. The ?v= hash is substituted by app/lite/assets.py. */
 @font-face{font-family:'reikun-icons';font-display:block;src:url(/lite/static/lite-icons.woff2?v=__FONT_HASH__) format('woff2')}
 .icon{display:inline-flex;align-items:center;justify-content:center;
-font:1.25rem/1 'reikun-icons',sans-serif}
-.controls .icon{width:1.25rem;height:1.25rem;flex:none}
+font:1.125rem/1 'reikun-icons',sans-serif}
+.controls .icon{width:1.125rem;height:1.125rem;flex:none}
 .icon-sun::before{content:"\f5a2"}
 .icon-moon::before{content:"\f497"}
 .icon-full::before{content:"\f3f9"}

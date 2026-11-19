@@ -27,7 +27,7 @@ const MAP = {
 	dices: 'dices',
 	languages: 'languages',
 	school: 'school',
-	contrast: 'contrast',
+	palette: 'palette',
 	replay: 'rotate-ccw',
 	database: 'database',
 	'thumbs-up': 'thumbs-up',
