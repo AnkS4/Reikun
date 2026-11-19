@@ -100,7 +100,7 @@ export interface paths {
          * Kanji Groups Endpoint
          * @description Selectable values + counts for each /kanji/group key — the data behind
          *     the browse pickers on the kanji-group page (stroke counts 1-34, school
-         *     grades, JLPT levels).
+         *     grades, JLPT levels, cumulative top-N frequency bands).
          */
         get: operations["kanji_groups_endpoint_kanji_groups_get"];
         put?: never;
@@ -1174,7 +1174,7 @@ export interface operations {
                 };
             };
             /** @description Kanji metadata table unavailable */
-            500: {
+            503: {
                 headers: {
                     [name: string]: unknown;
                 };

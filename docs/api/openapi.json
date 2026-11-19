@@ -3,7 +3,7 @@
   "info": {
     "title": "Reikun API",
     "description": "Semantic Japanese Dictionary & Reading Assistant — hybrid dense + BM25 search, kanji details and JLPT-calibrated grammar explanations.",
-    "version": "1.3.0"
+    "version": "1.4.0"
   },
   "paths": {
     "/health": {
@@ -228,7 +228,7 @@
           "kanji"
         ],
         "summary": "Kanji Groups Endpoint",
-        "description": "Selectable values + counts for each /kanji/group key — the data behind\nthe browse pickers on the kanji-group page (stroke counts 1-34, school\ngrades, JLPT levels).",
+        "description": "Selectable values + counts for each /kanji/group key — the data behind\nthe browse pickers on the kanji-group page (stroke counts 1-34, school\ngrades, JLPT levels, cumulative top-N frequency bands).",
         "operationId": "kanji_groups_endpoint_kanji_groups_get",
         "responses": {
           "200": {
@@ -241,7 +241,7 @@
               }
             }
           },
-          "500": {
+          "503": {
             "description": "Kanji metadata table unavailable",
             "content": {
               "application/json": {
