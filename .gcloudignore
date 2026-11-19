@@ -44,10 +44,16 @@ eval/
 .dockerignore
 .gcloudignore
 
-# Docs, frontend, CI config — not needed to build the API image
+# Docs, frontend, CI config — the only frontend bytes the API image
+# needs are the self-hosted Plex mirror for lite's /lite/fonts
+# (web/static/fonts/, see d2a5c59); everything else in web/ is SPA
+# source the image never copies.
 README.md
 docs/
-web/
+web/*
+!web/static/
+web/static/*
+!web/static/fonts/
 .github/
 docker-compose*.yml
 tests/
