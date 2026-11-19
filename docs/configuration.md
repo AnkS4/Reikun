@@ -38,6 +38,7 @@ Docker maps `127.0.0.1:${APP_PORT:-8000}:8000` — change `APP_PORT` in `.env`, 
 | Variable | Description | Default |
 |----------|-------------|---------|
 | `TELEMETRY` | Event sink: `stdout` or `sqlite` | `stdout` |
+| `QUERY_LOG` | Search rows carry query text (`full`, default) or hashes only (`hash`) — feedback/explanation rows are always hash-only | `full` |
 | `TELEMETRY_RETENTION_DAYS` | Purge SQLite rows older than this many days (purged at sink init, then daily); 0 keeps rows forever | `0` |
 | `MONITORING_DB` | SQLite path when `TELEMETRY=sqlite` | `data/monitoring/reikun.db` |
 | `CORS_ORIGINS` | Comma-separated allowed browser origins | `*` (development; pin the site origin in production) |

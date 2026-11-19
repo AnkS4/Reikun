@@ -55,10 +55,12 @@ def _grade_badge(grade: int) -> dict:
 
 
 def meta_parts(d: dict) -> list[dict]:
-    """[{label, tip, group}] badges for a kanji's strokes / grade / JLPT /
-    frequency rank, skipping fields the entry lacks. `group` (absent on freq)
-    marks badges that are lookup keys — the frontend renders those as buttons
-    that browse words of the same group via /kanji/group."""
+    """[{label, tip, group, key?, n?, level?}] badges for a kanji's strokes /
+    grade / JLPT / frequency rank, skipping fields the entry lacks. `group`
+    (absent on freq) marks badges that are lookup keys — the frontend renders
+    those as buttons that browse words of the same group via /kanji/group.
+    `key`/`n`/`level` carry the structured data used for localized rendering
+    (e.g. Devanagari digits); `tip` stays the English hover hint."""
     parts = []
     if d.get("stroke_count"):
         parts.append({"label": f"{d['stroke_count']} strokes",
@@ -205,7 +207,7 @@ def kanji_group_cards(by: str, value: str, n: int = 40, offset: int = 0) -> dict
     `by`/`value`.
 
     `label` is the display name of the group ("7 strokes", "Grade 3",
-    "JLPT N2-N3"); `total` drives the Prev/Next pagination.
+    "JLPT N2-N3", "Top {v}" for freq); `total` drives Prev/Next pagination.
     """
     raw = kanji_group(by, value, n, offset)
     if raw is None:

@@ -85,11 +85,13 @@ def lookup_kanji(char: str) -> dict | None:
 
 def kanji_group(by: str, value: str, n: int = 40, offset: int = 0) -> tuple[tuple[dict, ...], int] | None:
     """
-    The KANJI of a "same metadata" group: every kanji whose `by`-field
-    (strokes / grade / jlpt) equals `value`, ordered by KANJIDIC2 frequency
-    (rank 1 first; unranked kanji trail alphabetically) and sliced to one
-    page. Returns `(page, total)` so the client can paginate; None for an
-    unknown `by` or a non-integer `value`.
+    The KANJI of a "same metadata" group: strokes / grade / jlpt match
+    `value` exactly; `freq` is a *cumulative* top-N bound on the KANJIDIC2
+    frequency rank (the N most-used kanji). Ordered by frequency (rank 1
+    first; unranked kanji trail alphabetically) and sliced to one page.
+    Returns `(page, total)` so the client can paginate; None for an
+    unknown `by`, a non-integer `value`, or an out-of-range one
+    (freq ≤ 3000, everything else ≤ 50).
 
     Characters, not words — a stroke-count or grade group is about the
     script itself (browse 7-stroke kanji), and words of a group mixed
@@ -102,11 +104,17 @@ def kanji_group(by: str, value: str, n: int = 40, offset: int = 0) -> tuple[tupl
     if by not in ("strokes", "grade", "jlpt", "freq"):
         return None
 
+    # Bound the group here (not only in the API layer) so the process-wide
+    # pool cache can't be grown without limit by out-of-range values.
+    upper = 3000 if by == "freq" else 50
+    if v < 1 or v > upper:
+        return None
+
     pool = _kanji_pool(by, v)  # cached — static table, stable ordering
     return pool[offset : offset + n], len(pool)
 
 
-@cache
+@lru_cache(maxsize=512)
 def _kanji_pool(by: str, v: int) -> tuple[dict, ...]:
     """The full ordered kanji pool of one group. For freq, `value` is an upper
     bound on the KANJIDIC2 frequency rank — cumulative top-N. Static table +
@@ -137,7 +145,8 @@ def _kanji_pool(by: str, v: int) -> tuple[dict, ...]:
 def kanji_group_facets() -> dict[str, list[dict]]:
     """Available values + entry counts per group key, for the /kanji-group
     pickers — one pass over the static table, cached for the process life.
-    Order: strokes/grade ascending, jlpt descending (N5 → N1)."""
+    Order: strokes/grade ascending, jlpt descending (N5 → N1), freq bands
+    ascending (cumulative top-N with cumulative counts)."""
     table = _load_kanji_table()
     counts: dict[str, dict[int, int]] = {"strokes": {}, "grade": {}, "jlpt": {}}
     keys = {"strokes": "stroke_count", "grade": "grade", "jlpt": "jlpt_level"}

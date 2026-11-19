@@ -5,8 +5,8 @@ plus kanji words like タバコ ← spa, 漢字借用 like 跆拳道 ← kor).
 Qdrant can't filter on the nested ``lsource.lang`` path (the dotted-path index
 accepts the schema but indexes nothing for arrays of objects — verified against
 the live collection 2026-11-14), so the facet is built in-process: one scroll
-of the ~6.2k lsource-bearing points, grouped by language and sorted by
-``wf_score``, then served from a TTL cache. The collection stays the source of
+of the ~6.2k lsource-bearing points, grouped by language and sorted by the common-first rule (``is_common`` first,
+then ``wf_score``, then alphabetical headword/reading), then served from a TTL cache. The collection stays the source of
 truth; the cache only avoids re-scrolling per request.
 """
 

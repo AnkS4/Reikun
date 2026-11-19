@@ -85,9 +85,18 @@ class SlidingWindowLimiter:
             return 0.0
 
     def _prune(self, cutoff: float) -> None:
-        """Drop idle clients so a crawl from many IPs can't grow memory without bound."""
+        """Drop idle clients so a crawl from many IPs can't grow memory without bound.
+        If nothing is idle, evict the least-recently-active keys instead — an
+        attack whose keys never go idle must not defeat the cap."""
         for k in [k for k, q in self._hits.items() if not q or q[-1] <= cutoff]:
             del self._hits[k]
+        if len(self._hits) > self.max_keys:
+            ordered = sorted(
+                self._hits.items(),
+                key=lambda kv: kv[1][-1] if kv[1] else 0.0,
+            )
+            for k, _ in ordered[: len(self._hits) - self.max_keys]:
+                del self._hits[k]
 
 
 def client_ip(request: Request, trusted_hops: int = 1) -> str:

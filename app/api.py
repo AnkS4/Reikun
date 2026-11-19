@@ -22,6 +22,7 @@ from contextlib import asynccontextmanager
 from typing import Annotated, Literal, cast, get_args
 
 from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException, Query, Response
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import StreamingResponse
@@ -65,6 +66,13 @@ from app.render import (
 )
 from app.retrieval import MODES, is_headword, morph_hint, search, warm_headword_index
 from app.telemetry import telemetry
+
+
+def _kanji_unavailable(exc: Exception) -> HTTPException:
+    """Shared translation for "the committed kanji table is missing/broken" —
+    the same condition /ready maps to 503; log with context, fail honestly."""
+    logger.exception("kanji metadata table unavailable", exc_info=exc)
+    return HTTPException(503, "Kanji metadata table unavailable")
 
 logger = logging.getLogger("reikun.api")
 
@@ -630,8 +638,8 @@ def kanji_random_endpoint(
     pick. Same rules as the UI: frequency-ranked pool, optionally restricted
     to a JLPT level, up to 8 headword-verified tries then an unchecked pick."""
     response.headers["Cache-Control"] = "no-store"  # a cached "random" would repeat itself
-    pool = jlpt_kanji(level) if level else None
     try:
+        pool = jlpt_kanji(level) if level else None
         for _ in range(8):
             if is_headword(c := random_kanji(within=pool)):
                 return {"kanji": c}
@@ -641,7 +649,12 @@ def kanji_random_endpoint(
         # Qdrant unreachable (or the kanji table is missing/empty): answer with
         # whatever the local table can offer, not a 500.
         logger.warning("kanji random headword check failed; using unchecked pick", exc_info=True)
-        return {"kanji": random_kanji(within=pool)}
+        try:
+            return {"kanji": random_kanji(within=None)}
+        except Exception:
+            # The local table itself is unavailable — the absolute last resort.
+            logger.error("kanji table unavailable for random pick", exc_info=True)
+            return {"kanji": "日"}
 
 
 GroupKey = Literal["strokes", "grade", "jlpt", "freq"]
@@ -651,13 +664,16 @@ GroupKey = Literal["strokes", "grade", "jlpt", "freq"]
     "/kanji/groups",
     tags=["kanji"],
     response_model=KanjiGroupsResponse,
-    responses={500: {"model": ErrorResponse, "description": "Kanji metadata table unavailable"}},
+    responses={503: {"model": ErrorResponse, "description": "Kanji metadata table unavailable"}},
 )
 def kanji_groups_endpoint() -> dict:
     """Selectable values + counts for each /kanji/group key — the data behind
     the browse pickers on the kanji-group page (stroke counts 1-34, school
-    grades, JLPT levels)."""
-    return kanji_group_facets()
+    grades, JLPT levels, cumulative top-N frequency bands)."""
+    try:
+        return kanji_group_facets()
+    except (FileNotFoundError, ValueError, KeyError, IndexError) as exc:
+        raise _kanji_unavailable(exc) from exc
 
 
 @app.get("/kanji/group", tags=["kanji"], response_model=KanjiGroupResponse)
@@ -684,9 +700,18 @@ def kanji_group_endpoint(
     frequency-ranked most-common first; `total` drives Prev/Next pagination."""
     if by != "freq" and value > 50:
         # Stroke counts are ≤34, grades ≤6, JLPT ≤4 — 50 is a generous ceiling.
-        # Frequencies are cumulative top-N up to the ranked set size.
-        raise HTTPException(422, f"value={value} is out of range for by={by}")
-    cards = kanji_group_cards(by, str(value), n, offset)
+        # Frequencies are cumulative top-N up to the ranked set size. Raise
+        # the same envelope query validators produce so clients see one 422.
+        raise RequestValidationError([{
+            "type": "less_than_equal",
+            "loc": ("query", "value"),
+            "msg": "Input should be less than or equal to 50",
+            "input": value,
+        }])
+    try:
+        cards = kanji_group_cards(by, str(value), n, offset)
+    except (FileNotFoundError, ValueError, KeyError, IndexError) as exc:
+        raise _kanji_unavailable(exc) from exc
     if cards is None or cards["total"] == 0:
         raise HTTPException(404, f"No kanji in group {by}={value}")
     response.headers["Cache-Control"] = _CACHE_STATIC
@@ -707,7 +732,10 @@ def kanji_batch_endpoint(
 ) -> dict:
     """Compact hover-card data for several kanji at once — one round-trip per
     sentence of tooltips. Unknown kanji map to null."""
-    seen = {c: kanji_hover(c) for c in dict.fromkeys(chars) if is_kanji(c)}
+    try:
+        seen = {c: kanji_hover(c) for c in dict.fromkeys(chars) if is_kanji(c)}
+    except (FileNotFoundError, ValueError, KeyError, IndexError) as exc:
+        raise _kanji_unavailable(exc) from exc
     if not seen:
         raise HTTPException(400, "Provide at least one kanji character")
     response.headers["Cache-Control"] = _CACHE_STATIC
@@ -727,9 +755,14 @@ def kanji_endpoint(
 ) -> dict:
     """KANJIDIC2 details (meta badges, readings with okurigana parts, common
     words with ruby parts) for one kanji — the frontend renders the card."""
-    if not is_kanji(char):
-        raise HTTPException(400, "Provide exactly one kanji character")
-    card = kanji_card(char, strokes=strokes)
+    try:
+        if not is_kanji(char):
+            raise HTTPException(400, "Provide exactly one kanji character")
+        card = kanji_card(char, strokes=strokes)
+    except HTTPException:
+        raise
+    except (FileNotFoundError, ValueError, KeyError, IndexError) as exc:
+        raise _kanji_unavailable(exc) from exc
     if not card:
         raise HTTPException(404, f"No KANJIDIC2 entry for {char!r}")
     # Kanji details are static data — let browsers/CDNs reuse them.
@@ -862,6 +895,7 @@ def explain_stream_endpoint(req: ExplainRequest) -> StreamingResponse:
 
     def events():
         ok = True
+        done_ok = True  # send the terminal done payload (false on client disconnect)
         try:
             for c in explain_grammar_stream(sentence, english, req.level, hint=hint):
                 # UTF-8 SSE stream: don't \uXXXX-escape the Japanese fragments.
@@ -870,16 +904,24 @@ def explain_stream_endpoint(req: ExplainRequest) -> StreamingResponse:
             logger.exception("explain stream failed")
             ok = False
             yield f"data: {json.dumps({'error': EXPLAIN_UNAVAILABLE})}\n\n"
-        latency_ms = int((time.perf_counter() - t0) * 1000)
-        expl_id = telemetry().explanation(sentence, req.level, model=last_model(), latency_ms=latency_ms, ok=ok)
-        payload = {
-            "done": True,
-            "explanation_id": expl_id,
-            "latency_ms": latency_ms,
-            "provider": LLM_PROVIDER,
-            "model": last_model(),
-        }
-        yield f"data: {json.dumps(payload, ensure_ascii=False)}\n\n"
+        except BaseException:
+            # GeneratorExit/CancelledError — the client went away. Record the
+            # (already-billed) explanation honestly and emit nothing further.
+            ok = False
+            done_ok = False
+            raise
+        finally:
+            latency_ms = int((time.perf_counter() - t0) * 1000)
+            expl_id = telemetry().explanation(sentence, req.level, model=last_model(), latency_ms=latency_ms, ok=ok)
+            if done_ok:
+                payload = {
+                    "done": True,
+                    "explanation_id": expl_id,
+                    "latency_ms": latency_ms,
+                    "provider": LLM_PROVIDER,
+                    "model": last_model(),
+                }
+                yield f"data: {json.dumps(payload, ensure_ascii=False)}\n\n"
 
     # no-transform + X-Accel-Buffering: keep proxies from buffering or compressing
     # the stream, which would hold every chunk back until the end.

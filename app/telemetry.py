@@ -19,12 +19,19 @@ Feedback and explanation text stays hash-only (12-hex-char SHA-256 prefixes).
 import hashlib
 import json
 import logging
+import os
 import sys
 from datetime import UTC, datetime
 from functools import cache, wraps
 from typing import Protocol
 
 from app.config import TELEMETRY
+
+# Cleartext query/rewritten text in stdout lines and SQLite rows — feedback
+# and explanation rows are already hash-only. Set QUERY_LOG=hash to make
+# search rows carry hashes only (privacy-grade logs); anything else keeps
+# today's verbatim default.
+_QUERY_LOG_HASH = os.environ.get("QUERY_LOG", "full").strip().lower() == "hash"
 
 # Dedicated logger with its own stdout handler — the root logger's
 # "%(levelname)s …" format would corrupt the JSON lines.
@@ -83,7 +90,9 @@ class _StdoutTelemetry:
                num_results: int, result_count: int, top_result: str | None, latency_ms: int,
                cached: bool = False, route: str | None = None,
                embed_ms: int | None = None, retrieve_ms: int | None = None) -> None:
-        _emit("search", query=query, rewritten_query=rewritten_query,
+        q_clear = "" if _QUERY_LOG_HASH else query
+        rw_clear = "" if _QUERY_LOG_HASH else rewritten_query
+        _emit("search", query=q_clear, rewritten_query=rw_clear,
               rewritten=query != rewritten_query, query_hash=_h(query),
               rewritten_query_hash=_h(rewritten_query),
               rewrite_method=rewrite_method, mode=mode, num_results=num_results,
@@ -111,6 +120,8 @@ class _SqliteTelemetry:
                cached: bool = False, route: str | None = None,
                embed_ms: int | None = None, retrieve_ms: int | None = None) -> int:
         from scripts.feedback_log import log_search
+        if _QUERY_LOG_HASH:
+            query, rewritten_query = (_h(query) or ""), (_h(rewritten_query) or "")
         return log_search(query, rewritten_query=rewritten_query, rewrite_method=rewrite_method,
                           mode=mode, num_results=num_results, result_count=result_count,
                           top_result=top_result, latency_ms=latency_ms, cached=cached,
