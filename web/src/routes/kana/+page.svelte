@@ -5,9 +5,7 @@
 	import { t } from '#lib/i18n.svelte.ts';
 
 	const variant = $derived.by((): 'hiragana' | 'katakana' =>
-		(typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('variant') : 'hiragana') === 'katakana'
-			? 'katakana'
-			: 'hiragana');
+		page.url.searchParams.get('variant') === 'katakana' ? 'katakana' : 'hiragana');
 	const chart = $derived(variant === 'katakana' ? KATAKANA : HIRAGANA);
 
 	// Columns: a · i · u · e · o (kana reading order) — rows: Basic, Dakuten, Handakuten.
