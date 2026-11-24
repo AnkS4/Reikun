@@ -50,7 +50,7 @@ const MAP = {
 	'pen-line': 'pen-line',
 	'book-open': 'book-open',
 	'book-open-text': 'book-open-text',
-	feather: 'feather',
+	zap: 'zap',
 };
 
 const HEADER = `/**

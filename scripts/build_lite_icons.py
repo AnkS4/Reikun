@@ -2,7 +2,7 @@
 """Build the Lite control-icon font (app/static/lite-icons.woff2).
 
 The twelve glyphs are the Lucide icons (ISC) the SPA ships (sun, moon,
-layout-dashboard, languages, database) plus the browse-tile icons (pen-line,
+layers-3, languages, database) plus the browse-tile icons (pen-line,
 school, award, import, book-open-text, chart-line, blend), traced from their 24x24 stroke
 SVG paths: each path is
 stroked (width 2.0, round caps/joins — matching the SPA's stroke attributes),
@@ -60,16 +60,12 @@ _ICONS = {
         "M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 "
         "8.268c.344-.215.825-.004.803.401",
     ),
-    # layout-dashboard — top-right corner: switch to the full version (lucide:layout-dashboard, ISC)
+    # layers-3 — top-right corner: switch to the full version (lucide:layers-3, ISC)
     "F3F9": (
-        "M4.0,3.0h5.0a1.0,1.0 0 0 1 1.0,1.0v7.0a1.0,1.0 0 0 1 -1.0,1.0h-5.0a1.0,1.0 0 0 1 "
-        "-1.0,-1.0v-7.0a1.0,1.0 0 0 1 1.0,-1.0z",
-        "M15.0,3.0h5.0a1.0,1.0 0 0 1 1.0,1.0v3.0a1.0,1.0 0 0 1 -1.0,1.0h-5.0a1.0,1.0 0 0 1 "
-        "-1.0,-1.0v-3.0a1.0,1.0 0 0 1 1.0,-1.0z",
-        "M15.0,12.0h5.0a1.0,1.0 0 0 1 1.0,1.0v7.0a1.0,1.0 0 0 1 -1.0,1.0h-5.0a1.0,1.0 0 0 1 "
-        "-1.0,-1.0v-7.0a1.0,1.0 0 0 1 1.0,-1.0z",
-        "M4.0,16.0h5.0a1.0,1.0 0 0 1 1.0,1.0v3.0a1.0,1.0 0 0 1 -1.0,1.0h-5.0a1.0,1.0 0 0 1 "
-        "-1.0,-1.0v-3.0a1.0,1.0 0 0 1 1.0,-1.0z",
+        "M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 "
+        "0l8.58-3.9a1 1 0 0 0 0-1.83z",
+        "M2 12a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 12",
+        "M2 17a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 17",
     ),
     # languages — top-right chrome: language menu trigger (lucide:languages, ISC)
     "F658": (

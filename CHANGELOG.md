@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
+- **Variant-switch icons**: the SPA's Full → Lite control now uses `zap` instead of `feather` (a quick, lightweight bolt), and Lite's Lite → Full control uses `layers-3` instead of `layout-dashboard` (the whole feature stack), retraced into the same F3F9 slot. Both come verbatim from `lucide-static`; `feather` retires from the SPA set.
 - **Wasei-eigo tile glyph is now `blend`** instead of `share` — two overlapping circles read as English ∩ Japanese, and no other surface uses it; `share` stays in the SPA set for the ShareButton. Lite's F109 retraced byte-reproducibly from the same upstream path (two circles); `.icon-blend` replaces `.icon-share`.
 
 ## [1.4.0] - 2026-11-19

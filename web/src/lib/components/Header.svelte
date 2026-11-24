@@ -97,11 +97,11 @@
 
 <div class="header-controls">
 	<!-- Variant switch, drawn like the popover triggers: a plain 2rem round
-	     icon button — a quill for the lightweight variant (the hero tag already
-	     uses the book glyph), matched in height and form with the status dot /
-	     appearance / language controls. -->
+	     icon button — a lightning bolt for the quick, lightweight variant,
+	     matched in height and form with the status dot / appearance / language
+	     controls. -->
 	<a class="btn tertiary header-lite" href={LITE_URL} title={t('liteSwitch')} aria-label={t('liteSwitch')} rel="noopener">
-		<Icon name="feather" size={18} />
+		<Icon name="zap" size={18} />
 	</a>
 	<!-- svelte-ignore a11y_no_noninteractive_tabindex — focusable so keyboard users can open the status tooltip -->
 	<span
