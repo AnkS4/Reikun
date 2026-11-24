@@ -18,7 +18,7 @@ updates:
   # Frontend deps (web/package-lock.json).
   # TypeScript 7 is ignored: svelte-check only accepts TypeScript 5 or 6 as a
   # peer, so the upgrade breaks `npm ci` until the SvelteKit toolchain supports
-  # it (see local/notes/Issues.md W5). Remove the ignore when that lands.
+  # it. Remove the ignore when that lands.
   - package-ecosystem: "npm"
     directory: "/web"
     schedule:
