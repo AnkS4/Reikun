@@ -624,7 +624,7 @@
 				<span class="browse-desc">{t('browseLoanwordsDesc')}</span>
 			</a>
 			<a class="browse-tile" href="/loanwords?lang=wasei">
-				<span class="browse-icon"><Icon name="share" size={22} /></span>
+				<span class="browse-icon"><Icon name="blend" size={22} /></span>
 				<span class="browse-name">{t('browseWasei')}</span>
 				<span class="browse-desc">{t('browseWaseiDesc')}</span>
 			</a>

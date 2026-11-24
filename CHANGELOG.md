@@ -7,7 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-_No changes yet._
+### Changed
+- **Wasei-eigo tile glyph is now `blend`** instead of `share` — two overlapping circles read as English ∩ Japanese, and no other surface uses it; `share` stays in the SPA set for the ShareButton. Lite's F109 retraced byte-reproducibly from the same upstream path (two circles); `.icon-blend` replaces `.icon-share`.
 
 ## [1.4.0] - 2026-11-19
 

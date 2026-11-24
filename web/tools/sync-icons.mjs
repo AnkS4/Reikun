@@ -41,6 +41,7 @@ const MAP = {
 	split: 'split',
 	copy: 'copy',
 	check: 'check',
+	blend: 'blend',
 	share: 'share',
 	warning: 'triangle-alert',
 	close: 'x',
