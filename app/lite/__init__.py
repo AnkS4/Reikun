@@ -1186,7 +1186,8 @@ def _result_card(query: str, result: dict, furi: bool, lang: str) -> str:
     if etym_sources:
         etym_html = "; ".join(
             (
-                f'<a class="etym-link" href="/lite/loanwords/{quote(src["lang"], safe="")}">'
+                f'<a class="etym-link" href="/lite/loanwords/'
+                f'{quote("wasei" if src.get("wasei") else src["lang"], safe="")}">'
                 f'{esc(src["label"])}</a>'
                 if src.get("lang")
                 else esc(src["label"])

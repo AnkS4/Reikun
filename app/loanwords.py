@@ -63,6 +63,13 @@ def _build() -> dict[str, list[dict]]:
             # (e.g. eng + eng-variant) — list it once per language.
             seen: set[str] = set()
             for src in d["lsource"]:
+                # Wasei-eigo items are Japanese-made coinages: they get their
+                # own pseudo-bucket below and must NOT be folded into the
+                # source language's listing, otherwise /loanwords?lang=eng (and
+                # its lite twin) would be dominated by words that already have a
+                # dedicated section. Skip them here.
+                if src.get("wasei"):
+                    continue
                 if src["lang"] in seen:
                     continue
                 seen.add(src["lang"])
@@ -80,6 +87,23 @@ def _build() -> dict[str, list[dict]]:
                                     str(d.get("kanji_form") or d.get("reading") or ""),
                                     str(d.get("reading") or "")))
     return out
+
+
+def _entry_has_source_lang(d: dict, lang: str) -> bool:
+    """Whether ``d`` carries a (non-wasei) lsource item for ``lang``.
+
+    Used to keep wasei-tagged entries out of source-language listings even
+    when the in-memory index was built by an older code path or monkeypatched
+    in tests.
+    """
+    lsource = d.get("lsource") or []
+    if not lsource:
+        # No etymology payload to inspect (synthetic/test entries) — keep.
+        return True
+    for src in lsource:
+        if src.get("lang") == lang and not src.get("wasei"):
+            return True
+    return False
 
 
 def _loanwords() -> dict[str, list[dict]]:
@@ -103,11 +127,13 @@ def loanword_facets() -> list[dict[str, Any]]:
     rather than alongside the source languages.
     """
     idx = _loanwords()
-    return [
-        {"lang": lang, "name": lang_name(lang), "count": len(entries)}
-        for lang, entries in sorted(idx.items(), key=lambda kv: -len(kv[1]))
-        if lang != "wasei"
-    ]
+    out = []
+    for lang, entries in sorted(idx.items(), key=lambda kv: -len(kv[1])):
+        if lang == "wasei":
+            continue
+        filtered = [d for d in entries if _entry_has_source_lang(d, lang)]
+        out.append({"lang": lang, "name": lang_name(lang), "count": len(filtered)})
+    return out
 
 
 def loanwords_page(lang: str, offset: int = 0, limit: int = 50) -> dict[str, Any] | None:
@@ -116,6 +142,8 @@ def loanwords_page(lang: str, offset: int = 0, limit: int = 50) -> dict[str, Any
     entries = idx.get(lang)
     if entries is None:
         return None
+    if lang != "wasei":
+        entries = [d for d in entries if _entry_has_source_lang(d, lang)]
     return {
         "lang": lang,
         "name": lang_name(lang),

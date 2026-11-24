@@ -330,7 +330,8 @@ export interface components {
          * EtymologySource
          * @description One JMdict ``lsource`` item, display-enriched: ``label`` is the English
          *     phrase ("From Portuguese"), ``tag`` the BCP-47 ``lang`` attribute for the
-         *     source form (None → render without a lang tag).
+         *     source form (None → render without a lang tag). ``wasei`` is set for
+         *     Japanese-made (wasei-eigo) coinages.
          */
         EtymologySource: {
             /** Lang */
@@ -344,6 +345,8 @@ export interface components {
             label: string;
             /** Tag */
             tag?: string | null;
+            /** Wasei */
+            wasei?: boolean | string | null;
         };
         /** ExampleSentence */
         ExampleSentence: {

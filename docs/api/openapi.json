@@ -814,6 +814,20 @@
               }
             ],
             "title": "Tag"
+          },
+          "wasei": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Wasei"
           }
         },
         "type": "object",
@@ -822,7 +836,7 @@
           "label"
         ],
         "title": "EtymologySource",
-        "description": "One JMdict ``lsource`` item, display-enriched: ``label`` is the English\nphrase (\"From Portuguese\"), ``tag`` the BCP-47 ``lang`` attribute for the\nsource form (None → render without a lang tag)."
+        "description": "One JMdict ``lsource`` item, display-enriched: ``label`` is the English\nphrase (\"From Portuguese\"), ``tag`` the BCP-47 ``lang`` attribute for the\nsource form (None → render without a lang tag). ``wasei`` is set for\nJapanese-made (wasei-eigo) coinages."
       },
       "ExampleSentence": {
         "properties": {

@@ -212,11 +212,13 @@ class InflectionRow(BaseModel):
 class EtymologySource(BaseModel):
     """One JMdict ``lsource`` item, display-enriched: ``label`` is the English
     phrase ("From Portuguese"), ``tag`` the BCP-47 ``lang`` attribute for the
-    source form (None → render without a lang tag)."""
+    source form (None → render without a lang tag). ``wasei`` is set for
+    Japanese-made (wasei-eigo) coinages."""
     lang: str
     text: str = ""
     label: str
     tag: str | None = None
+    wasei: bool | str | None = None
 
 
 class Xref(BaseModel):
