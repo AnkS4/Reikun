@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
+- **The hero badge is text-only**: the `book-open` glyph (16px) is gone from the "Semantic Japanese Dictionary & Reading Assistant" tag in the SPA header; lite never had one. The glyph retires from the SPA icon set (all 27 remaining glyphs are in use). The hero brand emblem (`/icons/emblem.svg`) is unchanged.
 - **Variant-switch icons**: the SPA's Full → Lite control now uses `zap` instead of `feather` (a quick, lightweight bolt), and Lite's Lite → Full control uses `layers-3` instead of `layout-dashboard` (the whole feature stack), retraced into the same F3F9 slot. Both come verbatim from `lucide-static`; `feather` retires from the SPA set.
 - **Wasei-eigo tile glyph is now `blend`** instead of `share` — two overlapping circles read as English ∩ Japanese, and no other surface uses it; `share` stays in the SPA set for the ShareButton. Lite's F109 retraced byte-reproducibly from the same upstream path (two circles); `.icon-blend` replaces `.icon-share`.
 

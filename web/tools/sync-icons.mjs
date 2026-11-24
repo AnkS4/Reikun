@@ -48,7 +48,6 @@ const MAP = {
 	'arrow-up': 'arrow-up',
 	'arrow-right': 'arrow-right',
 	'pen-line': 'pen-line',
-	'book-open': 'book-open',
 	'book-open-text': 'book-open-text',
 	zap: 'zap',
 };

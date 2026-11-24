@@ -177,7 +177,6 @@
 	<div class="header-title" class:hero>
 		{#if hero}
 			<div class="hero-badge-tag">
-				<Icon name="book-open" size={16} />
 				<span>{BRAND_SUBTEXT}</span>
 			</div>
 		{/if}
