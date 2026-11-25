@@ -1,41 +1,20 @@
-// Sync brand assets from assets/ into web/static/.
-//
-// This script should be run as part of the build process (see package.json).
-//
-// Portability note: the web Docker build context is the repo root, so assets/
-// is present in image builds too and the copy is idempotent over the committed
-// web/static/. A missing assets/ (e.g. a stripped checkout) silently skips —
-// web/static/ is the committed output and stays valid.
-//
-// Note: favicon.svg and favicon.png at the root of web/static/ are manually
-// maintained and not synced from assets/ (they are separate 32px versions
-// distinct from the favicons/ directory).
-
-import { cpSync, existsSync, mkdirSync, readdirSync, statSync } from 'node:fs';
+// Copy the web-facing brand assets from their canonical artwork. A stripped
+// checkout (including the web Docker image) uses the committed static mirror.
+import { copyFileSync, existsSync, mkdirSync, readdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const here = dirname(fileURLToPath(import.meta.url));
-const assetsDir = join(here, '..', '..', 'assets');
-const staticDir = join(here, '..', 'static');
+const assets = fileURLToPath(new URL('../../assets/', import.meta.url));
+const output = fileURLToPath(new URL('../static/', import.meta.url));
 
-// Brand assets (favicons, icons, images).
-if (existsSync(assetsDir)) {
-	console.log(`Syncing assets from ${assetsDir} to ${staticDir}...`);
-	for (const sub of ['favicons', 'icons', 'images']) {
-		mkdirSync(join(staticDir, sub), { recursive: true });
-	}
-	for (const sub of ['favicons', 'icons', 'images']) {
-		const src = join(assetsDir, sub);
-		const dest = join(staticDir, sub);
-		if (!existsSync(src)) continue;
-		for (const name of readdirSync(src)) {
-			if (statSync(join(src, name)).isFile()) cpSync(join(src, name), join(dest, name));
+if (existsSync(assets)) {
+	for (const folder of ['emblems', 'favicons', 'icons', 'images']) {
+		for (const file of readdirSync(join(assets, folder), { withFileTypes: true })) {
+			if (!file.isFile() || (folder === 'emblems' && !file.name.endsWith('.svg'))) continue;
+			const dest = folder === 'emblems' ? 'icons' : file.name === 'favicon.svg' ? '' : folder;
+			const path = join(output, dest, file.name);
+			mkdirSync(dirname(path), { recursive: true });
+			copyFileSync(join(assets, folder, file.name), path);
 		}
 	}
-	console.log('Assets synced successfully.');
-} else {
-	console.log(`assets/ not found (Docker build context?) — skipping asset sync (${staticDir} is committed).`);
 }
-
-process.exit(0);

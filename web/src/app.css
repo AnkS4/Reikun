@@ -511,9 +511,12 @@ ruby rt {
 	width: 1.1em;
 	height: 1.1em;
 	flex-shrink: 0;
-	border-radius: 22%;
 	vertical-align: middle;
 	object-fit: contain;
+}
+
+:is([data-theme='dark'], [data-theme='oled']) .brand-icon {
+	content: url('/icons/emblem-dark.svg');
 }
 
 /* Both floating controls share one hit area: 2rem circle, neutral hover */

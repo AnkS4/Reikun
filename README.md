@@ -1,6 +1,9 @@
 <p align="center">
   <a href="https://reikun.app/">
-    <img src="assets/emblems/emblem.svg" alt="Reikun emblem" width="128">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="assets/emblems/emblem-dark.svg">
+      <img src="assets/emblems/emblem.svg" alt="Reikun emblem" width="128">
+    </picture>
   </a>
 </p>
 
