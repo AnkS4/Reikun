@@ -365,6 +365,19 @@ main {
 	}
 }
 
+/* Keep the three-part lockup together: full wording on narrow screens,
+   then progressively smaller until the normal hero scale fits. */
+@supports (width: 1cqw) {
+	.header-title {
+		container-type: inline-size;
+	}
+
+	.hero-heading.hero-heading {
+		flex-wrap: nowrap;
+		font-size: clamp(2.1rem, 12cqw, 3.8rem);
+	}
+}
+
 /* ---------- Ruby / Furigana ---------- */
 ruby {
 	ruby-align: center;
@@ -438,7 +451,6 @@ ruby rt {
 	font-family: var(--font-display);
 	font-size: clamp(2.5rem, 7vw, 3.8rem);
 	font-weight: 500;
-	letter-spacing: -0.025em;
 	line-height: 1.08;
 	color: var(--text);
 	justify-content: center;
@@ -449,7 +461,9 @@ ruby rt {
 	font-weight: 400;
 	color: var(--text-muted);
 	font-size: 0.72em;
+	line-height: inherit;
 	margin-left: var(--space-1);
+	transform: translateY(0.04em);
 }
 
 .hero .tagline {
@@ -483,33 +497,33 @@ ruby rt {
 	font-family: var(--font-display);
 	font-size: var(--fs-2xl);
 	font-weight: 500;
-	letter-spacing: -0.015em;
 	margin: 0.35rem 0 0;
-}
-
-.compact-title .brand-kanji {
-	font-family: var(--font-japanese);
-	font-size: 0.85em;
-	font-weight: 400;
-	color: var(--text-muted);
 }
 
 .title-home {
 	color: var(--text);
+	font-family: 'IBM Plex Sans', 'Segoe UI', Roboto, sans-serif;
 	display: inline-flex;
 	align-items: center;
-	gap: 0.35em;
+	gap: 0.25em;
 	transition: opacity var(--dur-base);
+}
+
+/* Keep the Latin wordmark's tracking even in Devanagari UI locales. */
+.title-home .brand-wordmark {
+	letter-spacing: -0.02em;
 }
 
 .title-home:hover {
 	opacity: 0.8;
 }
 
-/* Brand icon alongside title */
+/* The mark nearly fills its SVG. Size it to the letter caps, not the em box. */
 .brand-icon {
-	width: 1.1em;
-	height: 1.1em;
+	width: 0.75em;
+	height: 0.75em;
+	width: 1.08cap;
+	height: 1.08cap;
 	flex-shrink: 0;
 	vertical-align: middle;
 	object-fit: contain;
@@ -637,8 +651,8 @@ ruby rt {
 	top: 0;
 	padding: var(--space-3) 0;
 	background: transparent;
-	/* Above hovered cards (z-60) — their tooltips stay behind the bar */
-	z-index: var(--z-search);
+	/* Header tooltips must remain above the bar when they overlap it. */
+	z-index: var(--z-card);
 }
 
 .search-pair {
@@ -1208,28 +1222,13 @@ a.kanji-tip {
 	background: var(--primary-light);
 }
 
-/* Brand logos stay clean — decorative, no affordance needed */
-.brand-kanji .kanji-tip {
-	border-bottom: none;
-}
-
-.brand-kanji .kanji-tip:is(:hover, :focus, .pinned) {
-	border-bottom: 2px solid var(--primary);
-	background: transparent;
-}
-
-/* Header brand kanji tip sits above the sticky search row (z-80) */
-.brand-kanji .kanji-tip-body {
-	z-index: var(--z-brand-kanji);
-}
-
 .kanji-tip-body,
 .seg-tip {
 	display: block;
 	position: absolute;
 	z-index: var(--z-tooltip);
 	left: 50%;
-	top: calc(100% + 0.35rem);
+	top: calc(100% + 0.5rem);
 	transform: translateX(calc(-50% + var(--tip-shift, 0px))) translateY(var(--tip-dy, 0px));
 	min-width: 8rem;
 	max-width: var(--tip-w);
@@ -1247,6 +1246,8 @@ a.kanji-tip {
 	white-space: normal;
 	text-align: left;
 	cursor: default;
+	user-select: none;
+	pointer-events: none;
 	animation: tip-in var(--dur-fast) ease-out;
 }
 
@@ -3490,7 +3491,8 @@ button, a, input, summary {
 	touch-action: manipulation;               /* removes the tap delay / double-tap zoom */
 }
 
-.hero-heading, .compact-title, .tagline {
+.compact-title,
+.tagline {
 	text-wrap: balance;
 }
 

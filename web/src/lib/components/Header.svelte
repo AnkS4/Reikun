@@ -3,7 +3,7 @@
 	import { apiReadyShared } from '#lib/api.ts';
 	import { theme } from '#lib/theme.svelte.ts';
 	import { i18n, t, LOCALES, LOCALE_NAMES, LOCALE_TAGS } from '#lib/i18n.svelte.ts';
-	import { BRAND_SUBTEXT } from '#lib/brand.ts';
+	import { BRAND_SHORT, BRAND_SUBTEXT } from '#lib/brand.ts';
 	import { page } from '$app/state';
 	import { PUBLIC_API_BASE } from '$app/env/public';
 	import KanjiText from './KanjiText.svelte';
@@ -11,6 +11,8 @@
 	import Icon from './Icon.svelte';
 
 	let { hero = false, tagline = '' }: { hero?: boolean; tagline?: string } = $props();
+	let tooltipY = $state(0);
+	const setTooltipY = (em: number) => (tooltipY = em);
 
 	// Context-aware: land on the equivalent page in the lite UI instead of
 	// always the home page, so switching variants feels continuous.
@@ -181,16 +183,18 @@
 			</div>
 		{/if}
 		<h1 class="title-heading" class:hero-heading={hero} class:compact-title={!hero}>
-			<a class="title-home" href="/" title={t('backToSearch')}>
+			<a class="title-home" href="/" onmouseenter={() => setTooltipY(.75)} onmouseleave={() => setTooltipY(.35)}>
 				<img
 					src="/icons/emblem.svg"
 					alt=""
 					class="brand-icon"
 					aria-hidden="true"
 				/>
-				<span>Reikun</span>
+				<span class="brand-wordmark" lang="en">{BRAND_SHORT}</span>
 			</a>
-			<span class="brand-kanji" lang="ja">(<KanjiText text="例訓" />)</span>
+			{#if hero}
+				<span class="brand-kanji" lang="ja">(<KanjiText text="例訓" />)</span>
+			{/if}
 		</h1>
 		{#if hero && tagline}<p class="tagline">{tagline}</p>{/if}
 	</div>

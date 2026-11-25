@@ -292,11 +292,21 @@ def _badge(badge: dict, from_word: str = "", lang: str = "en") -> str:
 
 
 def _header(hero: bool, lang: str = "en") -> str:
+    wordmark = '<span class="brand-wordmark" lang="en">Reikun</span>'
     if hero:
+        # The kanji can't live inside the brand <a> — nested anchors are
+        # invalid HTML and the parser would spit the links out of the span.
+        # A .brand-line wrapper carries the hero font-size so the kanji can
+        # size itself in em relative to the wordmark.
         return (
             '<header class="hero">'
             f'<p class="hero-tag">{esc(_BRAND_SUBTEXT)}</p>'
-            '<h1 class="hero-title"><a class="brand" href="/lite">Reikun <span lang="ja">(例訓)</span></a>'
+            f'<h1 class="hero-title"><span class="brand-line">'
+            f'<a class="brand" href="/lite">{wordmark}</a>'
+            f'<span class="brand-kanji" lang="ja">('
+            f'<a href="/lite/kanji/{quote("例", safe="")}">例</a>'
+            f'<a href="/lite/kanji/{quote("訓", safe="")}">訓</a>)</span>'
+            '</span>'
             '<span class="tag">lite</span></h1>'
             f'<p class="tagline">{esc(_t(lang, "lite_tagline"))}</p>'
             f'<p class="lite-note">{esc(_t(lang, "lite_note"))} '
@@ -304,7 +314,7 @@ def _header(hero: bool, lang: str = "en") -> str:
             "</header>"
         )
     return (
-        '<header><a class="brand" href="/lite">Reikun <span lang="ja">(例訓)</span></a>'
+        f'<header><a class="brand" href="/lite" title="{esc(_t(lang, "aboutTitle"))}">{wordmark}</a>'
         '<span class="tag">lite</span></header>'
     )
 
@@ -2011,7 +2021,7 @@ def lite_about(request: Request) -> HTMLResponse:
         f'{esc(_t(lang, "sourceAfter"))}'
     )
     body = f"""<article class="about">
-<h1>{esc(_t(lang, "aboutTitle"))}</h1>
+<h1>{esc(_t(lang, "aboutTitle"))} <span lang="ja">(例訓)</span></h1>
 <p class="lede">{esc(_t(lang, "aboutLede"))}</p>
 <h2>{esc(_t(lang, "whatItDoes"))}</h2>
 <ul>

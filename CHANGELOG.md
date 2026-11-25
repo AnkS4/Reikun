@@ -8,11 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- **JLPT selection on kanji pages**: the level picker now updates the selected level instead of calling a no-op, so Random kanji uses the chosen level.
+- **Lite kana tile icon sizing**: the Japanese text glyph is normalized to the same 1.4rem icon box as the Lucide browse icons; its alignment rules no longer depend on a touch-screen media query.
 - **Wasei-eigo no longer leaks into source-language loanword lists**: JMdict tags wasei entries with `xml:lang="eng"`, so the in-memory loanwords index was folding ~2,040 wasei words into `/loanwords?lang=eng` (and its lite twin) in addition to the dedicated `/loanwords?lang=wasei` section. The index now skips wasei-tagged `lsource` items when grouping by source language, and the etymology link on a wasei entry points at the wasei listing. English drops from 2,546 to ~506 genuine loanwords; the wasei count (2,052) is unchanged.
 
 ### Changed
 - **New Reikun identity**: Signal is the primary emblem and Graphite is the neutral alternative. The website, favicons, app icons, IBM Plex Sans logo lockups and social preview use the new mark.
-- **The hero badge is text-only**: the `book-open` glyph (16px) is gone from the "Semantic Japanese Dictionary & Reading Assistant" tag in the SPA header; lite never had one. The glyph retires from the SPA icon set (all 27 remaining glyphs are in use). The hero brand emblem (`/icons/emblem.svg`) is unchanged.
+- **Simpler brand header**: Reikun uses the same Latin Plex wordmark across interface languages. The SPA emblem matches the wordmark’s cap height, `例訓` stays on the full and Lite landing pages to clarify the name, and the return-to-search tooltip appears only on internal pages.
+- **The hero badge is text-only**: the `book-open` glyph (16px) is gone from the "Semantic Japanese Dictionary & Reading Assistant" tag in the SPA header; lite never had one. The glyph retires from the SPA icon set (all 27 remaining glyphs are in use).
 - **Variant-switch icons**: the SPA's Full → Lite control now uses `zap` instead of `feather` (a quick, lightweight bolt), and Lite's Lite → Full control uses `layers-3` instead of `layout-dashboard` (the whole feature stack), retraced into the same F3F9 slot. Both come verbatim from `lucide-static`; `feather` retires from the SPA set.
 - **Wasei-eigo tile glyph is now `blend`** instead of `share` — two overlapping circles read as English ∩ Japanese, and no other surface uses it; `share` stays in the SPA set for the ShareButton. Lite's F109 retraced byte-reproducibly from the same upstream path (two circles); `.icon-blend` replaces `.icon-share`.
 

@@ -72,18 +72,26 @@ header.hero{display:block;text-align:center;margin:calc(clamp(var(--space-7),12v
 .hero-tag{display:inline-block;font-family:var(--font-mono);font-size:var(--fs-xs);font-weight:500;
 letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted);background:var(--surface-soft);
 border:1px solid var(--border-soft);border-radius:var(--radius-pill);padding:var(--space-1) var(--space-3);margin:0 0 var(--space-4)}
-.hero-title{margin:0}
-.hero .brand{font-family:var(--font-display);font-size:clamp(2.5rem,7vw,3.8rem);font-weight:500;
-letter-spacing:-.025em;line-height:1.08}
+.hero-title{margin:0;container-type:inline-size}
+/* .brand-line wraps wordmark + kanji so the kanji can size in em off the
+   wordmark's clamp() — it can't live inside the brand <a> (nested anchors
+   are invalid HTML; the parser would eject the kanji links). */
+.hero .brand-line{font-size:clamp(2.1rem,12cqw,3.8rem);line-height:1.08;white-space:nowrap}
+.hero .brand-line .brand{font-size:inherit;line-height:inherit}
 .tagline{color:var(--text-muted);font-size:var(--fs-lg);max-width:38rem;margin:var(--space-3) auto 0;line-height:1.55;
 font-weight:400;text-wrap:balance}
 .lite-note{font-size:var(--fs-xs);color:var(--text-muted);margin:var(--space-2) auto 0;max-width:38rem;text-align:center}
 .lite-note a{color:var(--primary)}
-.brand{font-family:var(--font-display);font-size:var(--fs-2xl);font-weight:500;letter-spacing:-.015em;
-text-decoration:none;color:var(--text);}
+.brand{font-family:'IBM Plex Sans','Segoe UI',Roboto,sans-serif;font-size:var(--fs-2xl);font-weight:500;
+ text-decoration:none;color:var(--text);}
 .brand:hover{opacity:.8}
-.brand span{font-family:var(--font-japanese);font-size:.85em;font-weight:400;color:var(--text-muted)}
-.hero .brand span{font-size:.72em;margin-left:var(--space-1)}
+.brand .brand-wordmark{letter-spacing:-.02em}
+/* -.17em lifts the kanji ink onto the Latin cap band — CJK glyphs sit low
+   on the shared baseline, so bare baseline alignment reads ~7px too low. */
+.brand-kanji{font-family:var(--font-japanese);font-size:.72em;font-weight:400;
+ color:var(--text-muted);margin-left:var(--space-3);display:inline-block;
+ transform:translateY(-.17em);text-decoration:none}
+.about h1 [lang=ja]{font-family:var(--font-japanese);font-size:.8em;font-weight:400;color:var(--text-muted);line-height:1.25}
 .tag{font-family:var(--font-mono);font-size:var(--fs-2xs);font-weight:500;color:var(--text-muted);
 background:var(--surface-soft);border:1px solid var(--border-soft);border-radius:var(--radius-pill);
 padding:.1rem var(--space-2);text-transform:uppercase;letter-spacing:.05em;white-space:nowrap}
@@ -221,8 +229,12 @@ background:var(--surface);text-decoration:none;color:inherit}
 .browse-tile:active{border-color:var(--border-hover)}
 .browse-icon{display:inline-flex;align-items:center;justify-content:center;
 width:2rem;height:2rem;margin-bottom:.15rem;border-radius:var(--radius-md);
+box-sizing:border-box;
 background:var(--surface-soft);color:var(--text-muted)}
-.browse-icon .icon{font-size:1.4rem}
+.browse-icon .icon{font-size:1.4rem;width:1.4rem;height:1.4rem;flex:none}
+/* Kana tile mirrors the SPA's .browse-kana: Plex JP あ at 1.5rem/1 in the
+   same muted tone as the icon-font glyphs — not body-text size in --text. */
+.browse-icon.tile-kana{font-family:var(--font-japanese);font-size:1.5rem;font-weight:400;line-height:1}
 .browse-name{font-size:var(--fs-md);font-weight:600;color:var(--text)}
 .browse-desc{font-size:var(--fs-sm);color:var(--text-muted);line-height:1.4}
 
@@ -460,7 +472,7 @@ form.search button[type=submit],form.search .btn{min-height:2.75rem}
 }
 /* About article — the SPA's type scale: mono section labels, muted body text. */
 .about{max-width:38rem;margin:2.5rem auto 0}
-.about h1{margin:0 0 var(--space-4)}
+.about h1{margin:var(--space-8) 0 var(--space-4)}
 .about h1{font-family:var(--font-display);font-size:clamp(1.8rem,5vw,2.4rem);
 font-weight:500;margin:0 0 var(--space-4)}
 .about .lede{font-size:var(--fs-lg);line-height:1.7;color:var(--text)}
@@ -504,5 +516,3 @@ button[type=submit],.btn{border:1px solid ButtonText}
 form.search button[type=submit],form.search .btn{min-height:2.75rem}
 .pill{min-height:2.75rem}
 .kbadges a.badge{display:inline-flex;align-items:center;min-height:2.75rem;padding-block:.3rem}
-/* Kana browse tile: Plex JP's あ directly — no icon face (the mirror ships IBM Plex Sans JP) */
-.tile-kana{font-family:var(--font-japanese);font-size:1.5rem;font-weight:600;line-height:1;display:inline-flex;align-items:center;justify-content:center}

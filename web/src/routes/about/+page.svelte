@@ -21,10 +21,10 @@
 		<img
 			src="/icons/emblem.svg"
 			alt=""
-			class="brand-icon about-brand-icon"
+			class="brand-icon"
 			aria-hidden="true"
 		/>
-		<h1>{t('aboutTitle')}</h1>
+		<h1>{t('aboutTitle')} <span lang="ja">(例訓)</span></h1>
 	</div>
 	<p class="lede">{t('aboutLede')}</p>
 
@@ -126,6 +126,7 @@
 	.about {
 		max-width: 38rem;
 		margin: 2.5rem auto 0;
+		padding-block: clamp(4rem, 10vw, 6rem);
 	}
 
 	.about-title-row {
@@ -133,27 +134,29 @@
 		align-items: center;
 		gap: 0.75rem;
 		margin: 0 0 1rem;
-	}
-
-	.about-brand-icon {
-		width: clamp(2rem, 5vw, 2.5rem);
-		height: clamp(2rem, 5vw, 2.5rem);
-		border-radius: 22%;
-		flex-shrink: 0;
-	}
-
-	.about h1 {
 		font-family: var(--font-display);
 		font-size: clamp(1.8rem, 5vw, 2.4rem);
 		font-weight: 500;
+	}
+
+	.about h1 {
+		font: inherit;
+		line-height: 1.3;
 		margin: 0;
+	}
+
+	.about h1 [lang='ja'] {
+		font-family: var(--font-japanese);
+		font-size: 0.8em;
+		font-weight: 400;
+		color: var(--text-muted);
 	}
 
 	/* CJK and Indic glyphs sit lower than Latin caps at the same size —
 	   nudge the localized headings up in those locales. */
-	:global(html:lang(ja)) .about h1,
-	:global(html:lang(mr)) .about h1,
-	:global(html:lang(hi)) .about h1 {
+	:global(html:lang(ja)) .about-title-row,
+	:global(html:lang(mr)) .about-title-row,
+	:global(html:lang(hi)) .about-title-row {
 		font-size: calc(clamp(1.8rem, 5vw, 2.4rem) * 1.1);
 	}
 

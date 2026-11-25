@@ -5,7 +5,8 @@
 	import KanjiCard from '#lib/components/KanjiCard.svelte';
 	import Icon from '#lib/components/Icon.svelte';
 	import Popover from '#lib/components/Popover.svelte';
-	import { t } from '#lib/i18n.svelte.ts';
+		import Segmented from '#lib/components/Segmented.svelte';
+import { t } from '#lib/i18n.svelte.ts';
 	import { isKanji } from '#lib/kanji.ts';
 	import { apiRandomKanji, LEVELS, type Level } from '#lib/api.ts';
 	import { pushRecent } from '#lib/recent.ts';
@@ -21,10 +22,10 @@
 	let qInput = $state('');
 	let searchInput = $state<HTMLInputElement>();
 	let randomBusy = $state(false);
-	const level = $state<Level>('N5');
+	let level = $state<Level>('N5');
 
 	function setLevel(l: Level) {
-		// no-op on kanji page — level only matters for the random pick
+		level = l;
 	}
 
 	async function submitSearch(e: Event) {
@@ -130,16 +131,7 @@
 	</button>
 	<Popover label={level} title={t('jlptTitle')} buttonClass="btn-3d jlpt-trigger">
 		<p class="popover-title">{t('jlptLevel')}</p>
-		<div class="segmented" role="group" aria-label={t('jlptLevel')}>
-			{#each LEVELS as l (l)}
-				<button
-					type="button"
-					class:sel={level === l}
-					aria-pressed={level === l}
-					onclick={() => setLevel(l)}>{l}</button
-				>
-			{/each}
-		</div>
+		<Segmented options={LEVELS} value={level} onchange={setLevel} label={t('jlptLevel')} />
 	</Popover>
 </form>
 <div class="kanji-detail-wrap">

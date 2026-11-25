@@ -106,13 +106,30 @@ def test_home_mirrors_spa_hero_and_examples() -> None:
     # plus the SPA's example-search pills, the random-kanji button, and the
     # LITE tag next to the title (like the compact header).
     assert "Semantic Japanese Dictionary &amp; Reading Assistant" in r.text
-    assert "例訓" in r.text
     assert "/lite/kanji/random" in r.text
     assert "咲く" in r.text and "大君" in r.text and "courage" in r.text and "to walk" in r.text
     # The no-JS random button is a formaction submit, not a script.
     assert 'formaction="/lite/kanji/random"' in r.text
     assert '<span class="tag">lite</span>' in r.text
     assert 'class="tagline"' in r.text
+
+
+@pytest.mark.parametrize("lang", ["en", "es", "ja", "hi", "mr"])
+def test_brand_lockup_follows_page_and_locale(lang: str) -> None:
+    def brand_link(path: str) -> str:
+        response = client.get(path, headers={"Cookie": f"lite_lang={lang}"})
+        assert response.status_code == 200
+        return response.text.split("<header", 1)[1].split("</header>", 1)[0]
+
+    home = brand_link("/lite")
+    inside = brand_link("/lite/kana")
+    wordmark = '<span class="brand-wordmark" lang="en">Reikun</span>'
+    assert wordmark in home and wordmark in inside
+    assert 'class="brand-kanji"' in home
+    assert ">例</a>" in home and ">訓</a>" in home
+    assert 'class="brand-kanji"' not in inside
+    assert "title=" not in home
+    assert f'title="{lite.esc(lite._t(lang, "aboutTitle"))}"' in inside
 
 
 def test_search_row_buttons_are_one_consistent_style() -> None:
