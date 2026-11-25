@@ -17,8 +17,6 @@
 
 <Header />
 
-<nav class="policy-nav"><a href="/">← Reikun</a></nav>
-
 <article class="policy">
 	<h1>Privacy Policy</h1>
 	<p class="lede">
@@ -93,24 +91,8 @@
 </article>
 
 <style>
-	.policy-nav {
-		padding-top: 1.5rem;
-	}
-
-	.policy-nav a {
-		font-family: var(--font-mono);
-		font-size: var(--fs-xs);
-		color: var(--text-muted);
-		text-decoration: none;
-	}
-
-	.policy-nav a:hover {
-		color: var(--text);
-	}
-
 	.policy {
-		max-width: 38rem;
-		margin: 2.5rem auto 0;
+		margin: var(--space-3) auto 0;
 	}
 
 	.policy h1 {

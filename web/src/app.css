@@ -2147,7 +2147,7 @@ a.kanji-tip {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-	padding: 1.25rem 0 var(--space-2);
+	padding: var(--space-3) 0 var(--space-2);
 	margin-bottom: var(--space-2);
 }
 
@@ -2185,7 +2185,6 @@ a.kanji-tip {
 .kgroup-wrap {
 	max-width: 60rem;
 	margin: 0 auto;
-	padding: 0 0 2.5rem;
 }
 
 .kgroup-title {
@@ -2499,15 +2498,12 @@ a.kanji-tip {
 
 /* ---------- Conjugation page (/conjugations?word=&reading=) ---------- */
 .conj-page-wrap {
-	max-width: 42rem;
 	margin: 0 auto;
-	padding: 0 1.25rem 2.5rem;
 }
 
 .kanji-detail-wrap {
 	max-width: 60rem;
 	margin: 0 auto;
-	padding: 0 0 2.5rem;
 }
 
 .conj-page-title {

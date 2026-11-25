@@ -355,8 +355,8 @@ min-height:2.2rem;font-weight:500;color:var(--text)}
 line-height:1.3;max-width:9.5em}
 /* Conjugations page — spacing mirrors the SPA's conj-page-wrap / conj-page-title /
    conj-page-sub / group-nav-bar (see web/src/app.css). */
-.conj-page{max-width:42rem;margin:0 auto}
-.conj-nav{padding:1.25rem 0 var(--space-2);margin-bottom:var(--space-2)}
+.conj-page{margin:0 auto}
+.conj-nav{padding:var(--space-3) 0 var(--space-2);margin-bottom:var(--space-2)}
 .conj-page-back{margin-top:var(--space-5)}
 .conj-title{display:flex;align-items:baseline;gap:var(--space-2);flex-wrap:wrap;
 margin:var(--space-3) 0 var(--space-1);font-size:2rem;font-weight:700}
@@ -471,8 +471,8 @@ form.search button[type=submit],form.search .btn{min-height:2.75rem}
 .kwords{grid-template-columns:1fr}
 }
 /* About article — the SPA's type scale: mono section labels, muted body text. */
-.about{max-width:38rem;margin:2.5rem auto 0}
-.about h1{margin:var(--space-8) 0 var(--space-4)}
+.about{margin:0 auto}
+.about h1{margin:var(--space-3) 0 var(--space-4)}
 .about h1{font-family:var(--font-display);font-size:clamp(1.8rem,5vw,2.4rem);
 font-weight:500;margin:0 0 var(--space-4)}
 .about .lede{font-size:var(--fs-lg);line-height:1.7;color:var(--text)}

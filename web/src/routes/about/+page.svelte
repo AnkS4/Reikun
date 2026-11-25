@@ -14,16 +14,8 @@
 
 <Header />
 
-<nav class="about-nav"><a href="/">← Reikun</a></nav>
-
 <article class="about">
 	<div class="about-title-row">
-		<img
-			src="/icons/emblem.svg"
-			alt=""
-			class="brand-icon"
-			aria-hidden="true"
-		/>
 		<h1>{t('aboutTitle')} <span lang="ja">(例訓)</span></h1>
 	</div>
 	<p class="lede">{t('aboutLede')}</p>
@@ -108,25 +100,8 @@
 </article>
 
 <style>
-	.about-nav {
-		padding-top: 1.5rem;
-	}
-
-	.about-nav a {
-		font-family: var(--font-mono);
-		font-size: var(--fs-xs);
-		color: var(--text-muted);
-		text-decoration: none;
-	}
-
-	.about-nav a:hover {
-		color: var(--text);
-	}
-
 	.about {
-		max-width: 38rem;
-		margin: 2.5rem auto 0;
-		padding-block: clamp(4rem, 10vw, 6rem);
+		margin: var(--space-3) auto 0;
 	}
 
 	.about-title-row {
