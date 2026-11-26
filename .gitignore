@@ -29,9 +29,11 @@ data/raw/
 # needed by the ingest step). kanji_table.json is committed — the app needs it
 # at runtime and it is small enough (~4 MB) to ship in the Docker image.
 data/processed/*
-!data/processed/kanji_table.json
-!data/processed/headword_index.marisa
-!data/processed/strokes.json
+!data/processed/ja/
+data/processed/ja/*
+!data/processed/ja/kanji_table.json
+!data/processed/ja/headword_index.marisa
+!data/processed/ja/strokes.json
 data/kanjivg/
 data/monitoring/
 data/snapshots/

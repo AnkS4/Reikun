@@ -1,7 +1,7 @@
 """
 Headword index: every written form of a JMdict entry → its candidate entries.
 
-Backed by a marisa BytesTrie (`data/processed/headword_index.marisa`, ~26 MB)
+Backed by a marisa BytesTrie (`data/processed/ja/headword_index.marisa`, ~26 MB)
 that is mmap'd at runtime and built either by scripts/build_chunks.py (from
 chunks) or by app.retrieval as a fallback (from a Qdrant payload scroll).
 Both builders feed the same `add_entry` / `build_trie` so the on-disk format

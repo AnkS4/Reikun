@@ -38,7 +38,6 @@ services:
     volumes:
       - ./data/processed:/app/data/processed
       - ./data/raw:/app/data/raw
-      - ./data/kanjivg:/app/data/kanjivg
       - ./data/monitoring:/app/data/monitoring
       - models:/app/models   # named volume — seeds models baked into the image; bind mount would mask them
     depends_on:

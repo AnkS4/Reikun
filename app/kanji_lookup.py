@@ -1,6 +1,6 @@
 """Deterministic kanji lookups (KANJIDIC2 table + KanjiVG stroke order) — no LLM involved.
 
-Both are served from committed JSON under data/processed/ (kanji_table.json,
+Both are served from committed JSON under data/processed/ja/ (kanji_table.json,
 strokes.json) and shipped in the image — no network access at request time.
 """
 
@@ -39,7 +39,7 @@ def kanji_in(text: str) -> list[str]:
 
 @cache
 def _load_kanji_table() -> dict[str, dict]:
-    path = PROC_DIR / "kanji_table.json"
+    path = PROC_DIR / "ja" / "kanji_table.json"
     if not path.exists():
         raise FileNotFoundError(f"kanji_table.json not found at {path}.\nRun  python scripts/build_chunks.py  first.")
     return json.loads(path.read_text(encoding="utf-8"))
@@ -184,7 +184,7 @@ def kanji_group_facets() -> dict[str, list[dict]]:
 # never served, and ~half the kanji in kanji_table have no diagram at all, so
 # a per-request fetch would mostly be paying for 404s.
 
-STROKES_PATH = PROC_DIR / "strokes.json"
+STROKES_PATH = PROC_DIR / "ja" / "strokes.json"
 
 _STROKE_PATH = re.compile(r'<path id="kvg:[0-9a-f]+-s(\d+)"[^>]*\bd="([^"]+)"')
 _STROKE_NUMBER = re.compile(r'<text transform="matrix\(1 0 0 1 ([\d.]+) ([\d.]+)\)">([^<]+)</text>')

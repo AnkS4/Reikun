@@ -821,7 +821,7 @@ def headword_index() -> TrieIndex:
     """
     Every kanji_form/reading in the collection → minimal entry info.
 
-    Served from `data/processed/headword_index.marisa` — a ~26 MB mmap'd trie
+    Served from `data/processed/ja/headword_index.marisa` — a ~26 MB mmap'd trie
     committed to the repo and baked into the image. Missing file → rebuilt
     from one payload-only Qdrant scroll (~44 requests) and saved for the next
     boot; that fallback keeps the old ~340 MB in-memory dict cost, so
@@ -836,7 +836,7 @@ def headword_index() -> TrieIndex:
     if _headword_index is None:
         with _headword_lock:
             if _headword_index is None:  # another thread may have built it while we waited
-                path = PROC_DIR / "headword_index.marisa"
+                path = PROC_DIR / "ja" / "headword_index.marisa"
                 if not path.exists():
                     _build_headword_trie(path)
                 _headword_index = TrieIndex(path)

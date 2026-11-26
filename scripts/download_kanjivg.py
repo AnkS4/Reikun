@@ -36,8 +36,11 @@ import httpx
 from dotenv import dotenv_values, find_dotenv
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from app.config import KANJIVG_DIR, RAW_DIR
+from app.config import KANJIVG_DIR, raw_dir
 from app.kanji_lookup import STROKES_PATH, parse_stroke_svg
+
+# kanjidic2.xml (and the KanjiVG SVGs) are Japanese sources under data/raw/ja/.
+RAW_DIR = raw_dir("ja")
 
 _ENV = dotenv_values(find_dotenv(usecwd=True))  # project-root .env as a dict
 

@@ -34,7 +34,10 @@ from pathlib import Path
 from typing import NamedTuple
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from app.config import RAW_DIR
+from app.config import raw_dir
+
+# Japanese sources: JMdict_e_NG_examp.gz / kanjidic2.xml.gz land in data/raw/ja/.
+RAW_DIR = raw_dir("ja")
 
 log = logging.getLogger(__name__)
 

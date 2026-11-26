@@ -1,7 +1,7 @@
 """API smoke tests runnable without Qdrant/LLM.
 
 Everything exercised here is backed by committed data
-(data/processed/kanji_table.json + headword_index.marisa) or by request
+(data/processed/ja/kanji_table.json + headword_index.marisa) or by request
 validation alone. /search and /explain need live services and stay out of
 CI scope; /ready is asserted tolerant (503 when Qdrant is absent — a dev
 machine with a local Qdrant sees 200 instead).
@@ -84,7 +84,7 @@ def test_kanji_card() -> None:
 
 
 def test_kanji_card_strokes_from_committed_data() -> None:
-    # strokes.json is committed — no network, no data/kanjivg/ needed.
+    # strokes.json is committed — no network, no data/raw/ja/kanjivg/ needed.
     stroke = client.get("/kanji/家", params={"strokes": "true"}).json()["stroke"]
     assert stroke["view_box"] == "0 0 109 109"
     assert len(stroke["strokes"]) == len(stroke["numbers"]) == 10

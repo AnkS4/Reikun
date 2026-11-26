@@ -44,9 +44,9 @@ RUN /usr/local/bin/python -m pip install --no-cache-dir --target=/tmp/uvpkg uv==
     && rm -rf /tmp/uvpkg /home/app/.cache/uv
 
 COPY --chown=app:app \
-    data/processed/kanji_table.json \
-    data/processed/headword_index.marisa \
-    data/processed/strokes.json \
+    data/processed/ja/kanji_table.json \
+    data/processed/ja/headword_index.marisa \
+    data/processed/ja/strokes.json \
     data/processed/
 
 # shared UI strings — app/lite/i18n.py resolves i18n/ two levels above itself

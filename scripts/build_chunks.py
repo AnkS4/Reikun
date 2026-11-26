@@ -37,11 +37,16 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from wordfreq import zipf_frequency
 
-from app.config import CHUNKS_SCHEMA, PROC_DIR, RAW_DIR
+from app.config import CHUNKS_SCHEMA, proc_dir, raw_dir
 from app.conjugation import conjugate
 from app.headword_index import add_entry, build_trie
 from app.kanji_lookup import is_kanji
 from app.query_rewrite import gloss_key, gloss_keys
+
+# Japanese sources and outputs (per-language scoping: the es pack lives in
+# scripts/build_chunks_es.py writing data/processed/es/).
+RAW_DIR = raw_dir("ja")
+PROC_DIR = proc_dir("ja")
 
 log = logging.getLogger(__name__)
 

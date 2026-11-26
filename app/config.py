@@ -38,9 +38,25 @@ ROOT = Path(__file__).resolve().parent.parent
 DATA_DIR = ROOT / "data"
 RAW_DIR = DATA_DIR / "raw"
 PROC_DIR = DATA_DIR / "processed"
-KANJIVG_DIR = DATA_DIR / "kanjivg"
 MODELS_DIR = Path(_env("MODELS_DIR", str(ROOT / "models" / "fastembed")))
 MONITORING_DB = Path(_env("MONITORING_DB", str(DATA_DIR / "monitoring" / "reikun.db")))
+
+
+def raw_dir(lang: str = "ja") -> Path:
+    """Per-language raw downloads: data/raw/<lang>/ (e.g. the EDRDG XMLs under
+    ja/, the Wiktionary Content File Exports and Tatoeba exports under es/)."""
+    return RAW_DIR / lang
+
+
+def proc_dir(lang: str = "ja") -> Path:
+    """Per-language processed artifacts: data/processed/<lang>/ (chunks.json,
+    the kanji/hanzi table, the headword index, …) — the files the Docker image
+    COPYs and the ingest consumes."""
+    return PROC_DIR / lang
+
+
+# KanjiVG stroke-order SVGs — a Japanese-only source dataset.
+KANJIVG_DIR = raw_dir("ja") / "kanjivg"
 
 # Origin of the full JavaScript UI, used only by the Lite UI's variant-switch
 # link — in development the SPA (web) and API (lite) run on separate ports.
@@ -67,7 +83,8 @@ def _read_version() -> str:
 APP_VERSION = _read_version()
 
 # Ensure directories we write to actually exist (first-run safety).
-for _dir in (RAW_DIR, PROC_DIR, KANJIVG_DIR, MODELS_DIR, MONITORING_DB.parent):
+for _dir in (RAW_DIR, PROC_DIR, raw_dir("ja"), proc_dir("ja"), KANJIVG_DIR,
+             MODELS_DIR, MONITORING_DB.parent):
     _dir.mkdir(parents=True, exist_ok=True)
 
 # Schema stamp for data/processed/chunks.json — build_chunks writes it into
