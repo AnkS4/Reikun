@@ -159,10 +159,14 @@ def recreate_collection(client) -> None:
 
 
 def chunk_sig(chunk: dict) -> str:
-    """Content fingerprint over everything that lands in the point (payload
-    fields + the text the vectors embed) — --update diffs on it, so upstream
-    edits to an existing entry get re-upserted, not just added/deleted."""
-    blob = json.dumps(chunk, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    """Content fingerprint over everything that lands in the point — the
+    payload _payload() emits (its shape included, so a payload-field change
+    re-upserts) plus the sparse embed input (the dense input is the payload's
+    meanings). --update diffs on it, so upstream edits to an existing entry —
+    or to the point's own schema — get re-upserted, not just added/deleted."""
+    blob = json.dumps(
+        {"p": _payload(chunk, sig=""), "s": chunk.get("sparse_text") or chunk["text"]},
+        ensure_ascii=False, sort_keys=True, separators=(",", ":"))
     return hashlib.sha1(blob.encode()).hexdigest()[:16]
 
 
@@ -180,6 +184,9 @@ def _payload(chunk: dict, sig: str) -> dict:
         "is_common": chunk.get("is_common", False),
         "commonness": chunk.get("commonness", 0.0),
         "wf_score": chunk.get("wf_score", 0.0),
+        # Language-pack POS ("verb"/"noun"/… from the es pack; absent on ja
+        # chunks, whose senses carry per-sense POS) — display + pack filters.
+        "pos": chunk.get("pos"),
         "text": chunk["text"],
         # All variant forms — keyword-indexed for exact match on alternates.
         "kanji_forms": chunk.get("kanji_forms", []),
