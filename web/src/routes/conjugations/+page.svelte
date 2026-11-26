@@ -36,11 +36,16 @@
 	let busy = $state(false);
 	let error = $state('');
 	let fetchedHeadword = $state('');
+	// False when the table came from the fallback match below — the requested
+	// ?word= has no conjugation table of its own, so the page must not present
+	// the matched entry's inflections under the requested form.
+	let exactMatch = $state(true);
 
 	$effect(() => {
 		const w = word;
 		fetchedRows = null;
 		fetchedHeadword = '';
+		exactMatch = true;
 		error = '';
 		if (!w || stateRows) {
 			busy = false;
@@ -54,7 +59,9 @@
 		apiSearch(w, 3)
 			.then((resp) => {
 				if (dropped) return;
-				// Find the entry whose dictionary form matches the word param
+				// Find the entry whose dictionary form matches the word param;
+				// failing that, the first entry that ships a table at all
+				// (inflections of the closest match, not of the requested word).
 				const match = resp.results.find(
 					(r: SearchResult) =>
 						r.inflected_forms?.length &&
@@ -63,6 +70,7 @@
 				if (match) {
 					fetchedRows = match.inflected_forms;
 					fetchedHeadword = match.kanji_form || match.reading || w;
+					exactMatch = match.kanji_form === w || match.reading === w;
 				} else {
 					error = t('noConjData', { word: w });
 				}
@@ -80,8 +88,18 @@
 	});
 
 	const rows = $derived(stateRows ?? fetchedRows ?? []);
-	const heading = $derived(word || fetchedHeadword || t('conjugations'));
-	const displayReading = $derived(reading && reading !== word ? reading : '');
+	// Exact matches (and the nav-state table, carried for the requested word)
+	// head with the requested word, as before. A fallback match heads with the
+	// entry that actually carries the table — the requested form has no
+	// conjugations of its own to label these rows with.
+	const heading = $derived(
+		exactMatch || !fetchedRows ? word || t('conjugations') : fetchedHeadword
+	);
+	// The ?reading= param describes the requested form — meaningless next to a
+	// different entry's headword, so it only shows while that entry is exact.
+	const displayReading = $derived(
+		reading && reading !== word && (exactMatch || !fetchedRows) ? reading : ''
+	);
 </script>
 
 <svelte:head>
@@ -107,6 +125,14 @@
 		<p class="conj-page-sub">
 			{t('conjSubtitle', { word: heading })}
 		</p>
+
+		{#if fetchedRows && !exactMatch}
+			<!-- Fallback match: the requested word has no table of its own — say
+			     so; the heading above is the closest entry that does. -->
+			<p class="notice">
+				<Icon name="info" size={18} /> {t('conjClosestMatch', { word, headword: heading })}
+			</p>
+		{/if}
 
 		{#if busy}
 			<div class="kgroup-loading"><span class="spinner"></span></div>
@@ -135,7 +161,10 @@
 
 		<div class="conj-page-back">
 			<button type="button" class="btn-3d" onclick={goBack}>
-				← {t('backTo', { word: heading })}
+				<!-- goBack() searches the requested form (?q=<word>), not the
+				     matched headword the table above heads with — label the
+				     destination, not the heading. -->
+				← {t('backTo', { word: word || heading })}
 			</button>
 		</div>
 	{/if}

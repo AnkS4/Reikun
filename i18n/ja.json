@@ -147,6 +147,7 @@
 	"written": "表記",
 	"kana": "仮名",
 	"noConjData": "「{word}」に関する活用データは見つかりませんでした。",
+	"conjClosestMatch": "「{word}」の活用表は見つかりませんでした。最も近い「{headword}」を表示しています。",
 	"conjLoadFailed": "活用データの読み込みに失敗しました",
 	"strokes": "画数",
 	"grade": "学年",

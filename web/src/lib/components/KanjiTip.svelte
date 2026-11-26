@@ -6,6 +6,7 @@
 	import { t } from '#lib/i18n.svelte.ts';
 	let { char }: { char: string } = $props();
 	const uid = $props.id();
+	const PIN_EVENT = 'reikun-kanji-tip-pin';
 
 	// The back-context this tip's link threads to the kanji page: the searched
 	// word on the home page (`?q=`), the kanji being viewed on a kanji page
@@ -61,6 +62,8 @@
 			hovered = false;
 		} else {
 			pinned = true;
+			// The other instances close themselves, so the newest pin wins.
+			window.dispatchEvent(new CustomEvent(PIN_EVENT, { detail: { id: uid } }));
 		}
 	}
 
@@ -72,6 +75,21 @@
 		pinned = false;
 		hovered = false;
 	}
+
+	// One pinned tip at a time: the newest pin announces its id, and older
+	// pinned instances close themselves. Listened for only while this tip is
+	// showing — a hidden tip is already closed, so the broadcast has nothing
+	// to tell it, and a permanent listener here would hang one window listener
+	// on every rendered kanji (hundreds on large results), making every pin
+	// dispatch visit each of them.
+	$effect(() => {
+		if (!visible) return;
+		const onPin = (event: Event) => {
+			if ((event as CustomEvent<{ id: string }>).detail.id !== uid) close();
+		};
+		window.addEventListener(PIN_EVENT, onPin);
+		return () => window.removeEventListener(PIN_EVENT, onPin);
+	});
 
 	$effect(() => {
 		if (!visible) return;

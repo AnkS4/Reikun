@@ -12,8 +12,20 @@
  *   ready  the last request got an HTTP answer from the API
  *   waking a cold-start request is still pending after SLOW_MS
  *   down   retries exhausted without ever reaching the API
+ *
+ * The module also carries the outcome of the latest /ready attempt
+ * (`backend.ready`): the header status dot's source of truth, published by
+ * the shared request in api.ts — retries included.
  */
 export type BackendState = 'idle' | 'waking' | 'ready' | 'down';
+
+/** One /ready attempt's outcome. `error` (the human-readable failure shown in
+ * the offline tooltip) is only present when ok is false. */
+export interface ReadyStatus {
+	ok: boolean;
+	entries: number | null;
+	error?: string;
+}
 
 const SLOW_MS = 1750;
 // A success this recent means any new slowness is ordinary load, not a cold
@@ -21,6 +33,11 @@ const SLOW_MS = 1750;
 const COLD_IDLE_MS = 60_000;
 
 let state = $state<BackendState>('idle');
+// Published by the shared /ready request in api.ts (see setReady). Reactive:
+// readers derive from this instead of subscribing to the request's promise,
+// so a successful retry recovers them — a promise that already rejected never
+// calls back again.
+let readyStatus = $state<ReadyStatus | null>(null);
 let seq = 0;
 let lastOkAt = 0;
 const active = new Set<number>();
@@ -32,6 +49,16 @@ function likelyColdStart(): boolean {
 export const backend = {
 	get state(): BackendState {
 		return state;
+	},
+
+	get ready(): ReadyStatus | null {
+		return readyStatus;
+	},
+
+	/** Publish a /ready outcome (the shared request in api.ts is the only
+	 * writer): ok with the entry count, or offline with the failure message. */
+	setReady(ok: boolean, entries: number | null, error?: string): void {
+		readyStatus = ok ? { ok: true, entries } : { ok: false, entries: null, error };
 	},
 
 	/**

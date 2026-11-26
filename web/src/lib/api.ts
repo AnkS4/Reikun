@@ -122,17 +122,34 @@ export function apiReady(): Promise<ReadyInfo> {
 }
 
 let readyPromise: Promise<ReadyInfo> | null = null;
+// Monotonic attempt id: a superseded attempt (WakeBanner's retry started a
+// newer one) must not publish its late outcome over the newer attempt's.
+let readySeq = 0;
 
 /**
  * One /ready request shared by the layout (which fires it at app start to wake
  * the server) and the header's status dot. A failure clears the cache so a
- * later call retries.
+ * later call retries. The outcome lands in shared reactive state
+ * (backend.ready) rather than living only in the returned promise, so a
+ * successful retry updates the header even though it never re-subscribed.
  */
 export function apiReadyShared(): Promise<ReadyInfo> {
-	readyPromise ??= apiReady().catch((e) => {
-		readyPromise = null;
-		throw e;
-	});
+	if (!readyPromise) {
+		const seq = ++readySeq;
+		readyPromise = apiReady().then(
+			(r) => {
+				if (seq === readySeq) backend.setReady(true, r.entries);
+				return r;
+			},
+			(e) => {
+				if (seq === readySeq) {
+					backend.setReady(false, null, e instanceof Error ? e.message : t('apiUnreachable'));
+					readyPromise = null;
+				}
+				throw e;
+			}
+		);
+	}
 	return readyPromise;
 }
 
@@ -250,7 +267,9 @@ type SsePayload = {
 
 /**
  * POST /explain/stream — SSE: `data: {"text": …}` chunks, then a `done` event
- * (or `error`). fetch+reader rather than EventSource because it's a POST.
+ * (or `error`). fetch+reader rather than EventSource because it's a POST. The
+ * `done` frame is required: EOF without one rejects, so a stream the server
+ * never finished surfaces as a failure over the partial text already shown.
  *
  * Only the connect phase (request → response headers) has a timeout and
  * automatic retries — that is where a cold start bites. Once text is flowing
@@ -284,7 +303,6 @@ export async function explainStream(
 	const reader = body.getReader();
 	const dec = new TextDecoder();
 	let buf = '';
-	let gotText = false;
 	let done: ExplainDone | null = null;
 	try {
 		for (;;) {
@@ -304,7 +322,6 @@ export async function explainStream(
 					continue; // one malformed frame shouldn't sink the whole explanation
 				}
 				if (payload.text) {
-					gotText = true;
 					onText(payload.text);
 				} else if (payload.error) {
 					throw new ApiError(502, payload.error);
@@ -322,6 +339,13 @@ export async function explainStream(
 		// Release the socket instead of leaving the stream to GC — an error
 		// frame aborts the read loop mid-body.
 		await reader.cancel().catch(() => {});
+		// A connection cut mid-explanation (proxy EOF, crash, process kill)
+		// surfaces here as a body-level network error, not a clean EOF — the
+		// done frame is the only proof the explanation finished, so a
+		// non-ApiError with no `done` is the same truncation the post-loop
+		// check catches for a clean EOF. Server error frames (ApiError) keep
+		// their own message. Either way the partial text stays on screen.
+		if (!done && !(e instanceof ApiError)) throw new ApiError(502, t('errorStreamEnded'));
 		throw normalize(e);
 	} finally {
 		// cancel() already released the lock on the error path; release it on
@@ -332,6 +356,12 @@ export async function explainStream(
 			/* already released */
 		}
 	}
-	if (!done && !gotText) throw new ApiError(502, t('errorStreamEnded'));
-	return done ?? { explanation_id: null, latency_ms: 0 };
+	// The server ends every normal stream with an explicit done frame — EOF
+	// without one means the connection died mid-explanation (proxy cut, crash,
+	// process kill). The chunks already handed to onText stay on screen: the
+	// caller's catch path keeps the partial text and flags it as failed rather
+	// than dressing an unfinished stream up as a complete result with a
+	// fabricated (null-id, zero-latency) footer.
+	if (!done) throw new ApiError(502, t('errorStreamEnded'));
+	return done;
 }

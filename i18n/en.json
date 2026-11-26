@@ -147,6 +147,7 @@
 	"written": "Written",
 	"kana": "Kana",
 	"noConjData": "No conjugation data found for “{word}”.",
+	"conjClosestMatch": "No conjugation table for “{word}” — showing the closest match, {headword}.",
 	"conjLoadFailed": "Failed to load conjugation data",
 	"strokes": "strokes",
 	"grade": "grade",

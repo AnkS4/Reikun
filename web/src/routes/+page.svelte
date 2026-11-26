@@ -221,6 +221,14 @@
 		if (q !== committed) {
 			wantResults = DEFAULT_RESULTS; // reset before urlKey below
 			activeCard = -1;
+			// Dropping the visible results abandons whatever search produced
+			// them: bump the sequence so its late response can't land over the
+			// cleared state (Back from a slow ?q=dog to / used to resurrect the
+			// results), and stop the searching UI — the abandoned request's
+			// finally no longer owns the flag once the sequence moves past it.
+			// runSearch re-bumps for a new query, so fresh searches stay guarded.
+			++reqSeq;
+			searching = false;
 			resp = null; // skeletons take over until the new results land
 		}
 		const urlKey = `${q}|${wantResults}`;

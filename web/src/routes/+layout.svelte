@@ -30,8 +30,9 @@
 
 	// Wake the API (and its Qdrant behind it) the moment the app loads, so the
 	// cold start overlaps with the user reading the page instead of their first click.
-	// Header reads the same shared promise for its status dot; failures surface
-	// through <WakeBanner>, so there is nothing to handle here.
+	// The shared request publishes its outcome to backend.ready for the header's
+	// status dot; failures surface through <WakeBanner>, so there is nothing to
+	// handle here.
 	onMount(() => {
 		apiReadyShared().catch(() => {});
 	});

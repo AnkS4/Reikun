@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { backend } from '#lib/backend.svelte.ts';
 	import { apiReadyShared } from '#lib/api.ts';
 	import { theme } from '#lib/theme.svelte.ts';
 	import { i18n, t, LOCALES, LOCALE_NAMES, LOCALE_TAGS } from '#lib/i18n.svelte.ts';
@@ -70,19 +71,14 @@
 		return `${base}/lite`;
 	});
 
-	// Only reassigned as a whole — raw state avoids proxying the response object.
-	let status = $state.raw<{ ok: boolean; entries: number | null; error?: string } | null>(null);
-	onMount(() => {
-		apiReadyShared()
-			.then((r) => (status = { ok: true, entries: r.entries }))
-			.catch((e) =>
-				(status = {
-					ok: false,
-					entries: null,
-					error: e instanceof Error ? e.message : t('apiUnreachable')
-				})
-			);
-	});
+	// Readiness lives in shared reactive state (backend.ready — written by the
+	// /ready request in api.ts, retries included), so the dot and entry count
+	// recover when a retry succeeds: subscribing to the promise here would go
+	// deaf after the first rejection. The mount ping still fires the first
+	// attempt (sharing the layout's in-flight one) and retries a failed one on
+	// navigation; against a cached success it's a no-op.
+	onMount(() => apiReadyShared().catch(() => {}));
+	const status = $derived(backend.ready);
 
 	const THEME_OPTIONS = [
 		{ v: 'system' as const, key: 'themeSystem' as const },

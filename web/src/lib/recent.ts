@@ -16,6 +16,20 @@ const MAX_CHARS = 150; // matches the API's query cap — never render junk from
 const COOKIE_BUDGET = 2400; // encoded value must stay under the ~4KB browser cap (lite enforces the same)
 const MAX_AGE = 2_592_000; // 30 days
 
+// Measure and cut in Unicode code points, not UTF-16 code units: the shared
+// cookie is read by the Python lite renderer, whose len() counts code points
+// (so a code-unit cap would disagree with lite about the 150 limit), and a
+// code-unit slice that lands inside an astral char stores a lone surrogate —
+// JSON.stringify happily carries that into the cookie, where the Python
+// reader dies with UnicodeEncodeError on every visit until the cookie is
+// cleared. `[...s]` iterates code points for both jobs.
+function cpLength(s: string): number {
+	return [...s].length;
+}
+function cpTrunc(s: string, max: number): string {
+	return Array.from(s).slice(0, max).join('');
+}
+
 function normalize(list: unknown): string[] | null {
 	if (!Array.isArray(list)) return null;
 	// Deduped: a duplicate entry would be a duplicate key in the recent
@@ -23,7 +37,10 @@ function normalize(list: unknown): string[] | null {
 	// older build may still hold one.
 	const seen = new Set<string>();
 	return list
-		.filter((x): x is string => typeof x === 'string' && x.length > 0 && x.length <= MAX_CHARS)
+		// Cap in code points too (see cpLength): a 150-code-point entry with
+		// astral chars written by lite has a longer UTF-16 .length and would
+		// be dropped wholesale by a unit-count filter.
+		.filter((x): x is string => typeof x === 'string' && cpLength(x) > 0 && cpLength(x) <= MAX_CHARS)
 		.filter((x) => (seen.has(x) ? false : (seen.add(x), true)))
 		.slice(0, MAX);
 }
@@ -55,6 +72,7 @@ function readCookie(): string[] | null {
 function writeCookie(list: string[]): void {
 	for (let n = list.length; n >= 1; n--) {
 		const encoded = encodeURIComponent(JSON.stringify(list.slice(0, n)));
+		// Percent-encoding emits ASCII only, so this .length is the byte count.
 		if (encoded.length > COOKIE_BUDGET && n > 1) continue;
 		try {
 			document.cookie = `${COOKIE}=${encoded}; Path=/; Max-Age=${MAX_AGE}; SameSite=Lax`;
@@ -93,7 +111,15 @@ export function loadRecent(): string[] {
 	return local ?? [];
 }
 
-export function pushRecent(q: string): string[] {
+export function pushRecent(raw: string): string[] {
+	// Enforce the per-entry cap at write time: the read path's normalize()
+	// drops over-long entries wholesale, so storing a long paste raw would
+	// bloat the shared cookie past lite's cap and then silently vanish on the
+	// next load. Trim too — callers mostly pass trimmed input, and a
+	// whitespace shell would never dedupe against the trimmed queries
+	// already stored around it.
+	const q = cpTrunc(raw.trim(), MAX_CHARS);
+	if (!q) return loadRecent(); // nothing worth storing — keep the list as-is
 	const list = [q, ...loadRecent().filter((x) => x !== q)].slice(0, MAX);
 	try {
 		safeStorage.set(KEY, JSON.stringify(list));

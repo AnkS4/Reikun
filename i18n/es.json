@@ -147,6 +147,7 @@
 	"written": "Grafía",
 	"kana": "Kana",
 	"noConjData": "No se han encontrado datos de conjugación para «{word}».",
+	"conjClosestMatch": "No hay tabla de conjugación para «{word}»; se muestra la coincidencia más cercana, «{headword}».",
 	"conjLoadFailed": "No se han podido cargar los datos de conjugación.",
 	"strokes": "trazos",
 	"grade": "curso",
