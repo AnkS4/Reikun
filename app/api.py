@@ -28,6 +28,8 @@ from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 from qdrant_client.http.exceptions import UnexpectedResponse
+from starlette.datastructures import Headers
+from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 from app.config import (
     APP_VERSION,
@@ -52,7 +54,7 @@ from app.grammar_explain import (
     last_model,
     validate_input,
 )
-from app.kanji_lookup import is_kanji, jlpt_kanji, kanji_group_facets, random_kanji
+from app.kanji_lookup import _load_kanji_table, is_kanji, jlpt_kanji, kanji_group_facets, random_kanji
 from app.lite import router as lite_router
 from app.loanwords import loanword_facets, loanwords_page
 from app.ratelimit import rate_limited
@@ -100,6 +102,96 @@ async def lifespan(_: FastAPI):
     yield
 
 
+# Request-body cap for the transport guard below. The largest legitimate body
+# is a Field-capped /explain request: 1600 + 3200 chars (200x8 + 400x8), each
+# char at worst 3-byte UTF-8 that JSON-escapes to \uXXXX (6 bytes) — ~30 KB of
+# adversarially escaped JSON. 64 KiB leaves headroom for syntax and whitespace
+# while keeping every real payload well under it and megabyte floods out.
+MAX_BODY_BYTES = 64 * 1024
+# Pre-encoded 413 body: the middleware answers without entering FastAPI, so it
+# can't go through HTTPException's JSONResponse — hand-roll the same shape.
+_BODY_LIMIT_BODY = json.dumps({"detail": "Request body too large"}).encode()
+
+
+class _BodyTooLarge(Exception):
+    """Raised by the guarded receive once an unsized body overshoots the cap —
+    the middleware catches it and answers 413; the parser never sees the excess."""
+
+
+class _BodyLimitMiddleware:
+    """Reject oversized request bodies with 413 before FastAPI reads them.
+
+    Why a middleware: FastAPI buffers and JSON-decodes the entire request body
+    before Pydantic's Field bounds run, and the rate-limit dependencies only
+    resolve after that — so the Field caps and rate limits never kept a
+    megabyte POST from being read, decoded and parsed. This runs first:
+    a declared Content-Length is checked for free, and a body without one
+    (chunked) is counted as the app pulls it and aborted the moment it
+    overshoots — the connection is closed, not drained forever.
+    """
+
+    def __init__(self, app: ASGIApp, max_bytes: int = MAX_BODY_BYTES) -> None:
+        self.app = app
+        self.max_bytes = max_bytes
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+        declared = Headers(scope=scope).get("content-length")
+        if declared is not None:
+            try:
+                oversized = int(declared) > self.max_bytes
+            except ValueError:
+                oversized = False  # a malformed header is the server's 400, not ours
+            if oversized:
+                await self._reject(send)
+            else:
+                await self.app(scope, receive, send)
+            return
+        # No Content-Length: wrap the channel so body bytes are counted only
+        # if/when the app actually reads them (bodyless GET/HEAD never does).
+        received = 0
+        responded = False
+
+        async def counting_receive() -> Message:
+            nonlocal received
+            message = await receive()
+            if message["type"] == "http.request":
+                received += len(message.get("body", b""))
+                if received > self.max_bytes:
+                    raise _BodyTooLarge
+            return message
+
+        async def watching_send(message: Message) -> None:
+            nonlocal responded
+            if message["type"] == "http.response.start":
+                responded = True
+            await send(message)
+
+        try:
+            await self.app(scope, counting_receive, watching_send)
+        except _BodyTooLarge:
+            if responded:  # a response is already out — only the server can clean up now
+                raise
+            await self._reject(send)
+
+    async def _reject(self, send: Send) -> None:
+        # connection: close — the request body was not consumed, so the
+        # connection is not reusable; both uvicorn protocols end it here
+        # instead of draining a body nobody wants.
+        await send({
+            "type": "http.response.start",
+            "status": 413,
+            "headers": [
+                (b"content-type", b"application/json"),
+                (b"content-length", str(len(_BODY_LIMIT_BODY)).encode("ascii")),
+                (b"connection", b"close"),
+            ],
+        })
+        await send({"type": "http.response.body", "body": _BODY_LIMIT_BODY})
+
+
 app = FastAPI(
     title="Reikun API",
     version=APP_VERSION,
@@ -114,6 +206,11 @@ app = FastAPI(
 # headers). Starlette's GZip skips text/event-stream, so /explain/stream is
 # unaffected; small payloads (< 1 KB) aren't worth compressing.
 app.add_middleware(GZipMiddleware, minimum_size=1024)
+
+# Same position (inside CORS/security-headers, outside the router): a 413 from
+# the body cap keeps its headers, and no handler, validator or rate limiter
+# ever sees a body byte past MAX_BODY_BYTES.
+app.add_middleware(_BodyLimitMiddleware, max_bytes=MAX_BODY_BYTES)
 
 _origins = [o.strip() for o in CORS_ORIGINS.split(",") if o.strip()] or ["*"]
 # Security headers for the server-rendered surface and the API, mirroring
@@ -476,10 +573,12 @@ class LoanwordsPageResponse(BaseModel):
 
 
 class ExplainRequest(BaseModel):
-    # Hard transport caps: the handler's validate_input() trims whitespace and
-    # enforces the real 200/400-char limits, but the body has already been
-    # buffered by then — these bounds keep a megabyte payload from ever being
-    # parsed (generous headroom for whitespace that collapses downstream).
+    # Defense-in-depth, not the primary guard: the transport cap
+    # (_BodyLimitMiddleware / MAX_BODY_BYTES) is what stops a megabyte body
+    # from being read — FastAPI buffers and JSON-parses the whole body before
+    # these bounds run. They shape the validation error and give the handler's
+    # validate_input() (whitespace-trim + the real 200/400-char limits)
+    # headroom for input that collapses downstream.
     sentence: str = Field(
         min_length=1, max_length=MAX_SENTENCE_CHARS * 8, description="Japanese example sentence"
     )
@@ -504,8 +603,8 @@ class FeedbackRequest(BaseModel):
     kind: Literal["search", "explanation"]
     ref_id: int | None = Field(None, description="`search_id` from /search or `explanation_id` from /explain")
     rating: Literal[1, -1]
-    # Bounded like the explain inputs: the row stores the query, so an
-    # unbounded string is both a body-parse hazard and a storage one.
+    # Bounded like the explain inputs (and under the MAX_BODY_BYTES transport
+    # cap): the row stores the query, so an unbounded string is a storage one.
     query: str | None = Field(None, max_length=512)
 
 
@@ -531,9 +630,20 @@ def health(response: Response) -> dict:
     },
 )
 def ready(response: Response) -> dict:
-    """Readiness: a real query against the Qdrant collection.
-    503 when Qdrant is unreachable or the collection is missing/empty."""
+    """Readiness: the kanji table is validated first (load + JSON parse),
+    then a real query runs against the Qdrant collection.
+    503 when the table is missing/corrupt, Qdrant is unreachable,
+    or the collection is missing/empty."""
+    # (The docstring is verbatim on purpose — FastAPI copies it into the
+    # OpenAPI description. The check covers the kanji table too: it loads and
+    # JSON-parses here, so a missing/corrupt table is 503 before the Qdrant
+    # round-trip, the same condition the kanji endpoints translate through
+    # _kanji_unavailable. functools.cache keeps it a no-op after first success.)
     response.headers["Cache-Control"] = "no-store"
+    try:  # local and cheap, so check the table before paying the Qdrant round-trip
+        _load_kanji_table()
+    except (FileNotFoundError, ValueError, KeyError, IndexError) as exc:
+        raise _kanji_unavailable(exc) from exc
     try:  # one round-trip: a missing collection is a 404 from count, not a second request
         client = qdrant_client()
         count = client.count(COLLECTION).count
@@ -848,17 +958,13 @@ def loanwords_lang_endpoint(
     results = []
     for r in page["results"]:
         head = r.get("kanji_form") or r.get("reading") or r.get("text") or ""
+        forms = (head, *(r.get("kanji_forms") or ()), *(r.get("readings") or ()))
         results.append({
             **r,
             "ruby": furigana_parts(head, r.get("reading")),
-            "related": (
-                related_words(
-                    (head, *(r.get("kanji_forms") or ()), *(r.get("readings") or ())),
-                    (head, *(r.get("kanji_forms") or ()), *(r.get("readings") or ())),
-                )
-                if head
-                else []
-            ),
+            # Whole-entry-card only: every written form joins the exclusion
+            # set so the word can't recommend itself.
+            "related": related_words(forms, forms) if head else [],
         })
     response.headers["Cache-Control"] = _CACHE_LOANWORDS
     return {**page, "results": results}

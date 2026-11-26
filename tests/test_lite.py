@@ -239,6 +239,35 @@ def test_status_chip_is_a_native_disclosure() -> None:
     assert controls.index("status-dot") < controls.index("theme-toggle") < controls.index("lang-menu")
 
 
+def test_status_refresh_coalesces_onto_one_probe(monkeypatch: pytest.MonkeyPatch) -> None:
+    # While the snapshot is stale every rendered page schedules its own probe
+    # as a background task — the single-flight guard must make the concurrent
+    # ones no-op, or a burst of traffic after the TTL turns into a burst of
+    # identical Qdrant probes. (A held _probe_lock stands in for the in-flight
+    # probe; the guard is what the test pins, not the network.) The snapshot
+    # is reset wholesale: other tests' requests run real background refreshes,
+    # so the module state on entry isn't "never probed".
+    monkeypatch.setattr(lite, "_status_snapshot", {"ok": None, "count": None, "at": 0.0, "error": None})
+    probes: list[int] = []
+
+    class _Count:
+        count = 7
+
+    class _FakeClient:
+        def count(self, *a: object, **k: object) -> _Count:
+            probes.append(1)
+            return _Count()
+
+    monkeypatch.setattr(lite, "qdrant_client", lambda: _FakeClient())
+    with lite._probe_lock:  # a probe is "in flight"
+        lite._refresh_status()  # the concurrent refresher: must fall back
+        assert not probes  # …no probe of its own
+        assert lite._status_snapshot["ok"] is None  # snapshot untouched
+    lite._refresh_status()  # guard free → the single probe runs
+    assert probes == [1]
+    assert lite._status_snapshot["ok"] is True and lite._status_snapshot["count"] == 7
+
+
 def test_recent_pills_from_cookie_replace_examples() -> None:
     value = quote(json.dumps(["走る"], separators=(",", ":")), safe="")
     client.cookies.set("lite_recent", value)
@@ -278,6 +307,39 @@ def test_recent_cookie_shared_shape_stays_within_browser_budget() -> None:
         assert len(stored) <= 8 and all(len(i) <= 150 for i in stored)
         # oldest long entries were the ones dropped, never the new search
         assert len(json.loads(unquote(value))) > len(stored)
+    finally:
+        client.cookies.clear()
+
+
+def test_recent_cookie_dedupes_duplicate_entries() -> None:
+    # web/src/lib/recent.ts dedupes on read: a list written by an older build
+    # may hold a duplicate, which would render twice in the pills. The newest
+    # occurrence wins (the list is newest-first), order and cap otherwise.
+    value = quote(json.dumps(["走る", "犬", "走る", "猫"], separators=(",", ":")), safe="")
+    client.cookies.set("lite_recent", value)
+    try:
+        home = client.get("/lite")
+        assert home.text.count('<span lang="ja">走る</span>') == 1
+        assert home.text.count('<span lang="ja">犬</span>') == 1
+        assert home.text.count('<span lang="ja">猫</span>') == 1
+        # kept the *first* (most recent) occurrence: 走る still leads the list
+        assert home.text.index('<span lang="ja">走る</span>') < home.text.index('<span lang="ja">犬</span>')
+    finally:
+        client.cookies.clear()
+
+
+def test_recent_cookie_drops_lone_surrogates() -> None:
+    # A lone UTF-16 surrogate (JSON "\ud83d") in an old or hand-crafted cookie
+    # parses fine but explodes encoding the response — /lite would 500 on every
+    # request until the cookie was cleared. The reader drops what can't survive
+    # UTF-8; the valid entries still render as pills.
+    value = quote(json.dumps(["\ud83d", "走る", "犬"], separators=(",", ":")), safe="")
+    client.cookies.set("lite_recent", value)
+    try:
+        home = client.get("/lite")
+        assert home.status_code == 200
+        assert home.text.count('<span lang="ja">走る</span>') == 1
+        assert home.text.count('<span lang="ja">犬</span>') == 1
     finally:
         client.cookies.clear()
 

@@ -245,21 +245,57 @@ def entry_forms(r: dict) -> tuple[str | None, ...]:
             *(r.get("kanji_forms") or ()), *(r.get("readings") or ()))
 
 
-@cache
+# _infl_indexed's memo: None = never probed, True = latched for the process,
+# False = trusted only until the next _INFL_PROBE_RETRY_S re-probe. Probes run
+# under _infl_probe_lock: unlocked, two threads past an expired negative TTL
+# probe concurrently — one stores True, the other hits a transient error and
+# stores False over it, un-latching the supposedly process-permanent positive
+# (the expiring TTL alone would stampede the probe). Held across the
+# get_collection round-trip on purpose: serializing the rare call is the
+# one-probe-per-TTL budget.
+_infl_indexed_cache: bool | None = None
+_infl_probed_at = 0.0
+_infl_probe_lock = threading.Lock()
+# Non-positive answers re-probe on this cadence instead of latching until
+# restart — one get_collection round-trip per TTL per process, never per search.
+_INFL_PROBE_RETRY_S = 30.0
+
+
+def _infl_latched() -> bool:
+    """The memo's positive, read fresh: threads parked on _infl_probe_lock must
+    see the winner's latched True the moment it releases, not a stale view."""
+    return bool(_infl_indexed_cache)
+
+
 def _infl_indexed() -> bool:
     """True when the live payload index includes infl_forms — the conjugation
     arm only rides along once the collection has been re-ingested with the
-    table (Qdrant strict mode 400s an un-indexed filter field). Checked once
-    per process — the schema is fixed at ingest time and ingest completes
-    before the API boots — and cached so _exact_filter never pays a
-    get_collection round-trip per search. Either answer latches; a transport
-    error reads as not-indexed so degradation, not downtime, is the failure
-    mode."""
-    try:
-        schema = qdrant_client().get_collection(COLLECTION).payload_schema or {}
-        return "infl_forms" in schema
-    except Exception:
-        return False
+    table (Qdrant strict mode 400s an un-indexed filter field). Cached so
+    _exact_filter never pays a get_collection round-trip per search: the
+    positive answer latches for the process lifetime — the schema is fixed at
+    ingest time and ingest completes before the API boots — while anything
+    else (a pre-re-ingest collection, a transport error) is re-probed after
+    _INFL_PROBE_RETRY_S. Degradation, not a latched outage: the old all-latching
+    version turned one dropped packet on the first probe into a conjugation arm
+    gone until process restart."""
+    global _infl_indexed_cache, _infl_probed_at
+    if _infl_latched():
+        return True
+    with _infl_probe_lock:  # release guaranteed by the with-block, even on a probe error
+        # Double-check under the lock: a thread that waited out the winner's
+        # probe must not pay a second round-trip — or, worse, overwrite the
+        # winner's latched True with its own failure.
+        if _infl_latched():
+            return True
+        if _infl_indexed_cache is not None and time.monotonic() - _infl_probed_at < _INFL_PROBE_RETRY_S:
+            return False
+        try:
+            schema = qdrant_client().get_collection(COLLECTION).payload_schema or {}
+            _infl_indexed_cache = "infl_forms" in schema
+        except Exception:
+            _infl_indexed_cache = False  # degrade now, retry after the TTL
+        _infl_probed_at = time.monotonic()
+        return bool(_infl_indexed_cache)
 
 
 def _exact_filter(query: str) -> Filter:

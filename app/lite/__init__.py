@@ -328,6 +328,8 @@ def _header(hero: bool, lang: str = "en") -> str:
 _status_lock = threading.Lock()
 _status_snapshot: dict[str, object] = {"ok": None, "count": None, "at": 0.0, "error": None}
 _STATUS_TTL = 60.0  # seconds between probes
+# Single-flight guard: while a probe runs, every other refresher no-ops.
+_probe_lock = threading.Lock()
 
 
 def _status_state() -> tuple[bool | None, int | None, bool, str | None]:
@@ -342,21 +344,33 @@ def _status_state() -> tuple[bool | None, int | None, bool, str | None]:
 
 def _refresh_status() -> None:
     """Probe the dictionary catalogue. Runs after the response is sent, so a
-    slow or sleeping Qdrant never delays a page."""
-    count: int | None = None
-    ok = False
-    error: str | None = None
+    slow or sleeping Qdrant never delays a page.
+
+    Concurrent stale pages each schedule this as a background task; the guard
+    coalesces them onto the first — the rest fall back to the snapshot that
+    one probe is about to write, which the next render reads (exactly the
+    stale-then-fresh flow a single visitor already sees). Without the guard,
+    a burst of traffic after the TTL turns into a burst of identical probes.
+    """
+    if not _probe_lock.acquire(blocking=False):
+        return  # a probe is already in flight and will refresh the snapshot
     try:
-        result = qdrant_client().count(COLLECTION, timeout=2)
-        count = result.count
-        # Same readiness rule as /ready: an empty collection is not a working
-        # dictionary, however reachable the server is.
-        ok = bool(count)
-    except Exception as exc:  # unreachable, missing collection, timeout, …
-        error = type(exc).__name__
-        logger.debug("lite status: dictionary unreachable (%s)", error)
-    with _status_lock:
-        _status_snapshot.update(ok=ok, count=count, at=time.monotonic(), error=error)
+        count: int | None = None
+        ok = False
+        error: str | None = None
+        try:
+            result = qdrant_client().count(COLLECTION, timeout=2)
+            count = result.count
+            # Same readiness rule as /ready: an empty collection is not a working
+            # dictionary, however reachable the server is.
+            ok = bool(count)
+        except Exception as exc:  # unreachable, missing collection, timeout, …
+            error = type(exc).__name__
+            logger.debug("lite status: dictionary unreachable (%s)", error)
+        with _status_lock:
+            _status_snapshot.update(ok=ok, count=count, at=time.monotonic(), error=error)
+    finally:
+        _probe_lock.release()
 
 
 # Top-right controls mirror the SPA's header cluster order and icon set —
@@ -908,6 +922,18 @@ def _read_lang(request: Request) -> str:
     return value if value in _LANGS else "en"
 
 
+def _utf8_safe(item: str) -> bool:
+    # The writers never store one, but an old or hand-crafted cookie can carry
+    # a lone UTF-16 surrogate (JSON "\ud83d"): it parses fine and then blows up
+    # encoding the response — a persistent /lite crash until the cookie is
+    # cleared. Defensive: drop what can't survive UTF-8.
+    try:
+        item.encode("utf-8")
+    except UnicodeEncodeError:
+        return False
+    return True
+
+
 def _read_recent(request: Request) -> list[str]:
     try:
         value = json.loads(unquote(request.cookies.get(_RECENT_COOKIE, "") or "[]"))
@@ -915,7 +941,14 @@ def _read_recent(request: Request) -> list[str]:
         return []
     if not isinstance(value, list):
         return []
-    return [item for item in value if isinstance(item, str) and 0 < len(item) <= _RECENT_MAX_CHARS][:MAX_RECENT]
+    # Deduped like the web reader (web/src/lib/recent.ts normalize()): a list
+    # written by an older build may hold a duplicate, which would render twice
+    # in the pills. The list is newest-first, so keeping the *first* occurrence
+    # keeps the most recent — then the cap closes over the deduped list.
+    return list(dict.fromkeys(
+        item for item in value
+        if isinstance(item, str) and 0 < len(item) <= _RECENT_MAX_CHARS and _utf8_safe(item)
+    ))[:MAX_RECENT]
 
 
 def _recent_cookie_value(current: str, query: str) -> str:

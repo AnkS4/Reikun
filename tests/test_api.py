@@ -7,6 +7,9 @@ CI scope; /ready is asserted tolerant (503 when Qdrant is absent — a dev
 machine with a local Qdrant sees 200 instead).
 """
 
+import asyncio
+import json
+
 from fastapi.testclient import TestClient
 
 from app import api
@@ -27,6 +30,48 @@ def test_health() -> None:
 def test_ready_responds() -> None:
     # 503 without Qdrant (CI), 200 if a local one happens to be up.
     assert client.get("/ready").status_code in (200, 503)
+
+
+class _FakeCount:
+    count = 1
+
+
+class _FakeClient:
+    """Qdrant stub for /ready: one entry, scroll healthy."""
+
+    def count(self, *a: object, **k: object) -> _FakeCount:
+        return _FakeCount()
+
+    def scroll(self, *a: object, **k: object) -> list:
+        return []
+
+
+def test_ready_200_when_qdrant_and_kanji_table_healthy(monkeypatch) -> None:
+    # The committed table is present in CI, so stubbing only Qdrant proves the
+    # added kanji-table check keeps the healthy path at 200.
+    monkeypatch.setattr(api, "qdrant_client", lambda: _FakeClient())
+    r = client.get("/ready")
+    assert r.status_code == 200
+    assert r.json()["entries"] == 1
+
+
+def test_ready_503_when_kanji_table_missing(monkeypatch) -> None:
+    # The other half of _kanji_unavailable's contract ("the same condition
+    # /ready maps to 503"): with Qdrant healthy but the committed table gone
+    # or corrupt, /ready must 503 instead of a 200 that defers the failure to
+    # the first /kanji request.
+    def missing() -> dict[str, dict]:
+        raise FileNotFoundError("kanji_table.json not found")
+
+    def corrupt() -> dict[str, dict]:
+        raise ValueError("Expecting value: line 1 column 1 (char 0)")  # json.JSONDecodeError
+
+    monkeypatch.setattr(api, "qdrant_client", lambda: _FakeClient())
+    for broken in (missing, corrupt):
+        monkeypatch.setattr(api, "_load_kanji_table", broken)
+        r = client.get("/ready")
+        assert r.status_code == 503
+        assert r.json() == {"detail": "Kanji metadata table unavailable"}
 
 
 def test_kanji_card() -> None:
@@ -233,6 +278,77 @@ def test_feedback_records_and_validates() -> None:
     assert client.post("/feedback", json={"kind": "search", "rating": 0}).status_code == 422
     assert client.post("/feedback", json={"kind": "bogus", "rating": 1}).status_code == 422
     assert client.post("/feedback", json={"kind": "search", "rating": 1, "query": "x" * 513}).status_code == 422
+
+
+def test_oversized_body_rejected_with_413_before_parsing() -> None:
+    # The transport cap (MAX_BODY_BYTES), not the Field bounds: FastAPI buffers
+    # and JSON-parses the whole body before Pydantic runs, so a body over the
+    # cap must be answered by the middleware — on the JSON routes and on the
+    # SSE one alike.
+    for route in ("/explain", "/explain/stream"):
+        r = client.post(route, content=b'{"sentence": "' + b"x" * (api.MAX_BODY_BYTES + 1) + b'"}')
+        assert r.status_code == 413
+        assert r.json() == {"detail": "Request body too large"}
+        assert r.headers["connection"] == "close"  # the unread body poisons keep-alive
+
+
+def test_body_limit_leaves_normal_traffic_alone() -> None:
+    # GET carries no body the middleware would touch (and FastAPI registers no
+    # HEAD routes to begin with); POSTs under the cap reach FastAPI exactly as
+    # before — including the SSE route's normal body-parse (empty sentence →
+    # the validator's 422, not a 413).
+    assert client.get("/health").status_code == 200
+    assert client.get("/lite").status_code == 200
+    assert client.post("/feedback", json={"kind": "search", "rating": 1, "query": "x" * 512}).status_code == 201
+    assert client.post("/explain/stream", json={"sentence": "", "level": "N5"}).status_code == 422
+    # Field caps still fire for bodies under the transport cap: the old 422s
+    # are defense-in-depth now, not the primary guard.
+    assert client.post("/explain", json={"sentence": "猫" * 1601}).status_code == 422
+
+
+def test_body_limit_aborts_unsized_oversized_bodies() -> None:
+    """Chunked requests carry no Content-Length and httpx's test transport
+    always sets one — so drive the middleware at the ASGI layer directly: an
+    unsized body is counted as the app pulls it and aborted mid-read once it
+    overshoots the cap; one at the cap passes whole."""
+
+    async def scenario(max_bytes: int, chunk: int, n_chunks: int) -> tuple[bool, list[dict], int]:
+        called = False
+        sent: list[dict] = []
+        reads = 0
+        pending = [
+            {"type": "http.request", "body": b"x" * chunk, "more_body": i < n_chunks - 1}
+            for i in range(n_chunks)
+        ]
+
+        async def inner_app(scope, receive, send):
+            nonlocal called
+            called = True
+            while (await receive()).get("more_body"):
+                pass  # read to the end, the way FastAPI consumes a JSON body
+
+        async def receive() -> dict:
+            nonlocal reads
+            reads += 1
+            return pending[reads - 1] if reads <= len(pending) else {"type": "http.disconnect"}
+
+        async def send(message: dict) -> None:
+            sent.append(message)
+
+        middleware = api._BodyLimitMiddleware(inner_app, max_bytes=max_bytes)
+        await middleware({"type": "http", "method": "POST", "path": "/", "headers": []}, receive, send)
+        return called, sent, reads
+
+    # 4 KiB streamed against a 2 KiB cap: the third chunk overshoots — the app
+    # is aborted on it and 413 goes out without the remaining chunk ever read.
+    called, sent, reads = asyncio.run(scenario(2048, 1024, 4))
+    assert called and reads == 3
+    assert sent[0]["status"] == 413 and (b"connection", b"close") in sent[0]["headers"]
+    assert json.loads(sent[1]["body"]) == {"detail": "Request body too large"}
+
+    # 2 KiB against a 2 KiB cap: exactly at the limit is fine and fully read.
+    called, sent, reads = asyncio.run(scenario(2048, 1024, 2))
+    assert called and reads == 2 and sent == []
 
 
 def test_cache_headers() -> None:

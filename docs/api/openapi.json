@@ -34,7 +34,7 @@
           "meta"
         ],
         "summary": "Ready",
-        "description": "Readiness: a real query against the Qdrant collection.\n503 when Qdrant is unreachable or the collection is missing/empty.",
+        "description": "Readiness: the kanji table is validated first (load + JSON parse),\nthen a real query runs against the Qdrant collection.\n503 when the table is missing/corrupt, Qdrant is unreachable,\nor the collection is missing/empty.",
         "operationId": "ready_ready_get",
         "responses": {
           "200": {
