@@ -33,8 +33,10 @@ export interface paths {
         };
         /**
          * Ready
-         * @description Readiness: a real query against the Qdrant collection.
-         *     503 when Qdrant is unreachable or the collection is missing/empty.
+         * @description Readiness: the kanji table is validated first (load + JSON parse),
+         *     then a real query runs against the Qdrant collection.
+         *     503 when the table is missing/corrupt, Qdrant is unreachable,
+         *     or the collection is missing/empty.
          */
         get: operations["ready_ready_get"];
         put?: never;
