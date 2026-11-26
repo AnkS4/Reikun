@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- **Homepage brand-kanji popups clear the sticky search row**: tooltips now sit above it, and the optical alignment uses `top` instead of a transform so the tip is not trapped in the anchor's stacking context.
+- **Brand kanji get the body-text underline treatment**: the hero 例/訓 anchors use the same dashed-at-rest / solid-on-hover affordance as kanji in sentences and cards.
 - **JLPT selection on kanji pages**: the level picker now updates the selected level instead of calling a no-op, so Random kanji uses the chosen level.
 - **Lite kana tile icon sizing**: the Japanese text glyph is normalized to the same 1.4rem icon box as the Lucide browse icons; its alignment rules no longer depend on a touch-screen media query.
 - **Wasei-eigo no longer leaks into source-language loanword lists**: JMdict tags wasei entries with `xml:lang="eng"`, so the in-memory loanwords index was folding ~2,040 wasei words into `/loanwords?lang=eng` (and its lite twin) in addition to the dedicated `/loanwords?lang=wasei` section. The index now skips wasei-tagged `lsource` items when grouping by source language, and the etymology link on a wasei entry points at the wasei listing. English drops from 2,546 to ~506 genuine loanwords; the wasei count (2,052) is unchanged.
