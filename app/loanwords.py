@@ -38,6 +38,44 @@ _lock = threading.Lock()
 _index: dict[str, list[dict]] | None = None
 _loaded_at = 0.0
 
+# Precomputed views of _index, swapped atomically as one tuple so a concurrent
+# reader never sees facets/listings derived from a different index than the
+# guard claims: (facet chip row, {lang: filtered entries}, the index object
+# they were derived from). Facet and page requests then cost dict lookups +
+# slices instead of re-filtering every entry per request.
+_derived: tuple[list[dict[str, Any]], dict[str, list[dict]], dict[str, list[dict]]] | None = None
+
+
+def _precomputed(idx: dict[str, list[dict]]) -> tuple[list[dict[str, Any]], dict[str, list[dict]]]:
+    """(facet dicts, per-language filtered listings) for ``idx``, derived once
+    per index object. The real build primes this in _loanwords while the lock
+    is held; an index injected by another seam (tests monkeypatching _index or
+    _loanwords) derives on first use instead. Derivation is a pure function of
+    idx, so concurrent derivations of the same object converge on one winner."""
+    global _derived
+    cached = _derived
+    if cached is not None and cached[2] is idx:
+        return cached[0], cached[1]
+    listings: dict[str, list[dict]] = {}
+    for lang, entries in idx.items():
+        # _build only files matching entries into each bucket, so for its
+        # output this filter is a no-op — it exists for indexes built by an
+        # older code path or monkeypatched in tests (see
+        # _entry_has_source_lang). The wasei pseudo-bucket is stored
+        # unfiltered: its page never filters, and facets skip it entirely.
+        listings[lang] = entries if lang == "wasei" else [
+            d for d in entries if _entry_has_source_lang(d, lang)
+        ]
+    # Same common-first rule as before: raw bucket length desc, stable sort
+    # keeps idx's insertion order for ties, wasei never becomes a chip.
+    facets = [
+        {"lang": lang, "name": lang_name(lang), "count": len(listings[lang])}
+        for lang, _ in sorted(idx.items(), key=lambda kv: -len(kv[1]))
+        if lang != "wasei"
+    ]
+    _derived = (facets, listings, idx)
+    return facets, listings
+
 
 def _build() -> dict[str, list[dict]]:
     """Scroll every lsource-bearing point once and group the result dicts by
@@ -114,6 +152,9 @@ def _loanwords() -> dict[str, list[dict]]:
         if _index is None or time.monotonic() - _loaded_at > _TTL:
             _index = _build()
             _loaded_at = time.monotonic()
+            # Prime the facet row and per-language listings while the lock is
+            # held, so no request ever pays the per-entry filter itself.
+            _precomputed(_index)
             log.info("loanwords index: %s languages, %s entries",
                      len(_index), sum(len(v) for v in _index.values()))
         return _index
@@ -124,26 +165,23 @@ def loanword_facets() -> list[dict[str, Any]]:
 
     The wasei pseudo-bucket is deliberately excluded: wasei-eigo lives in
     its own dedicated section (the home-grid tile and /loanwords?lang=wasei)
-    rather than alongside the source languages.
+    rather than alongside the source languages. Returns the precomputed row
+    itself — callers (the api and lite endpoints) only read it.
     """
     idx = _loanwords()
-    out = []
-    for lang, entries in sorted(idx.items(), key=lambda kv: -len(kv[1])):
-        if lang == "wasei":
-            continue
-        filtered = [d for d in entries if _entry_has_source_lang(d, lang)]
-        out.append({"lang": lang, "name": lang_name(lang), "count": len(filtered)})
-    return out
+    facets, _ = _precomputed(idx)
+    return facets
 
 
 def loanwords_page(lang: str, offset: int = 0, limit: int = 50) -> dict[str, Any] | None:
     """One page of a language's borrowed words, or None for an unknown code."""
     idx = _loanwords()
-    entries = idx.get(lang)
-    if entries is None:
+    # The None test stays on the raw index: a known language whose entries all
+    # filter out still serves a real page with total 0, not a 404.
+    if idx.get(lang) is None:
         return None
-    if lang != "wasei":
-        entries = [d for d in entries if _entry_has_source_lang(d, lang)]
+    _, listings = _precomputed(idx)
+    entries = listings[lang]
     return {
         "lang": lang,
         "name": lang_name(lang),
