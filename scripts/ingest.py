@@ -52,10 +52,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from app.config import (
     COLLECTION,
     DENSE_VECTOR,
-    PROC_DIR,
     QDRANT_TIMEOUT,
     QDRANT_URL,
     SPARSE_VECTOR,
+    proc_dir,
     qdrant_client,
 )
 from app.embedder import VECTOR_DIM, embed_documents
@@ -63,7 +63,7 @@ from app.embedder import VECTOR_DIM, embed_documents
 log = logging.getLogger(__name__)
 
 BATCH_SIZE = 256
-CHUNKS_PATH = PROC_DIR / "chunks.json"
+CHUNKS_PATH = proc_dir("ja") / "chunks.json"
 # Qdrant's default indexing_threshold (KB of vectors per segment before HNSW
 # is built). Set to 0 for the bulk upload so segments aren't re-indexed as
 # they fill, then restored — the documented fast path for bulk loads.
@@ -79,11 +79,15 @@ def load_chunks(
     common_only: bool = False,
     limit: int | None = None,
     freq_band_max: int = FREQ_BAND_MAX,
+    lang: str = "ja",
 ) -> list[dict]:
     """Load processed chunks — all of them, or the --common subset."""
-    if not CHUNKS_PATH.exists():
-        raise FileNotFoundError(f"Missing: {CHUNKS_PATH}\nRun  python scripts/build_chunks.py  first.")
-    chunks: list[dict] = json.loads(CHUNKS_PATH.read_text(encoding="utf-8"))
+    chunks_path = proc_dir(lang) / "chunks.json"
+    if not chunks_path.exists():
+        raise FileNotFoundError(
+            f"Missing: {chunks_path}\nRun the language pack's build_chunks first."
+        )
+    chunks: list[dict] = json.loads(chunks_path.read_text(encoding="utf-8"))
     if common_only:
         chunks = [
             c
@@ -375,6 +379,8 @@ def run(
     update: bool = False,
     reuse_vectors: bool = False,
     seed_from: str | None = None,
+    lang: str = "ja",
+    keep_snapshots: bool = False,
 ) -> None:
     """Programmatic entry point (used by scripts/startup.py); `main()` is the CLI wrapper.
 
@@ -398,8 +404,9 @@ def run(
     upload, and recover on the Cloud cluster — the cloud then never runs its
     own (hours-long) index build. Same drift checks apply, so anything
     unverified is embedded locally before the snapshot is taken."""
-    chunks = load_chunks(common_only, limit, freq_band_max)
-    log.info("Loaded %s chunks from %s", f"{len(chunks):,}", CHUNKS_PATH.name)
+    chunks = load_chunks(common_only, limit, freq_band_max, lang=lang)
+    chunks_path = proc_dir(lang) / "chunks.json"
+    log.info("Loaded %s chunks from %s", f"{len(chunks):,}", chunks_path.name)
 
     log.info("Connecting to Qdrant at %s …", QDRANT_URL)
     client = qdrant_client()
@@ -525,7 +532,9 @@ def run(
     # live point count against this rather than chunks.meta.json's full-corpus
     # entries, so an intentional --common/--limit subset isn't "partial" forever.
     try:
-        (PROC_DIR / "ingest.meta.json").write_text(json.dumps({
+        meta_dir = proc_dir(lang)
+        meta_dir.mkdir(parents=True, exist_ok=True)
+        (meta_dir / "ingest.meta.json").write_text(json.dumps({
             "at": datetime.now(UTC).isoformat(timespec="seconds"),
             "points": count,
             "scope": "update" if update else ("subset" if common_only or limit else "full"),
@@ -533,11 +542,40 @@ def run(
     except OSError:
         pass
 
+    # Snapshot hygiene (mirrors cloud_ingest's delete-after-transfer): snapshots
+    # live on the same disk as the collection, so stale ones creep toward the
+    # cluster's ceiling (4 GB on the free tier — a Japanese snapshot alone is
+    # ~680 MB). Default: delete every snapshot now that the ingest is done —
+    # a snapshot is only useful mid-transfer or as a deliberate backup;
+    # --keep-snapshots opts out.
+    if not keep_snapshots:
+        try:
+            snaps = client.list_snapshots(COLLECTION)
+        except Exception:  # local builds / older targets may not expose them
+            snaps = []
+        for snap in snaps:
+            try:
+                client.delete_snapshot(COLLECTION, snap.name, wait=True)
+                log.info("  Deleted stale snapshot %s.", snap.name)
+            except Exception as exc:
+                log.warning("  Could not delete snapshot %s (%s) — prune manually.", snap.name, exc)
+
 
 def main() -> None:
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
     logging.getLogger("httpx").setLevel(logging.WARNING)
     parser = argparse.ArgumentParser(description="Ingest JMdict chunks into Qdrant.")
+    parser.add_argument(
+        "--lang", default="ja", choices=("ja", "es"),
+        help="language pack: reads data/processed/<lang>/chunks.json and targets the "
+             "collection from QDRANT_COLLECTION (set es_words for the Spanish pack)",
+    )
+    parser.add_argument(
+        "--keep-snapshots", action="store_true",
+        help="skip the post-ingest snapshot prune (snapshots are deleted by default, "
+             "mirroring cloud_ingest's delete-after-transfer so the cluster disk "
+             "doesn't creep toward its ceiling)",
+    )
     parser.add_argument(
         "--common", action="store_true",
         help="ingest only the common/with-examples/nf-band subset (~37k) instead of all ~219k — quick testing",
@@ -569,7 +607,8 @@ def main() -> None:
     )
     args = parser.parse_args()
     run(args.common, args.limit, args.freq_band, update=args.update,
-        reuse_vectors=args.reuse_vectors, seed_from=args.seed_from)
+        reuse_vectors=args.reuse_vectors, seed_from=args.seed_from,
+        lang=args.lang, keep_snapshots=args.keep_snapshots)
 
 
 if __name__ == "__main__":
