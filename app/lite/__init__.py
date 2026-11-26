@@ -314,7 +314,7 @@ def _header(hero: bool, lang: str = "en") -> str:
             "</header>"
         )
     return (
-        f'<header><a class="brand" href="/lite" title="{esc(_t(lang, "aboutTitle"))}">{wordmark}</a>'
+        f'<header><a class="brand" href="/lite" title="{esc(_t(lang, "backToSearch"))}">{wordmark}</a>'
         '<span class="tag">lite</span></header>'
     )
 

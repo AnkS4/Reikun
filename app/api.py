@@ -609,6 +609,7 @@ def search_endpoint(
     results = []
     for r in resp.results:
         head = r.get("kanji_form") or r.get("reading") or r.get("text") or ""
+        forms = (head, *(r.get("kanji_forms") or ()), *(r.get("readings") or ()))
         entry = {
             **r,
             "ruby": furigana_parts(head, r.get("reading")),
@@ -617,12 +618,7 @@ def search_endpoint(
             "lsource": enrich_lsource(r.get("lsource")),
             # Whole-entry-card only: every written form joins the exclusion
             # set so the word can't recommend itself.
-            "related": related_words(
-                (head, *(r.get("kanji_forms") or ()), *(r.get("readings") or ())),
-                (head, *(r.get("kanji_forms") or ()), *(r.get("readings") or ())),
-            )
-            if head
-            else [],
+            "related": related_words(forms, forms) if head else [],
         }
         results.append(entry)
     return {

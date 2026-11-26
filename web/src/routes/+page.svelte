@@ -51,7 +51,10 @@
 
 	// <svelte:window> owns the listener; no manual add/remove needed.
 	function handleScroll() {
-		showBackToTop = window.scrollY > 300;
+		// The button only has two visual states — don't churn Svelte state on
+		// every scroll event once the threshold has been crossed.
+		const next = window.scrollY > 300;
+		if (next !== showBackToTop) showBackToTop = next;
 	}
 
 	function scrollToTop() {

@@ -110,7 +110,7 @@
 		{#if d?.meta.length}
 			<div class="tip-stroke">{d.meta.map((m) => m.label).join(' · ')}</div>
 		{/if}
-		<a class="tip-go" href={kanjiHref} onclick={() => close()} rel="noopener noreferrer" target="_blank"
+		<a class="tip-go" href={kanjiHref} onclick={() => close()}
 			>{t('tipOpen', { char })}</a
 		>
 	</span>

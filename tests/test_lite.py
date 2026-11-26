@@ -129,7 +129,7 @@ def test_brand_lockup_follows_page_and_locale(lang: str) -> None:
     assert ">例</a>" in home and ">訓</a>" in home
     assert 'class="brand-kanji"' not in inside
     assert "title=" not in home
-    assert f'title="{lite.esc(lite._t(lang, "aboutTitle"))}"' in inside
+    assert f'title="{lite.esc(lite._t(lang, "backToSearch"))}"' in inside
 
 
 def test_search_row_buttons_are_one_consistent_style() -> None:

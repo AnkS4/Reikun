@@ -84,7 +84,7 @@
 
 	/* Z-index ladder — reuse, don't invent (see Design.md → Layering). */
 	--z-inline: 1; --z-stroke-art: 2; --z-replay: 10;
-	--z-popover: 40; --z-tooltip: 85; --z-card: 60; --z-search: 80;
+	--z-popover: 40; --z-tooltip: 50; --z-card: 60; --z-search: 80;
 	--z-floating: 90; --z-wake: 95; --z-brand-kanji: 100;
 	--z-header: 200; --z-skip: 1000;
 
@@ -94,7 +94,7 @@
 
 	/* Z-index ladder (values as used in this file; see Design.md → Common →
 	   Layering for the canonical table): 1 inline, 2 stroke-art, 10 replay,
-	   40 popovers, 60 hovered cards, 80 search row, 85 tooltips/stats,
+	   40 popovers, 50 tooltips/stats, 60 hovered cards, 80 search row,
 	   90 floating buttons, 95 wake banner, 100 brand kanji tip, 200 header
 	   controls, 1000 skip link. */
 
@@ -397,6 +397,10 @@ ruby rt {
 	margin-top: 1.25rem;
 	padding-bottom: var(--space-2);
 	position: relative;
+	/* The whole header paints above the sticky search row. Container queries
+	   inside the title make a stacking context, so the brand tip's own
+	   z-index cannot escape it; this is what lets it overlap the bar. */
+	z-index: var(--z-brand-kanji);
 }
 
 /* Floating control cluster — bare ghost icons at the viewport edge,
@@ -1239,6 +1243,12 @@ a.kanji-tip {
 	background: var(--primary-light);
 }
 
+/* The brand kanji sits above the sticky search row; other tooltips keep the
+   normal tooltip layer so result-card tips stay behind the bar when scrolled. */
+.brand-kanji .kanji-tip-body {
+	z-index: var(--z-brand-kanji);
+}
+
 .kanji-tip-body,
 .seg-tip {
 	display: block;
@@ -1263,8 +1273,6 @@ a.kanji-tip {
 	white-space: normal;
 	text-align: left;
 	cursor: default;
-	user-select: none;
-	pointer-events: none;
 	animation: tip-in var(--dur-fast) ease-out;
 }
 

@@ -11,8 +11,7 @@
 	import Icon from './Icon.svelte';
 
 	let { hero = false, tagline = '' }: { hero?: boolean; tagline?: string } = $props();
-	let tooltipY = $state(0);
-	const setTooltipY = (em: number) => (tooltipY = em);
+	const isHome = $derived(page.url.pathname === '/');
 
 	// Context-aware: land on the equivalent page in the lite UI instead of
 	// always the home page, so switching variants feels continuous.
@@ -183,7 +182,7 @@
 			</div>
 		{/if}
 		<h1 class="title-heading" class:hero-heading={hero} class:compact-title={!hero}>
-			<a class="title-home" href="/" onmouseenter={() => setTooltipY(.75)} onmouseleave={() => setTooltipY(.35)}>
+			<a class="title-home" href="/" title={isHome ? undefined : t('backToSearch')}>
 				<img
 					src="/icons/emblem.svg"
 					alt=""

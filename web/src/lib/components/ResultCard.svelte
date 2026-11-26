@@ -68,9 +68,6 @@
 	function xrefSeeAlso(s: Sense) {
 		return (s.xrefs ?? []).filter((x) => x.type !== 'ant').slice(0, 6);
 	}
-	function hasXrefs(s: Sense): boolean {
-		return xrefAntonyms(s).length > 0 || xrefSeeAlso(s).length > 0;
-	}
 
 	/** Build URL for the conjugations page. */
 	const conjHref = $derived.by(() => {
@@ -166,6 +163,8 @@
 		     usage notes, cross-references and examples (JMdict scopes all of
 		     these to the sense — see scripts/build_chunks.py). -->
 		{#each senses as sense, si (si)}
+			{@const antonyms = xrefAntonyms(sense)}
+			{@const seeAlso = xrefSeeAlso(sense)}
 			<div class="sense-block" id={result.id != null ? `sense-${result.id}-${si + 1}` : undefined}>
 				{#if sense.glosses?.length || posTags(sense).length || miscTags(sense).length || (sense.dial ?? []).length}
 					<div class="sense-line">
@@ -193,14 +192,14 @@
 				{#if sense.s_inf?.length}
 					<p class="sense-note" lang="en">{sense.s_inf.join(' ')}</p>
 				{/if}
-				{#if onSearchWord && hasXrefs(sense)}
+				{#if onSearchWord && (antonyms.length > 0 || seeAlso.length > 0)}
 					<!-- Dictionary cross-references (JMdict xref): antonyms and
 					     see-also pointers — searchable headwords carrying the
 					     target entry seq + sense number for the deep link. -->
 					<div class="xref-row">
-						{#if xrefAntonyms(sense).length}
+						{#if antonyms.length}
 							<span class="xref-label">{t('antonyms')}</span>
-							{#each xrefAntonyms(sense) as x (x.seq + x.sno + x.text)}
+							{#each antonyms as x (x.seq + x.sno + x.text)}
 								<button
 									type="button"
 									class="related-pill xref-ant"
@@ -209,9 +208,9 @@
 								><span lang="ja">{x.text}{#if x.sno}<sup class="xref-sno">{x.sno}</sup>{/if}</span></button>
 							{/each}
 						{/if}
-						{#if xrefSeeAlso(sense).length}
+						{#if seeAlso.length}
 							<span class="xref-label">{t('seeAlso')}</span>
-							{#each xrefSeeAlso(sense) as x (x.seq + x.sno + x.text)}
+							{#each seeAlso as x (x.seq + x.sno + x.text)}
 								<button
 									type="button"
 									class="related-pill"
