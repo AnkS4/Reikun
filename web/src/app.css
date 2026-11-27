@@ -543,6 +543,17 @@ ruby rt {
 	content: url('/icons/emblem-dark.svg');
 }
 
+/* The Spanish edition (data-pack set pre-paint by theme-init.js): the gold
+   sun's artwork in both themes — AFTER the dark rule above, so the es-dark
+   pair wins by source order at equal specificity. */
+[data-pack='es'] .brand-icon {
+	content: url('/icons/emblem-es.svg');
+}
+
+[data-pack='es']:is([data-theme='dark'], [data-theme='oled']) .brand-icon {
+	content: url('/icons/emblem-es-dark.svg');
+}
+
 /* Both floating controls share one hit area: 2rem circle, neutral hover */
 .header-controls .status-dot,
 .header-controls .btn {

@@ -137,7 +137,7 @@
 	{#if currentPack() === 'es'}
 		<!-- The es edition's own origin: the share metadata points here (the
 		     site-wide statics in app.html describe the Japanese original). -->
-		<meta property="og:title" content="Reikun — The open Spanish dictionary & reading assistant" />
+		<meta property="og:title" content="Reikun — The open Spanish dictionary" />
 		<meta property="og:description" content={TAGLINE} />
 		<meta property="og:url" content="https://es.reikun.app/" />
 		<meta property="og:image" content="https://es.reikun.app/images/og-image-es.png" />

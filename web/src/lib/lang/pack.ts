@@ -27,7 +27,5 @@ export function emblemSrc(pack: Pack = currentPack()): string {
 /** The product's wordmark line per pack (kept in English — the same
  *  untranslatable-subtext rule as brand.ts). */
 export function brandSubtext(pack: Pack = currentPack()): string {
-	return pack === 'es'
-		? 'The open Spanish dictionary & reading assistant'
-		: 'Semantic Japanese Dictionary & Reading Assistant';
+	return pack === 'es' ? 'The open Spanish dictionary' : 'Semantic Japanese Dictionary & Reading Assistant';
 }
