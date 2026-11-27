@@ -34,7 +34,13 @@ PATHS = {
     ),
 }
 SIGNAL = ("#202322", "#606A65", "#DA462B")
-SIGNAL_DARK = ("#F1F2EC", "#ACB6B0", "#FF7359")
+# Dark variant keeps the SAME red accent as light — the sun is the brand's
+# constant; only the ink/foot flip for contrast.
+SIGNAL_DARK = ("#F1F2EC", "#ACB6B0", "#DA462B")
+# Spanish edition: the sun takes the Spanish flag's gold — the flag's dominant
+# color, distinct from the Japanese red, and it reads on both light and dark.
+SPANISH = ("#202322", "#606A65", "#F1BF00")
+SPANISH_DARK = ("#F1F2EC", "#ACB6B0", "#F1BF00")
 GRAPHITE = (SIGNAL[0], SIGNAL[0], SIGNAL[1])
 GRAPHITE_DARK = (SIGNAL_DARK[0], SIGNAL_DARK[0], SIGNAL_DARK[1])
 PAPER = "#FBFAF6"
@@ -114,14 +120,16 @@ def lettering(
 
 
 def main() -> None:
-    for suffix, palette in (
-        ("", SIGNAL),
-        ("-dark", SIGNAL_DARK),
-        ("-graphite", GRAPHITE),
-        ("-graphite-dark", GRAPHITE_DARK),
+    for suffix, palette, title in (
+        ("", SIGNAL, "Reikun Signal"),
+        ("-dark", SIGNAL_DARK, "Reikun Signal"),
+        ("-es", SPANISH, "Reikun Signal (Spanish)"),
+        ("-es-dark", SPANISH_DARK, "Reikun Signal (Spanish)"),
+        ("-graphite", GRAPHITE, "Reikun Graphite"),
+        ("-graphite-dark", GRAPHITE_DARK, "Reikun Graphite"),
     ):
         name = "emblem" + suffix
-        artwork = svg("Reikun " + ("Graphite" if "graphite" in name else "Signal"), 100, 100, mark(palette))
+        artwork = svg(title, 100, 100, mark(palette))
         write(f"emblems/{name}.svg", artwork, **{f"{name}.png": 496} if "dark" not in name else {})
 
     dark_rules = "".join(f".{k}{{fill:{v}}}" for k, v in zip(PATHS, SIGNAL_DARK, strict=True))
@@ -131,14 +139,24 @@ def main() -> None:
         svg("Reikun", 100, 100, adaptive + mark(SIGNAL)),
         **{f"favicon-{size}.png": size for size in (16, 32, 48)},
     )
+    es_rules = "".join(f".{k}{{fill:{v}}}" for k, v in zip(PATHS, SPANISH_DARK, strict=True))
+    es_adaptive = "<style>@media (prefers-color-scheme:dark){" + es_rules + "}</style>\n"
+    write(
+        "favicons/favicon-es.svg",
+        svg("Reikun", 100, 100, es_adaptive + mark(SPANISH)),
+        **{f"favicon-es-{size}.png": size for size in (16, 32, 48)},
+    )
     # Full-bleed squares let the platform apply its own corner or circle mask.
     write("icons/icon-light.svg", tile(SIGNAL, PAPER, 70), **{"apple-touch-icon.png": 180})
     write("icons/icon-dark.svg", tile(SIGNAL_DARK, NIGHT, 70))
     write("icons/icon-graphite.svg", tile(GRAPHITE, PAPER, 70))
+    write("icons/icon-es-light.svg", tile(SPANISH, PAPER, 70), **{"apple-touch-icon-es.png": 180})
+    write("icons/icon-es-dark.svg", tile(SPANISH_DARK, NIGHT, 70))
     # A centered 56% square fits inside the manifest's 80%-diameter safe circle.
     write("icons/icon-maskable.svg", tile(SIGNAL, PAPER, 56), **{"icon-192.png": 192, "icon-512.png": 512})
+    write("icons/icon-es-maskable.svg", tile(SPANISH, PAPER, 56), **{"icon-es-192.png": 192, "icon-es-512.png": 512})
 
-    for suffix, palette in (("", SIGNAL), ("-graphite", GRAPHITE)):
+    for suffix, palette in (("", SIGNAL), ("-es", SPANISH), ("-graphite", GRAPHITE)):
         for layout in ("horizontal", "stacked"):
             name = f"logo-{layout}{suffix}"
             if layout == "horizontal":
@@ -168,6 +186,31 @@ def main() -> None:
         "images/og-image.svg",
         svg("Reikun (例訓) — Semantic Japanese Dictionary & Reading Assistant", 1200, 630, card),
         **{"og-image.png": 1200},
+    )
+
+    es_card = "\n".join(
+        [
+            f'<rect width="1200" height="630" fill="{PAPER}"/>',
+            lettering("OPEN LANGUAGE LEARNING", 78, 91, 24, SIGNAL[1], "mono-w500-latin"),
+            mark(SPANISH, 73, 169, 149),
+            lettering("Reikun", 255, 295, 138, SIGNAL[0]),
+            lettering("The open Spanish dictionary & reading assistant", 78, 407, 40, SIGNAL[0]),
+            lettering(
+                "Word meanings, pronunciation, conjugations and grammar in context.",
+                78,
+                468,
+                31,
+                SIGNAL[1],
+                "sans-w400-latin",
+            ),
+            '<path d="M78 522H1122" stroke="#D6DAD2" stroke-width="2"/>',
+            lettering("es.reikun.app", 78, 574, 26, SIGNAL[1], "mono-w500-latin"),
+        ]
+    )
+    write(
+        "images/og-image-es.svg",
+        svg("Reikun — The open Spanish dictionary & reading assistant", 1200, 630, es_card),
+        **{"og-image-es.png": 1200},
     )
 
 
