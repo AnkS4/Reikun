@@ -77,3 +77,4 @@ app/.streamlit/secrets.toml
 
 # wrangler local dev state (miniflare cache/d1)
 web/.wrangler/
+data/work/

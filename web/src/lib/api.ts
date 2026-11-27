@@ -167,6 +167,15 @@ export function apiSearch(q: string, n: number): Promise<SearchResponse> {
 	});
 }
 
+/** Spanish pack search (/es/search) — same response shape, different corpus. */
+export function esSearch(q: string, n: number): Promise<SearchResponse> {
+	return call(async (signal) => {
+		const { data, error, response } = await client.GET('/es/search', { params: { query: { q, n } }, signal });
+		if (error) throw asError(error, response.status);
+		return data;
+	});
+}
+
 export function apiKanjiBatch(chars: string): Promise<Record<string, KanjiHover | null>> {
 	return call(async (signal) => {
 		const { data, error, response } = await client.GET('/kanji', { params: { query: { chars } }, signal });
