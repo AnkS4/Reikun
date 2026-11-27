@@ -132,8 +132,11 @@ export default {
 async function proxy(request, target, env) {
 	const headers = new Headers(request.headers);
 	// The outgoing fetch sets Host from the target URL; a forwarded Host
-	// (reikun.app) would fail Cloud Run's host validation.
+	// (reikun.app) would fail Cloud Run's host validation. State the original
+	// host separately so the API can scope shared preference cookies to the
+	// parent domain across both editions.
 	headers.delete("host");
+	headers.set("x-reikun-host", new URL(request.url).hostname);
 	const client = request.headers.get("cf-connecting-ip");
 	if (client) {
 		// True caller, exactly once, stated by the proxy that saw it. Cloud Run

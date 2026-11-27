@@ -1002,9 +1002,12 @@ def test_theme_cookie_is_shared_across_editions_and_stays_local_offline() -> Non
 
     from app.api import app as api_app
 
+    # The Worker states the browser host in x-reikun-host (it drops `host`).
     for host in ("reikun.app", "es.reikun.app"):
-        c = TestClient(api_app, base_url=f"https://{host}")
-        r = c.get("/lite/theme", params={"v": "dark", "next": "/lite"}, follow_redirects=False)
+        r = client.get(
+            "/lite/theme", params={"v": "dark", "next": "/lite"},
+            headers={"x-reikun-host": host}, follow_redirects=False,
+        )
         assert r.status_code == 303
         assert "domain=reikun.app" in r.headers["set-cookie"].lower()
     local = TestClient(api_app, base_url="http://localhost:8000")

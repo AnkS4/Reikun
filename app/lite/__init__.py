@@ -1004,7 +1004,10 @@ def _theme_cookie_domain(request: Request) -> str | None:
     theme choice shared across all four combinations. Local/dev hosts stay
     host-only (browsers reject Domain=reikun.app on localhost).
     """
-    host = request.headers.get("host", "").split(":", 1)[0].lower()
+    # The edge proxy drops `host` (Cloud Run validates its own), so it states
+    # the original hostname in x-reikun-host. Fall back to `host` for direct
+    # callers and local dev.
+    host = (request.headers.get("x-reikun-host") or request.headers.get("host", "")).split(":", 1)[0].lower()
     return "reikun.app" if host == "reikun.app" or host.endswith(".reikun.app") else None
 
 
