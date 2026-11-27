@@ -187,7 +187,11 @@ def _payload(chunk: dict, sig: str) -> dict:
         # Native-Spanish definitions (es pack): the display glosses, kept
         # alongside the English `meanings` the vectors embed.
         "definitions_es": chunk.get("definitions_es"),
-        **{field: chunk[field] for field in ("etymology_es", "origin_languages") if chunk.get(field)},
+        **{
+            field: chunk[field]
+            for field in ("etymology_es", "origin_languages", "examples_es")
+            if chunk.get(field)
+        },
         # Pronunciation (IPA) — display-only, no index.
         "ipa": chunk.get("ipa"),
         "text": chunk["text"],

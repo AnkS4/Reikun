@@ -216,6 +216,7 @@ def _hit_to_dict(hit, score: float | None = None) -> dict:
         # Pronunciation (IPA) — the es pack's furigana slot; absent on ja.
         "ipa": p.get("ipa"),
         "example_sentences": p.get("example_sentences", []),
+        "examples_es": p.get("examples_es", []),
         "is_common": p.get("is_common", False),
         "text": p.get("text", ""),
         # Conjugation table (verb/adjective entries) + the label of the row

@@ -125,6 +125,40 @@ def test_es_etymology_filters_and_counts_use_es_collection(monkeypatch):
     assert client.get("/es/etymology/entries", params={"lang": "unknown"}).status_code == 404
 
 
+def test_spanish_explain_uses_requested_cefr_depth_and_output_language(monkeypatch):
+    from app import spanish_explain
+
+    captured = {}
+
+    def fake_chat(system, user, **kwargs):
+        captured.update(system=system, user=user, kwargs=kwargs)
+        return "La oración usa el pretérito."
+
+    monkeypatch.setattr(spanish_explain, "chat", fake_chat)
+    result = spanish_explain.explain_spanish_grammar(
+        "Ayer fui al mercado.", "Yesterday I went to the market.", "B1", "es"
+    )
+    assert result == "La oración usa el pretérito."
+    assert "CEFR level: B1" in captured["system"]
+    assert "Write the explanation in Spanish" in captured["system"]
+    assert "Japanese" not in captured["system"]
+    assert '"spanish_sentence": "Ayer fui al mercado."' in captured["user"]
+    assert captured["kwargs"]["max_tokens"] <= 900
+
+
+def test_es_explain_endpoint_is_only_grammar_routed_and_validates_level(monkeypatch):
+    calls = []
+    monkeypatch.setattr(api, "explain_spanish_grammar", lambda sentence, english, level, language: (
+        calls.append((sentence, english, level, language)) or "Explanation."
+    ))
+    response = client.post("/es/explain", json={
+        "sentence": "Ayer fui al mercado.", "english": "I went to the market.", "level": "A2", "language": "es"
+    })
+    assert response.status_code == 200 and response.json()["level"] == "A2"
+    assert calls == [("Ayer fui al mercado.", "I went to the market.", "A2", "es")]
+    assert client.post("/es/explain", json={"sentence": "Hola.", "level": "N5"}).status_code == 422
+
+
 def test_es_conjugations_prefers_headword_before_exact_inflection(monkeypatch):
     calls = []
     row = {"form": "indicative future compound", "surface": "habré hablado"}
@@ -151,6 +185,20 @@ def test_es_conjugations_prefers_headword_before_exact_inflection(monkeypatch):
     assert inflected.json()["inflected_forms"][0]["surface"] == row["surface"]
     assert calls == ["reading", "infl_forms"]
     assert client.get("/es/conjugations", params={"word": "aceite"}).status_code == 404
+
+
+def test_es_search_returns_tatoeba_ids_and_attribution(monkeypatch):
+    sentence = {
+        "spanish": "Ayer hablé con Ana.", "english": "I spoke with Ana yesterday.",
+        "spanish_id": 12, "english_id": 34, "spanish_author": "spanish-user",
+        "english_author": "english-user", "license": "CC BY 2.0 FR",
+    }
+    hit = _hit("hablar", meanings=("to speak",), pos="verb")
+    hit.payload["examples_es"] = [sentence]
+    _fake_query(monkeypatch, [hit])
+    result = client.get("/es/search", params={"q": "hablar", "log": "false"})
+    assert result.status_code == 200
+    assert result.json()["results"][0]["examples_es"] == [sentence]
 
 
 def test_es_search_exact_inflection_reaches_the_filter(monkeypatch):

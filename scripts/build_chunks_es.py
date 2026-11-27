@@ -35,6 +35,7 @@ from wordfreq import zipf_frequency
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from app.config import CHUNKS_SCHEMA, proc_dir, raw_dir
 from app.query_rewrite import gloss_keys
+from scripts.build_tatoeba_es import attach_tatoeba_examples
 
 log = logging.getLogger(__name__)
 
@@ -296,6 +297,12 @@ def main() -> None:
                 _merge_en(c, en_entry[1])
                 merged += 1
         log.info("English glosses merged into %s of %s chunks", f"{merged:,}", f"{len(chunks):,}")
+    tatoeba_examples = 0
+    try:
+        tatoeba_examples = attach_tatoeba_examples(chunks, Path(raw_dir("es")))
+    except FileNotFoundError as exc:
+        log.warning("Tatoeba examples skipped: %s", exc)
+
     chunks.sort(key=lambda c: (-c["wf_score"], c["reading"]))
     if args.limit:
         chunks = chunks[: args.limit]
@@ -307,7 +314,11 @@ def main() -> None:
     (out_dir / "chunks.meta.json").write_text(json.dumps({
         "schema": CHUNKS_SCHEMA,
         "entries": len(chunks),
-        "source": "eswiktionary content export 2026-11-01 via wiktextract --edition es",
+        "tatoeba_entries": tatoeba_examples,
+        "source": (
+            "eswiktionary content export 2026-11-01 via wiktextract --edition es; "
+            "official Tatoeba spa/eng linked detailed exports"
+        ),
         "generated_at": time.strftime("%Y-%m-%dT%H:%M:%S", time.gmtime()),
     }, indent=2) + "\n", encoding="utf-8")
 

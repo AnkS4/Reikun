@@ -58,6 +58,11 @@ def test_spanish_lite_search_is_server_rendered_and_updates_shared_history(monke
         "origin_languages": ["castellano antiguo"],
         "senses": [{"pos": ["verb"]}],
         "inflected_forms": [{"form": "indicative present", "surface": "hablo"}],
+        "examples_es": [{
+            "spanish": "Ayer hablé con Ana.", "english": "I spoke with Ana yesterday.",
+            "spanish_id": 101, "english_id": 202, "spanish_author": "autor_es",
+            "english_author": "author_en", "license": "CC BY 2.0 FR",
+        }],
     }
     class _Telemetry:
         def search(self, *args, **kwargs):
@@ -74,6 +79,8 @@ def test_spanish_lite_search_is_server_rendered_and_updates_shared_history(monke
     assert "Del castellano antiguo fablar." in page.text
     assert 'href="/lite/etymology?lang=castellano%20antiguo"' in page.text
     assert 'href="/lite/conjugations?word=hablar"' in page.text
+    assert "Ayer hablé con Ana." in page.text
+    assert 'href="https://tatoeba.org/en/sentences/show/101"' in page.text
     assert "lite_recent=" in page.headers.get("set-cookie", "")
 
 

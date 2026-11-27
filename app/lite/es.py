@@ -10,10 +10,9 @@ from __future__ import annotations
 import logging
 from urllib.parse import quote
 
-from fastapi import APIRouter, Depends, Query, Request
+from fastapi import APIRouter, Query, Request
 from fastapi.responses import HTMLResponse, Response
 
-from app.config import RATE_LIMIT_SEARCH, TRUSTED_PROXY_HOPS
 from app.lang.es import es_conjugations, es_etymology_facets, es_etymology_page, search_es
 from app.lite import (
     _COOKIE_MAX_AGE,
@@ -32,13 +31,11 @@ from app.lite import (
     _page as _shared_page,
 )
 from app.lite.i18n import _t
-from app.ratelimit import rate_limited
 from app.telemetry import telemetry
 
 logger = logging.getLogger("reikun.lite.es")
 
 router = APIRouter(tags=["lite"], include_in_schema=False, route_class=_LiteRoute)
-_search_limit = Depends(rate_limited(RATE_LIMIT_SEARCH, TRUSTED_PROXY_HOPS))
 _PAGE_SIZE = 20
 _DEFAULT_COUNT = 10
 
@@ -159,10 +156,31 @@ def _result_card(result: dict, lang: str = "es") -> str:
             f'<span class="conj-count">{len(forms)}</span> →</a></p>'
         )
     ipa_html = f'<span class="es-ipa" lang="es">{esc(ipa)}</span>' if ipa else ""
+    examples_html = ""
+    if examples := result.get("examples_es") or []:
+        rows = []
+        for item in examples:
+            if not isinstance(item, dict):
+                continue
+            spanish_id, english_id = item.get("spanish_id"), item.get("english_id")
+            rows.append(
+                f'<li><p lang="es">{esc(item.get("spanish"))}</p><p lang="en">{esc(item.get("english"))}</p>'
+                f'<p class="es-lite-credit">{esc(_t(lang, "es_lite_tatoeba"))} '
+                f'<a href="https://tatoeba.org/en/sentences/show/{esc(spanish_id)}" rel="noopener">'
+                f'#{esc(spanish_id)}</a> ({esc(item.get("spanish_author")) or "?"}) · '
+                f'<a href="https://tatoeba.org/en/sentences/show/{esc(english_id)}" rel="noopener">'
+                f'#{esc(english_id)}</a>'
+                f' ({esc(item.get("english_author")) or "?"}) · {esc(item.get("license"))}</p></li>'
+            )
+        if rows:
+            examples_html = (
+                f'<section class="es-lite-examples"><p class="es-defs-label">'
+                f'{esc(_t(lang, "es_lite_examples"))}</p><ul>{"".join(rows)}</ul></section>'
+            )
     return (
         '<article class="result-card"><div class="result-head">'
         f'<span class="headword es-headword" lang="es">{esc(reading)}</span>{ipa_html}{badges}</div>'
-        f'{english}{spanish}{conjugations}'
+        f'{english}{spanish}{examples_html}{conjugations}'
         + (
             f'<section class="es-lite-etymology"><p class="es-defs-label">'
             f'{esc(_t(lang, "es_lite_etymology"))}</p>{etymology}{origin_html}{credit}</section>'
@@ -192,7 +210,7 @@ def es_lite_home(request: Request) -> HTMLResponse:
     return _render_page(request, _t(lang, "es_lite_title"), body, hero=True)
 
 
-@router.get("/es/lite/search", response_class=HTMLResponse, dependencies=[_search_limit])
+@router.get("/es/lite/search", response_class=HTMLResponse)
 def es_lite_search(request: Request, q: str = "") -> Response:
     query = q.strip()
     lang = _controls_lang(request)

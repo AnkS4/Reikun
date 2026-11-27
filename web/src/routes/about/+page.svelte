@@ -1,10 +1,13 @@
 <script lang="ts">
 	import { t } from '#lib/i18n.svelte.ts';
 	import Header from '#lib/components/Header.svelte';
+	import { currentPack } from '#lib/lang/pack.ts';
 
 	// Build-time version, inlined by Vite from web/package.json (vite.config.ts
 	// `define`, declared in src/app.d.ts) — no runtime API call, works offline.
 	const version = __APP_VERSION__;
+
+	const pack = currentPack();
 </script>
 
 <svelte:head>
@@ -42,25 +45,49 @@
 
 	<section>
 		<h2>{t('dataSources')}</h2>
-		<p>
-			{t('dataBefore')}<a
-				href="https://www.edrdg.org/wiki/index.php/JMdict-EDICT_Dictionary_Project"
-				target="_blank"
-				rel="noopener noreferrer">JMdict</a
-			>{t('dataAnd')}<a
-				href="https://www.edrdg.org/wiki/index.php/KANJIDIC_Project"
-				target="_blank"
-				rel="noopener noreferrer">KANJIDIC2</a
-			>{t('dataAfter')}<a
-				href="https://www.edrdg.org/wiki/index.php/Tanaka_Corpus"
-				target="_blank"
-				rel="noopener noreferrer">Tanaka Corpus</a
-			>{t('dataAfter2')}<a
-				href="https://kanjivg.tagaini.net/"
-				target="_blank"
-				rel="noopener noreferrer">KanjiVG</a
-			>{t('dataAfter3')}
-		</p>
+		{#if pack === 'es'}
+			<!-- Legal/data-credit lines stay in English (same convention as the
+			     footer) — only the paragraph switches per edition. -->
+			<p>
+				Dictionary data from <a
+					href="https://es.wiktionary.org/"
+					target="_blank"
+					rel="noopener noreferrer">Spanish Wiktionary</a
+				> (Wikimedia contributors, CC BY-SA 4.0), extracted with <a
+					href="https://github.com/tatuylonen/wiktextract"
+					target="_blank"
+					rel="noopener noreferrer">wiktextract</a
+				>. Sentences from <a
+					href="https://tatoeba.org/"
+					target="_blank"
+					rel="noopener noreferrer">Tatoeba</a
+				> (CC BY 2.0 FR). Frequency data from <a
+					href="https://github.com/rspeer/wordfreq"
+					target="_blank"
+					rel="noopener noreferrer">wordfreq</a
+				> (MIT).
+			</p>
+		{:else}
+			<p>
+				{t('dataBefore')}<a
+					href="https://www.edrdg.org/wiki/index.php/JMdict-EDICT_Dictionary_Project"
+					target="_blank"
+					rel="noopener noreferrer">JMdict</a
+				>{t('dataAnd')}<a
+					href="https://www.edrdg.org/wiki/index.php/KANJIDIC_Project"
+					target="_blank"
+					rel="noopener noreferrer">KANJIDIC2</a
+				>{t('dataAfter')}<a
+					href="https://www.edrdg.org/wiki/index.php/Tanaka_Corpus"
+					target="_blank"
+					rel="noopener noreferrer">Tanaka Corpus</a
+				>{t('dataAfter2')}<a
+					href="https://kanjivg.tagaini.net/"
+					target="_blank"
+					rel="noopener noreferrer">KanjiVG</a
+				>{t('dataAfter3')}
+			</p>
+		{/if}
 	</section>
 
 	<section>

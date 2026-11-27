@@ -39,7 +39,6 @@ from app.config import (
     LLM_PROVIDER,
     RATE_LIMIT_EXPLAIN,
     RATE_LIMIT_FEEDBACK,
-    RATE_LIMIT_SEARCH,
     TRUSTED_PROXY_HOPS,
     qdrant_client,
 )
@@ -69,6 +68,7 @@ from app.render import (
     segment_chip,
 )
 from app.retrieval import MAX_QUERY_CHARS, MODES, is_headword, morph_hint, search, warm_headword_index
+from app.spanish_explain import CefrLevel, explain_spanish_grammar
 from app.telemetry import telemetry
 
 
@@ -253,9 +253,9 @@ app.include_router(es_lite_router)
 
 
 
-# Per-client request limits (see app/ratelimit.py) — 429 + Retry-After when exceeded.
+# Only grammar explanations and feedback are rate-limited per client; dictionary
+# lookups stay unlimited (user preference). See app/ratelimit.py.
 _explain_limit = Depends(rate_limited(RATE_LIMIT_EXPLAIN, TRUSTED_PROXY_HOPS))
-_search_limit = Depends(rate_limited(RATE_LIMIT_SEARCH, TRUSTED_PROXY_HOPS))
 _feedback_limit = Depends(rate_limited(RATE_LIMIT_FEEDBACK, TRUSTED_PROXY_HOPS))
 
 # Static dictionary data: safe for browsers/CDNs to reuse for a day.
@@ -292,6 +292,16 @@ class RubyPart(BaseModel):
 class ExampleSentence(BaseModel):
     japanese: str
     english: str = ""
+
+
+class EsExampleSentence(BaseModel):
+    spanish: str
+    english: str
+    spanish_id: int
+    english_id: int
+    spanish_author: str = ""
+    english_author: str = ""
+    license: str = "CC BY 2.0 FR"
 
 
 class CommonWord(BaseModel):
@@ -387,6 +397,8 @@ class SearchResult(BaseModel):
     readings: list[str] = []
     meanings: list[str] = []
     example_sentences: list[ExampleSentence] = []
+    # Tatoeba Spanish-English pairs with sentence IDs/authors for CC BY attribution.
+    examples_es: list[EsExampleSentence] = []
     is_common: bool = False
     text: str = ""
     score: float = 0.0
@@ -588,6 +600,13 @@ class EsConjugationsResponse(BaseModel):
     inflected_forms: list[InflectionRow]
 
 
+class EsExplainRequest(BaseModel):
+    sentence: str = Field(min_length=1, max_length=MAX_SENTENCE_CHARS * 8)
+    english: str = Field("", max_length=MAX_ENGLISH_CHARS * 8)
+    level: CefrLevel = "A1"
+    language: Literal["en", "es"] = "en"
+
+
 class ExplainRequest(BaseModel):
     # Defense-in-depth, not the primary guard: the transport cap
     # (_BodyLimitMiddleware / MAX_BODY_BYTES) is what stops a megabyte body
@@ -680,7 +699,7 @@ def ready(response: Response) -> dict:
 
 # ── Search ───────────────────────────────────────────────────────────────────
 
-@app.get("/search", tags=["search"], response_model=SearchResponseModel, dependencies=[_search_limit])
+@app.get("/search", tags=["search"], response_model=SearchResponseModel)
 def search_endpoint(
     background: BackgroundTasks,
     # pattern=\S: whitespace-only input is a 422, not an embed of "".
@@ -785,7 +804,41 @@ def es_conjugations_endpoint(
     return table
 
 
-@app.get("/es/search", tags=["search"], response_model=SearchResponseModel, dependencies=[_search_limit])
+@app.post(
+    "/es/explain",
+    tags=["grammar"],
+    response_model=ExplainResponse,
+    dependencies=[_explain_limit],
+)
+def es_explain_endpoint(req: EsExplainRequest) -> dict:
+    """Explain Spanish grammar with learner-selected CEFR depth (A1-C2)."""
+    try:
+        sentence, english, _ = validate_input(req.sentence, req.english)
+    except ValueError as exc:
+        raise HTTPException(422, str(exc)) from exc
+    started = time.perf_counter()
+    ok = True
+    try:
+        text = explain_spanish_grammar(sentence, english, req.level, req.language)
+    except Exception:
+        logger.exception("Spanish grammar explanation failed")
+        ok = False
+        text = ""
+    latency_ms = int((time.perf_counter() - started) * 1000)
+    explanation_id = telemetry().explanation(sentence, req.level, model=last_model(), latency_ms=latency_ms, ok=ok)
+    if not ok:
+        raise HTTPException(502, EXPLAIN_UNAVAILABLE)
+    return {
+        "explanation_id": explanation_id,
+        "level": req.level,
+        "provider": LLM_PROVIDER,
+        "model": last_model(),
+        "latency_ms": latency_ms,
+        "text": text,
+    }
+
+
+@app.get("/es/search", tags=["search"], response_model=SearchResponseModel)
 def es_search_endpoint(
     # pattern=\S: whitespace-only input is a 422, not an embed of "".
     q: Annotated[

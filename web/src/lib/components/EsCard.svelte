@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { formatNumber, t } from '#lib/i18n.svelte.ts';
 	import Icon from '#lib/components/Icon.svelte';
+	import EsSentenceExamples from '#lib/components/EsSentenceExamples.svelte';
 	import { esPosLabel, type EsResult } from '#lib/lang/es.ts';
 
 	/**
@@ -45,6 +46,8 @@
 			</ul>
 		</div>
 	{/if}
+
+	<EsSentenceExamples examples={result.examples} />
 
 	{#if result.etymologyEs.length || result.originLanguages.length}
 		<section class="es-etymology" aria-label="Etymology">

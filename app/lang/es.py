@@ -148,7 +148,7 @@ def _es_hit_to_dict(hit, score: float | None = None) -> dict:
     # Older native-only chunks leave that field null and store them in meanings.
     definitions = payload.get("definitions_es")
     result["definitions_es"] = result["meanings"] if definitions is None else definitions
-    for field in ("etymology_es", _ORIGIN_FIELD):
+    for field in ("etymology_es", _ORIGIN_FIELD, "examples_es"):
         result[field] = payload.get(field) or []
     return result
 

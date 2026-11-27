@@ -220,6 +220,48 @@
         }
       }
     },
+    "/es/explain": {
+      "post": {
+        "tags": [
+          "grammar"
+        ],
+        "summary": "Es Explain Endpoint",
+        "description": "Explain Spanish grammar with learner-selected CEFR depth (A1-C2).",
+        "operationId": "es_explain_endpoint_es_explain_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EsExplainRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExplainResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/es/search": {
       "get": {
         "tags": [
@@ -1067,6 +1109,92 @@
           "inflected_forms"
         ],
         "title": "EsConjugationsResponse"
+      },
+      "EsExampleSentence": {
+        "properties": {
+          "spanish": {
+            "type": "string",
+            "title": "Spanish"
+          },
+          "english": {
+            "type": "string",
+            "title": "English"
+          },
+          "spanish_id": {
+            "type": "integer",
+            "title": "Spanish Id"
+          },
+          "english_id": {
+            "type": "integer",
+            "title": "English Id"
+          },
+          "spanish_author": {
+            "type": "string",
+            "title": "Spanish Author",
+            "default": ""
+          },
+          "english_author": {
+            "type": "string",
+            "title": "English Author",
+            "default": ""
+          },
+          "license": {
+            "type": "string",
+            "title": "License",
+            "default": "CC BY 2.0 FR"
+          }
+        },
+        "type": "object",
+        "required": [
+          "spanish",
+          "english",
+          "spanish_id",
+          "english_id"
+        ],
+        "title": "EsExampleSentence"
+      },
+      "EsExplainRequest": {
+        "properties": {
+          "sentence": {
+            "type": "string",
+            "maxLength": 1600,
+            "minLength": 1,
+            "title": "Sentence"
+          },
+          "english": {
+            "type": "string",
+            "maxLength": 3200,
+            "title": "English",
+            "default": ""
+          },
+          "level": {
+            "type": "string",
+            "enum": [
+              "A1",
+              "A2",
+              "B1",
+              "B2",
+              "C1",
+              "C2"
+            ],
+            "title": "Level",
+            "default": "A1"
+          },
+          "language": {
+            "type": "string",
+            "enum": [
+              "en",
+              "es"
+            ],
+            "title": "Language",
+            "default": "en"
+          }
+        },
+        "type": "object",
+        "required": [
+          "sentence"
+        ],
+        "title": "EsExplainRequest"
       },
       "EtymologySource": {
         "properties": {
@@ -2188,6 +2316,14 @@
             },
             "type": "array",
             "title": "Example Sentences",
+            "default": []
+          },
+          "examples_es": {
+            "items": {
+              "$ref": "#/components/schemas/EsExampleSentence"
+            },
+            "type": "array",
+            "title": "Examples Es",
             "default": []
           },
           "is_common": {

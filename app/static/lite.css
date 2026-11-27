@@ -228,6 +228,10 @@ margin:1.4rem 0 .6rem;text-align:left}
 .es-lite-etymology{margin-top:var(--space-3);border-top:1px solid var(--border-soft);padding-top:var(--space-2)}
 .es-lite-etymology p{margin:.25rem 0}
 .es-lite-credit{font-size:var(--fs-xs);color:var(--text-muted)}
+.es-lite-examples{margin-top:var(--space-3);border-top:1px solid var(--border-soft);padding-top:var(--space-2)}
+.es-lite-examples ul{margin:.3rem 0 0;padding-left:1.2rem}
+.es-lite-examples li{margin:.4rem 0}
+.es-lite-examples li p{margin:.1rem 0}
 .es-lite-browse{margin-top:var(--space-5)}
 .es-lite-browse .browse-tile{max-width:23rem}
 .es-conj-table{width:100%;border-collapse:collapse;background:var(--surface);font-size:var(--fs-sm)}

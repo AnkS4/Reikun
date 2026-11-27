@@ -47,6 +47,8 @@ export interface EsResult {
 	pos: string[];
 	etymologyEs: string[];
 	originLanguages: string[];
+	/** Tatoeba Spanish-English pairs with sentence-ID and contributor attribution. */
+	examples: components['schemas']['EsExampleSentence'][];
 	/** Number of sourced conjugation rows available on the verb's own page. */
 	conjugationCount: number;
 }
@@ -140,6 +142,7 @@ export function shapeEs(r: ApiResult): EsResult {
 		pos: [...new Set((r.senses ?? []).flatMap((sense) => sense.pos ?? []))],
 		etymologyEs: r.etymology_es ?? [],
 		originLanguages: r.origin_languages ?? [],
+		examples: r.examples_es ?? [],
 		conjugationCount: r.inflected_forms?.length ?? 0
 	};
 }
