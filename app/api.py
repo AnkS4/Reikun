@@ -39,6 +39,7 @@ from app.config import (
     LLM_PROVIDER,
     RATE_LIMIT_EXPLAIN,
     RATE_LIMIT_FEEDBACK,
+    RATE_LIMIT_SEARCH,
     TRUSTED_PROXY_HOPS,
     qdrant_client,
 )
@@ -253,9 +254,9 @@ app.include_router(es_lite_router)
 
 
 
-# Only grammar explanations and feedback are rate-limited per client; dictionary
-# lookups stay unlimited (user preference). See app/ratelimit.py.
+# Per-client request limits (see app/ratelimit.py) — 429 + Retry-After when exceeded.
 _explain_limit = Depends(rate_limited(RATE_LIMIT_EXPLAIN, TRUSTED_PROXY_HOPS))
+_search_limit = Depends(rate_limited(RATE_LIMIT_SEARCH, TRUSTED_PROXY_HOPS))
 _feedback_limit = Depends(rate_limited(RATE_LIMIT_FEEDBACK, TRUSTED_PROXY_HOPS))
 
 # Static dictionary data: safe for browsers/CDNs to reuse for a day.
@@ -699,7 +700,7 @@ def ready(response: Response) -> dict:
 
 # ── Search ───────────────────────────────────────────────────────────────────
 
-@app.get("/search", tags=["search"], response_model=SearchResponseModel)
+@app.get("/search", tags=["search"], response_model=SearchResponseModel, dependencies=[_search_limit])
 def search_endpoint(
     background: BackgroundTasks,
     # pattern=\S: whitespace-only input is a 422, not an embed of "".
@@ -838,7 +839,7 @@ def es_explain_endpoint(req: EsExplainRequest) -> dict:
     }
 
 
-@app.get("/es/search", tags=["search"], response_model=SearchResponseModel)
+@app.get("/es/search", tags=["search"], response_model=SearchResponseModel, dependencies=[_search_limit])
 def es_search_endpoint(
     # pattern=\S: whitespace-only input is a 422, not an embed of "".
     q: Annotated[

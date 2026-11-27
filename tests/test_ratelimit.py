@@ -4,6 +4,8 @@ Pure-Python — builds its own tiny app, so no Qdrant/LLM and no shared state
 with the real endpoints' limiters.
 """
 
+from typing import Any
+
 import pytest
 from fastapi import Depends, FastAPI
 from fastapi.testclient import TestClient
@@ -56,6 +58,25 @@ def test_idle_keys_are_pruned() -> None:
     lim.hit("d")
     lim.hit("e")  # over max_keys → idle a/b/c dropped
     assert set(lim._hits) <= {"d", "e"}
+
+
+def _route_dependency_calls(routes: list[Any], path: str) -> set[object]:
+    route = next(r for r in routes if getattr(r, "path", None) == path)
+    return {d.call for d in route.dependant.dependencies}
+
+
+def test_dictionary_search_routes_keep_the_search_limit() -> None:
+    """Search is a bot/abuse brake: every lookup path must keep the limiter."""
+    from app import api, lite
+    from app.lite import es as lite_es
+
+    for path in ("/search", "/es/search"):
+        assert api._search_limit.dependency in _route_dependency_calls(api.app.routes, path), path
+    for path in ("/lite/search", "/lite/conjugations"):
+        assert lite._search_limit.dependency in _route_dependency_calls(lite.router.routes, path), path
+    assert lite_es._search_limit.dependency in _route_dependency_calls(
+        lite_es.router.routes, "/es/lite/search"
+    )
 
 
 def _app(per_minute: int, hops: int = 1) -> TestClient:

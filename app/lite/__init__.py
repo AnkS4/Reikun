@@ -48,7 +48,7 @@ from collections.abc import Callable, Coroutine
 from typing import Any, cast
 from urllib.parse import quote, unquote, urlencode
 
-from fastapi import APIRouter, BackgroundTasks, Query, Request
+from fastapi import APIRouter, BackgroundTasks, Depends, Query, Request
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from fastapi.routing import APIRoute
 from starlette.background import BackgroundTask
@@ -56,12 +56,15 @@ from starlette.background import BackgroundTask
 from app.config import (
     APP_VERSION,
     COLLECTION,
+    RATE_LIMIT_SEARCH,
+    TRUSTED_PROXY_HOPS,
     WEB_BASE_URL,
     qdrant_client,
 )
 from app.etymology import enrich_lsource
 from app.kanji_lookup import is_kanji, kanji_group_facets, kanji_in, random_kanji
 from app.loanwords import loanword_facets, loanwords_page
+from app.ratelimit import rate_limited
 from app.render import furigana_parts, kanji_card, kanji_group_cards, related_words, segment_chip
 from app.retrieval import MAX_JA_QUERY_CHARS, SearchResponse, is_headword, search
 from app.telemetry import telemetry
@@ -132,6 +135,8 @@ class _LiteRoute(APIRoute):
 # HTML pages, not JSON API surface — keep them out of /docs and the generated
 # frontend types.
 router = APIRouter(tags=["lite"], include_in_schema=False, route_class=_LiteRoute)
+
+_search_limit = Depends(rate_limited(RATE_LIMIT_SEARCH, TRUSTED_PROXY_HOPS))
 
 _CACHE_STATIC = "public, max-age=86400, stale-while-revalidate=604800"
 _CANONICAL_BASE = "https://reikun.app"
@@ -776,7 +781,7 @@ def lite_home(request: Request) -> HTMLResponse:
     )
 
 
-@router.get("/lite/search", response_class=HTMLResponse)
+@router.get("/lite/search", response_class=HTMLResponse, dependencies=[_search_limit])
 def lite_search(
     background: BackgroundTasks,
     request: Request,
@@ -1368,7 +1373,7 @@ def _result_card(query: str, result: dict, furi: bool, lang: str) -> str:
 
 # ── Conjugations ─────────────────────────────────────────────────────────────
 
-@router.get("/lite/conjugations", response_class=HTMLResponse)
+@router.get("/lite/conjugations", response_class=HTMLResponse, dependencies=[_search_limit])
 def lite_conjugations(request: Request, word: str = "", reading: str = "") -> Response:
     """Conjugation table for one word — the target of the result card's
     "Conjugations (n)" link, mirroring the SPA's /conjugations page.

@@ -10,9 +10,10 @@ from __future__ import annotations
 import logging
 from urllib.parse import quote
 
-from fastapi import APIRouter, Query, Request
+from fastapi import APIRouter, Depends, Query, Request
 from fastapi.responses import HTMLResponse, Response
 
+from app.config import RATE_LIMIT_SEARCH, TRUSTED_PROXY_HOPS
 from app.lang.es import es_conjugations, es_etymology_facets, es_etymology_page, search_es
 from app.lite import (
     _COOKIE_MAX_AGE,
@@ -31,11 +32,13 @@ from app.lite import (
     _page as _shared_page,
 )
 from app.lite.i18n import _t
+from app.ratelimit import rate_limited
 from app.telemetry import telemetry
 
 logger = logging.getLogger("reikun.lite.es")
 
 router = APIRouter(tags=["lite"], include_in_schema=False, route_class=_LiteRoute)
+_search_limit = Depends(rate_limited(RATE_LIMIT_SEARCH, TRUSTED_PROXY_HOPS))
 _PAGE_SIZE = 20
 _DEFAULT_COUNT = 10
 
@@ -210,7 +213,7 @@ def es_lite_home(request: Request) -> HTMLResponse:
     return _render_page(request, _t(lang, "es_lite_title"), body, hero=True)
 
 
-@router.get("/es/lite/search", response_class=HTMLResponse)
+@router.get("/es/lite/search", response_class=HTMLResponse, dependencies=[_search_limit])
 def es_lite_search(request: Request, q: str = "") -> Response:
     query = q.strip()
     lang = _controls_lang(request)
