@@ -524,6 +524,32 @@ ruby rt {
 	letter-spacing: -0.02em;
 }
 
+/* The Spanish edition's alpha chip: a quiet editorial marker beside the
+   wordmark — gold reads as brand, not as a warning. Sized from the heading
+   so it tracks the hero and compact headers without a second rule. */
+.alpha-tag {
+	display: inline-flex;
+	align-items: center;
+	padding: 0.12em 0.5em;
+	border: 1px solid rgba(180, 130, 0, 0.4);
+	border-radius: var(--radius-pill);
+	background: rgba(241, 191, 0, 0.14);
+	color: #8a6400;
+	font-family: var(--font-mono);
+	font-size: clamp(0.55rem, 0.2em, 0.78rem);
+	font-weight: 600;
+	letter-spacing: 0.08em;
+	line-height: 1.3;
+	white-space: nowrap;
+	vertical-align: middle;
+}
+
+:is([data-theme='dark'], [data-theme='oled']) .alpha-tag {
+	border-color: rgba(241, 191, 0, 0.38);
+	background: rgba(241, 191, 0, 0.16);
+	color: #f1bf00;
+}
+
 .title-home:hover {
 	opacity: 0.8;
 }
@@ -552,6 +578,23 @@ ruby rt {
 
 [data-pack='es']:is([data-theme='dark'], [data-theme='oled']) .brand-icon {
 	content: url('/icons/emblem-es-dark.svg');
+}
+
+/* The sister-edition switch wears the *other* site's sun: gold on the
+   Japanese host, red on the Spanish one. The dark pair follows the same
+   source-order trick as the brand icon above. */
+.sister-emblem {
+	width: 18px;
+	height: 18px;
+	object-fit: contain;
+}
+
+:is([data-theme='dark'], [data-theme='oled']) .header-es .sister-emblem {
+	content: url('/icons/emblem-es-dark.svg');
+}
+
+[data-pack='es']:is([data-theme='dark'], [data-theme='oled']) .header-es .sister-emblem {
+	content: url('/icons/emblem-dark.svg');
 }
 
 /* Both floating controls share one hit area: 2rem circle, neutral hover */

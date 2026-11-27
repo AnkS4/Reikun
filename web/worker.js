@@ -49,6 +49,16 @@ export default {
 	async fetch(request, env) {
 		const url = new URL(request.url);
 		const api = (env.API_URL || "").replace(/\/+$/, "");
+		// The lite UI is Japanese-only until the Spanish lite ships (M3).
+		// Never serve the Japanese variant from the Spanish host: carry a
+		// search query across, everything else lands on the es home.
+		if (url.hostname === "es.reikun.app" &&
+			(url.pathname === "/lite" || url.pathname.startsWith("/lite/"))) {
+			const target = new URL("/", url);
+			const q = url.searchParams.get("q");
+			if (q) target.searchParams.set("q", q);
+			return Response.redirect(target.toString(), 302);
+		}
 		if (api) {
 			if (url.pathname === "/lite" || url.pathname.startsWith("/lite/")) {
 				return proxy(request, api + url.pathname + url.search, env);
