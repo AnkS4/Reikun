@@ -14,6 +14,14 @@
 	"name": "reikun",
 	"compatibility_date": "2026-10-01",
 	"main": "./worker.js",
+	// Custom domains managed by `wrangler deploy` (the git-integration build
+	// runs it on every push): the Japanese original on the apex, the Spanish
+	// edition on its subdomain. Both create their DNS records + certs
+	// automatically — the zone lives in the same account.
+	"routes": [
+		{ "pattern": "reikun.app", "custom_domain": true },
+		{ "pattern": "es.reikun.app", "custom_domain": true }
+	],
 	"assets": {
 		"directory": "./build",
 		// The ASSETS binding lets the fetch handler read the neutral SPA shell
