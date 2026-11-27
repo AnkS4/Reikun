@@ -21,15 +21,17 @@ dist/
 .env.*
 !.env.example
 
-# Data (populated at runtime or build-time inputs; the three runtime
+# Data (populated at runtime or build-time inputs; the per-language runtime
 # artifacts are explicitly kept)
 data/raw/
-data/kanjivg/
 data/processed/*
-!data/processed/kanji_table.json
-!data/processed/headword_index.marisa
-!data/processed/strokes.json
+!data/processed/ja/
+data/processed/ja/*
+!data/processed/ja/kanji_table.json
+!data/processed/ja/headword_index.marisa
+!data/processed/ja/strokes.json
 data/monitoring/
+data/work/
 
 # Models (pre-warmed in Dockerfile)
 models/
