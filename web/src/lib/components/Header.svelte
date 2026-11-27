@@ -48,6 +48,7 @@
 		if (path === '/about') return `${base}/lite/about`;
 		if (path === '/privacy') return `${base}/lite/privacy`;
 		if (path === '/history') return `${base}/lite/history`;
+		if (path === '/etymology') return `${base}/lite/etymology${search}`;
 		if (path === '/kana') {
 			const variant = page.url.searchParams.get('variant') === 'katakana' ? '?variant=katakana' : '';
 			return `${base}/lite/kana${variant}`;

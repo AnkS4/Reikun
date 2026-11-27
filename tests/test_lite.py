@@ -15,6 +15,7 @@ from fastapi.testclient import TestClient
 
 from app import lite
 from app.api import APP_VERSION, app
+from app.lite import es as es_lite
 
 client = TestClient(app)
 
@@ -30,6 +31,94 @@ def test_home_is_html_without_javascript() -> None:
     assert r.headers["content-type"].startswith("text/html")
     assert 'action="/lite/search"' in r.text and 'name="q"' in r.text
     assert "<script" not in r.text.lower()
+
+
+def test_spanish_lite_home_is_spanish_static_and_branded() -> None:
+    page = client.get("/es/lite", headers={"x-reikun-language-pack": "es"})
+    assert page.status_code == 200
+    assert '<html lang="es"' in page.text
+    assert 'action="/lite/search"' in page.text
+    assert 'href="https://es.reikun.app"' in page.text
+    assert "The open Spanish dictionary" in page.text
+    assert "ALPHA" in page.text and ">Lite</span>" in page.text
+    assert "sobremesa" in page.text and "anduvieras" in page.text
+    assert "/lite/etymology" in page.text
+    assert "kanji" not in page.text.lower()
+    assert "<script" not in page.text.lower()
+
+
+def test_spanish_lite_search_is_server_rendered_and_updates_shared_history(monkeypatch: pytest.MonkeyPatch) -> None:
+    from app.lang.es import SearchResponse
+    from app.query_rewrite import Rewrite
+
+    hit = {
+        "reading": "hablar", "ipa": "/a\\u02c8blaɾ/", "meanings": ["to speak"],
+        "definitions_es": ["Expresar algo usando palabras."],
+        "etymology_es": ["Del castellano antiguo fablar."],
+        "origin_languages": ["castellano antiguo"],
+        "senses": [{"pos": ["verb"]}],
+        "inflected_forms": [{"form": "indicative present", "surface": "hablo"}],
+    }
+    class _Telemetry:
+        def search(self, *args, **kwargs):
+            return None
+
+    monkeypatch.setattr(es_lite, "search_es", lambda query, count: SearchResponse(
+        results=(hit,), rewrite=Rewrite(original=query, query=query, method="none"), mode="es", latency_ms=3
+    ))
+    monkeypatch.setattr(es_lite, "telemetry", _Telemetry)
+    headers = {"x-reikun-language-pack": "es"}
+    page = client.get("/es/lite/search", params={"q": "hablar"}, headers=headers)
+    assert page.status_code == 200 and "<script" not in page.text.lower()
+    assert "to speak" in page.text and "Expresar algo usando palabras." in page.text
+    assert "Del castellano antiguo fablar." in page.text
+    assert 'href="/lite/etymology?lang=castellano%20antiguo"' in page.text
+    assert 'href="/lite/conjugations?word=hablar"' in page.text
+    assert "lite_recent=" in page.headers.get("set-cookie", "")
+
+
+def test_spanish_lite_history_reads_the_shared_cookie() -> None:
+    client.cookies.clear()
+    client.cookies.set("lite_recent", quote(json.dumps(["sobremesa"]), safe=""))
+    try:
+        history = client.get("/es/lite/history", headers={"x-reikun-language-pack": "es"})
+        assert history.status_code == 200
+        assert "Búsquedas recientes" in history.text
+        assert 'href="/lite/search?q=sobremesa"' in history.text
+    finally:
+        client.cookies.clear()
+
+
+def test_spanish_lite_etymology_and_conjugations_use_pack_data(monkeypatch: pytest.MonkeyPatch) -> None:
+    from app.lite import es as es_lite
+
+    monkeypatch.setattr(es_lite, "es_etymology_facets", lambda: [
+        {"lang": "latín", "name": "Latín", "count": 100},
+    ])
+    monkeypatch.setattr(es_lite, "es_etymology_page", lambda lang, offset, limit: {
+        "lang": lang, "name": "Latín", "total": 100, "offset": offset,
+        "results": [{
+            "reading": "casa", "meanings": ["house"],
+            "definitions_es": ["Del latín casa."],
+            "origin_languages": ["latín"],
+            "etymology_es": ["Del latín casa (choza)."],
+            "senses": [], "inflected_forms": [],
+        }],
+    })
+    monkeypatch.setattr(es_lite, "es_conjugations", lambda word: {
+        "word": "hablar", "inflected_forms": [
+            {"form": "indicative present", "surface": "hablo"},
+        ],
+    })
+    headers = {"x-reikun-language-pack": "es"}
+    facets = client.get("/es/lite/etymology", headers=headers)
+    assert facets.status_code == 200
+    assert 'href="/lite/etymology?lang=lat%C3%ADn"' in facets.text
+    entries = client.get("/es/lite/etymology", params={"lang": "latín"}, headers=headers)
+    assert "Del latín casa (choza)." in entries.text and "Wikcionario en español" in entries.text
+    conjugations = client.get("/es/lite/conjugations", params={"word": "hablar"}, headers=headers)
+    assert conjugations.status_code == 200
+    assert "hablo" in conjugations.text and 'lang="es"' in conjugations.text
 
 
 def test_kanji_group_freq_page_labels(monkeypatch) -> None:

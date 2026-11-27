@@ -57,6 +57,7 @@ from app.grammar_explain import (
 from app.kanji_lookup import _load_kanji_table, is_kanji, jlpt_kanji, kanji_group_facets, random_kanji
 from app.lang.es import ES_COLLECTION, es_conjugations, es_etymology_facets, es_etymology_page, search_es
 from app.lite import router as lite_router
+from app.lite.es import router as es_lite_router
 from app.loanwords import loanword_facets, loanwords_page
 from app.ratelimit import rate_limited
 from app.render import (
@@ -248,6 +249,7 @@ app.add_middleware(
 
 # JavaScript-free, server-rendered UI (/lite, /lite/search, /lite/kanji…).
 app.include_router(lite_router)
+app.include_router(es_lite_router)
 
 
 

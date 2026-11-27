@@ -217,6 +217,22 @@ background:var(--surface);color:var(--text-muted);
 font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);
 margin:1.4rem 0 .6rem;text-align:left}
 .history-list a{overflow-wrap:anywhere}
+/* Spanish-pack word cards, shared etymology and the bilingual home page. */
+.es-headword{font-family:var(--font);overflow-wrap:anywhere}
+.es-ipa{display:inline-flex;font-family:var(--font-mono);font-size:var(--fs-xs);color:var(--text-muted);
+ background:var(--surface-soft);border-radius:var(--radius-pill);padding:.15rem .55rem}
+.es-lite-defs{margin-top:var(--space-3);padding:var(--space-2) var(--space-3);background:var(--surface-soft);border-radius:var(--radius-sm)}
+.es-lite-native{background:transparent;border:1px solid var(--border-soft)}
+.es-lite-defs ul{margin:.3rem 0 0;padding-left:1.2rem;line-height:1.5}
+.es-lite-defs li{margin:.15rem 0}
+.es-lite-etymology{margin-top:var(--space-3);border-top:1px solid var(--border-soft);padding-top:var(--space-2)}
+.es-lite-etymology p{margin:.25rem 0}
+.es-lite-credit{font-size:var(--fs-xs);color:var(--text-muted)}
+.es-lite-browse{margin-top:var(--space-5)}
+.es-lite-browse .browse-tile{max-width:23rem}
+.es-conj-table{width:100%;border-collapse:collapse;background:var(--surface);font-size:var(--fs-sm)}
+.es-conj-table th,.es-conj-table td{padding:.35rem .5rem;border-bottom:1px solid var(--border-soft);text-align:left}
+.es-conj-table tbody th{font-weight:500;color:var(--text-muted)}
 .browse-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:var(--space-3);margin-top:var(--space-3)}
 @media (max-width:40rem){.browse-grid{grid-template-columns:repeat(2,1fr)}}
 .pick-grid{grid-template-columns:repeat(3,1fr)}

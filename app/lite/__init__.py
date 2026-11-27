@@ -104,7 +104,7 @@ def _with_etag(request: Request, response: Response) -> Response:
     if not response.headers.get("content-type", "").startswith("text/html"):
         return response
     etag = '"' + hashlib.sha256(body).hexdigest()[:16] + '"'
-    if request.url.path in ("/lite", "/lite/"):
+    if request.url.path in ("/lite", "/lite/", "/es/lite", "/es/lite/"):
         # The home page depends on the recent-searches cookie, so a 304 could
         # serve a stale "Example searches" copy to someone who has searched
         # since (some browsers/proxies mishandle Vary: Cookie). Always fresh.
@@ -480,9 +480,34 @@ def _lang_toggle(lang: str, next_url: str) -> str:
     )
 
 
+def _is_es_pack(request: Request) -> bool:
+    """The edge Worker selects the Spanish Lite renderer by pack header."""
+    return request.headers.get("x-reikun-language-pack") == "es"
+
+
+def _controls_lang(request: Request) -> str:
+    """Spanish Lite starts in Spanish unless the visitor has a locale cookie."""
+    if _is_es_pack(request) and not request.cookies.get(_LANG_COOKIE):
+        return "es"
+    return _read_lang(request)
+
+
 def _full_switch_url(request: Request) -> str:
-    """Map the current Lite page to its full-UI equivalent so the variant
-    switch lands on the same content instead of always the home page."""
+    """Map the current Lite page to its full-UI equivalent."""
+    if _is_es_pack(request):
+        base = "https://es.reikun.app"
+        path = request.url.path.removeprefix("/es")
+        if path == "/lite":
+            return base
+        if path == "/lite/search" and (q := request.query_params.get("q", "")):
+            return f"{base}/?q={quote(q, safe='')}"
+        if path == "/lite/history":
+            return f"{base}/history"
+        if path == "/lite/etymology":
+            return f"{base}/etymology?{request.url.query}" if request.url.query else f"{base}/etymology"
+        if path == "/lite/conjugations" and request.query_params.get("word"):
+            return f"{base}/conjugations?word={quote(request.query_params['word'], safe='')}"
+        return base
     if not WEB_BASE_URL:
         return ""
     base = WEB_BASE_URL.rstrip("/")
@@ -539,9 +564,13 @@ def _full_switch_url(request: Request) -> str:
 
 def _controls(request: Request) -> str:
     """Top-right chrome row on every page, using links and native disclosures."""
-    lang = _read_lang(request)
+    lang = _controls_lang(request)
     theme = _read_theme(request)
     next_url = _current_path(request)
+    if _is_es_pack(request):
+        # API-side es routes are prefixed internally; redirects return to the
+        # browser-visible /lite namespace, which the Worker maps back to /es/lite.
+        next_url = next_url.removeprefix("/es")
     parts = []
     full_url = _full_switch_url(request)
     if full_url:
@@ -551,12 +580,14 @@ def _controls(request: Request) -> str:
             f' title="{esc(label)}" aria-label="{esc(label)}">{_icon("full")}</a>'
         )
     history_label = esc(_t(lang, "recentSearches"))
-    current = ' aria-current="page"' if request.url.path == "/lite/history" else ""
+    current = ' aria-current="page"' if request.url.path.endswith("/lite/history") else ""
     parts.append(
         f'<a class="icon-link" href="/lite/history" title="{history_label}"'
         f' aria-label="{history_label}"{current}>{_icon("history")}</a>'
     )
-    parts.extend((_status_chip(lang), _theme_toggle(theme, next_url, lang), _lang_toggle(lang, next_url)))
+    if not _is_es_pack(request):
+        parts.append(_status_chip(lang))
+    parts.extend((_theme_toggle(theme, next_url, lang), _lang_toggle(lang, next_url)))
     return '<div class="controls">' + "".join(parts) + '</div>'
 
 
@@ -574,9 +605,12 @@ def _page(
     canonical: str = "",
     noindex: bool = False,
     cache_lang: str | None = None,
+    header_markup: str | None = None,
+    footer_markup: str | None = None,
+    description: str | None = None,
 ) -> HTMLResponse:
     head_extras = (
-        f'<meta name="description" content="{esc(_t(lang, "lite_tagline"))}">\n'
+        f'<meta name="description" content="{esc(description or _t(lang, "lite_tagline"))}">\n'
         + (f'<link rel="canonical" href="{_CANONICAL_BASE}{esc(canonical)}">\n' if canonical else "")
         + ('<meta name="robots" content="noindex">\n' if noindex else "")
     )
@@ -592,13 +626,13 @@ def _page(
 <body>
 <a class="skip-link" href="#main">{esc(_t(lang, "skipToContent"))}</a>
 <div class="page-header">
-{_header(hero, lang)}
+{header_markup if header_markup is not None else _header(hero, lang)}
 {controls}
 </div>
 <main id="main" tabindex="-1">
 {body}
 </main>
-{_FOOTER}
+{footer_markup if footer_markup is not None else _FOOTER}
 </body>
 </html>"""
     # cache_lang is the visitor's UI language when it differs from the
@@ -985,8 +1019,8 @@ def _current_path(request: Request) -> str:
 
 
 def _safe_next(next_url: str | None) -> str:
-    # Sites-only redirect: a /lite… path may carry a query, but never a domain.
-    if next_url and next_url.startswith("/lite") and not next_url.startswith("//"):
+    # Local-only redirects: either pack's Lite path may carry a query, never a domain.
+    if next_url and (next_url.startswith("/lite") or next_url.startswith("/es/lite")) and not next_url.startswith("//"):
         return next_url
     return "/lite"
 

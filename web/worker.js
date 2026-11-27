@@ -9,7 +9,8 @@
  *
  *   /api/*   → the Cloud Run API, with the `/api` prefix stripped
  *              (the SPA bakes PUBLIC_API_BASE=/api at build time)
- *   /lite*   → the Cloud Run API's server-rendered lite UI, path as-is
+ *   /lite*   → the Cloud Run API's server-rendered lite UI; on the Spanish host
+ *              /lite* maps to its Spanish pack while fonts/preferences stay shared
  *   (other)  → static assets (handled by the assets router before this
  *              script unless `run_worker_first` lists the path), falling
  *              back to the neutral SPA shell for client-rendered deep links.
@@ -49,19 +50,20 @@ export default {
 	async fetch(request, env) {
 		const url = new URL(request.url);
 		const api = (env.API_URL || "").replace(/\/+$/, "");
-		// The lite UI is Japanese-only until the Spanish lite ships (M3).
-		// Never serve the Japanese variant from the Spanish host: carry a
-		// search query across, everything else lands on the es home.
-		if (url.hostname === "es.reikun.app" &&
-			(url.pathname === "/lite" || url.pathname.startsWith("/lite/"))) {
-			const target = new URL("/", url);
-			const q = url.searchParams.get("q");
-			if (q) target.searchParams.set("q", q);
-			return Response.redirect(target.toString(), 302);
-		}
 		if (api) {
 			if (url.pathname === "/lite" || url.pathname.startsWith("/lite/")) {
-				return proxy(request, api + url.pathname + url.search, env);
+				const spanish = url.hostname === "es.reikun.app";
+				const sharedAsset = /^\/lite\/(static|fonts)\//.test(url.pathname);
+				const sharedPreference = /^\/lite\/(theme|lang|recent\/clear)$/.test(url.pathname);
+				const path = spanish && !sharedAsset && !sharedPreference
+					? url.pathname.replace(/^\/lite(?=\/|$)/, "/es/lite")
+					: url.pathname;
+				if (spanish) {
+					const headers = new Headers(request.headers);
+					headers.set("x-reikun-language-pack", "es");
+					request = new Request(request, { headers });
+				}
+				return proxy(request, api + path + url.search, env);
 			}
 			if (url.pathname === "/api" || url.pathname.startsWith("/api/")) {
 				const path = url.pathname.slice("/api".length) || "/";
