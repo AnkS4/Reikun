@@ -89,26 +89,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/es/explain": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Es Explain Endpoint
-         * @description Explain Spanish grammar with learner-selected CEFR depth (A1-C2).
-         */
-        post: operations["es_explain_endpoint_es_explain_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/es/search": {
         parameters: {
             query?: never;
@@ -503,28 +483,6 @@ export interface components {
              * @default CC BY 2.0 FR
              */
             license: string;
-        };
-        /** EsExplainRequest */
-        EsExplainRequest: {
-            /** Sentence */
-            sentence: string;
-            /**
-             * English
-             * @default
-             */
-            english: string;
-            /**
-             * Level
-             * @default A1
-             * @enum {string}
-             */
-            level: "A1" | "A2" | "B1" | "B2" | "C1" | "C2";
-            /**
-             * Language
-             * @default en
-             * @enum {string}
-             */
-            language: "en" | "es";
         };
         /** EsFamiliesResponse */
         EsFamiliesResponse: {
@@ -1398,39 +1356,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    es_explain_endpoint_es_explain_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["EsExplainRequest"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ExplainResponse"];
                 };
             };
             /** @description Validation Error */

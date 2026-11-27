@@ -33,12 +33,15 @@ function readSharedCookie(): 'light' | 'dark' | null {
 function syncSharedCookie(c: ThemeChoice): void {
 	if (!browser) return;
 	// A pinned choice is shared with the lite UI through the cookie; system
-	// removes it so lite falls back to its own system resolution.
+	// removes it so lite falls back to its own system resolution. Domain=reikun.app
+	// makes it visible on both reikun.app and es.reikun.app (both variants);
+	// localhost stays host-only because browsers reject that domain there.
+	const host = location.hostname.toLowerCase();
+	const domain = host === 'reikun.app' || host.endsWith('.reikun.app') ? '; domain=reikun.app' : '';
 	const value = c === 'system' ? '' : c === 'light' ? 'light' : 'dark';
 	document.cookie =
-		value === ''
-			? `${SHARED_COOKIE}=; path=/; max-age=0; samesite=lax`
-			: `${SHARED_COOKIE}=${value}; path=/; max-age=${COOKIE_AGE}; samesite=lax`;
+		(value === '' ? `${SHARED_COOKIE}=; path=/; max-age=0; samesite=lax` :
+			`${SHARED_COOKIE}=${value}; path=/; max-age=${COOKIE_AGE}; samesite=lax`) + domain;
 }
 
 // Cached once at module load — avoids repeated matchMedia() calls in apply().

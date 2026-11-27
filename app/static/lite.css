@@ -87,8 +87,18 @@ font-weight:400;text-wrap:balance}
 .lite-note{font-size:var(--fs-xs);color:var(--text-muted);margin:var(--space-2) auto 0;max-width:38rem;text-align:center}
 .lite-note a{color:var(--primary)}
 .brand{font-family:'IBM Plex Sans','Segoe UI',Roboto,sans-serif;font-size:var(--fs-2xl);font-weight:500;
- text-decoration:none;color:var(--text);}
+ display:inline-flex;align-items:baseline;gap:.25rem;text-decoration:none;color:var(--text)}
 .brand:hover{opacity:.8}
+/* The SPA's emblem, reused in both Lite wordmarks; CSS picks the edition's
+   artwork and its dark pair, exactly like web/src/app.css. */
+.brand-icon{width:1.08cap;height:1.08cap;flex:none;object-fit:contain;vertical-align:middle}
+:root[data-theme=dark] .brand-icon{content:url('/icons/emblem-dark.svg')}
+:root[data-pack=es] .brand-icon{content:url('/icons/emblem-es.svg')}
+:root[data-pack=es]:root[data-theme=dark] .brand-icon{content:url('/icons/emblem-es-dark.svg')}
+@media (prefers-color-scheme:dark){
+:root[data-theme=system] .brand-icon{content:url('/icons/emblem-dark.svg')}
+:root[data-pack=es][data-theme=system] .brand-icon{content:url('/icons/emblem-es-dark.svg')}
+}
 .brand .brand-wordmark{letter-spacing:-.02em}
 /* -.17em lifts the kanji ink onto the Latin cap band — CJK glyphs sit low
    on the shared baseline, so bare baseline alignment reads ~7px too low. */

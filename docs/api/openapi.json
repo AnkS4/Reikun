@@ -220,48 +220,6 @@
         }
       }
     },
-    "/es/explain": {
-      "post": {
-        "tags": [
-          "grammar"
-        ],
-        "summary": "Es Explain Endpoint",
-        "description": "Explain Spanish grammar with learner-selected CEFR depth (A1-C2).",
-        "operationId": "es_explain_endpoint_es_explain_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/EsExplainRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ExplainResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/es/search": {
       "get": {
         "tags": [
@@ -1174,49 +1132,6 @@
           "english_id"
         ],
         "title": "EsExampleSentence"
-      },
-      "EsExplainRequest": {
-        "properties": {
-          "sentence": {
-            "type": "string",
-            "maxLength": 1600,
-            "minLength": 1,
-            "title": "Sentence"
-          },
-          "english": {
-            "type": "string",
-            "maxLength": 3200,
-            "title": "English",
-            "default": ""
-          },
-          "level": {
-            "type": "string",
-            "enum": [
-              "A1",
-              "A2",
-              "B1",
-              "B2",
-              "C1",
-              "C2"
-            ],
-            "title": "Level",
-            "default": "A1"
-          },
-          "language": {
-            "type": "string",
-            "enum": [
-              "en",
-              "es"
-            ],
-            "title": "Language",
-            "default": "en"
-          }
-        },
-        "type": "object",
-        "required": [
-          "sentence"
-        ],
-        "title": "EsExplainRequest"
       },
       "EsFamiliesResponse": {
         "properties": {

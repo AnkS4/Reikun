@@ -664,10 +664,11 @@ def test_about_page() -> None:
 
 
 def test_about_page_has_no_external_assets() -> None:
-    # Lite stays lean: stylesheet, icon font and one same-origin sister emblem
-    # (the sixth chrome control) — nothing else is fetched from the network.
+    # Lite stays lean: stylesheet, icon font, the wordmark emblem and the
+    # sister-switch emblem — nothing else is fetched from the network.
     r = client.get("/lite/about")
-    assert r.text.count("<img") == 1
+    assert r.text.count("<img") == 2
+    assert 'class="brand-icon" src="/icons/emblem.svg"' in r.text
     assert 'class="sister-emblem"' in r.text and 'src="/icons/emblem-es.svg"' in r.text
     assert client.get("/lite/static/emblem.svg").status_code == 404
 
@@ -981,3 +982,36 @@ def test_sister_switch_never_carries_a_search_query() -> None:
         assert f'href="{expected}"' in page.text
         sister = page.text.split('class="icon-link sister-switch"')[1].split(">")[0]
         assert "q=azahar" not in sister
+
+
+def test_wordmark_is_clickable_and_branded_in_both_lite_editions() -> None:
+    for path, headers, emblem in (
+        ("/lite", {}, "/icons/emblem.svg"),
+        ("/es/lite", {"x-reikun-language-pack": "es"}, "/icons/emblem-es.svg"),
+    ):
+        page = client.get(path, headers=headers)
+        assert '<a class="brand" href="/lite"' in page.text
+        assert f'class="brand-icon" src="{emblem}"' in page.text
+        assert f'data-pack="{"es" if headers else "ja"}"' in page.text
+    results = client.get("/es/lite/search", params={"q": "hablar"}, headers={"x-reikun-language-pack": "es"})
+    assert '<a class="brand" href="/lite"' in results.text  # not just on the home page
+
+
+def test_theme_cookie_is_shared_across_editions_and_stays_local_offline() -> None:
+    from fastapi.testclient import TestClient
+
+    from app.api import app as api_app
+
+    for host in ("reikun.app", "es.reikun.app"):
+        c = TestClient(api_app, base_url=f"https://{host}")
+        r = c.get("/lite/theme", params={"v": "dark", "next": "/lite"}, follow_redirects=False)
+        assert r.status_code == 303
+        assert "domain=reikun.app" in r.headers["set-cookie"].lower()
+    local = TestClient(api_app, base_url="http://localhost:8000")
+    r = local.get("/lite/theme", params={"v": "dark", "next": "/lite"}, follow_redirects=False)
+    assert "domain=" not in r.headers["set-cookie"].lower()
+
+
+def test_spanish_explain_feature_is_removed() -> None:
+    assert client.post("/es/explain", json={"sentence": "Hola."}).status_code == 404
+    assert "/es/explain" not in client.get("/openapi.json").json()["paths"]

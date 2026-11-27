@@ -293,31 +293,60 @@ def _badge(badge: dict, from_word: str = "", lang: str = "en") -> str:
     return f'<span class="badge" title="{tip}">{label}</span>'
 
 
-def _header(hero: bool, lang: str = "en") -> str:
+def _emblem(pack: str = "ja") -> str:
+    """The same wordmark emblem as the SPA, per edition; CSS swaps dark art."""
+    src = "/icons/emblem.svg" if pack == "ja" else "/icons/emblem-es.svg"
+    return f'<img class="brand-icon" src="{src}" alt="" aria-hidden="true">'
+
+
+def _header(
+    hero: bool,
+    lang: str = "en",
+    *,
+    pack: str = "ja",
+    subtext: str | None = None,
+    tagline: str | None = None,
+    tags: str = "",
+    note: str = "",
+) -> str:
+    """Shared Lite header for both editions.
+
+    Japanese passes only its pack; the Spanish renderer supplies its own
+    subtext/tagline/chips/note. Both get the same brand link and emblem, so
+    the wordmark is clickable on every page in both variants.
+    """
+    emblem = _emblem(pack)
     wordmark = '<span class="brand-wordmark" lang="en">Reikun</span>'
+    default_tags = '<span class="tag">lite</span>'
     if hero:
         # The kanji can't live inside the brand <a> — nested anchors are
         # invalid HTML and the parser would spit the links out of the span.
         # A .brand-line wrapper carries the hero font-size so the kanji can
         # size itself in em relative to the wordmark.
-        return (
-            '<header class="hero">'
-            f'<p class="hero-tag">{esc(_BRAND_SUBTEXT)}</p>'
-            f'<h1 class="hero-title"><span class="brand-line">'
-            f'<a class="brand" href="/lite">{wordmark}</a>'
-            f'<span class="brand-kanji" lang="ja">('
-            f'<a href="/lite/kanji/{quote("例", safe="")}">例</a>'
-            f'<a href="/lite/kanji/{quote("訓", safe="")}">訓</a>)</span>'
-            '</span>'
-            '<span class="tag">lite</span></h1>'
-            f'<p class="tagline">{esc(_t(lang, "lite_tagline"))}</p>'
+        kanji = ""
+        if pack == "ja":
+            kanji = (
+                '<span class="brand-kanji" lang="ja">('
+                f'<a href="/lite/kanji/{quote("例", safe="")}">例</a>'
+                f'<a href="/lite/kanji/{quote("訓", safe="")}">訓</a>)</span>'
+            )
+        default_note = (
             f'<p class="lite-note">{esc(_t(lang, "lite_note"))} '
             f'<a href="/lite/about#lite">{esc(_t(lang, "lite_noteLink"))}</a></p>'
+        )
+        return (
+            '<header class="hero">'
+            f'<p class="hero-tag">{esc(subtext or _BRAND_SUBTEXT)}</p>'
+            f'<h1 class="hero-title"><span class="brand-line">'
+            f'<a class="brand" href="/lite">{emblem}{wordmark}</a>'
+            f'{kanji}</span>{tags or default_tags}</h1>'
+            f'<p class="tagline">{esc(tagline or _t(lang, "lite_tagline"))}</p>'
+            f'{note or default_note}'
             "</header>"
         )
     return (
-        f'<header><a class="brand" href="/lite" title="{esc(_t(lang, "backToSearch"))}">{wordmark}</a>'
-        '<span class="tag">lite</span></header>'
+        f'<header><a class="brand" href="/lite" title="{esc(_t(lang, "backToSearch"))}">{emblem}{wordmark}</a>'
+        f'{tags or default_tags}</header>'
     )
 
 
@@ -643,6 +672,7 @@ def _page(
     footer_markup: str | None = None,
     description: str | None = None,
     status_pack: str = "ja",
+    pack: str = "ja",
 ) -> HTMLResponse:
     head_extras = (
         f'<meta name="description" content="{esc(description or _t(lang, "lite_tagline"))}">\n'
@@ -650,7 +680,7 @@ def _page(
         + ('<meta name="robots" content="noindex">\n' if noindex else "")
     )
     document = f"""<!doctype html>
-<html lang="{esc(lang)}" data-theme="{esc(theme)}">
+<html lang="{esc(lang)}" data-theme="{esc(theme)}" data-pack="{esc(pack)}">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -913,7 +943,11 @@ def lite_theme(request: Request, v: str = "", next: str = "") -> Response:
     the page follows the system preference, so unknown values leave it alone."""
     response = RedirectResponse(_safe_next(next), status_code=303, headers={"Cache-Control": "no-store"})
     if v in _THEMES:
-        response.set_cookie(_THEME_COOKIE, v, max_age=_COOKIE_MAX_AGE, samesite="lax", secure=_secure_cookie(request))
+        response.set_cookie(
+            _THEME_COOKIE, v,
+            max_age=_COOKIE_MAX_AGE, samesite="lax", secure=_secure_cookie(request),
+            domain=_theme_cookie_domain(request),
+        )
     return response
 
 
@@ -960,6 +994,18 @@ def _secure_cookie(request: Request) -> bool:
     """First-party preference cookies don't need HttpOnly (the SPA reads them),
     but in production they must ride HTTPS."""
     return request.url.scheme == "https"
+
+
+def _theme_cookie_domain(request: Request) -> str | None:
+    """Make the theme cookie visible to both editions and both variants.
+
+    `reikun.app` and `es.reikun.app` are separate hosts; a host-only cookie
+    set on one is invisible on the other. A parent-domain cookie keeps the
+    theme choice shared across all four combinations. Local/dev hosts stay
+    host-only (browsers reject Domain=reikun.app on localhost).
+    """
+    host = request.headers.get("host", "").split(":", 1)[0].lower()
+    return "reikun.app" if host == "reikun.app" or host.endswith(".reikun.app") else None
 
 
 def _int(value: str, default: int) -> int:

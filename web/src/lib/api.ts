@@ -16,7 +16,6 @@ export type SearchResult = components['schemas']['SearchResult'];
 export type SenseResult = components['schemas']['SenseResult'];
 export type ExampleSentence = components['schemas']['ExampleSentence'];
 export type EsExampleSentence = components['schemas']['EsExampleSentence'];
-export type EsCefrLevel = components['schemas']['EsExplainRequest']['level'];
 export type Segment = components['schemas']['Segment'];
 export type RubyPart = components['schemas']['RubyPart'];
 export type KanjiCard = components['schemas']['KanjiCard'];
@@ -185,16 +184,6 @@ export function esConjugations(word: string): Promise<components['schemas']['EsC
 		const { data, error, response } = await client.GET('/es/conjugations', {
 			params: { query: { word } }, signal
 		});
-		if (error) throw asError(error, response.status);
-		return data;
-	});
-}
-
-export const ES_CEFR_LEVELS: readonly EsCefrLevel[] = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
-
-export function apiEsExplain(input: components['schemas']['EsExplainRequest']): Promise<components['schemas']['ExplainResponse']> {
-	return call(async (signal) => {
-		const { data, error, response } = await client.POST('/es/explain', { body: input, signal });
 		if (error) throw asError(error, response.status);
 		return data;
 	});

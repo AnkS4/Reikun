@@ -31,6 +31,9 @@ from app.lite import (
     esc,
 )
 from app.lite import (
+    _header as _shared_header,
+)
+from app.lite import (
     _page as _shared_page,
 )
 from app.lite.i18n import _t
@@ -38,6 +41,9 @@ from app.ratelimit import rate_limited
 from app.telemetry import telemetry
 
 logger = logging.getLogger("reikun.lite.es")
+
+# Same untranslatable brand line as the full Spanish SPA (pack.ts).
+_BRAND_SUBTEXT_ES = "The open Spanish dictionary"
 
 router = APIRouter(tags=["lite"], include_in_schema=False, route_class=_LiteRoute)
 _search_limit = Depends(rate_limited(RATE_LIMIT_SEARCH, TRUSTED_PROXY_HOPS))
@@ -63,16 +69,20 @@ _POS = {
 
 
 def _header(*, hero: bool, lang: str) -> str:
-    wordmark = '<span class="brand-wordmark" lang="en">Reikun</span>'
+    """Spanish chrome reuses the shared Lite header (emblem, brand link, note)."""
     tags = '<span class="tag">ALPHA</span><span class="tag">Lite</span>'
-    if hero:
-        return (
-            '<header class="hero"><p class="hero-tag">The open Spanish dictionary</p>'
-            '<h1 class="hero-title"><span class="brand-line">'
-            f'<a class="brand" href="/lite">{wordmark}</a>{tags}'
-            f'</span></h1><p class="tagline">{esc(_t(lang, "es_lite_tagline"))}</p></header>'
-        )
-    return f'<header>{wordmark}{tags}</header>'
+    note = (
+        f'<p class="lite-note">{esc(_t(lang, "lite_note"))} '
+        f'<a href="/lite/about#lite">{esc(_t(lang, "lite_noteLink"))}</a></p>'
+    )
+    return _shared_header(
+        hero, lang,
+        pack="es",
+        subtext=_BRAND_SUBTEXT_ES,
+        tagline=_t(lang, "es_lite_tagline"),
+        tags=tags,
+        note=note,
+    )
 
 
 # Same English-only footer as the full Spanish edition (and the Japanese
@@ -110,6 +120,7 @@ def _render_page(request: Request, title: str, body: str, *, hero: bool = False)
         footer_markup=_FOOTER,
         description=description,
         status_pack="es",
+        pack="es",
     )
 
 

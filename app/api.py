@@ -70,7 +70,6 @@ from app.render import (
     segment_chip,
 )
 from app.retrieval import MAX_QUERY_CHARS, MODES, is_headword, morph_hint, search, warm_headword_index
-from app.spanish_explain import CefrLevel, explain_spanish_grammar
 from app.telemetry import telemetry
 
 
@@ -616,13 +615,6 @@ class EsFamiliesResponse(BaseModel):
     families: list[EsFamily]
 
 
-class EsExplainRequest(BaseModel):
-    sentence: str = Field(min_length=1, max_length=MAX_SENTENCE_CHARS * 8)
-    english: str = Field("", max_length=MAX_ENGLISH_CHARS * 8)
-    level: CefrLevel = "A1"
-    language: Literal["en", "es"] = "en"
-
-
 class ExplainRequest(BaseModel):
     # Defense-in-depth, not the primary guard: the transport cap
     # (_BodyLimitMiddleware / MAX_BODY_BYTES) is what stops a megabyte body
@@ -818,40 +810,6 @@ def es_conjugations_endpoint(
     if table is None:
         raise HTTPException(404, "No conjugations available for this word.")
     return table
-
-
-@app.post(
-    "/es/explain",
-    tags=["grammar"],
-    response_model=ExplainResponse,
-    dependencies=[_explain_limit],
-)
-def es_explain_endpoint(req: EsExplainRequest) -> dict:
-    """Explain Spanish grammar with learner-selected CEFR depth (A1-C2)."""
-    try:
-        sentence, english, _ = validate_input(req.sentence, req.english)
-    except ValueError as exc:
-        raise HTTPException(422, str(exc)) from exc
-    started = time.perf_counter()
-    ok = True
-    try:
-        text = explain_spanish_grammar(sentence, english, req.level, req.language)
-    except Exception:
-        logger.exception("Spanish grammar explanation failed")
-        ok = False
-        text = ""
-    latency_ms = int((time.perf_counter() - started) * 1000)
-    explanation_id = telemetry().explanation(sentence, req.level, model=last_model(), latency_ms=latency_ms, ok=ok)
-    if not ok:
-        raise HTTPException(502, EXPLAIN_UNAVAILABLE)
-    return {
-        "explanation_id": explanation_id,
-        "level": req.level,
-        "provider": LLM_PROVIDER,
-        "model": last_model(),
-        "latency_ms": latency_ms,
-        "text": text,
-    }
 
 
 @app.get("/es/search", tags=["search"], response_model=SearchResponseModel, dependencies=[_search_limit])
