@@ -47,7 +47,7 @@ COPY --chown=app:app \
     data/processed/ja/kanji_table.json \
     data/processed/ja/headword_index.marisa \
     data/processed/ja/strokes.json \
-    data/processed/
+    data/processed/ja/
 
 # shared UI strings — app/lite/i18n.py resolves i18n/ two levels above itself
 COPY --chown=app:app i18n/ i18n/
