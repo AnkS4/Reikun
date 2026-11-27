@@ -862,6 +862,11 @@ export interface components {
             /** Ipa */
             ipa?: string | null;
             /**
+             * Definitions Es
+             * @default []
+             */
+            definitions_es: string[];
+            /**
              * Reading Restrictions
              * @default {}
              */

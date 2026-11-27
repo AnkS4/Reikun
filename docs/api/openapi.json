@@ -2064,6 +2064,14 @@
             ],
             "title": "Ipa"
           },
+          "definitions_es": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Definitions Es",
+            "default": []
+          },
           "reading_restrictions": {
             "additionalProperties": {
               "items": {

@@ -399,6 +399,9 @@ class SearchResult(BaseModel):
     # Pronunciation (IPA) — the es pack's furigana slot (alphabetic language);
     # JMdict entries carry none.
     ipa: str | None = None
+    # Native-Spanish definitions (es pack) — the display glosses beneath the
+    # English `meanings`; JMdict entries carry none.
+    definitions_es: list[str] = []
     reading_restrictions: dict[str, list[str]] = {}
     # Variant-forms block: per-keb reading bindings + ke_inf labels +
     # kana-only readings; None when the entry carries no restrictions or
