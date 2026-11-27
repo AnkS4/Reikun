@@ -68,7 +68,7 @@ text-rendering:optimizeLegibility}
 :focus-visible{outline:2px solid var(--primary);outline-offset:2px}
 a{color:inherit;text-decoration:none}
 .page-header{display:flex;flex-wrap:wrap;align-items:center;gap:var(--space-2);margin-bottom:.35rem}
-header{display:flex;align-items:baseline;gap:var(--space-2)}
+header{display:flex;align-items:baseline}
 /* The controls are viewport-fixed (see .controls), so the hero needs enough
    top margin to clear them — including the larger 2.75rem touch targets. */
 header.hero{display:block;order:1;flex-basis:100%;text-align:center;
@@ -109,9 +109,10 @@ font-weight:400;text-wrap:balance}
 .tag{font-family:var(--font-mono);font-size:var(--fs-2xs);font-weight:500;color:var(--text-muted);
 background:var(--surface-soft);border:1px solid var(--border-soft);border-radius:var(--radius-pill);
 padding:.1rem var(--space-2);text-transform:uppercase;letter-spacing:.05em;white-space:nowrap}
-/* The Spanish wordmark carries two chips in one inline brand-line (no flex
-   gap there), unlike the single lite chip on the Japanese hero. */
-.brand-line .tag+.tag{margin-left:var(--space-1)}
+/* Chips share one inline-flex wrapper in both hero and compact headers, so
+   the gap before ALPHA and between ALPHA/LITE is the same 4px everywhere. */
+.header-tags{display:inline-flex;align-items:center;gap:var(--space-1);
+ margin-left:var(--space-1);vertical-align:baseline}
 /* Viewport-corner cluster, matching the full UI's fixed top-right controls.
    A centered content column would otherwise park it ~190px from the corner
    on desktop; only the menus below overlay content. */

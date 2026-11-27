@@ -39,11 +39,12 @@
 		>{t('clear')}</button>
 	</div>
 	{#if recent.length}
-		<ul>
+		<!-- Same pill buttons as beneath the search box on the home page. -->
+		<div class="pills" aria-label={t('recentSearches')}>
 			{#each recent as query (query)}
-				<li><a href={searchHref(query)}>{query}</a></li>
+				<a class="pill" href={searchHref(query)}>{query}</a>
 			{/each}
-		</ul>
+		</div>
 	{:else}
 		<p class="history-empty" role="status">{t('noRecentSearches')}</p>
 	{/if}
@@ -67,24 +68,12 @@
 		cursor: default;
 	}
 
-	ul {
-		margin: 0;
-		list-style: none;
-		padding: 0;
-		border-top: 1px solid var(--border-soft);
+	.pills {
+		justify-content: flex-start;
 	}
 
-	li a {
-		display: block;
-		padding: var(--space-3) var(--space-2);
-		border-bottom: 1px solid var(--border-soft);
-		color: var(--text);
-		text-decoration: none;
+	.pill {
 		overflow-wrap: anywhere;
-	}
-
-	li a:hover {
-		background: var(--hover-bg);
 	}
 
 	.history-back {

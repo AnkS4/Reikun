@@ -282,12 +282,15 @@ def es_lite_history(request: Request) -> HTMLResponse:
     recent = _read_recent(request)
     body = f'<h1>{esc(_t(lang, "recentSearches"))}</h1>'
     if recent:
+        # Plain pills, matching the Spanish Lite home's pinned searches.
         items = "".join(
-            f'<li><a href="/lite/search?q={quote(query, safe="")}">{esc(query)}</a></li>'
+            f'<a class="pill" href="/lite/search?q={quote(query, safe="")}">{esc(query)}</a>'
             for query in recent
         )
+        label = esc(_t(lang, "recentSearches"))
         body += (
-            f'<ul class="history-list">{items}</ul><p><a href="/lite/recent/clear?next=%2Flite%2Fhistory">'
+            f'<div class="pills" aria-label="{label}">{items}</div>'
+            '<p><a href="/lite/recent/clear?next=%2Flite%2Fhistory">'
             f'{esc(_t(lang, "clear"))}</a></p>'
         )
     else:

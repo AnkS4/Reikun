@@ -178,7 +178,7 @@ def test_lite_chrome_hugs_the_viewport_corner() -> None:
     and the Spanish hero's two chips need their own inline gap."""
     css = client.get("/lite/static/lite.css").text
     assert "position:fixed;top:.6rem;right:.85rem" in css
-    assert ".brand-line .tag+.tag{margin-left:var(--space-1)}" in css  # 4px
+    assert ".header-tags{display:inline-flex;align-items:center;gap:var(--space-1);" in css  # 4px
     # The fixed cluster must not sit on top of the hero on small screens.
     assert "header.hero{margin:2.75rem 0 var(--space-5)}" in css
 
@@ -433,7 +433,7 @@ def test_recent_cookie_is_only_displayed_on_the_private_history_page() -> None:
         history = client.get("/lite/history")
         assert history.headers["cache-control"] == "no-store"
         assert 'name="robots" content="noindex"' in history.text
-        assert f'href="/lite/search?q={quote("走る")}">走る</a>' in history.text
+        assert f'class="pill" href="/lite/search?q={quote("走る")}">走る</a>' in history.text
     finally:
         client.cookies.clear()
 
@@ -1018,3 +1018,14 @@ def test_theme_cookie_is_shared_across_editions_and_stays_local_offline() -> Non
 def test_spanish_explain_feature_is_removed() -> None:
     assert client.post("/es/explain", json={"sentence": "Hola."}).status_code == 404
     assert "/es/explain" not in client.get("/openapi.json").json()["paths"]
+
+
+def test_lite_chips_share_the_same_wrapper_in_both_editions() -> None:
+    for path, headers, chips in (
+        ("/lite", {}, '<span class="tag">lite</span>'),
+        ("/es/lite", {"x-reikun-language-pack": "es"}, '<span class="tag">ALPHA</span><span class="tag">Lite</span>'),
+    ):
+        home = client.get(path, headers=headers).text
+        assert f'<span class="header-tags">{chips}</span>' in home
+    css = client.get("/lite/static/lite.css").text
+    assert ".header-tags{display:inline-flex;align-items:center;gap:var(--space-1);" in css

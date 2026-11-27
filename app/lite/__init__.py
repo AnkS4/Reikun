@@ -317,7 +317,10 @@ def _header(
     """
     emblem = _emblem(pack)
     wordmark = '<span class="brand-wordmark" lang="en">Reikun</span>'
+    # One wrapper keeps the gap before the first chip and between chips at 4px
+    # in both the hero and the compact header (the old flex gap was 8px there).
     default_tags = '<span class="tag">lite</span>'
+    header_tags = f'<span class="header-tags">{tags or default_tags}</span>'
     if hero:
         # The kanji can't live inside the brand <a> — nested anchors are
         # invalid HTML and the parser would spit the links out of the span.
@@ -339,14 +342,14 @@ def _header(
             f'<p class="hero-tag">{esc(subtext or _BRAND_SUBTEXT)}</p>'
             f'<h1 class="hero-title"><span class="brand-line">'
             f'<a class="brand" href="/lite">{emblem}{wordmark}</a>'
-            f'{kanji}</span>{tags or default_tags}</h1>'
+            f'{kanji}</span>{header_tags}</h1>'
             f'<p class="tagline">{esc(tagline or _t(lang, "lite_tagline"))}</p>'
             f'{note or default_note}'
             "</header>"
         )
     return (
         f'<header><a class="brand" href="/lite" title="{esc(_t(lang, "backToSearch"))}">{emblem}{wordmark}</a>'
-        f'{tags or default_tags}</header>'
+        f'{header_tags}</header>'
     )
 
 
@@ -970,11 +973,16 @@ def lite_history(request: Request) -> HTMLResponse:
     recent = _read_recent(request)
     body = f'<h1>{esc(title)}</h1>'
     if recent:
+        # Plain pills, same as the pinned searches below the Lite search box.
         items = "".join(
-            f'<li><a href="{_href("/lite/search", q=query)}">{esc(query)}</a></li>' for query in recent
+            f'<a class="pill" href="{_href("/lite/search", q=query)}">{esc(query)}</a>' for query in recent
         )
         clear_url = _href("/lite/recent/clear", next="/lite/history")
-        body += f'<ul class="history-list">{items}</ul><p><a href="{clear_url}">{esc(_t(lang, "clear"))}</a></p>'
+        label = esc(_t(lang, "recentSearches"))
+        body += (
+            f'<div class="pills" aria-label="{label}">{items}</div>'
+            f'<p><a href="{clear_url}">{esc(_t(lang, "clear"))}</a></p>'
+        )
     else:
         body += f'<p>{esc(_t(lang, "noRecentSearches"))}</p>'
     body += f'<p><a href="/lite">{esc(_t(lang, "backToSearch"))}</a></p>'
