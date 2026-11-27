@@ -22,7 +22,7 @@
 		// The proxy paths must reach the Worker FIRST — the assets router
 		// otherwise answers (or claims) them before any fetch-handler logic.
 		// Patterns, not plain prefixes: "/api/*" does not match "/api" itself.
-		"run_worker_first": ["/api", "/api/*", "/lite", "/lite/*"],
+		"run_worker_first": ["/", "/api", "/api/*", "/lite", "/lite/*"],
 		// Unmatched paths are handled by the Worker's fetch handler, which
 		// serves the neutral SPA shell (200.html). NOT
 		// "single-page-application": that mode serves index.html, and

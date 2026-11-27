@@ -58,6 +58,22 @@ export default {
 				return proxy(request, api + path + url.search, env);
 			}
 		}
+		// "/" reaches the Worker (run_worker_first): the Spanish edition's host
+		// serves the neutral SPA shell — index.html is the *prerendered
+		// Japanese home*, and es.reikun.app's home is the Spanish search
+		// (lib/lang/pack.ts switches on the hostname after hydration). Every
+		// other host gets the prerendered home as before.
+		if (url.pathname === "/") {
+			const home = await env.ASSETS.fetch(
+				new URL(url.hostname === "es.reikun.app" ? "/200.html" : "/index.html", request.url)
+			);
+			if (home.ok) {
+				const headers = new Headers(home.headers);
+				headers.set("content-type", "text/html; charset=utf-8");
+				headers.set("cache-control", "no-cache");
+				return new Response(home.body, { status: 200, headers });
+			}
+		}
 		// The SPA shell — adapter-static's 200.html fallback (a neutral shell,
 		// unlike index.html, which is the prerendered home page). Served with a
 		// 200 so the client router can take over the requested URL.

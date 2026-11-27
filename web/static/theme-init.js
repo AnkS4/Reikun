@@ -33,4 +33,13 @@
 				var bg = { light: '#fcfaf6', dark: '#0f1620', oled: '#000000' }[resolved] || '#fcfaf6';
 				var meta = document.getElementById('theme-color');
 				if (meta) meta.setAttribute('content', bg);
+				// The Spanish edition's origin swaps the brand artwork for the
+				// gold-sun set (same mark, Spanish accent) — icon + touch icon.
+				// The favicon SVG already adapts to dark chrome via its own styles.
+				if (location.hostname === 'es.reikun.app') {
+					var icon = document.querySelector('link[rel="icon"][type="image/svg+xml"]');
+					if (icon) icon.setAttribute('href', icon.getAttribute('href').replace(/favicon\.svg/, 'favicon-es.svg'));
+					var touch = document.querySelector('link[rel="apple-touch-icon"]');
+					if (touch) touch.setAttribute('href', touch.getAttribute('href').replace(/apple-touch-icon\.png/, 'apple-touch-icon-es.png'));
+				}
 			})();
