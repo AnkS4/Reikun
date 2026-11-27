@@ -456,8 +456,10 @@ def route_query(query: str) -> str:
     return "en_word" if len(query.split()) <= 3 else "en_sentence"
 
 
-def _rrf(prefetches: list[Prefetch], weights: list[float], limit: int) -> dict[str, Any]:
-    return {"prefetch": prefetches, "query": RrfQuery(rrf=Rrf(weights=weights)), "limit": limit}
+def _rrf(prefetches: list[Prefetch], weights: list[float], limit: int,
+         k: int | None = None) -> dict[str, Any]:
+    return {"prefetch": prefetches,
+            "query": RrfQuery(rrf=Rrf(weights=weights, k=k)), "limit": limit}
 
 
 def _auto_search(query: str, num_results: int, *, vectors, route: str) -> list[dict]:

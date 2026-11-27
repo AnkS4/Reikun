@@ -76,11 +76,25 @@ def test_es_search_too_long_is_flagged_not_embedded(monkeypatch):
     assert calls == []  # rejected before any model/DB work
 
 
-def test_es_exact_filter_covers_both_directions():
-    f = es_pack.es_exact_filter("hablas")
-    keys = [c.key for c in f.should]
-    assert keys == ["reading", "infl_forms", "gloss_keys"]
-    assert all(c.match.value == "hablas" for c in f.should)
+def test_es_exact_filters_cover_both_directions():
+    word_f = es_pack.es_word_filter("hablas")
+    assert [c.key for c in word_f.should] == ["reading", "infl_forms"]
+    assert all(c.match.value == "hablas" for c in word_f.should)
+
+    gloss_f = es_pack.es_gloss_filter("house")
+    assert [c.key for c in gloss_f.should] == ["primary_gloss_keys"]
+    assert gloss_f.should[0].match.value == "house"
+
+
+def test_es_language_route_uses_relative_frequency():
+    # wordfreq's es corpus carries English loans, so "house" has a high es
+    # zipf — only the en-vs-es comparison routes it correctly.
+    assert es_pack._looks_spanish("casa")
+    assert es_pack._looks_spanish("casa grande")
+    assert es_pack._looks_spanish("hablas")
+    assert not es_pack._looks_spanish("house")
+    assert not es_pack._looks_spanish("big house")
+    assert not es_pack._looks_spanish("to speak")
 
 
 def test_es_ready_503_when_collection_missing(monkeypatch):

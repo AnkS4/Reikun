@@ -34,6 +34,7 @@ from wordfreq import zipf_frequency
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from app.config import CHUNKS_SCHEMA, proc_dir, raw_dir
+from app.query_rewrite import gloss_keys
 
 log = logging.getLogger(__name__)
 
@@ -79,6 +80,19 @@ def _clean_glosses(sense: dict, cap: int = 3) -> list[str]:
     return out
 
 
+def _gloss_key_set(glosses: list[str]) -> list[str]:
+    """Normalised exact-match keys for a gloss list — the ja pipeline's
+    `gloss_keys` contract. Each semicolon-separated fragment is treated as
+    its own gloss, so "to talk; to speak" yields "talk"/"speak" keys instead
+    of one long phrase. Only English glosses feed this: native definitions
+    would let "red social" match an English "red" query."""
+    keys: set[str] = set()
+    for gloss in glosses:
+        for part in gloss.split(";"):
+            keys.update(gloss_keys(part))
+    return sorted(keys)[:20]
+
+
 def _chunk(entry: dict) -> dict:
     word = entry["word"]
     pos = entry.get("pos") or ""
@@ -95,10 +109,6 @@ def _chunk(entry: dict) -> dict:
             if g.lower() not in {a.lower() for a in all_glosses}:
                 all_glosses.append(g)
     meanings = all_glosses[:6]
-    gloss_keys = list({t.lower() for g in all_glosses for t in g.split()})[:20]
-    primary = sense_rows[0]["glosses"] if sense_rows else []
-    primary_keys = list({t.lower() for g in primary for t in g.split()})[:20]
-
     text = f"{word}: {'; '.join(meanings)}"
     ipa = next((s.get("ipa") for s in (entry.get("sounds") or []) if s.get("ipa")), None)
     chunk = {
@@ -106,9 +116,11 @@ def _chunk(entry: dict) -> dict:
         "kanji_form": None,
         "reading": word,
         "meanings": meanings,
-        "gloss_keys": gloss_keys,
-        "primary_gloss_keys": primary_keys,
-        "head_gloss_keys": primary[:1],
+        # English exact-match keys are filled by _merge_en; native gloss
+        # tokens would pollute the English arm ("red social" -> "red").
+        "gloss_keys": [],
+        "primary_gloss_keys": [],
+        "head_gloss_keys": [],
         "example_sentences": [],
         "text": text,
         "sparse_text": f"{word}: {'; '.join(all_glosses[:12])}",
@@ -179,12 +191,14 @@ def _merge_en(chunk: dict, en_entry: dict | None) -> None:
     chunk["definitions_es"] = chunk["meanings"]
     if en_glosses:
         chunk["meanings"] = en_glosses
-        gloss_keys = list({t.lower() for g in en_glosses for t in g.split()})[:20]
-        chunk["gloss_keys"] = gloss_keys
-        chunk["primary_gloss_keys"] = list(
-            {t.lower() for g in en_glosses[:1] for t in g.split()})[:20]
-        chunk["head_gloss_keys"] = en_glosses[:1]
+        chunk["gloss_keys"] = _gloss_key_set(en_glosses)
+        chunk["primary_gloss_keys"] = _gloss_key_set(en_glosses[:1])
+        chunk["head_gloss_keys"] = chunk["primary_gloss_keys"]
         chunk["text"] = f"{chunk['reading']}: {'; '.join(en_glosses)}"
+        # The BM25 sparse index serves BOTH directions: the English tokens
+        # join the native ones (Spanish queries keep matching the native
+        # text; English queries gain their gloss tokens).
+        chunk["sparse_text"] = f"{chunk['sparse_text']} {'; '.join(en_glosses)}"
     # The en edition's conjugation tables are the fuller ones (hablar: 303
     # forms vs the es edition's 138) — union the surfaces, prefer en rows.
     en_forms = en_entry.get("forms") or []
