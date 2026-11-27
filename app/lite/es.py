@@ -209,7 +209,10 @@ def es_lite_home(request: Request) -> HTMLResponse:
         f'<section class="es-lite-browse"><p class="pills-label">{esc(_t(lang, "es_lite_explore"))}</p>'
         '<a class="browse-tile" href="/lite/etymology">'
         f'<span class="browse-name">{esc(_t(lang, "es_lite_etymology"))}</span>'
-        f'<span class="browse-desc">{esc(_t(lang, "es_lite_browse_etymology"))}</span></a></section>'
+        f'<span class="browse-desc">{esc(_t(lang, "es_lite_browse_etymology"))}</span></a>'
+        '<a class="browse-tile" href="/lite/conjugations">'
+        f'<span class="browse-name">{esc(_t(lang, "conjugations"))}</span>'
+        f'<span class="browse-desc">{esc(_t(lang, "es_lite_browse_conjugations"))}</span></a></section>'
     )
     return _render_page(request, _t(lang, "es_lite_title"), body, hero=True)
 

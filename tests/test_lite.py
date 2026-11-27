@@ -42,7 +42,7 @@ def test_spanish_lite_home_is_spanish_static_and_branded() -> None:
     assert "The open Spanish dictionary" in page.text
     assert "ALPHA" in page.text and ">Lite</span>" in page.text
     assert "sobremesa" in page.text and "anduvieras" in page.text
-    assert "/lite/etymology" in page.text
+    assert "/lite/etymology" in page.text and "/lite/conjugations" in page.text
     assert "kanji" not in page.text.lower()
     assert "<script" not in page.text.lower()
 

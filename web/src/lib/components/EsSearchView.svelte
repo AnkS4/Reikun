@@ -246,5 +246,10 @@
 			<span class="browse-name">Etymology</span>
 			<span class="browse-desc">Browse Spanish words by source language</span>
 		</a>
+		<a class="browse-tile" href="/conjugations">
+			<span class="browse-icon"><Icon name="school" size={22} /></span>
+			<span class="browse-name">Conjugations</span>
+			<span class="browse-desc">Verb tables for Spanish verbs, including irregular forms</span>
+		</a>
 	</div>
 {/if}

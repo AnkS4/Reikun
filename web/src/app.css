@@ -3720,6 +3720,20 @@ button, a, input, summary {
 	margin-top: var(--space-5);
 }
 
+/* The Explore tiles are the last thing on either homepage: drop the usual
+   page-bottom padding and footer gap there so the section doesn't float a
+   full screen-height away from the rule. */
+main:has(.browse) {
+	/* Sticky-footer flex growth is what opens a huge void below the tiles on
+	   tall viewports; home pages let the footer follow the content instead. */
+	flex-grow: 0;
+	padding-bottom: var(--space-3);
+}
+
+main:has(.browse) + .footer {
+	margin-top: var(--space-3);
+}
+
 .browse-grid {
 	display: grid;
 	grid-template-columns: repeat(4, 1fr);
