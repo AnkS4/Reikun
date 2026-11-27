@@ -143,15 +143,14 @@
 	>
 		<Icon name="history" size={18} />
 	</a>
-	{#if pack === 'ja'}
-		<!-- Variant switch, drawn like the popover triggers: a plain 2rem round
-		     icon button — a lightning bolt for the quick, lightweight variant,
-		     matched in height and form with the status dot / appearance / language
-		     controls. -->
-		<a class="btn tertiary header-lite" href={LITE_URL} title={t('liteSwitch')} aria-label={t('liteSwitch')} rel="noopener">
-			<Icon name="zap" size={18} />
-		</a>
-	{/if}
+	<!-- Variant switch, drawn like the popover triggers: a plain 2rem round
+	     icon button — a lightning bolt for the quick, lightweight variant,
+	     matched in height and form with the status dot / appearance / language
+	     controls. Both packs get it: the Spanish Lite is live, so hiding it
+	     there stranded Spanish visitors on the full UI. -->
+	<a class="btn tertiary header-lite" href={LITE_URL} title={t('liteSwitch')} aria-label={t('liteSwitch')} rel="noopener">
+		<Icon name="zap" size={18} />
+	</a>
 	<!-- svelte-ignore a11y_no_noninteractive_tabindex — focusable so keyboard users can open the status tooltip -->
 	<span
 		class="status-dot"

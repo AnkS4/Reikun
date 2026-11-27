@@ -157,6 +157,16 @@ def test_home_browse_links() -> None:
     assert 'icon-book-open-text' in home and 'icon-lang' in home
 
 
+def test_lite_chrome_hugs_the_viewport_corner() -> None:
+    """The full UI pins its controls to the viewport; Lite must do the same,
+    and the Spanish hero's two chips need their own inline gap."""
+    css = client.get("/lite/static/lite.css").text
+    assert "position:fixed;top:.6rem;right:.85rem" in css
+    assert ".brand-line .tag+.tag{margin-left:var(--space-2)}" in css
+    # The fixed cluster must not sit on top of the hero on small screens.
+    assert "header.hero{margin:2.75rem 0 var(--space-5)}" in css
+
+
 def test_lite_serves_the_plex_mirror() -> None:
     client.cookies.clear()
     css = client.get("/lite/fonts/fonts.css")

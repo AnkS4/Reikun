@@ -69,8 +69,10 @@ text-rendering:optimizeLegibility}
 a{color:inherit;text-decoration:none}
 .page-header{display:flex;flex-wrap:wrap;align-items:center;gap:var(--space-2);margin-bottom:.35rem}
 header{display:flex;align-items:baseline;gap:var(--space-2)}
+/* The controls are viewport-fixed (see .controls), so the hero needs enough
+   top margin to clear them — including the larger 2.75rem touch targets. */
 header.hero{display:block;order:1;flex-basis:100%;text-align:center;
-margin:clamp(var(--space-4),5vh,var(--space-7)) 0 var(--space-5)}
+margin:max(clamp(var(--space-4),5vh,var(--space-7)),2.75rem) 0 var(--space-5)}
 .hero-tag{display:inline-block;font-family:var(--font-mono);font-size:var(--fs-xs);font-weight:500;
 letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted);background:var(--surface-soft);
 border:1px solid var(--border-soft);border-radius:var(--radius-pill);padding:var(--space-1) var(--space-3);margin:0 0 var(--space-4)}
@@ -97,9 +99,14 @@ font-weight:400;text-wrap:balance}
 .tag{font-family:var(--font-mono);font-size:var(--fs-2xs);font-weight:500;color:var(--text-muted);
 background:var(--surface-soft);border:1px solid var(--border-soft);border-radius:var(--radius-pill);
 padding:.1rem var(--space-2);text-transform:uppercase;letter-spacing:.05em;white-space:nowrap}
-/* Keep the toolbar in the header's flow; only the menus overlay content. */
-.controls{--control-size:2rem;--controls-gap:.15rem;position:relative;z-index:var(--z-header);display:flex;
- align-items:center;gap:var(--controls-gap);margin-left:auto}
+/* The Spanish wordmark carries two chips in one inline brand-line (no flex
+   gap there), unlike the single lite chip on the Japanese hero. */
+.brand-line .tag+.tag{margin-left:var(--space-2)}
+/* Viewport-corner cluster, matching the full UI's fixed top-right controls.
+   A centered content column would otherwise park it ~190px from the corner
+   on desktop; only the menus below overlay content. */
+.controls{--control-size:2rem;--controls-gap:.15rem;position:fixed;top:.6rem;right:.85rem;
+ margin-right:-8px;z-index:var(--z-header);display:flex;align-items:center;gap:var(--controls-gap)}
 /* Top-right icon buttons, mirroring the SPA's header cluster: same 2rem round
    hit area, muted until hover. Titles + aria-labels carry the meaning. */
 .controls .icon-link{display:inline-flex;align-items:center;justify-content:center;
@@ -478,7 +485,7 @@ line-height:1.15;white-space:normal;word-break:break-word}
 @media (max-width:680px){
 body{padding:1.25rem var(--space-4) var(--space-7)}
 .controls{--controls-gap:var(--space-1)}
-header.hero{margin:var(--space-4) 0 var(--space-5)}
+header.hero{margin:2.75rem 0 var(--space-5)}
 .hero-tag{font-size:var(--fs-2xs);letter-spacing:.04em;padding:.2rem .65rem}
 .tagline{font-size:var(--fs-md);line-height:1.5;max-width:22rem;color:var(--text-faint)}
 input[name=q]{font-size:var(--fs-body)}
