@@ -4,7 +4,8 @@
 	import { apiReadyShared } from '#lib/api.ts';
 	import { theme } from '#lib/theme.svelte.ts';
 	import { i18n, t, LOCALES, LOCALE_NAMES, LOCALE_TAGS } from '#lib/i18n.svelte.ts';
-	import { BRAND_SHORT, BRAND_SUBTEXT } from '#lib/brand.ts';
+	import { BRAND_SHORT } from '#lib/brand.ts';
+	import { brandSubtext, currentPack, emblemSrc } from '#lib/lang/pack.ts';
 	import { page } from '$app/state';
 	import { PUBLIC_API_BASE } from '$app/env/public';
 	import KanjiText from './KanjiText.svelte';
@@ -174,20 +175,22 @@
 	<div class="header-title" class:hero>
 		{#if hero}
 			<div class="hero-badge-tag">
-				<span>{BRAND_SUBTEXT}</span>
+				<span>{brandSubtext()}</span>
 			</div>
 		{/if}
 		<h1 class="title-heading" class:hero-heading={hero} class:compact-title={!hero}>
 			<a class="title-home" href="/" title={isHome ? undefined : t('backToSearch')}>
 				<img
-					src="/icons/emblem.svg"
+					src={emblemSrc()}
 					alt=""
 					class="brand-icon"
 					aria-hidden="true"
 				/>
 				<span class="brand-wordmark" lang="en">{BRAND_SHORT}</span>
 			</a>
-			{#if hero}
+			{#if hero && currentPack() === 'ja'}
+				<!-- 例訓 clarifies the name on the Japanese edition only — it would
+				     be nonsense on the Spanish edition's header. -->
 				<span class="brand-kanji" lang="ja">(<KanjiText text="例訓" />)</span>
 			{/if}
 		</h1>
