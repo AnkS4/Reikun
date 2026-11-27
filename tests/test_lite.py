@@ -47,6 +47,18 @@ def test_spanish_lite_home_is_spanish_static_and_branded() -> None:
     assert "<script" not in page.text.lower()
 
 
+def test_spanish_lite_carries_all_six_chrome_controls() -> None:
+    page = client.get("/es/lite", headers={"x-reikun-language-pack": "es"})
+    controls = page.text.split('class="controls"')[1].split("<main", 1)[0]
+    markers = ("sister-switch", "icon-full", "icon-history", "status-dot", "theme-toggle", "lang-menu")
+    assert all(marker in controls for marker in markers)
+    order = [controls.index(marker) for marker in markers]
+    assert order == sorted(order)
+    # Sister switch stays inside this variant and wears the Japanese emblem.
+    assert 'href="https://reikun.app/lite"' in controls
+    assert 'src="/icons/emblem.svg"' in controls
+
+
 def test_spanish_lite_search_is_server_rendered_and_updates_shared_history(monkeypatch: pytest.MonkeyPatch) -> None:
     from app.lang.es import SearchResponse
     from app.query_rewrite import Rewrite
@@ -162,7 +174,7 @@ def test_lite_chrome_hugs_the_viewport_corner() -> None:
     and the Spanish hero's two chips need their own inline gap."""
     css = client.get("/lite/static/lite.css").text
     assert "position:fixed;top:.6rem;right:.85rem" in css
-    assert ".brand-line .tag+.tag{margin-left:var(--space-2)}" in css
+    assert ".brand-line .tag+.tag{margin-left:var(--space-1)}" in css  # 4px
     # The fixed cluster must not sit on top of the hero on small screens.
     assert "header.hero{margin:2.75rem 0 var(--space-5)}" in css
 
@@ -273,6 +285,13 @@ def test_theme_toggle_is_one_click_and_variant_switch(monkeypatch) -> None:
     assert 'aria-label="Switch to the full interface"' in controls
     assert 'class="icon-link"' in controls and 'class="status-dot' in controls
     assert 'class="theme-toggle"' in controls and 'class="lang-menu"' in controls
+    # Same cluster order as the full UI: sister, variant, history, status,
+    # appearance, language — the variant switch and History were swapped.
+    order = [
+        controls.index(marker)
+        for marker in ("sister-switch", "icon-full", "icon-history", "status-dot", "theme-toggle", "lang-menu")
+    ]
+    assert order == sorted(order)
     assert "http://127.0.0.1:5173" in controls
     interior = client.get("/lite/history").text
     interior_controls = interior.split('class="controls"')[1].split("<main", 1)[0]
@@ -379,6 +398,25 @@ def test_status_refresh_coalesces_onto_one_probe(monkeypatch: pytest.MonkeyPatch
     lite._refresh_status()  # guard free → the single probe runs
     assert probes == [1]
     assert lite._status_snapshot["ok"] is True and lite._status_snapshot["count"] == 7
+
+
+def test_spanish_status_chip_probes_the_spanish_collection(monkeypatch: pytest.MonkeyPatch) -> None:
+    from types import SimpleNamespace
+
+    seen: list[str] = []
+    monkeypatch.setattr(lite, "_es_status_snapshot", {"ok": None, "count": None, "at": 0.0, "error": None})
+
+    class _FakeClient:
+        def count(self, collection: str, timeout: int = 2) -> SimpleNamespace:
+            seen.append(collection)
+            return SimpleNamespace(count=42)
+
+    monkeypatch.setattr(lite, "qdrant_client", lambda: _FakeClient())
+    lite._refresh_status("es")
+    assert seen == ["es_words"]
+    assert lite._es_status_snapshot["ok"] is True and lite._es_status_snapshot["count"] == 42
+    page = client.get("/es/lite", headers={"x-reikun-language-pack": "es"})
+    assert "status-dot" in page.text
 
 
 def test_recent_cookie_is_only_displayed_on_the_private_history_page() -> None:
@@ -622,9 +660,11 @@ def test_about_page() -> None:
 
 
 def test_about_page_has_no_external_assets() -> None:
-    # Lite stays asset-free apart from its stylesheet: no emblem request.
+    # Lite stays lean: stylesheet, icon font and one same-origin sister emblem
+    # (the sixth chrome control) — nothing else is fetched from the network.
     r = client.get("/lite/about")
-    assert "<img" not in r.text and "emblem" not in r.text
+    assert r.text.count("<img") == 1
+    assert 'class="sister-emblem"' in r.text and 'src="/icons/emblem-es.svg"' in r.text
     assert client.get("/lite/static/emblem.svg").status_code == 404
 
 

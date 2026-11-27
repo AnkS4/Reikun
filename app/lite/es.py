@@ -102,6 +102,7 @@ def _render_page(request: Request, title: str, body: str, *, hero: bool = False)
         header_markup=_header(hero=hero, lang=lang),
         footer_markup=_FOOTER,
         description=description,
+        status_pack="es",
     )
 
 

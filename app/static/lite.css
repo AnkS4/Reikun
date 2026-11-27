@@ -101,7 +101,7 @@ background:var(--surface-soft);border:1px solid var(--border-soft);border-radius
 padding:.1rem var(--space-2);text-transform:uppercase;letter-spacing:.05em;white-space:nowrap}
 /* The Spanish wordmark carries two chips in one inline brand-line (no flex
    gap there), unlike the single lite chip on the Japanese hero. */
-.brand-line .tag+.tag{margin-left:var(--space-2)}
+.brand-line .tag+.tag{margin-left:var(--space-1)}
 /* Viewport-corner cluster, matching the full UI's fixed top-right controls.
    A centered content column would otherwise park it ~190px from the corner
    on desktop; only the menus below overlay content. */
@@ -123,6 +123,14 @@ width:var(--control-size);height:var(--control-size);border-radius:999px;color:v
 .icon{display:inline-flex;align-items:center;justify-content:center;
 font:1.125rem/1 'reikun-icons',sans-serif}
 .controls .icon{width:1.125rem;height:1.125rem;flex:none}
+/* Sister edition: the other site's sun, matching the full UI's emblem pair. */
+.controls .sister-emblem{width:1.125rem;height:1.125rem;object-fit:contain;flex:none}
+:root[data-theme=dark] .sister-switch[data-sister=es] .sister-emblem{content:url('/icons/emblem-es-dark.svg')}
+:root[data-theme=dark] .sister-switch[data-sister=ja] .sister-emblem{content:url('/icons/emblem-dark.svg')}
+@media (prefers-color-scheme:dark){
+:root[data-theme=system] .sister-switch[data-sister=es] .sister-emblem{content:url('/icons/emblem-es-dark.svg')}
+:root[data-theme=system] .sister-switch[data-sister=ja] .sister-emblem{content:url('/icons/emblem-dark.svg')}
+}
 .icon-sun::before{content:"\f5a2"}
 .icon-moon::before{content:"\f497"}
 .icon-full::before{content:"\f3f9"}

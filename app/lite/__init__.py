@@ -63,6 +63,7 @@ from app.config import (
 )
 from app.etymology import enrich_lsource
 from app.kanji_lookup import is_kanji, kanji_group_facets, kanji_in, random_kanji
+from app.lang.es import ES_COLLECTION
 from app.loanwords import loanword_facets, loanwords_page
 from app.ratelimit import rate_limited
 from app.render import furigana_parts, kanji_card, kanji_group_cards, related_words, segment_chip
@@ -328,22 +329,30 @@ def _header(hero: bool, lang: str = "en") -> str:
 # detail in a native title tooltip.
 _status_lock = threading.Lock()
 _status_snapshot: dict[str, object] = {"ok": None, "count": None, "at": 0.0, "error": None}
+_es_status_snapshot: dict[str, object] = {"ok": None, "count": None, "at": 0.0, "error": None}
 _STATUS_TTL = 60.0  # seconds between probes
 # Single-flight guard: while a probe runs, every other refresher no-ops.
 _probe_lock = threading.Lock()
 
 
-def _status_state() -> tuple[bool | None, int | None, bool, str | None]:
+def _snapshot_for(pack: str) -> dict[str, object]:
+    # Read the module global at call time: tests replace _status_snapshot
+    # wholesale when they need a clean probe.
+    return _status_snapshot if pack == "ja" else _es_status_snapshot
+
+
+def _status_state(pack: str = "ja") -> tuple[bool | None, int | None, bool, str | None]:
     """(ok, entry count, stale?, last error) from the last probe — no network call."""
+    snapshot = _snapshot_for(pack)
     with _status_lock:
-        ok = cast("bool | None", _status_snapshot["ok"])
-        count = cast("int | None", _status_snapshot["count"])
-        at = cast("float", _status_snapshot["at"])
-        error = cast("str | None", _status_snapshot["error"])
+        ok = cast("bool | None", snapshot["ok"])
+        count = cast("int | None", snapshot["count"])
+        at = cast("float", snapshot["at"])
+        error = cast("str | None", snapshot["error"])
     return ok, count, (time.monotonic() - at) > _STATUS_TTL, error
 
 
-def _refresh_status() -> None:
+def _refresh_status(pack: str = "ja") -> None:
     """Probe the dictionary catalogue. Runs after the response is sent, so a
     slow or sleeping Qdrant never delays a page.
 
@@ -360,7 +369,8 @@ def _refresh_status() -> None:
         ok = False
         error: str | None = None
         try:
-            result = qdrant_client().count(COLLECTION, timeout=2)
+            collection = COLLECTION if pack == "ja" else ES_COLLECTION
+            result = qdrant_client().count(collection, timeout=2)
             count = result.count
             # Same readiness rule as /ready: an empty collection is not a working
             # dictionary, however reachable the server is.
@@ -369,7 +379,7 @@ def _refresh_status() -> None:
             error = type(exc).__name__
             logger.debug("lite status: dictionary unreachable (%s)", error)
         with _status_lock:
-            _status_snapshot.update(ok=ok, count=count, at=time.monotonic(), error=error)
+            _snapshot_for(pack).update(ok=ok, count=count, at=time.monotonic(), error=error)
     finally:
         _probe_lock.release()
 
@@ -386,14 +396,14 @@ def _icon(name: str) -> str:
     return f'<span class="icon icon-{name}" aria-hidden="true"></span>'
 
 
-def _status_chip(lang: str) -> str:
+def _status_chip(lang: str, pack: str = "ja") -> str:
     """The SPA's database status dot as a no-JS <details> disclosure: the
     summary is the same tinted glyph, and opening it reveals the same status
     panel the SPA's hover popover carries — title, state line with its mark,
     and a detail sub-line (entry count, waking note, or reach error). The
     state comes from the last cached snapshot (refreshed in the background),
     so a page view never waits on Qdrant."""
-    ok, count, _, error = _status_state()
+    ok, count, _, error = _status_state(pack)
     if ok is None:
         state = "checking"
         line = _t(lang, "statusConnecting")
@@ -562,6 +572,23 @@ def _full_switch_url(request: Request) -> str:
     return base
 
 
+def _sister_switch(request: Request) -> tuple[str, str]:
+    """The sister-edition control, pointing at the other pack's *Lite*.
+
+    Same target page as the sibling full-UI control, but within this variant;
+    the other edition's home is one click away either way. Returns the URL and
+    the sister pack (used to pick the emblem artwork).
+    """
+    sister = "ja" if _is_es_pack(request) else "es"
+    base = "https://reikun.app" if sister == "ja" else "https://es.reikun.app"
+    path = request.url.path.removeprefix("/es")
+    if not path.startswith("/lite"):
+        path = "/lite"
+    query = request.url.query
+    url = f"{base}{path}" + (f"?{query}" if query else "")
+    return url, sister
+
+
 def _controls(request: Request) -> str:
     """Top-right chrome row on every page, using links and native disclosures."""
     lang = _controls_lang(request)
@@ -572,6 +599,16 @@ def _controls(request: Request) -> str:
         # browser-visible /lite namespace, which the Worker maps back to /es/lite.
         next_url = next_url.removeprefix("/es")
     parts = []
+    # Same six controls as the full UI, in the same order: sister edition,
+    # variant switch, history, status, appearance, language.
+    sister_url, sister = _sister_switch(request)
+    sister_label = "Try the Japanese dictionary" if sister == "ja" else "Try the Spanish dictionary"
+    emblem = "/icons/emblem.svg" if sister == "ja" else "/icons/emblem-es.svg"
+    parts.append(
+        f'<a class="icon-link sister-switch" href="{esc(sister_url)}" data-sister="{sister}"'
+        f' rel="noopener" title="{esc(sister_label)}" aria-label="{esc(sister_label)}">'
+        f'<img class="sister-emblem" src="{emblem}" alt="" aria-hidden="true"></a>'
+    )
     full_url = _full_switch_url(request)
     if full_url:
         label = _t(lang, "lite_fullSwitch")
@@ -585,8 +622,7 @@ def _controls(request: Request) -> str:
         f'<a class="icon-link" href="/lite/history" title="{history_label}"'
         f' aria-label="{history_label}"{current}>{_icon("history")}</a>'
     )
-    if not _is_es_pack(request):
-        parts.append(_status_chip(lang))
+    parts.append(_status_chip(lang, "es" if _is_es_pack(request) else "ja"))
     parts.extend((_theme_toggle(theme, next_url, lang), _lang_toggle(lang, next_url)))
     return '<div class="controls">' + "".join(parts) + '</div>'
 
@@ -608,6 +644,7 @@ def _page(
     header_markup: str | None = None,
     footer_markup: str | None = None,
     description: str | None = None,
+    status_pack: str = "ja",
 ) -> HTMLResponse:
     head_extras = (
         f'<meta name="description" content="{esc(description or _t(lang, "lite_tagline"))}">\n'
@@ -643,7 +680,7 @@ def _page(
         # caches may ignore Vary: Cookie (Cloudflare does) and serve one
         # visitor's copy to another, so keep it to the browser.
         cache = cache.replace("public,", "private,", 1)
-    ok, _, stale, _ = _status_state()
+    ok, _, stale, _ = _status_state(status_pack)
     if cache and ok is not True:
         # The status chip is baked into the page: only share a copy that says
         # "Ready", never one that says "Offline" (or has not probed yet).
@@ -653,7 +690,7 @@ def _page(
     if stale:
         # Probe the dictionary after the response is sent: the page never waits
         # on Qdrant, and the next view shows a fresh chip.
-        response.background = BackgroundTask(_refresh_status)
+        response.background = BackgroundTask(_refresh_status, status_pack)
     return response
 
 
