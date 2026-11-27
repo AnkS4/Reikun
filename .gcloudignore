@@ -30,6 +30,9 @@ data/processed/ja/*
 !data/processed/ja/kanji_table.json
 !data/processed/ja/headword_index.marisa
 !data/processed/ja/strokes.json
+!data/processed/es/
+data/processed/es/*
+!data/processed/es/families.json
 data/monitoring/
 data/work/
 

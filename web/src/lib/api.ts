@@ -26,6 +26,8 @@ export type KanjiGroupResponse = components['schemas']['KanjiGroupResponse'];
 export type LoanwordsResponse = components['schemas']['LoanwordsResponse'];
 export type LoanwordsPageResponse = components['schemas']['LoanwordsPageResponse'];
 export type LoanwordFacet = components['schemas']['LoanwordFacet'];
+export type EsFamily = components['schemas']['EsFamily'];
+export type EsFamiliesResponse = components['schemas']['EsFamiliesResponse'];
 export type ReadyInfo = components['schemas']['ReadyResponse'];
 export type ExplainRequest = components['schemas']['ExplainRequest'];
 export type Level = ExplainRequest['level'];
@@ -212,6 +214,14 @@ export function esEtymologyEntries(lang: string, n: number, offset: number): Pro
 			params: { query: { lang, n, offset } }, signal
 		});
 		if (error) throw asError(error, response.status);
+		return data;
+	});
+}
+
+export function esFamilies(): Promise<EsFamiliesResponse> {
+	return call(async (signal) => {
+		const { data, error, response } = await client.GET('/es/families', { signal });
+		if (!data) throw asError(error, response.status);
 		return data;
 	});
 }

@@ -658,6 +658,28 @@
         }
       }
     },
+    "/es/families": {
+      "get": {
+        "tags": [
+          "es"
+        ],
+        "summary": "Es Families Endpoint",
+        "description": "Etymology-link word families, built offline from the Spanish extract.",
+        "operationId": "es_families_endpoint_es_families_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EsFamiliesResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/es/etymology": {
       "get": {
         "tags": [
@@ -1195,6 +1217,61 @@
           "sentence"
         ],
         "title": "EsExplainRequest"
+      },
+      "EsFamiliesResponse": {
+        "properties": {
+          "families": {
+            "items": {
+              "$ref": "#/components/schemas/EsFamily"
+            },
+            "type": "array",
+            "title": "Families"
+          }
+        },
+        "type": "object",
+        "required": [
+          "families"
+        ],
+        "title": "EsFamiliesResponse"
+      },
+      "EsFamily": {
+        "properties": {
+          "word": {
+            "type": "string",
+            "title": "Word"
+          },
+          "members": {
+            "items": {
+              "$ref": "#/components/schemas/EsFamilyMember"
+            },
+            "type": "array",
+            "title": "Members"
+          }
+        },
+        "type": "object",
+        "required": [
+          "word",
+          "members"
+        ],
+        "title": "EsFamily"
+      },
+      "EsFamilyMember": {
+        "properties": {
+          "word": {
+            "type": "string",
+            "title": "Word"
+          },
+          "gloss": {
+            "type": "string",
+            "title": "Gloss",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "word"
+        ],
+        "title": "EsFamilyMember"
       },
       "EtymologySource": {
         "properties": {

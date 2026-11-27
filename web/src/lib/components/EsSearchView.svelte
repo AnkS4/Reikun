@@ -16,16 +16,13 @@
 	const PAGE_RESULTS = 10;
 	const MAX_RESULTS = 50;
 
-	// Alternate Spanish lookups and English glosses. Include an irregular
-	// inflection (anduvieras → andar) and an expression (vergüenza ajena).
+	// Four pinned searches: a Spanish verb, an English verb (no "to"), and
+	// one phrase in each language. Short enough to read at a glance.
 	const EXAMPLES = [
-		['sobremesa', 'es'],
-		['downpour', 'en'],
-		['anduvieras', 'es'],
-		['to meander', 'en'],
-		['azahar', 'es'],
-		['serendipity', 'en'],
-		['vergüenza ajena', 'es']
+		['hablar', 'es'],
+		['meander', 'en'],
+		['vergüenza ajena', 'es'],
+		['raining cats and dogs', 'en']
 	];
 
 	// Hero tagline + meta description — es-page specific chrome (the shared
@@ -241,15 +238,18 @@
 		{/each}
 	</div>
 	<div class="browse" aria-label={t('browse')}>
-		<a class="browse-tile" href="/etymology">
-			<span class="browse-icon"><Icon name="blend" size={22} /></span>
-			<span class="browse-name">Etymology</span>
-			<span class="browse-desc">Browse Spanish words by source language</span>
-		</a>
-		<a class="browse-tile" href="/conjugations">
-			<span class="browse-icon"><Icon name="school" size={22} /></span>
-			<span class="browse-name">Conjugations</span>
-			<span class="browse-desc">Verb tables for Spanish verbs, including irregular forms</span>
-		</a>
+		<p class="popover-title">{t('browse')}</p>
+		<div class="browse-grid two-up">
+			<a class="browse-tile" href="/etymology">
+				<span class="browse-icon"><Icon name="blend" size={22} /></span>
+				<span class="browse-name">Etymology</span>
+				<span class="browse-desc">Browse Spanish words by source language</span>
+			</a>
+			<a class="browse-tile" href="/families">
+				<span class="browse-icon"><Icon name="split" size={22} /></span>
+				<span class="browse-name">Word families</span>
+				<span class="browse-desc">Words that share an etymological root</span>
+			</a>
+		</div>
 	</div>
 {/if}

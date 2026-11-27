@@ -515,6 +515,8 @@ def _full_switch_url(request: Request) -> str:
             return f"{base}/history"
         if path == "/lite/etymology":
             return f"{base}/etymology?{request.url.query}" if request.url.query else f"{base}/etymology"
+        if path == "/lite/families":
+            return f"{base}/families?{request.url.query}" if request.url.query else f"{base}/families"
         if path == "/lite/conjugations" and request.query_params.get("word"):
             return f"{base}/conjugations?word={quote(request.query_params['word'], safe='')}"
         return base
@@ -573,20 +575,16 @@ def _full_switch_url(request: Request) -> str:
 
 
 def _sister_switch(request: Request) -> tuple[str, str]:
-    """The sister-edition control, pointing at the other pack's *Lite*.
+    """The sister-edition control: always the other pack's Lite *home*.
 
-    Same target page as the sibling full-UI control, but within this variant;
-    the other edition's home is one click away either way. Returns the URL and
-    the sister pack (used to pick the emblem artwork).
+    A query belongs to the dictionary it was typed in — carrying `?q=azahar`
+    over to the Japanese dictionary would search a Spanish word there. The
+    variant switch (Lite ↔ full) stays context-aware; the edition switch
+    deliberately starts fresh. Returns the URL and the sister pack.
     """
     sister = "ja" if _is_es_pack(request) else "es"
     base = "https://reikun.app" if sister == "ja" else "https://es.reikun.app"
-    path = request.url.path.removeprefix("/es")
-    if not path.startswith("/lite"):
-        path = "/lite"
-    query = request.url.query
-    url = f"{base}{path}" + (f"?{query}" if query else "")
-    return url, sister
+    return f"{base}/lite", sister
 
 
 def _controls(request: Request) -> str:

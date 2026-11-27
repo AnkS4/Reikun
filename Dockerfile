@@ -48,6 +48,9 @@ COPY --chown=app:app \
     data/processed/ja/headword_index.marisa \
     data/processed/ja/strokes.json \
     data/processed/ja/
+# Small offline-derived Spanish word families (etymology links); the vectors
+# live in Qdrant, this is just the static family index served by /es/families.
+COPY --chown=app:app data/processed/es/families.json data/processed/es/
 
 # shared UI strings — app/lite/i18n.py resolves i18n/ two levels above itself
 COPY --chown=app:app i18n/ i18n/

@@ -260,6 +260,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/es/families": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Es Families Endpoint
+         * @description Etymology-link word families, built offline from the Spanish extract.
+         */
+        get: operations["es_families_endpoint_es_families_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/es/etymology": {
         parameters: {
             query?: never;
@@ -505,6 +525,28 @@ export interface components {
              * @enum {string}
              */
             language: "en" | "es";
+        };
+        /** EsFamiliesResponse */
+        EsFamiliesResponse: {
+            /** Families */
+            families: components["schemas"]["EsFamily"][];
+        };
+        /** EsFamily */
+        EsFamily: {
+            /** Word */
+            word: string;
+            /** Members */
+            members: components["schemas"]["EsFamilyMember"][];
+        };
+        /** EsFamilyMember */
+        EsFamilyMember: {
+            /** Word */
+            word: string;
+            /**
+             * Gloss
+             * @default
+             */
+            gloss: string;
         };
         /**
          * EtymologySource
@@ -1620,6 +1662,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    es_families_endpoint_es_families_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EsFamiliesResponse"];
                 };
             };
         };

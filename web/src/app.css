@@ -3747,6 +3747,12 @@ main:has(.browse) + .footer {
 	}
 }
 
+/* Spanish has two Explore tiles; two columns keeps them as wide, horizontally
+   aligned cards instead of a four-column row with half of it empty. */
+.browse-grid.two-up {
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 /* The kanji-group category picker has three tiles — one row on desktop,
    stacked on mobile (an orphan second row of one looked wrong at 2-up). */
 .pick-grid {

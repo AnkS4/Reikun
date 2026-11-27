@@ -43,6 +43,7 @@ from app.config import (
     TRUSTED_PROXY_HOPS,
     qdrant_client,
 )
+from app.es_families import es_families as load_es_families
 from app.etymology import enrich_lsource
 from app.grammar_explain import (
     JLPT_LEVELS,
@@ -601,6 +602,20 @@ class EsConjugationsResponse(BaseModel):
     inflected_forms: list[InflectionRow]
 
 
+class EsFamilyMember(BaseModel):
+    word: str
+    gloss: str = ""
+
+
+class EsFamily(BaseModel):
+    word: str
+    members: list[EsFamilyMember]
+
+
+class EsFamiliesResponse(BaseModel):
+    families: list[EsFamily]
+
+
 class EsExplainRequest(BaseModel):
     sentence: str = Field(min_length=1, max_length=MAX_SENTENCE_CHARS * 8)
     english: str = Field("", max_length=MAX_ENGLISH_CHARS * 8)
@@ -1066,6 +1081,12 @@ def kanji_endpoint(
 
 # The in-process index rebuilds every ~10 min; HTTP caches can be shorter.
 _CACHE_LOANWORDS = "public, max-age=300"
+
+
+@app.get("/es/families", tags=["es"], response_model=EsFamiliesResponse)
+def es_families_endpoint() -> dict:
+    """Etymology-link word families, built offline from the Spanish extract."""
+    return {"families": load_es_families()}
 
 
 @app.get("/es/etymology", tags=["etymology"], response_model=LoanwordsResponse)

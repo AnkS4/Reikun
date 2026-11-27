@@ -254,6 +254,8 @@ margin:1.4rem 0 .6rem;text-align:left}
 .es-conj-table tbody th{font-weight:500;color:var(--text-muted)}
 .browse-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:var(--space-3);margin-top:var(--space-3)}
 @media (max-width:40rem){.browse-grid{grid-template-columns:repeat(2,1fr)}}
+/* Spanish Explore has two cards; let them fill the row like the full UI. */
+.browse-grid.two-up{grid-template-columns:repeat(2,minmax(0,1fr))}
 .pick-grid{grid-template-columns:repeat(3,1fr)}
 @media (max-width:40rem){.pick-grid{grid-template-columns:1fr}}
 .browse-tile{display:flex;flex-direction:column;align-items:flex-start;gap:.3rem;

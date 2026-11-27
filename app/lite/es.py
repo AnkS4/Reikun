@@ -14,6 +14,7 @@ from fastapi import APIRouter, Depends, Query, Request
 from fastapi.responses import HTMLResponse, Response
 
 from app.config import RATE_LIMIT_SEARCH, TRUSTED_PROXY_HOPS
+from app.es_families import es_families
 from app.lang.es import es_conjugations, es_etymology_facets, es_etymology_page, search_es
 from app.lite import (
     _COOKIE_MAX_AGE,
@@ -21,6 +22,7 @@ from app.lite import (
     _controls,
     _controls_lang,
     _fmt_count,
+    _href,
     _LiteRoute,
     _read_recent,
     _read_theme,
@@ -42,14 +44,13 @@ _search_limit = Depends(rate_limited(RATE_LIMIT_SEARCH, TRUSTED_PROXY_HOPS))
 _PAGE_SIZE = 20
 _DEFAULT_COUNT = 10
 
+# Four pinned searches: a Spanish verb, an English verb (no "to"), and one
+# phrase in each language — a compact tour of what the dictionary handles.
 _EXAMPLES = (
-    ("sobremesa", "es"),
-    ("downpour", "en"),
-    ("anduvieras", "es"),
-    ("to meander", "en"),
-    ("azahar", "es"),
-    ("serendipity", "en"),
+    ("hablar", "es"),
+    ("meander", "en"),
     ("vergüenza ajena", "es"),
+    ("raining cats and dogs", "en"),
 )
 
 _POS = {
@@ -74,15 +75,21 @@ def _header(*, hero: bool, lang: str) -> str:
     return f'<header>{wordmark}{tags}</header>'
 
 
+# Same English-only footer as the full Spanish edition (and the Japanese
+# Lite): legal/credit lines stay untranslatable in both variants.
 _FOOTER = """<footer>
 <p>Reikun © 2026 Aniket Satbhai ·
-<a href="/lite/about">Acerca de</a> ·
-<a href="/lite/privacy">Privacidad</a> ·
+<a href="/lite/about">About</a> ·
+<a href="/lite/privacy">Privacy</a> ·
 <a href="https://github.com/AnkS4/Reikun" target="_blank" rel="noopener noreferrer">GitHub</a> ·
-<a href="https://github.com/AnkS4/Reikun/blob/main/LICENSE" target="_blank" rel="noopener noreferrer">Apache-2.0</a></p>
-<p>Datos del diccionario:
-<a href="https://es.wiktionary.org/" target="_blank" rel="noopener noreferrer">Wikcionario</a>
-(CC BY-SA 4.0). Frecuencia:
+<a href="https://github.com/AnkS4/Reikun/blob/main/LICENSE" target="_blank"
+rel="noopener noreferrer">Apache-2.0</a></p>
+<p>Dictionary data from
+<a href="https://es.wiktionary.org/" target="_blank" rel="noopener noreferrer">Wiktionary</a>
+(Wikimedia contributors, CC BY-SA 4.0), extracted with
+<a href="https://github.com/tatuylonen/wiktextract" target="_blank" rel="noopener noreferrer">wiktextract</a>.
+Sentences from <a href="https://tatoeba.org/" target="_blank" rel="noopener noreferrer">Tatoeba</a>
+(CC-BY 2.0 FR). Frequency data from
 <a href="https://github.com/rspeer/wordfreq" target="_blank" rel="noopener noreferrer">wordfreq</a>
 (MIT).</p>
 </footer>"""
@@ -207,12 +214,13 @@ def es_lite_home(request: Request) -> HTMLResponse:
         f'<p class="pills-label">{esc(_t(lang, "es_lite_examples"))}</p>'
         f'<div class="pills">{chips}</div>'
         f'<section class="es-lite-browse"><p class="pills-label">{esc(_t(lang, "es_lite_explore"))}</p>'
+        '<div class="browse-grid two-up">'
         '<a class="browse-tile" href="/lite/etymology">'
         f'<span class="browse-name">{esc(_t(lang, "es_lite_etymology"))}</span>'
         f'<span class="browse-desc">{esc(_t(lang, "es_lite_browse_etymology"))}</span></a>'
-        '<a class="browse-tile" href="/lite/conjugations">'
-        f'<span class="browse-name">{esc(_t(lang, "conjugations"))}</span>'
-        f'<span class="browse-desc">{esc(_t(lang, "es_lite_browse_conjugations"))}</span></a></section>'
+        '<a class="browse-tile" href="/lite/families">'
+        f'<span class="browse-name">{esc(_t(lang, "es_lite_families"))}</span>'
+        f'<span class="browse-desc">{esc(_t(lang, "es_lite_browse_families"))}</span></a></div></section>'
     )
     return _render_page(request, _t(lang, "es_lite_title"), body, hero=True)
 
@@ -394,3 +402,44 @@ def es_lite_etymology(request: Request, lang: str = "", offset: int = Query(defa
         f'<p><a href="/lite/etymology">← {esc(_t(ui_lang, "es_lite_all_origins"))}</a></p>'
     )
     return _render_page(request, f"{page['name']} — {title}", body)
+
+
+@router.get("/es/lite/families", response_class=HTMLResponse)
+def es_lite_families(request: Request, word: str = "") -> HTMLResponse:
+    """Word families derived from Wiktionary etymology links."""
+    ui_lang = _controls_lang(request)
+    title = _t(ui_lang, "familiesTitle")
+    families = es_families()
+    chosen = next((f for f in families if f["word"].lower() == word.strip().lower()), None) if word else None
+    if chosen:
+        cards = "".join(
+            f'<li><a class="kg-card" href="{_href("/lite/search", q=member["word"])}">'
+            f'<span class="kv-value" lang="es">{esc(member["word"])}</span>'
+            f'<span class="kg-meta">{esc(member["gloss"])}</span></a></li>'
+            for member in chosen["members"]
+        )
+        count = _fmt_count(len(chosen["members"]), ui_lang)
+        label = esc(_t(ui_lang, "familiesMembers", count=count))
+        body = (
+            f'<h1 lang="es">{esc(chosen["word"])}</h1>'
+            f'<p class="pills-label">{label}</p>'
+            f'<ul class="kg-grid">{cards}</ul>'
+            f'<p><a href="/lite/families">← {esc(_t(ui_lang, "familiesBack"))}</a></p>'
+        )
+        return _render_page(request, f"{chosen['word']} — {title}", body)
+    def _card(family: dict) -> str:
+        count = _fmt_count(len(family["members"]), ui_lang)
+        label = esc(_t(ui_lang, "familiesMembers", count=count))
+        return (
+            f'<li><a class="kg-card" href="{_href("/lite/families", word=family["word"])}">'
+            f'<span class="kv-value" lang="es">{esc(family["word"])}</span>'
+            f'<span class="kg-meta">{label}</span></a></li>'
+        )
+
+    cards = "".join(_card(family) for family in families)
+    body = (
+        f'<h1>{esc(title)}</h1><p>{esc(_t(ui_lang, "familiesIntro"))} '
+        '<a href="https://es.wiktionary.org/" target="_blank" rel="noopener noreferrer">Wiktionary</a>.</p>'
+        f'<ul class="kg-grid">{cards}</ul>'
+    )
+    return _render_page(request, title, body)

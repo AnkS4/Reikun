@@ -41,9 +41,13 @@ def test_spanish_lite_home_is_spanish_static_and_branded() -> None:
     assert 'href="https://es.reikun.app"' in page.text
     assert "The open Spanish dictionary" in page.text
     assert "ALPHA" in page.text and ">Lite</span>" in page.text
-    assert "sobremesa" in page.text and "anduvieras" in page.text
-    assert "/lite/etymology" in page.text and "/lite/conjugations" in page.text
+    assert ">hablar<" in page.text and ">meander<" in page.text
+    assert ">vergüenza ajena<" in page.text and ">raining cats and dogs<" in page.text
+    assert "/lite/etymology" in page.text and "/lite/families" in page.text
+    assert "/lite/conjugations" not in page.text.split("<main", 1)[1]
     assert "kanji" not in page.text.lower()
+    assert "About</a>" in page.text and "Dictionary data from" in page.text
+    assert "Acerca de" not in page.text and "Wikcionario" not in page.text
     assert "<script" not in page.text.lower()
 
 
@@ -954,3 +958,26 @@ def test_result_card_xref_chips_deep_link() -> None:
     assert 'href="/lite/search?q=%E5%8F%8D%E5%AF%BE#r1"' in html_out  # no sno → card anchor
     # no xrefs → no row at all
     assert "xref-row" not in lite._result_card("", _bare_result(), True, "en")
+
+
+def test_spanish_lite_families_browse_and_members() -> None:
+    from app.es_families import es_families
+
+    headers = {"x-reikun-language-pack": "es"}
+    listing = client.get("/es/lite/families", headers=headers)
+    assert listing.status_code == 200 and "<script" not in listing.text.lower()
+    first = es_families()[0]
+    assert f'href="/lite/families?word={quote(first["word"], safe="")}"' in listing.text
+    detail = client.get("/es/lite/families", params={"word": first["word"]}, headers=headers)
+    assert detail.status_code == 200
+    assert f'href="/lite/search?q={quote(first["members"][0]["word"], safe="")}"' in detail.text
+    assert f"{len(first['members'])}" in detail.text or "familiesMembers" not in detail.text
+
+
+def test_sister_switch_never_carries_a_search_query() -> None:
+    for path, headers in (("/lite/search", {}), ("/es/lite/search", {"x-reikun-language-pack": "es"})):
+        page = client.get(path, params={"q": "azahar"}, headers=headers)
+        expected = "https://es.reikun.app/lite" if not headers else "https://reikun.app/lite"
+        assert f'href="{expected}"' in page.text
+        sister = page.text.split('class="icon-link sister-switch"')[1].split(">")[0]
+        assert "q=azahar" not in sister
