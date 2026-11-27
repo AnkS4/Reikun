@@ -41,7 +41,10 @@
 				if (location.hostname === 'es.reikun.app') {
 					document.documentElement.dataset.pack = 'es';
 					var icon = document.querySelector('link[rel="icon"][type="image/svg+xml"]');
-					if (icon) icon.setAttribute('href', icon.getAttribute('href').replace(/favicon\.svg/, 'favicon-es.svg'));
+					if (icon) icon.setAttribute('href', icon.getAttribute('href').replace(/favicon\.svg$/, 'favicons/favicon-es.svg'));
+					document.querySelectorAll('link[rel="icon"][type="image/png"]').forEach(function (png) {
+						png.setAttribute('href', png.getAttribute('href').replace(/favicon-(\d+)\.png$/, 'favicon-es-$1.png'));
+					});
 					var touch = document.querySelector('link[rel="apple-touch-icon"]');
 					if (touch) touch.setAttribute('href', touch.getAttribute('href').replace(/apple-touch-icon\.png/, 'apple-touch-icon-es.png'));
 					var manifest = document.querySelector('link[rel="manifest"]');
