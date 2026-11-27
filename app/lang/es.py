@@ -113,36 +113,28 @@ def _es_query(query: str, num_results: int, vectors=None) -> list[dict]:
         return [_hit_to_dict(h) for h in hits]
 
     dense, sparse = vectors
-    sparse_vec = _sparse(sparse)
+    sparse_arm: Prefetch | None = None
+    if sparse is not None:
+        sparse_arm = Prefetch(query=_sparse(sparse), using=SPARSE_VECTOR, limit=pool)
     word_arm = Prefetch(
         query=OrderByQuery(order_by=OrderBy(key="wf_score", direction=Direction.DESC)),
         filter=es_word_filter(query),
         limit=pool,
     )
     if _looks_spanish(query):
-        params = _rrf(
-            [
-                Prefetch(query=sparse_vec, using=SPARSE_VECTOR, limit=pool),
-                word_arm,
-            ],
-            weights=[1.0, 3.0],
-            limit=num_results,
-            k=RRF_K,
-        )
+        arms = [(sparse_arm, 1.0), (word_arm, 3.0)]
     else:  # English (or ambiguous) input
-        params = _rrf(
-            [
-                Prefetch(query=dense, using=DENSE_VECTOR, limit=pool),
-                Prefetch(query=sparse_vec, using=SPARSE_VECTOR, limit=pool),
-                Prefetch(query=OrderByQuery(
-                             order_by=OrderBy(key="wf_score", direction=Direction.DESC)),
-                         filter=es_gloss_filter(query), limit=pool),
-                word_arm,
-            ],
-            weights=[2.0, 1.0, 4.0, 1.0],
-            limit=num_results,
-            k=RRF_K,
-        )
+        arms = [
+            (Prefetch(query=dense, using=DENSE_VECTOR, limit=pool), 2.0),
+            (sparse_arm, 1.0),
+            (Prefetch(query=OrderByQuery(
+                          order_by=OrderBy(key="wf_score", direction=Direction.DESC)),
+                      filter=es_gloss_filter(query), limit=pool), 4.0),
+            (word_arm, 1.0),
+        ]
+    prefetches = [arm for arm, _ in arms if arm is not None]
+    weights = [weight for arm, weight in arms if arm is not None]
+    params = _rrf(prefetches, weights, limit=num_results, k=RRF_K)
     hits = client.query_points(ES_COLLECTION, **params).points
     return [_hit_to_dict(h) for h in hits]
 
