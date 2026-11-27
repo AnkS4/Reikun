@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /* Regenerates web/src/lib/icons.ts from the installed lucide-static package.
  *
- * The 27 SPA glyphs inline the upstream Lucide bodies verbatim (modulo SVG
+ * The SPA glyphs inline the upstream Lucide bodies verbatim (modulo SVG
  * comment/wrapper stripping and currentColor passthrough), so an upstream
  * update is:
  *
@@ -30,6 +30,7 @@ const MAP = {
 	school: 'school',
 	palette: 'palette',
 	replay: 'rotate-ccw',
+	history: 'rotate-ccw-clock',
 	database: 'database',
 	'thumbs-up': 'thumbs-up',
 	'thumbs-down': 'thumbs-down',

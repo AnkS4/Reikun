@@ -162,6 +162,8 @@ def test_theme_toggle_is_one_click_and_variant_switch(monkeypatch) -> None:
     assert 'class="icon icon-full"' in controls and 'class="icon icon-db"' in controls
     assert 'class="icon icon-sun"' in controls and 'class="icon icon-moon"' in controls
     assert 'class="icon icon-lang"' in controls
+    assert 'class="icon icon-history"' in controls and 'class="icon icon-chevron"' in controls
+    assert '<details class="more-controls">' in controls
     assert 'aria-label="Switch to the full interface"' in controls
     assert 'class="icon-link"' in controls and 'class="status-dot' in controls
     assert 'class="theme-toggle"' in controls and 'class="lang-menu"' in controls
@@ -268,13 +270,17 @@ def test_status_refresh_coalesces_onto_one_probe(monkeypatch: pytest.MonkeyPatch
     assert lite._status_snapshot["ok"] is True and lite._status_snapshot["count"] == 7
 
 
-def test_recent_pills_from_cookie_replace_examples() -> None:
+def test_recent_cookie_is_only_displayed_on_the_private_history_page() -> None:
     value = quote(json.dumps(["走る"], separators=(",", ":")), safe="")
     client.cookies.set("lite_recent", value)
     try:
         home = client.get("/lite")
-        assert "Recent searches" in home.text and "走る" in home.text
-        assert "Example searches" not in home.text  # SPA behaviour: recent wins
+        assert 'href="/lite/history"' in home.text
+        assert "Example searches" in home.text and "走る" not in home.text
+        history = client.get("/lite/history")
+        assert history.headers["cache-control"] == "no-store"
+        assert 'name="robots" content="noindex"' in history.text
+        assert f'href="/lite/search?q={quote("走る")}">走る</a>' in history.text
     finally:
         client.cookies.clear()
 
@@ -283,8 +289,9 @@ def test_recent_clear_redirects_and_writes_empty_shared_list() -> None:
     # Not a delete_cookie: the shared list is also read by the web UI, where an
     # absent cookie means "no shared state — keep your local copy" and would
     # resurrect the cleared history. An explicit [] clears every reader.
-    r = client.get("/lite/recent/clear", follow_redirects=False)
+    r = client.get("/lite/recent/clear", params={"next": "/lite/history"}, follow_redirects=False)
     assert r.status_code == 303
+    assert r.headers["location"] == "/lite/history"
     assert 'lite_recent="[]"' in r.headers.get("set-cookie", "")  # starlette quotes the value
 
 
@@ -318,28 +325,28 @@ def test_recent_cookie_dedupes_duplicate_entries() -> None:
     value = quote(json.dumps(["走る", "犬", "走る", "猫"], separators=(",", ":")), safe="")
     client.cookies.set("lite_recent", value)
     try:
-        home = client.get("/lite")
-        assert home.text.count('<span lang="ja">走る</span>') == 1
-        assert home.text.count('<span lang="ja">犬</span>') == 1
-        assert home.text.count('<span lang="ja">猫</span>') == 1
+        history = client.get("/lite/history")
+        assert history.text.count('>走る</a>') == 1
+        assert history.text.count('>犬</a>') == 1
+        assert history.text.count('>猫</a>') == 1
         # kept the *first* (most recent) occurrence: 走る still leads the list
-        assert home.text.index('<span lang="ja">走る</span>') < home.text.index('<span lang="ja">犬</span>')
+        assert history.text.index('>走る</a>') < history.text.index('>犬</a>')
     finally:
         client.cookies.clear()
 
 
 def test_recent_cookie_drops_lone_surrogates() -> None:
     # A lone UTF-16 surrogate (JSON "\ud83d") in an old or hand-crafted cookie
-    # parses fine but explodes encoding the response — /lite would 500 on every
+    # parses fine but explodes encoding the response — /lite/history would 500 on every
     # request until the cookie was cleared. The reader drops what can't survive
-    # UTF-8; the valid entries still render as pills.
+    # UTF-8; the valid entries still render.
     value = quote(json.dumps(["\ud83d", "走る", "犬"], separators=(",", ":")), safe="")
     client.cookies.set("lite_recent", value)
     try:
-        home = client.get("/lite")
-        assert home.status_code == 200
-        assert home.text.count('<span lang="ja">走る</span>') == 1
-        assert home.text.count('<span lang="ja">犬</span>') == 1
+        history = client.get("/lite/history")
+        assert history.status_code == 200
+        assert history.text.count('>走る</a>') == 1
+        assert history.text.count('>犬</a>') == 1
     finally:
         client.cookies.clear()
 

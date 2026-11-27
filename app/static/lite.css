@@ -106,12 +106,16 @@ align-items:center;gap:.15rem}
 .controls .icon-link{display:inline-flex;align-items:center;justify-content:center;
 width:2rem;height:2rem;border-radius:999px;color:var(--text-muted)}
 .controls .icon-link:hover{color:var(--text)}
-/* Control/browse glyphs come from a tiny icon font (9 glyphs, ~1.4 kB,
-   served from /lite/static/lite-icons.woff2 — a real file, since some
-   hardened browsers drop data: URI fonts) — the SPA's own Lucide icons
-   (sun, moon, layout-dashboard, languages, database, pen-line, school,
-   award, import) traced to outlines by scripts/build_lite_icons.py (Lucide is
-   ISC-licensed). A font renders everywhere SVG is disabled
+.more-controls > summary{list-style:none;cursor:pointer}
+.more-controls > summary::-webkit-details-marker{display:none}
+.more-controls[open] > summary,.controls [aria-current=page]{background:var(--surface-soft);color:var(--text)}
+.more-controls[open] .icon-chevron{transform:rotate(180deg)}
+.secondary-controls{position:absolute;top:calc(100% + var(--space-1));right:0;display:flex;
+align-items:center;gap:.15rem;padding:var(--space-1);background:var(--surface);
+border:1px solid var(--border);border-radius:var(--radius-pill);box-shadow:0 .5rem 1.5rem rgb(0 0 0 / .18)}
+/* The control and browse glyphs are Lucide icons (ISC), traced to outlines
+   by scripts/build_lite_icons.py. This small font is served as a real file,
+   since some hardened browsers drop data: URI fonts. It renders where SVG is disabled
    (svg.disabled blanks inline SVG for exactly the no-JS visitors lite
    serves), and currentColor keeps state tinting and hover colors
    working. The ?v= hash is substituted by app/lite/assets.py. */
@@ -124,6 +128,8 @@ font:1.125rem/1 'reikun-icons',sans-serif}
 .icon-full::before{content:"\f3f9"}
 .icon-lang::before{content:"\f658"}
 .icon-db::before{content:"\f8c4"}
+.icon-history::before{content:"\f10a"}
+.icon-chevron::before{content:"\f10b"}
 .icon-book-open-text::before{content:"\f107"}
 .icon-chart-line::before{content:"\f108"}
 .icon-blend::before{content:"\f109"}
@@ -218,7 +224,7 @@ background:var(--surface);color:var(--text-muted);
 .pills-label{font-family:var(--font-mono);font-size:var(--fs-2xs);
 font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);
 margin:1.4rem 0 .6rem;text-align:left}
-.pills-label a{margin-left:.6rem}
+.history-list a{overflow-wrap:anywhere}
 .browse-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:var(--space-3);margin-top:var(--space-3)}
 @media (max-width:40rem){.browse-grid{grid-template-columns:repeat(2,1fr)}}
 .pick-grid{grid-template-columns:repeat(3,1fr)}

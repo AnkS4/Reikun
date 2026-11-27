@@ -9,16 +9,24 @@
 	import { formatNumber, t } from '#lib/i18n.svelte.ts';
 	import { BRAND_SHORT } from '#lib/brand.ts';
 	import { currentPack } from '#lib/lang/pack.ts';
+	import { pushRecent } from '#lib/recent.ts';
 
 	// Retrieval is ~25 ms — a page of ten costs the same as five; "Show more" refetches.
 	const DEFAULT_RESULTS = 10;
 	const PAGE_RESULTS = 10;
 	const MAX_RESULTS = 50;
 
-	// es-page examples: an inflected form (hits inflection exact matching),
-	// a lemma verb (ships a conjugation table), a noun, an English gloss.
-	// Plain strings — es-pack content, not chrome i18n.
-	const EXAMPLES = ['hablas', 'hablar', 'casa', 'library'];
+	// Alternate Spanish lookups and English glosses. Include an irregular
+	// inflection (anduvieras → andar) and an expression (vergüenza ajena).
+	const EXAMPLES = [
+		['sobremesa', 'es'],
+		['downpour', 'en'],
+		['anduvieras', 'es'],
+		['to meander', 'en'],
+		['azahar', 'es'],
+		['serendipity', 'en'],
+		['vergüenza ajena', 'es']
+	];
 
 	// Hero tagline + meta description — es-page specific chrome (the shared
 	// t('tagline') describes the Japanese dictionary); plain English until es
@@ -46,7 +54,8 @@
 	let reqSeq = 0;
 	$effect(() => {
 		const q = (page.url.searchParams.get('q') ?? '').trim();
-		if (q !== committed) {
+		const changedQuery = q !== committed;
+		if (changedQuery) {
 			wantResults = DEFAULT_RESULTS; // reset before urlKey below
 			// Dropping the visible results abandons whatever search produced
 			// them: bump the sequence so its late response can't land over the
@@ -65,6 +74,7 @@
 			error = '';
 			return;
 		}
+		if (changedQuery) pushRecent(q);
 		runSearch(q);
 	});
 
@@ -102,7 +112,10 @@
 		// Same query again (re-submit) → search directly; a changed query goes
 		// through ?q= so history records it.
 		if (v === committed) {
-			if (v) runSearch(v);
+			if (v) {
+				pushRecent(v);
+				runSearch(v);
+			}
 		} else setQuery(v);
 	}
 
@@ -220,11 +233,10 @@
 	{/if}
 {:else if !searching && !error}
 	<div class="pills" aria-label={t('exampleSearches')}>
-		{#each EXAMPLES as ex (ex)}
+		{#each EXAMPLES as [ex, lang] (ex)}
 			<button type="button" class="pill" onclick={() => commit(ex)}>
 				<Icon name="search" size={16} />
-				<!-- No lang tag: queries go in either language (see EXAMPLES). -->
-				<span>{ex}</span>
+				<span {lang}>{ex}</span>
 			</button>
 		{/each}
 	</div>

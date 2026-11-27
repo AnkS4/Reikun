@@ -10,6 +10,7 @@
 	import { PUBLIC_API_BASE } from '$app/env/public';
 	import KanjiText from './KanjiText.svelte';
 	import Popover from './Popover.svelte';
+	import SearchHistory from './SearchHistory.svelte';
 	import Icon from './Icon.svelte';
 
 	let { hero = false, tagline = '' }: { hero?: boolean; tagline?: string } = $props();
@@ -110,6 +111,24 @@
 	<a class="btn tertiary header-es" href={SISTER_URL} title={SISTER_TITLE} aria-label={SISTER_TITLE} rel="noopener">
 		<img class="sister-emblem" src={SISTER_EMBLEM} alt="" aria-hidden="true" />
 	</a>
+	<div class="header-history">
+		<Popover icon="history" title={t('recentSearches')}>
+			{#snippet children(close)}
+				<SearchHistory {close} />
+			{/snippet}
+		</Popover>
+	</div>
+	<details class="header-more">
+		<summary class="btn tertiary" title={t('moreControls')} aria-label={t('moreControls')}>
+			<Icon name="expand-more" size={16} />
+		</summary>
+		<div class="header-secondary">
+			{@render secondaryControls()}
+		</div>
+	</details>
+</div>
+
+{#snippet secondaryControls()}
 	{#if pack === 'ja'}
 		<!-- Variant switch, drawn like the popover triggers: a plain 2rem round
 		     icon button — a lightning bolt for the quick, lightweight variant,
@@ -187,7 +206,7 @@
 			{/each}
 		</div>
 	</Popover>
-</div>
+{/snippet}
 
 <div class="header-bar" class:compact={!hero}>
 	<div class="header-title" class:hero>

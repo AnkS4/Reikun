@@ -17,8 +17,9 @@ search response set and flip — no script, storage API or event handler.
 
 Routes (mounted by ``app/api.py``):
 
-    GET /lite                  search box + hero, examples / recent searches
+    GET /lite                  search box + hero and examples
     GET /lite/search?q=…       results (auto pipeline; single kanji → card)
+    GET /lite/history          recent searches from the shared cookie
     GET /lite/furigana         flip the furigana preference, redirect back
     GET /lite/theme            set the theme choice cookie, redirect back
     GET /lite/lang             set the interface language cookie, redirect back
@@ -420,11 +421,8 @@ def _status_chip(lang: str) -> str:
     )
 
 
-# Top-right controls mirror the SPA's header cluster: the same Lucide-style
-# glyphs in the same order (full-version switch, dictionary status, theme,
-# language), drawn from the subset WOFF2 icon font (scripts/build_lite_icons.py)
-# so hardened browsers with svg.disabled still render them. Markup needs no
-# JavaScript — status and language are <details> disclosures.
+# The full-version switch and history are always visible. The secondary
+# controls (status, theme, language) sit in a native <details> disclosure.
 #
 # Lite's icon language otherwise stays minimal:
 #   - wayfinding: typographic arrows in link text (←, →, from lite/i18n.py);
@@ -539,10 +537,7 @@ def _full_switch_url(request: Request) -> str:
 
 
 def _controls(request: Request) -> str:
-    """Top-right chrome row on every page — mirrors the SPA's header-cluster
-    order: full-version switch, dictionary status, theme switch, language
-    switch. Icon buttons mirror the SPA's cluster; the titles and
-    aria-labels carry the full meaning the icons abbreviate."""
+    """Top-right chrome row on every page, using links and native disclosures."""
     lang = _read_lang(request)
     theme = _read_theme(request)
     next_url = _current_path(request)
@@ -554,9 +549,19 @@ def _controls(request: Request) -> str:
             '<a class="icon-link" href="' + esc(full_url) + '" rel="noopener"'
             f' title="{esc(label)}" aria-label="{esc(label)}">{_icon("full")}</a>'
         )
-    parts.append(_status_chip(lang))
-    parts.append(_theme_toggle(theme, next_url, lang))
-    parts.append(_lang_toggle(lang, next_url))
+    history_label = esc(_t(lang, "recentSearches"))
+    current = ' aria-current="page"' if request.url.path == "/lite/history" else ""
+    parts.append(
+        f'<a class="icon-link" href="/lite/history" title="{history_label}"'
+        f' aria-label="{history_label}"{current}>{_icon("history")}</a>'
+    )
+    more_label = esc(_t(lang, "moreControls"))
+    parts.append(
+        f'<details class="more-controls"><summary class="icon-link" title="{more_label}"'
+        f' aria-label="{more_label}">{_icon("chevron")}</summary><div class="secondary-controls">'
+        f'{_status_chip(lang)}{_theme_toggle(theme, next_url, lang)}{_lang_toggle(lang, next_url)}'
+        '</div></details>'
+    )
     return '<div class="controls">' + "".join(parts) + "</div>"
 
 
@@ -693,32 +698,14 @@ _SEARCH_COUNT = 10
 def lite_home(request: Request) -> HTMLResponse:
     lang = _read_lang(request)
     furi = _read_furi(request)
-    recent = _read_recent(request)
-
-    # The SPA shows recent searches when they exist and the example pills
-    # otherwise; a cookie makes both possible without JavaScript. The home
-    # page's input placeholder carries the shared hint (the no-JS stand-in
-    # for the SPA's typewriter) — but only in the examples branch, where
-    # "tap an example below" is actually true.
-    if recent:
-        form = _search_form(furi=furi, lang=lang, next_url=_current_path(request), autofocus=True)
-        label = (
-            f'<p class="pills-label">{esc(_t(lang, "recentSearches"))} '
-            f'<a href="/lite/recent/clear">{esc(_t(lang, "clear"))}</a></p>'
-        )
-        pills = "".join(
-            f'<a class="pill" href="{_href("/lite/search", q=query)}"><span lang="ja">{esc(query)}</span></a>'
-            for query in recent
-        )
-    else:
-        form = _search_form(
-            furi=furi, lang=lang, next_url=_current_path(request), autofocus=True,
-            placeholder=_t(lang, "hint"),
-        )
-        label = f'<p class="pills-label">{esc(_t(lang, "exampleSearches"))}</p>'
-        pills = "".join(
-            f'<a class="pill" href="{_href("/lite/search", q=entry)}">{esc(entry)}</a>' for entry in _EXAMPLES
-        )
+    form = _search_form(
+        furi=furi, lang=lang, next_url=_current_path(request), autofocus=True,
+        placeholder=_t(lang, "hint"),
+    )
+    label = f'<p class="pills-label">{esc(_t(lang, "exampleSearches"))}</p>'
+    pills = "".join(
+        f'<a class="pill" href="{_href("/lite/search", q=entry)}">{esc(entry)}</a>' for entry in _EXAMPLES
+    )
 
     # Browse tiles — same four destinations as the SPA homepage grid, drawn
     # from the same subset icon font as the top-right controls.
@@ -875,14 +862,29 @@ def lite_lang(request: Request, v: str = "", next: str = "") -> Response:
     return response
 
 
+@router.get("/lite/history", response_class=HTMLResponse)
+def lite_history(request: Request) -> HTMLResponse:
+    """Show cookie-specific queries on a dedicated, non-cacheable page."""
+    lang = _read_lang(request)
+    title = _t(lang, "recentSearches")
+    recent = _read_recent(request)
+    body = f'<h1>{esc(title)}</h1>'
+    if recent:
+        items = "".join(
+            f'<li><a href="{_href("/lite/search", q=query)}">{esc(query)}</a></li>' for query in recent
+        )
+        clear_url = _href("/lite/recent/clear", next="/lite/history")
+        body += f'<ul class="history-list">{items}</ul><p><a href="{clear_url}">{esc(_t(lang, "clear"))}</a></p>'
+    else:
+        body += f'<p>{esc(_t(lang, "noRecentSearches"))}</p>'
+    body += f'<p><a href="/lite">{esc(_t(lang, "backToSearch"))}</a></p>'
+    return _page(title, body, theme=_read_theme(request), controls=_controls(request), lang=lang, noindex=True)
+
+
 @router.get("/lite/recent/clear")
 def lite_recent_clear(request: Request, next: str = "") -> Response:
-    """Empty the recent-searches cookie — the pills row's Clear link. Writes "
-    "[]\" instead of deleting the cookie: the shared list is read by the web UI
-    too (web/src/lib/recent.ts keeps its own localStorage fallback for when
-    cookies are blocked), and there an absent cookie reads as "no shared state,
-    use your local copy" — which would resurrect this history. An explicitly
-    empty list clears every reader."""
+    """Write an empty list to the shared cookie. Deleting the cookie would
+    make the SPA fall back to its localStorage copy and restore the history."""
     response = RedirectResponse(_safe_next(next), status_code=303, headers={"Cache-Control": "no-store"})
     response.set_cookie(_RECENT_COOKIE, "[]", max_age=_COOKIE_MAX_AGE, samesite="lax", secure=_secure_cookie(request))
     return response

@@ -14,7 +14,7 @@
 	import Feedback from '#lib/components/Feedback.svelte';
 	import Icon from '#lib/components/Icon.svelte';
 	import ShareButton from '#lib/components/ShareButton.svelte';
-	import { loadRecent, pushRecent, clearRecent } from '#lib/recent.ts';
+	import { pushRecent } from '#lib/recent.ts';
 	import { furigana } from '#lib/furigana.svelte.ts';
 	import { typewriter } from '#lib/typewriter.svelte.ts';
 	import { formatNumber, t } from '#lib/i18n.svelte.ts';
@@ -36,15 +36,12 @@
 	const MAX_QUERY_CHARS = 150;
 	const MAX_JA_QUERY_CHARS = 100;
 
-	// Reassigned whole, never mutated — raw avoids proxying the list.
-	let recent = $state.raw<string[]>([]);
 	let activeCard = $state(-1);
 	let qInput = $state('');
 	let searchInput = $state<HTMLInputElement>();
 	// Auto-focus drops the caret on desktop; on touch it would open the
 	// on-screen keyboard over the hero before the user asks for it.
 	onMount(() => {
-		recent = loadRecent();
 		if (!matchMedia('(pointer: coarse)').matches) searchInput?.focus({ preventScroll: true });
 		showBackToTop = window.scrollY > 300;
 	});
@@ -218,7 +215,8 @@
 			return;
 		}
 		const q = (sp.get('q') ?? '').trim();
-		if (q !== committed) {
+		const changedQuery = q !== committed;
+		if (changedQuery) {
 			wantResults = DEFAULT_RESULTS; // reset before urlKey below
 			activeCard = -1;
 			// Dropping the visible results abandons whatever search produced
@@ -241,7 +239,7 @@
 			error = '';
 			return;
 		}
-		recent = pushRecent(q);
+		if (changedQuery) pushRecent(q);
 		runSearch(q);
 	});
 
@@ -318,7 +316,10 @@
 		// doesn't change kanjiChar → scroll imperatively, the effect won't refire.
 		if (v === committed) {
 			if (isKanji(v)) scrollToKanji();
-			if (v) runSearch(v);
+			if (v) {
+				pushRecent(v);
+				runSearch(v);
+			}
 		} else setQuery(v);
 	}
 
@@ -339,8 +340,7 @@
 		error = '';
 		try {
 			const char = await apiRandomKanji(level);
-			// A random pick is a lookup too — keep it in the shared recents so
-			// the homepage pills (and the lite variant, via the cookie) show it.
+			// Random lookups also belong in the shared history.
 			pushRecent(char);
 			goto(`/kanji/${encodeURIComponent(char)}`);
 		} catch (e) {
@@ -588,7 +588,6 @@
 		</button>
 	{/if}
 {:else if !searching && !error}
-	{#if recent.length === 0}
 	<div class="pills" aria-label={t('exampleSearches')}>
 		{#each EXAMPLES as ex (ex)}
 			<button type="button" class="pill" onclick={() => commit(ex)}>
@@ -597,30 +596,6 @@
 			</button>
 		{/each}
 	</div>
-	{/if}
-	{#if recent.length}
-		<div class="recent">
-			<p class="popover-title">
-				{t('recent')}
-				<button
-					type="button"
-					class="recent-clear"
-					onclick={() => {
-						clearRecent();
-						recent = [];
-					}}>{t('clear')}</button
-				>
-			</p>
-			<div class="pills" aria-label={t('recentSearches')}>
-				{#each recent as q (q)}
-					<button type="button" class="pill" onclick={() => commit(q)}>
-						<Icon name="search" size={16} />
-						<span lang="ja">{q}</span>
-					</button>
-				{/each}
-			</div>
-		</div>
-	{/if}
 	<div class="browse" aria-label={t('browse')}>
 		<p class="popover-title">{t('browse')}</p>
 		<div class="browse-grid">
@@ -662,4 +637,3 @@
 		</button>
 	</div>
 {/if}
-

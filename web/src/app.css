@@ -597,7 +597,7 @@ ruby rt {
 	content: url('/icons/emblem-dark.svg');
 }
 
-/* Both floating controls share one hit area: 2rem circle, neutral hover */
+/* Floating controls share one hit area: 2rem circle, neutral hover */
 .header-controls .status-dot,
 .header-controls .btn {
 	display: inline-flex;
@@ -607,6 +607,43 @@ ruby rt {
 	height: 2rem;
 	padding: 0;
 	border-radius: var(--radius-pill);
+}
+
+.header-more > summary {
+	list-style: none;
+	cursor: pointer;
+}
+
+.header-more > summary::-webkit-details-marker {
+	display: none;
+}
+
+.header-more[open] > summary {
+	background: var(--surface-soft);
+	color: var(--text);
+}
+
+.header-more[open] > summary svg {
+	transform: rotate(180deg);
+}
+
+.header-secondary {
+	position: absolute;
+	top: calc(100% + var(--space-1));
+	right: 0;
+	display: flex;
+	align-items: center;
+	gap: 0.15rem;
+	padding: var(--space-1);
+	border: 1px solid var(--border-soft);
+	border-radius: var(--radius-pill);
+	background: var(--surface);
+	box-shadow: var(--shadow-md);
+}
+
+.header-history .popover-panel {
+	width: min(20rem, calc(100vw - 4rem));
+	min-width: 0;
 }
 
 .status-dot {
@@ -3658,10 +3695,6 @@ button, a, input, summary {
 	.sk { animation: none; }
 }
 
-.recent {
-	margin-top: var(--space-5);
-}
-
 .browse {
 	margin-top: var(--space-5);
 }
@@ -3736,25 +3769,6 @@ button, a, input, summary {
 	font-size: var(--fs-sm);
 	color: var(--text-muted);
 	line-height: 1.4;
-}
-
-.recent .popover-title {
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-}
-
-.recent-clear {
-	font: inherit;
-	background: none;
-	border: none;
-	color: var(--text-faint);
-	cursor: pointer;
-	text-transform: uppercase;
-}
-
-.recent-clear:hover {
-	color: var(--text);
 }
 
 :root {

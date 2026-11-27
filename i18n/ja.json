@@ -65,6 +65,8 @@
 	"recent": "最近の検索",
 	"clear": "クリア",
 	"recentSearches": "最近の検索",
+	"noRecentSearches": "検索履歴はまだありません。",
+	"moreControls": "その他の操作",
 	"scrollTop": "トップへ戻る",
 	"common": "常用",
 	"copyAsTitle": "「語【読み】— 意味」としてコピー",
