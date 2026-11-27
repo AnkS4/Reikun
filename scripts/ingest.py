@@ -187,6 +187,9 @@ def _payload(chunk: dict, sig: str) -> dict:
         # Language-pack POS ("verb"/"noun"/… from the es pack; absent on ja
         # chunks, whose senses carry per-sense POS) — display + pack filters.
         "pos": chunk.get("pos"),
+        # Native-Spanish definitions (es pack): the display glosses, kept
+        # alongside the English `meanings` the vectors embed.
+        "definitions_es": chunk.get("definitions_es"),
         "text": chunk["text"],
         # All variant forms — keyword-indexed for exact match on alternates.
         "kanji_forms": chunk.get("kanji_forms", []),

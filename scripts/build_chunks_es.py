@@ -20,6 +20,7 @@ Usage:
 """
 
 import argparse
+import gzip
 import hashlib
 import json
 import logging
@@ -38,6 +39,11 @@ log = logging.getLogger(__name__)
 
 SELF_RUN_PATH = raw_dir("ja").parent.parent / "work" / "es" / "es-selfrun.jsonl"
 OUT_DIR = proc_dir("es")
+# The English-Wiktionary slice (scripts/filter_lang.py output): the same
+# Spanish words with ENGLISH glosses — the layer English→Spanish search needs
+# (JMdict's whole point: Japanese words explained in English; the es edition
+# only explains them in Spanish).
+EN_RAW_PATH = raw_dir("ja").parent.parent / "raw" / "en" / "raw-wiktextract-es.jsonl.gz"
 
 # A sense whose glosses read like a form-of definition ("plural of casa") is
 # the fallback signal when wiktextract's form-of tag is absent.
@@ -126,6 +132,71 @@ def _chunk(entry: dict) -> dict:
     return chunk
 
 
+def _load_en_glosses() -> dict[tuple[str, str], dict]:
+    """(word.lower(), pos) → best English-Wiktionary entry (the lemma-shaped
+    one with the most senses), from the raw en-edition Spanish slice."""
+    index: dict[tuple[str, str], tuple[int, dict]] = {}
+    if not EN_RAW_PATH.exists():
+        log.warning("No en-gloss slice at %s — chunks stay native-Spanish only.", EN_RAW_PATH)
+        return {}
+    with gzip.open(EN_RAW_PATH, "rt", encoding="utf-8") as f:
+        for line in f:
+            entry = json.loads(line)
+            if entry.get("lang_code") != "es":
+                continue
+            senses = entry.get("senses") or []
+            key = (entry["word"].lower(), entry.get("pos") or "")
+            rank = (len(senses), 0 if (senses and _is_form_of(senses[0])) else 1)
+            if key not in index or rank > index[key][0]:
+                index[key] = (rank, entry)
+    log.info("en-gloss index: %s (word, pos) keys", f"{len(index):,}")
+    return index
+
+
+def _merge_en(chunk: dict, en_entry: dict | None) -> None:
+    """Fold English glosses + en-edition forms into a native-Spanish chunk.
+
+    `meanings` become the English glosses (what the dense model embeds — it
+    only ever sees English queries, exactly like Japanese/JMdict) with the
+    native definitions preserved in `definitions_es` for display.
+    """
+    if not en_entry:
+        chunk["definitions_es"] = chunk["meanings"]
+        return
+    en_senses = en_entry.get("senses") or []
+    en_glosses: list[str] = []
+    for s in en_senses:
+        for g in (s.get("glosses") or s.get("raw_glosses") or []):
+            g = g.strip()
+            if g and g.lower() not in {x.lower() for x in en_glosses}:
+                en_glosses.append(g)
+            if len(en_glosses) >= 6:
+                break
+        if len(en_glosses) >= 6:
+            break
+    chunk["definitions_es"] = chunk["meanings"]
+    if en_glosses:
+        chunk["meanings"] = en_glosses
+        gloss_keys = list({t.lower() for g in en_glosses for t in g.split()})[:20]
+        chunk["gloss_keys"] = gloss_keys
+        chunk["primary_gloss_keys"] = list(
+            {t.lower() for g in en_glosses[:1] for t in g.split()})[:20]
+        chunk["head_gloss_keys"] = en_glosses[:1]
+        chunk["text"] = f"{chunk['reading']}: {'; '.join(en_glosses)}"
+    # The en edition's conjugation tables are the fuller ones (hablar: 303
+    # forms vs the es edition's 138) — union the surfaces, prefer en rows.
+    en_forms = en_entry.get("forms") or []
+    en_surfaces = {f["form"] for f in en_forms if f.get("form")} - {chunk["reading"]}
+    if en_surfaces:
+        chunk["infl_forms"] = sorted(set(chunk.get("infl_forms") or []) | en_surfaces)
+        if chunk.get("pos") == "verb" and en_forms:
+            chunk["inflected_forms"] = [
+                {"form": " ".join(f.get("tags") or []) or "inflected form",
+                 "surface": f["form"], "kana": None}
+                for f in en_forms if f.get("form") and f["form"] != chunk["reading"]
+            ][:200]
+
+
 def main() -> None:
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
     parser = argparse.ArgumentParser(description="Build Spanish chunks from the wiktextract self-run.")
@@ -157,6 +228,15 @@ def main() -> None:
                 seen[key] = (rank, entry)
 
     chunks = [_chunk(e) for _, e in seen.values()]
+    en_index = _load_en_glosses()
+    if en_index:
+        merged = 0
+        for c in chunks:
+            en_entry = en_index.get((c["reading"].lower(), c["pos"]))
+            if en_entry:
+                _merge_en(c, en_entry[1])
+                merged += 1
+        log.info("English glosses merged into %s of %s chunks", f"{merged:,}", f"{len(chunks):,}")
     chunks.sort(key=lambda c: (-c["wf_score"], c["reading"]))
     if args.limit:
         chunks = chunks[: args.limit]
