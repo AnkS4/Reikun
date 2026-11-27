@@ -99,20 +99,27 @@ padding:.1rem var(--space-2);text-transform:uppercase;letter-spacing:.05em;white
    edge, but -15px pushed the border box ~1.4px past the viewport — enough
    for Firefox's :focus-visible outline (which Chrome doesn't paint on
    click) to clip. -8px leaves ~5.6px of clearance for the ring. */
-.controls{position:fixed;top:.6rem;right:.85rem;margin-right:-8px;z-index:var(--z-header);display:flex;
+.controls{--control-size:2rem;position:fixed;top:.6rem;right:.85rem;margin-right:-8px;z-index:var(--z-header);display:flex;
 align-items:center;gap:.15rem}
 /* Top-right icon buttons, mirroring the SPA's header cluster: same 2rem round
    hit area, muted until hover. Titles + aria-labels carry the meaning. */
 .controls .icon-link{display:inline-flex;align-items:center;justify-content:center;
-width:2rem;height:2rem;border-radius:999px;color:var(--text-muted)}
+width:var(--control-size);height:var(--control-size);border-radius:999px;color:var(--text-muted)}
 .controls .icon-link:hover{color:var(--text)}
-.more-controls > summary{list-style:none;cursor:pointer}
+.control-actions{display:flex;align-items:center;gap:.15rem}
+.more-controls{position:relative;min-height:var(--control-size);padding-right:var(--control-size);
+border-radius:var(--radius-pill)}
+.more-controls > summary{position:absolute;top:0;right:0;list-style:none;cursor:pointer}
 .more-controls > summary::-webkit-details-marker{display:none}
+.more-controls[open]{background:var(--surface);box-shadow:0 .5rem 1.5rem rgb(0 0 0 / .18)}
 .more-controls[open] > summary,.controls [aria-current=page]{background:var(--surface-soft);color:var(--text)}
-.more-controls[open] .icon-chevron{transform:rotate(180deg)}
-.secondary-controls{position:absolute;top:calc(100% + var(--space-1));right:0;display:flex;
-align-items:center;gap:.15rem;padding:var(--space-1);background:var(--surface);
-border:1px solid var(--border);border-radius:var(--radius-pill);box-shadow:0 .5rem 1.5rem rgb(0 0 0 / .18)}
+.more-controls .icon-chevron{transform:rotate(90deg)}
+.more-controls[open] .icon-chevron{transform:rotate(-90deg)}
+@media (prefers-reduced-motion:no-preference){
+.more-controls::details-content{opacity:0;translate:.5rem 0;
+transition:opacity .15s ease,translate .15s ease,content-visibility .15s allow-discrete}
+.more-controls[open]::details-content{opacity:1;translate:none}
+}
 /* The control and browse glyphs are Lucide icons (ISC), traced to outlines
    by scripts/build_lite_icons.py. This small font is served as a real file,
    since some hardened browsers drop data: URI fonts. It renders where SVG is disabled
@@ -138,7 +145,7 @@ font:1.125rem/1 'reikun-icons',sans-serif}
 .icon-award::before{content:"\f103"}
 .icon-import::before{content:"\f104"}
 .controls .status-dot{display:inline-flex;align-items:center;justify-content:center;
-width:2rem;height:2rem;border-radius:999px;color:var(--text-faint);cursor:default}
+width:var(--control-size);height:var(--control-size);border-radius:999px;color:var(--text-faint);cursor:default}
 .controls .status-dot.ok{color:var(--ok)}
 .controls .status-dot.err{color:var(--err)}
 /* Not probed yet: a step quieter than the other icons' --text-muted. */
@@ -149,8 +156,8 @@ width:2rem;height:2rem;border-radius:999px;color:var(--text-faint);cursor:defaul
 .controls .status-menu{position:relative;display:inline-flex}
 .controls .status-menu summary{list-style:none;cursor:pointer}
 .controls .status-menu summary::-webkit-details-marker{display:none}
-.status-pop{position:absolute;top:calc(100% + .35rem);right:0;z-index:var(--z-floating);margin:0;
-min-width:13rem;max-width:20rem;padding:.7rem .9rem;background:var(--surface);
+.status-pop{position:absolute;top:calc(100% + .35rem);right:calc(-2 * var(--control-size));z-index:var(--z-floating);margin:0;
+ min-width:13rem;max-width:min(20rem,calc(100vw - var(--control-size) - 1.1rem));padding:.7rem .9rem;background:var(--surface);
 border:1px solid var(--border);border-radius:var(--radius-md);
 box-shadow:0 .5rem 1.5rem rgb(0 0 0 / .18);font-size:var(--fs-sm);line-height:1.55;
 text-align:left;cursor:default}
@@ -518,7 +525,7 @@ button[type=submit],.btn{border:1px solid ButtonText}
 :root:not([data-theme="light"]){--border:rgba(255,255,255,.45);--border-soft:rgba(255,255,255,.25)}
 }
 @media (pointer:coarse){
-.controls .icon-link,.controls .status-dot{min-height:2.75rem;min-width:2.75rem}
+.controls{--control-size:2.75rem}
 form.search button[type=submit],form.search .btn{min-height:2.75rem}
 .pill{min-height:2.75rem}
 .kbadges a.badge{display:inline-flex;align-items:center;min-height:2.75rem;padding-block:.3rem}

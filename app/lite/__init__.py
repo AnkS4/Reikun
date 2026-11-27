@@ -421,8 +421,8 @@ def _status_chip(lang: str) -> str:
     )
 
 
-# The full-version switch and history are always visible. The secondary
-# controls (status, theme, language) sit in a native <details> disclosure.
+# The homepage shows the full control row. Interior pages put the same row
+# behind a native <details> disclosure.
 #
 # Lite's icon language otherwise stays minimal:
 #   - wayfinding: typographic arrows in link text (←, →, from lite/i18n.py);
@@ -533,6 +533,8 @@ def _full_switch_url(request: Request) -> str:
         return f"{base}/about"
     if path == "/lite/privacy":
         return f"{base}/privacy"
+    if path == "/lite/history":
+        return f"{base}/history"
     return base
 
 
@@ -555,14 +557,15 @@ def _controls(request: Request) -> str:
         f'<a class="icon-link" href="/lite/history" title="{history_label}"'
         f' aria-label="{history_label}"{current}>{_icon("history")}</a>'
     )
-    more_label = esc(_t(lang, "moreControls"))
-    parts.append(
-        f'<details class="more-controls"><summary class="icon-link" title="{more_label}"'
-        f' aria-label="{more_label}">{_icon("chevron")}</summary><div class="secondary-controls">'
-        f'{_status_chip(lang)}{_theme_toggle(theme, next_url, lang)}{_lang_toggle(lang, next_url)}'
-        '</div></details>'
-    )
-    return '<div class="controls">' + "".join(parts) + "</div>"
+    parts.extend((_status_chip(lang), _theme_toggle(theme, next_url, lang), _lang_toggle(lang, next_url)))
+    row = '<div class="control-actions">' + "".join(parts) + '</div>'
+    if request.url.path not in ("/lite", "/lite/"):
+        more_label = esc(_t(lang, "moreControls"))
+        row = (
+            f'<details class="more-controls"><summary class="icon-link" title="{more_label}"'
+            f' aria-label="{more_label}">{_icon("chevron")}</summary>{row}</details>'
+        )
+    return f'<div class="controls">{row}</div>'
 
 
 def _page(

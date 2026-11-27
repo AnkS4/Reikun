@@ -157,7 +157,7 @@
 	{/if}
 </svelte:head>
 
-<Header hero={!hasResults && !searching} tagline={TAGLINE} />
+<Header home={!committed} hero={!hasResults && !searching} tagline={TAGLINE} />
 
 <form class="search-row" role="search" onsubmit={submit}>
 	<div class="search-pair">

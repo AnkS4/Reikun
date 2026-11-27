@@ -408,7 +408,7 @@
 
 <svelte:window onkeydown={handleWindowKeydown} onscroll={handleScroll} />
 
-<Header hero={!hasResults && !searching} tagline={t('tagline')} />
+<Header home={!committed} hero={!hasResults && !searching} tagline={t('tagline')} />
 
 <form class="search-row" role="search" onsubmit={submit}>
 	<div class="search-pair">

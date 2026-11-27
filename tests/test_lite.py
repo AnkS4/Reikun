@@ -162,12 +162,17 @@ def test_theme_toggle_is_one_click_and_variant_switch(monkeypatch) -> None:
     assert 'class="icon icon-full"' in controls and 'class="icon icon-db"' in controls
     assert 'class="icon icon-sun"' in controls and 'class="icon icon-moon"' in controls
     assert 'class="icon icon-lang"' in controls
-    assert 'class="icon icon-history"' in controls and 'class="icon icon-chevron"' in controls
-    assert '<details class="more-controls">' in controls
+    assert 'class="icon icon-history"' in controls
+    assert 'class="more-controls"' not in controls
     assert 'aria-label="Switch to the full interface"' in controls
     assert 'class="icon-link"' in controls and 'class="status-dot' in controls
     assert 'class="theme-toggle"' in controls and 'class="lang-menu"' in controls
     assert "http://127.0.0.1:5173" in controls
+    interior = client.get("/lite/history").text
+    collapse = interior.split('<details class="more-controls">', 1)[1]
+    assert 'class="icon icon-chevron"' in collapse
+    assert 'class="icon icon-full"' in collapse and 'class="icon icon-history"' in collapse
+    assert 'href="http://127.0.0.1:5173/history"' in collapse
     monkeypatch.undo()
     assert 'Switch to the full interface' not in client.get("/lite").text  # unset → button hidden
 

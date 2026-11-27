@@ -8,7 +8,7 @@
 		title = '',
 		buttonClass = '',
 		children
-	}: { icon?: IconName; label?: string; title?: string; buttonClass?: string; children: Snippet<[() => void]> } = $props();
+	}: { icon?: IconName; label?: string; title?: string; buttonClass?: string; children: Snippet } = $props();
 	let open = $state(false);
 	let wrap = $state<HTMLDivElement>();
 	let trigger = $state<HTMLButtonElement>();
@@ -23,8 +23,7 @@
 	// Keyboard users land inside the panel (the selected option if there is one).
 	$effect(() => {
 		if (!open) return;
-		const preferred = panel?.querySelector<HTMLElement>('[data-popover-focus], .sel');
-		(preferred ?? panel?.querySelector<HTMLElement>('button, [href], input'))?.focus();
+		panel?.querySelector<HTMLElement>('.sel, button, [href], input')?.focus();
 	});
 </script>
 
@@ -61,7 +60,7 @@
 	</button>
 	{#if open}
 		<div class="popover-panel" role="dialog" aria-label={title || undefined} id={panelId} bind:this={panel}>
-			{@render children(() => close(true))}
+			{@render children()}
 		</div>
 	{/if}
 </div>

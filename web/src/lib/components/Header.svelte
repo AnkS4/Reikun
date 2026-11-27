@@ -10,10 +10,9 @@
 	import { PUBLIC_API_BASE } from '$app/env/public';
 	import KanjiText from './KanjiText.svelte';
 	import Popover from './Popover.svelte';
-	import SearchHistory from './SearchHistory.svelte';
 	import Icon from './Icon.svelte';
 
-	let { hero = false, tagline = '' }: { hero?: boolean; tagline?: string } = $props();
+	let { hero = false, home = false, tagline = '' }: { hero?: boolean; home?: boolean; tagline?: string } = $props();
 	const isHome = $derived(page.url.pathname === '/');
 	// Fixed per origin (es.reikun.app vs everything else) — safe to read once.
 	const pack = currentPack();
@@ -48,6 +47,7 @@
 		}
 		if (path === '/about') return `${base}/lite/about`;
 		if (path === '/privacy') return `${base}/lite/privacy`;
+		if (path === '/history') return `${base}/lite/history`;
 		if (path === '/kana') {
 			const variant = page.url.searchParams.get('variant') === 'katakana' ? '?variant=katakana' : '';
 			return `${base}/lite/kana${variant}`;
@@ -83,6 +83,15 @@
 	const SISTER_URL = pack === 'es' ? 'https://reikun.app' : 'https://es.reikun.app';
 	const SISTER_TITLE = pack === 'es' ? 'Try the Japanese dictionary' : 'Try the Spanish dictionary';
 	const SISTER_EMBLEM = pack === 'es' ? '/icons/emblem.svg' : '/icons/emblem-es.svg';
+	const historyUrl = $derived.by(() => {
+		try {
+			const level = page.url.searchParams.get('level');
+			if (level) return `/history?${new URLSearchParams({ level })}`;
+		} catch {
+			// Search params are unavailable during prerendering.
+		}
+		return '/history';
+	});
 
 	// Readiness lives in shared reactive state (backend.ready — written by the
 	// /ready request in api.ts, retries included), so the dot and entry count
@@ -106,29 +115,33 @@
 </script>
 
 <div class="header-controls">
+	{#if home}
+		<div class="header-actions">{@render controls()}</div>
+	{:else}
+		<details class="header-more">
+			<summary class="btn tertiary" title={t('moreControls')} aria-label={t('moreControls')}>
+				<Icon name="expand-more" size={16} />
+			</summary>
+			<div class="header-actions">{@render controls()}</div>
+		</details>
+	{/if}
+</div>
+
+{#snippet controls()}
 	<!-- Sister-edition switch: the other edition's sun crosses between the
 	     Japanese and Spanish hosts (each pack decides the target). -->
 	<a class="btn tertiary header-es" href={SISTER_URL} title={SISTER_TITLE} aria-label={SISTER_TITLE} rel="noopener">
 		<img class="sister-emblem" src={SISTER_EMBLEM} alt="" aria-hidden="true" />
 	</a>
-	<div class="header-history">
-		<Popover icon="history" title={t('recentSearches')}>
-			{#snippet children(close)}
-				<SearchHistory {close} />
-			{/snippet}
-		</Popover>
-	</div>
-	<details class="header-more">
-		<summary class="btn tertiary" title={t('moreControls')} aria-label={t('moreControls')}>
-			<Icon name="expand-more" size={16} />
-		</summary>
-		<div class="header-secondary">
-			{@render secondaryControls()}
-		</div>
-	</details>
-</div>
-
-{#snippet secondaryControls()}
+	<a
+		class="btn tertiary"
+		href={historyUrl}
+		title={t('recentSearches')}
+		aria-label={t('recentSearches')}
+		aria-current={page.url.pathname === '/history' ? 'page' : undefined}
+	>
+		<Icon name="history" size={18} />
+	</a>
 	{#if pack === 'ja'}
 		<!-- Variant switch, drawn like the popover triggers: a plain 2rem round
 		     icon button — a lightning bolt for the quick, lightweight variant,
@@ -224,16 +237,14 @@
 					aria-hidden="true"
 				/>
 				<span class="brand-wordmark" lang="en">{BRAND_SHORT}</span>
-				{#if pack === 'es'}
-					<!-- The Spanish edition is search-first and still growing — say
-					     so quietly, right on the wordmark (the standard alpha spot). -->
-					<span class="alpha-tag" title="Initial release — the dictionary is still growing">ALPHA</span>
-				{/if}
 			</a>
 			{#if hero && currentPack() === 'ja'}
 				<!-- 例訓 clarifies the name on the Japanese edition only — it would
 				     be nonsense on the Spanish edition's header. -->
 				<span class="brand-kanji" lang="ja">(<KanjiText text="例訓" />)</span>
+			{/if}
+			{#if pack === 'es'}
+				<span class="alpha-tag" title="Initial release — the dictionary is still growing">ALPHA</span>
 			{/if}
 		</h1>
 		{#if hero && tagline}<p class="tagline">{tagline}</p>{/if}
