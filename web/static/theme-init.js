@@ -34,12 +34,17 @@
 				var meta = document.getElementById('theme-color');
 				if (meta) meta.setAttribute('content', bg);
 				// The Spanish edition's origin swaps the brand artwork for the
-				// gold-sun set (same mark, Spanish accent) — icon + touch icon.
+				// gold-sun set (same mark, Spanish accent) — icon + touch icon +
+				// manifest + the data-pack flag the CSS theme rules key on (the
+				// dark emblem swap in app.css picks the es artwork through it).
 				// The favicon SVG already adapts to dark chrome via its own styles.
 				if (location.hostname === 'es.reikun.app') {
+					document.documentElement.dataset.pack = 'es';
 					var icon = document.querySelector('link[rel="icon"][type="image/svg+xml"]');
 					if (icon) icon.setAttribute('href', icon.getAttribute('href').replace(/favicon\.svg/, 'favicon-es.svg'));
 					var touch = document.querySelector('link[rel="apple-touch-icon"]');
 					if (touch) touch.setAttribute('href', touch.getAttribute('href').replace(/apple-touch-icon\.png/, 'apple-touch-icon-es.png'));
+					var manifest = document.querySelector('link[rel="manifest"]');
+					if (manifest) manifest.setAttribute('href', manifest.getAttribute('href').replace(/site\.webmanifest/, 'site-es.webmanifest'));
 				}
 			})();

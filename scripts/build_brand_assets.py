@@ -130,7 +130,7 @@ def main() -> None:
     ):
         name = "emblem" + suffix
         artwork = svg(title, 100, 100, mark(palette))
-        write(f"emblems/{name}.svg", artwork, **{f"{name}.png": 496} if "dark" not in name else {})
+        write(f"emblems/{name}.svg", artwork, **{f"{name}.png": 496})
 
     dark_rules = "".join(f".{k}{{fill:{v}}}" for k, v in zip(PATHS, SIGNAL_DARK, strict=True))
     adaptive = "<style>@media (prefers-color-scheme:dark){" + dark_rules + "}</style>\n"
@@ -194,7 +194,7 @@ def main() -> None:
             lettering("OPEN LANGUAGE LEARNING", 78, 91, 24, SIGNAL[1], "mono-w500-latin"),
             mark(SPANISH, 73, 169, 149),
             lettering("Reikun", 255, 295, 138, SIGNAL[0]),
-            lettering("The open Spanish dictionary & reading assistant", 78, 407, 40, SIGNAL[0]),
+            lettering("The open Spanish dictionary", 78, 407, 40, SIGNAL[0]),
             lettering(
                 "Word meanings, pronunciation, conjugations and grammar in context.",
                 78,
@@ -209,7 +209,7 @@ def main() -> None:
     )
     write(
         "images/og-image-es.svg",
-        svg("Reikun — The open Spanish dictionary & reading assistant", 1200, 630, es_card),
+        svg("Reikun — The open Spanish dictionary", 1200, 630, es_card),
         **{"og-image-es.png": 1200},
     )
 
