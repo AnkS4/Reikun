@@ -859,6 +859,8 @@ export interface components {
              * @default []
              */
             lsource: components["schemas"]["EtymologySource"][];
+            /** Ipa */
+            ipa?: string | null;
             /**
              * Reading Restrictions
              * @default {}

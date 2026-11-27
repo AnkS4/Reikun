@@ -213,6 +213,8 @@ def _hit_to_dict(hit, score: float | None = None) -> dict:
         "kanji_forms": p.get("kanji_forms") or [],
         "readings": p.get("readings") or [],
         "meanings": p.get("meanings", []),
+        # Pronunciation (IPA) — the es pack's furigana slot; absent on ja.
+        "ipa": p.get("ipa"),
         "example_sentences": p.get("example_sentences", []),
         "is_common": p.get("is_common", False),
         "text": p.get("text", ""),

@@ -190,6 +190,8 @@ def _payload(chunk: dict, sig: str) -> dict:
         # Native-Spanish definitions (es pack): the display glosses, kept
         # alongside the English `meanings` the vectors embed.
         "definitions_es": chunk.get("definitions_es"),
+        # Pronunciation (IPA) — display-only, no index.
+        "ipa": chunk.get("ipa"),
         "text": chunk["text"],
         # All variant forms — keyword-indexed for exact match on alternates.
         "kanji_forms": chunk.get("kanji_forms", []),

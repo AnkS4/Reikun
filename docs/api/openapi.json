@@ -2053,6 +2053,17 @@
             "title": "Lsource",
             "default": []
           },
+          "ipa": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ipa"
+          },
           "reading_restrictions": {
             "additionalProperties": {
               "items": {

@@ -396,6 +396,9 @@ class SearchResult(BaseModel):
     lsource: list[EtymologySource] = []
     # reading → kanji forms it may appear with (JMdict re_restr/re_nokanji);
     # raw passthrough — the display-ready pairings live in `variants`.
+    # Pronunciation (IPA) — the es pack's furigana slot (alphabetic language);
+    # JMdict entries carry none.
+    ipa: str | None = None
     reading_restrictions: dict[str, list[str]] = {}
     # Variant-forms block: per-keb reading bindings + ke_inf labels +
     # kana-only readings; None when the entry carries no restrictions or

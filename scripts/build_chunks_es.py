@@ -100,6 +100,7 @@ def _chunk(entry: dict) -> dict:
     primary_keys = list({t.lower() for g in primary for t in g.split()})[:20]
 
     text = f"{word}: {'; '.join(meanings)}"
+    ipa = next((s.get("ipa") for s in (entry.get("sounds") or []) if s.get("ipa")), None)
     chunk = {
         "id": _stable_id(word, pos),
         "kanji_form": None,
@@ -116,6 +117,7 @@ def _chunk(entry: dict) -> dict:
         "wf_score": round(max(zipf_frequency(word, "es"), 0.0), 3),
         "senses": sense_rows[:12],
         "pos": pos,
+        "ipa": ipa,
     }
 
     forms = entry.get("forms") or []
