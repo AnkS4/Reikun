@@ -169,10 +169,10 @@ def test_theme_toggle_is_one_click_and_variant_switch(monkeypatch) -> None:
     assert 'class="theme-toggle"' in controls and 'class="lang-menu"' in controls
     assert "http://127.0.0.1:5173" in controls
     interior = client.get("/lite/history").text
-    collapse = interior.split('<details class="more-controls">', 1)[1]
-    assert 'class="icon icon-chevron"' in collapse
-    assert 'class="icon icon-full"' in collapse and 'class="icon icon-history"' in collapse
-    assert 'href="http://127.0.0.1:5173/history"' in collapse
+    interior_controls = interior.split('class="controls"')[1].split("<main", 1)[0]
+    assert 'class="more-controls"' not in interior_controls
+    assert 'class="icon icon-full"' in interior_controls and 'class="icon icon-history"' in interior_controls
+    assert 'href="http://127.0.0.1:5173/history"' in interior_controls
     monkeypatch.undo()
     assert 'Switch to the full interface' not in client.get("/lite").text  # unset → button hidden
 

@@ -421,8 +421,7 @@ def _status_chip(lang: str) -> str:
     )
 
 
-# The homepage shows the full control row. Interior pages put the same row
-# behind a native <details> disclosure.
+# Lite keeps the same control row visible on every page.
 #
 # Lite's icon language otherwise stays minimal:
 #   - wayfinding: typographic arrows in link text (←, →, from lite/i18n.py);
@@ -558,14 +557,7 @@ def _controls(request: Request) -> str:
         f' aria-label="{history_label}"{current}>{_icon("history")}</a>'
     )
     parts.extend((_status_chip(lang), _theme_toggle(theme, next_url, lang), _lang_toggle(lang, next_url)))
-    row = '<div class="control-actions">' + "".join(parts) + '</div>'
-    if request.url.path not in ("/lite", "/lite/"):
-        more_label = esc(_t(lang, "moreControls"))
-        row = (
-            f'<details class="more-controls"><summary class="icon-link" title="{more_label}"'
-            f' aria-label="{more_label}">{_icon("chevron")}</summary>{row}</details>'
-        )
-    return f'<div class="controls">{row}</div>'
+    return '<div class="controls">' + "".join(parts) + '</div>'
 
 
 def _page(
@@ -599,8 +591,10 @@ def _page(
 </head>
 <body>
 <a class="skip-link" href="#main">{esc(_t(lang, "skipToContent"))}</a>
+<div class="page-header">
 {_header(hero, lang)}
 {controls}
+</div>
 <main id="main" tabindex="-1">
 {body}
 </main>

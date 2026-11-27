@@ -86,8 +86,6 @@ _ICONS = {
         "M3 3v5h5",
         "M12 7v5l4 2",
     ),
-    # chevron-down — more controls (Lucide, ISC)
-    "F10B": ("m6 9 6 6 6-6",),
     # pen-line — browse tile: kanji by stroke count (lucide:pen-line, ISC)
     "F101": (
         "M13 21h8",
