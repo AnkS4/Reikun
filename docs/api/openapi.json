@@ -163,6 +163,101 @@
         }
       }
     },
+    "/es/search": {
+      "get": {
+        "tags": [
+          "search"
+        ],
+        "summary": "Es Search Endpoint",
+        "description": "Spanish pack search (es_words): Spanish words explained in English\n(meanings) with native definitions (definitions_es), conjugation tables\n(inflected_forms) and inflection exact matching (hablas → hablar).",
+        "operationId": "es_search_endpoint_es_search_get",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S",
+              "description": "English or Spanish word, or a natural-language question",
+              "title": "Q"
+            },
+            "description": "English or Spanish word, or a natural-language question"
+          },
+          {
+            "name": "n",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 50,
+              "minimum": 1,
+              "description": "Number of results",
+              "default": 10,
+              "title": "N"
+            },
+            "description": "Number of results"
+          },
+          {
+            "name": "log",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Record the search in the telemetry sink",
+              "default": true,
+              "title": "Log"
+            },
+            "description": "Record the search in the telemetry sink"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchResponseModel"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/es/ready": {
+      "get": {
+        "tags": [
+          "meta"
+        ],
+        "summary": "Es Ready",
+        "description": "Readiness for the Spanish pack: a real count against es_words.\n503 when the collection is missing/empty (or the cluster is down).",
+        "operationId": "es_ready_es_ready_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadyResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/kanji/random": {
       "get": {
         "tags": [

@@ -55,6 +55,7 @@ from app.grammar_explain import (
     validate_input,
 )
 from app.kanji_lookup import _load_kanji_table, is_kanji, jlpt_kanji, kanji_group_facets, random_kanji
+from app.lang.es import ES_COLLECTION, search_es
 from app.lite import router as lite_router
 from app.loanwords import loanword_facets, loanwords_page
 from app.ratelimit import rate_limited
@@ -745,6 +746,77 @@ def search_endpoint(
         "segments": [segment_chip(s) for s in raw_segments] if raw_segments else None,
         "meta": meta,
     }
+
+
+# ── Spanish pack (es_words) ──────────────────────────────────────────────────
+
+@app.get("/es/search", tags=["search"], response_model=SearchResponseModel, dependencies=[_search_limit])
+def es_search_endpoint(
+    # pattern=\S: whitespace-only input is a 422, not an embed of "".
+    q: Annotated[
+        str,
+        Query(min_length=1, pattern=r"\S", description="English or Spanish word, or a natural-language question"),
+    ],
+    n: Annotated[int, Query(ge=1, le=50, description="Number of results")] = 10,
+    log: Annotated[bool, Query(description="Record the search in the telemetry sink")] = True,
+) -> dict:
+    """Spanish pack search (es_words): Spanish words explained in English
+    (meanings) with native definitions (definitions_es), conjugation tables
+    (inflected_forms) and inflection exact matching (hablas → hablar)."""
+    q = q.strip()
+    try:
+        resp = search_es(q, n)
+    except Exception:
+        logger.exception("es search failed")
+        raise HTTPException(502, "Search is temporarily unavailable. Please try again.") from None
+    search_id = None
+    if log:
+        top = resp.results[0] if resp.results else {}
+        search_id = telemetry().search(
+            q, rewritten_query=resp.rewrite.query, rewrite_method=resp.rewrite.method, mode=resp.mode,
+            num_results=n, result_count=len(resp.results),
+            top_result=top.get("reading"), latency_ms=resp.latency_ms,
+            cached=bool(resp.meta.get("cached")),
+            route=None, embed_ms=None, retrieve_ms=None,
+        )
+    results = [
+        {
+            **r,
+            # No furigana in an alphabetic language; no related-words pass yet.
+            "ruby": [],
+            "related": [],
+        }
+        for r in resp.results
+    ]
+    return {
+        "search_id": search_id,
+        "results": results,
+        "rewrite": {
+            "original": resp.rewrite.original,
+            "query": resp.rewrite.query,
+            "method": resp.rewrite.method,
+            "changed": resp.rewrite.query != resp.rewrite.original,
+        },
+        "mode": resp.mode,
+        "latency_ms": resp.latency_ms,
+        "segments": None,
+        "meta": dict(resp.meta),
+    }
+
+
+@app.get("/es/ready", tags=["meta"], response_model=ReadyResponse)
+def es_ready(response: Response) -> dict:
+    """Readiness for the Spanish pack: a real count against es_words.
+    503 when the collection is missing/empty (or the cluster is down)."""
+    response.headers["Cache-Control"] = "no-store"
+    try:
+        count = qdrant_client().count(ES_COLLECTION).count
+    except Exception:
+        logger.exception("es_words unavailable")
+        raise HTTPException(503, "Spanish dictionary unavailable") from None
+    if not count:
+        raise HTTPException(503, "Spanish dictionary unavailable")
+    return {"status": "ready", "collection": ES_COLLECTION, "entries": count, "llm": LLM_MODEL}
 
 
 # ── Kanji ────────────────────────────────────────────────────────────────────

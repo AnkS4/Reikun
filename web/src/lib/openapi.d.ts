@@ -69,6 +69,49 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/es/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Es Search Endpoint
+         * @description Spanish pack search (es_words): Spanish words explained in English
+         *     (meanings) with native definitions (definitions_es), conjugation tables
+         *     (inflected_forms) and inflection exact matching (hablas → hablar).
+         */
+        get: operations["es_search_endpoint_es_search_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/es/ready": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Es Ready
+         * @description Readiness for the Spanish pack: a real count against es_words.
+         *     503 when the collection is missing/empty (or the cluster is down).
+         */
+        get: operations["es_ready_es_ready_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/kanji/random": {
         parameters: {
             query?: never;
@@ -1124,6 +1167,62 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    es_search_endpoint_es_search_get: {
+        parameters: {
+            query: {
+                /** @description English or Spanish word, or a natural-language question */
+                q: string;
+                /** @description Number of results */
+                n?: number;
+                /** @description Record the search in the telemetry sink */
+                log?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SearchResponseModel"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    es_ready_es_ready_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReadyResponse"];
                 };
             };
         };
