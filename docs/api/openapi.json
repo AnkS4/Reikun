@@ -163,6 +163,63 @@
         }
       }
     },
+    "/es/conjugations": {
+      "get": {
+        "tags": [
+          "conjugations"
+        ],
+        "summary": "Es Conjugations Endpoint",
+        "description": "Load a Wiktionary conjugation table without running a dictionary search.",
+        "operationId": "es_conjugations_endpoint_es_conjugations_get",
+        "parameters": [
+          {
+            "name": "word",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 150,
+              "pattern": "\\S",
+              "description": "Spanish verb or inflection",
+              "title": "Word"
+            },
+            "description": "Spanish verb or inflection"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EsConjugationsResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No sourced table for this verb",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/es/search": {
       "get": {
         "tags": [
@@ -559,6 +616,112 @@
         }
       }
     },
+    "/es/etymology": {
+      "get": {
+        "tags": [
+          "etymology"
+        ],
+        "summary": "Es Etymology Facets Endpoint",
+        "description": "Source-language categories and counts from Spanish Wiktionary.",
+        "operationId": "es_etymology_facets_endpoint_es_etymology_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoanwordsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/es/etymology/entries": {
+      "get": {
+        "tags": [
+          "etymology"
+        ],
+        "summary": "Es Etymology Entries Endpoint",
+        "description": "Spanish entries with this source-language tag, most frequent first.",
+        "operationId": "es_etymology_entries_endpoint_es_etymology_entries_get",
+        "parameters": [
+          {
+            "name": "lang",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 160,
+              "pattern": "\\S",
+              "description": "Spanish Wiktionary source label",
+              "title": "Lang"
+            },
+            "description": "Spanish Wiktionary source label"
+          },
+          {
+            "name": "n",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 50,
+              "minimum": 1,
+              "description": "Page size",
+              "default": 25,
+              "title": "N"
+            },
+            "description": "Page size"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Items to skip",
+              "default": 0,
+              "title": "Offset"
+            },
+            "description": "Items to skip"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoanwordsPageResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown source language",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/loanwords": {
       "get": {
         "tags": [
@@ -883,6 +1046,27 @@
         ],
         "title": "ErrorResponse",
         "description": "FastAPI's HTTPException body — declared so non-422 errors show up in the schema."
+      },
+      "EsConjugationsResponse": {
+        "properties": {
+          "word": {
+            "type": "string",
+            "title": "Word"
+          },
+          "inflected_forms": {
+            "items": {
+              "$ref": "#/components/schemas/InflectionRow"
+            },
+            "type": "array",
+            "title": "Inflected Forms"
+          }
+        },
+        "type": "object",
+        "required": [
+          "word",
+          "inflected_forms"
+        ],
+        "title": "EsConjugationsResponse"
       },
       "EtymologySource": {
         "properties": {
@@ -2070,6 +2254,22 @@
             },
             "type": "array",
             "title": "Definitions Es",
+            "default": []
+          },
+          "etymology_es": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Etymology Es",
+            "default": []
+          },
+          "origin_languages": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Origin Languages",
             "default": []
           },
           "reading_restrictions": {

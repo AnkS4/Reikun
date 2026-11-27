@@ -12,10 +12,10 @@
  *   meanings        — ENGLISH glosses, the primary display (what the embedder
  *                     sees, exactly like JMdict glosses for the ja pack)
  *   definitions_es  — native Spanish definitions, the secondary display
- *   senses          — per-sense { glosses, pos }; pos is a wiktextract tag
+ *   senses          — native per-sense data; pos is a wiktextract tag
  *                     ("verb", "adj"…), not JMdict's coarse tags
  *   inflected_forms — conjugation rows { form: label, surface, kana: null };
- *                     verbs only, up to ~200 rows (a full conjugation stack)
+ *                     verbs only, native table with English-edition supplements
  *   kanji_form / ruby / related — always null / [] for es
  */
 
@@ -24,14 +24,6 @@ import type { SearchResponse } from '#lib/api.ts';
 import { t, type MessageKey } from '#lib/i18n.svelte.ts';
 
 type ApiResult = components['schemas']['SearchResult'];
-
-/** One sense of an es entry, as the card displays it. */
-export interface EsSense {
-	/** English glosses for this sense (the primary display). */
-	glosses: string[];
-	/** Raw POS tags (wiktextract, e.g. "verb", "adj") — render via esPosLabel. */
-	pos: string[];
-}
 
 /** Conjugation rows bucketed by mood/non-finite group, payload order kept. */
 export interface EsInflectionGroup {
@@ -51,10 +43,12 @@ export interface EsResult {
 	meanings: string[];
 	/** Native Spanish definitions — the secondary display. */
 	definitionsEs: string[];
-	/** Per-sense view; empty when the entry ships no senses. */
-	senses: EsSense[];
-	/** Conjugation rows grouped for display; empty for non-verbs. */
-	inflectedForms: EsInflectionGroup[];
+	/** Raw Wiktionary POS tags. The builder writes the same POS on each sense. */
+	pos: string[];
+	etymologyEs: string[];
+	originLanguages: string[];
+	/** Number of sourced conjugation rows available on the verb's own page. */
+	conjugationCount: number;
 }
 
 /** POS tags whose wording matches shared chrome reuse their i18n keys. */
@@ -100,50 +94,53 @@ export function esPosLabel(tag: string): string {
  * group order below is the display order (finite moods before non-finite).
  */
 const CONJ_GROUPS: [RegExp, string][] = [
-	[/\bimperative\b/, 'Imperative'],
-	[/\bsubjunctive\b/, 'Subjunctive'],
+	[/\bcombined-form\b/, 'With object pronouns'],
 	[/\bconditional\b/, 'Conditional'],
+	[/\bsubjunctive\b/, 'Subjunctive'],
+	[/\bimperative\b/, 'Imperative'],
 	[/\bindicative\b/, 'Indicative'],
 	[/\b(infinitive|gerund|participle|impersonal)\b/, 'Non-finite forms']
 ];
-const CONJ_OTHER = 'Other forms';
+const CONJ_ORDER = [
+	'Indicative', 'Conditional', 'Subjunctive', 'Imperative', 'Non-finite forms', 'With object pronouns'
+];
 
-function groupInflections(rows: ApiResult['inflected_forms']): EsInflectionGroup[] {
+export function groupInflections(rows: ApiResult['inflected_forms']): EsInflectionGroup[] {
 	const groups: EsInflectionGroup[] = [];
 	const byLabel = new Map<string, EsInflectionGroup>();
 	for (const r of rows) {
-		if (!r.surface) continue;
+		if (!r.surface || !/\p{L}/u.test(r.surface)) continue;
 		const form = r.form.toLowerCase();
-		let label = CONJ_OTHER;
-		for (const [re, l] of CONJ_GROUPS) {
-			if (re.test(form)) {
-				label = l;
-				break;
-			}
-		}
+		const label = CONJ_GROUPS.find(([pattern]) => pattern.test(form))?.[1];
+		if (!label) continue;
 		let g = byLabel.get(label);
 		if (!g) {
 			g = { label, rows: [] };
 			byLabel.set(label, g);
 			groups.push(g);
 		}
-		g.rows.push({ form: r.form, surface: r.surface });
+		g.rows.push({ form: r.form.replaceAll('-', ' '), surface: r.surface });
 	}
-	return groups;
+	return groups.sort((a, b) => CONJ_ORDER.indexOf(a.label) - CONJ_ORDER.indexOf(b.label));
 }
 
 /** Shape one raw result into the display view. */
 export function shapeEs(r: ApiResult): EsResult {
+	const meanings = r.meanings ?? [];
+	const definitionsEs = r.definitions_es ?? [];
+	// Native-only entries also carry their Spanish definitions in `meanings`
+	// for retrieval. Keep them out of the English display.
+	const nativeOnly = meanings.length === definitionsEs.length
+		&& meanings.every((meaning, i) => meaning === definitionsEs[i]);
 	return {
 		reading: r.reading,
 		ipa: r.ipa ?? null,
-		meanings: r.meanings ?? [],
-		// `definitions_es` is not declared on the shared SearchResult model yet
-		// (app/api.py), so the generated type doesn't carry it — read it
-		// defensively and let the field land here when the model gains it.
-		definitionsEs: (r as { definitions_es?: string[] | null }).definitions_es ?? [],
-		senses: (r.senses ?? []).map((s) => ({ glosses: s.glosses ?? [], pos: s.pos ?? [] })),
-		inflectedForms: groupInflections(r.inflected_forms ?? [])
+		meanings: nativeOnly ? [] : meanings,
+		definitionsEs,
+		pos: [...new Set((r.senses ?? []).flatMap((sense) => sense.pos ?? []))],
+		etymologyEs: r.etymology_es ?? [],
+		originLanguages: r.origin_languages ?? [],
+		conjugationCount: r.inflected_forms?.length ?? 0
 	};
 }
 

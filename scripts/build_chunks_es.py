@@ -54,6 +54,12 @@ _FORM_OF_GLOSS = re.compile(
     r"superlative|comparative|participle|vocative|accusative|genitive|dative)\b[^;]*\bof\b",
     re.IGNORECASE,
 )
+_ORIGIN_PREFIX = "ES:Palabras provenientes del "
+_FORM_METADATA = {"inflection-template", "table-tags"}
+_VERB_FORMS = {
+    "indicative", "subjunctive", "conditional", "imperative",
+    "infinitive", "gerund", "participle",
+}
 
 
 def _is_form_of(sense: dict) -> bool:
@@ -91,6 +97,25 @@ def _gloss_key_set(glosses: list[str]) -> list[str]:
         for part in gloss.split(";"):
             keys.update(gloss_keys(part))
     return sorted(keys)[:20]
+
+
+def _form_entries(forms: list[dict]):
+    """Real forms only; Wiktionary tables also emit template markers and empty cells."""
+    for item in forms:
+        surface = (item.get("form") or "").strip()
+        tags = item.get("tags") or []
+        if any(ch.isalpha() for ch in surface) and not _FORM_METADATA.intersection(tags):
+            yield surface, tags
+
+
+def _verb_rows(forms: list[dict], *, seen: set[tuple[str, tuple[str, ...]]] | None = None):
+    if seen is None:
+        seen = set()
+    for surface, tags in _form_entries(forms):
+        key = surface, tuple(sorted(tags))
+        if _VERB_FORMS.intersection(tags) and key not in seen:
+            seen.add(key)
+            yield {"form": " ".join(tags), "surface": surface, "kana": None}
 
 
 def _chunk(entry: dict) -> dict:
@@ -132,17 +157,26 @@ def _chunk(entry: dict) -> dict:
         "ipa": ipa,
     }
 
+    etymology = list(dict.fromkeys(t.strip() for t in entry.get("etymology_texts", []) if t.strip()))
+    if etymology:
+        chunk["etymology_es"] = etymology
+    # The native extract's source categories belong to this very entry.
+    # Etymology links also point to cognates and should not become facets.
+    origins = sorted({
+        c.removeprefix(_ORIGIN_PREFIX).strip()
+        for c in entry.get("categories", []) if c.startswith(_ORIGIN_PREFIX)
+    } - {""})
+    if origins:
+        chunk["origin_languages"] = origins
+
     forms = entry.get("forms") or []
-    surfaces = sorted({f["form"] for f in forms if f.get("form")} - {word})
+    surfaces = sorted({surface for surface, _ in _form_entries(forms)} - {word})
     if surfaces:
         chunk["infl_forms"] = surfaces
-        if pos == "verb":
-            chunk["inflected_forms"] = [
-                {"form": " ".join(f.get("tags") or []) or "inflected form",
-                 "surface": f["form"], "kana": None}
-                for f in forms
-                if f.get("form") and f["form"] != word
-            ][:200]
+    if pos == "verb":
+        rows = list(_verb_rows(forms))
+        if rows:
+            chunk["inflected_forms"] = rows
     return chunk
 
 
@@ -199,18 +233,27 @@ def _merge_en(chunk: dict, en_entry: dict | None) -> None:
         # join the native ones (Spanish queries keep matching the native
         # text; English queries gain their gloss tokens).
         chunk["sparse_text"] = f"{chunk['sparse_text']} {'; '.join(en_glosses)}"
-    # The en edition's conjugation tables are the fuller ones (hablar: 303
-    # forms vs the es edition's 138) — union the surfaces, prefer en rows.
+    # Preserve the native table (including compound tenses). English
+    # Wiktionary supplements it with tagged negative commands, clitic forms
+    # and the simple infinitive, and supplies a fallback when no native
+    # paradigm was extracted. Both editions feed surface lookup.
     en_forms = en_entry.get("forms") or []
-    en_surfaces = {f["form"] for f in en_forms if f.get("form")} - {chunk["reading"]}
+    en_surfaces = {surface for surface, _ in _form_entries(en_forms)} - {chunk["reading"]}
     if en_surfaces:
         chunk["infl_forms"] = sorted(set(chunk.get("infl_forms") or []) | en_surfaces)
-        if chunk.get("pos") == "verb" and en_forms:
-            chunk["inflected_forms"] = [
-                {"form": " ".join(f.get("tags") or []) or "inflected form",
-                 "surface": f["form"], "kana": None}
-                for f in en_forms if f.get("form") and f["form"] != chunk["reading"]
-            ][:200]
+    if chunk.get("pos") == "verb" and en_forms:
+        rows = chunk.get("inflected_forms", [])
+        keys = {(row["surface"], tuple(sorted(row["form"].split()))) for row in rows}
+        moods = {tag for _, tags in keys for tag in tags}
+        if {"indicative", "subjunctive"} <= moods:
+            en_forms = [
+                f for f in en_forms
+                if {"combined-form", "negative"}.intersection(f.get("tags") or [])
+                or (f.get("form") == chunk["reading"] and "infinitive" in (f.get("tags") or []))
+            ]
+        combined = rows + list(_verb_rows(en_forms, seen=keys))
+        if combined:
+            chunk["inflected_forms"] = combined
 
 
 def main() -> None:

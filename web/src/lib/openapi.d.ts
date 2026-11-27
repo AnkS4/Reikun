@@ -69,6 +69,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/es/conjugations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Es Conjugations Endpoint
+         * @description Load a Wiktionary conjugation table without running a dictionary search.
+         */
+        get: operations["es_conjugations_endpoint_es_conjugations_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/es/search": {
         parameters: {
             query?: never;
@@ -212,6 +232,46 @@ export interface paths {
          *     words with ruby parts) for one kanji — the frontend renders the card.
          */
         get: operations["kanji_endpoint_kanji__char__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/es/etymology": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Es Etymology Facets Endpoint
+         * @description Source-language categories and counts from Spanish Wiktionary.
+         */
+        get: operations["es_etymology_facets_endpoint_es_etymology_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/es/etymology/entries": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Es Etymology Entries Endpoint
+         * @description Spanish entries with this source-language tag, most frequent first.
+         */
+        get: operations["es_etymology_entries_endpoint_es_etymology_entries_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -370,6 +430,13 @@ export interface components {
         ErrorResponse: {
             /** Detail */
             detail: string;
+        };
+        /** EsConjugationsResponse */
+        EsConjugationsResponse: {
+            /** Word */
+            word: string;
+            /** Inflected Forms */
+            inflected_forms: components["schemas"]["InflectionRow"][];
         };
         /**
          * EtymologySource
@@ -867,6 +934,16 @@ export interface components {
              */
             definitions_es: string[];
             /**
+             * Etymology Es
+             * @default []
+             */
+            etymology_es: string[];
+            /**
+             * Origin Languages
+             * @default []
+             */
+            origin_languages: string[];
+            /**
              * Reading Restrictions
              * @default {}
              */
@@ -1178,6 +1255,47 @@ export interface operations {
             };
         };
     };
+    es_conjugations_endpoint_es_conjugations_get: {
+        parameters: {
+            query: {
+                /** @description Spanish verb or inflection */
+                word: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EsConjugationsResponse"];
+                };
+            };
+            /** @description No sourced table for this verb */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     es_search_endpoint_es_search_get: {
         parameters: {
             query: {
@@ -1387,6 +1505,71 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["KanjiCard"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    es_etymology_facets_endpoint_es_etymology_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LoanwordsResponse"];
+                };
+            };
+        };
+    };
+    es_etymology_entries_endpoint_es_etymology_entries_get: {
+        parameters: {
+            query: {
+                /** @description Spanish Wiktionary source label */
+                lang: string;
+                /** @description Page size */
+                n?: number;
+                /** @description Items to skip */
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LoanwordsPageResponse"];
+                };
+            };
+            /** @description Unknown source language */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description Validation Error */

@@ -127,13 +127,15 @@ _INDEX_FIELDS = ("kanji_form", "reading", "gloss_keys", "primary_gloss_keys",
 _FORMULA_FIELDS = ("wf_score", "commonness")
 
 
-def _ensure_indexes(client) -> None:
-    for field in (*_INDEX_FIELDS, *_FORMULA_FIELDS):
-        client.create_payload_index(COLLECTION, field, PayloadSchemaType.KEYWORD
-                                    if field in _INDEX_FIELDS else PayloadSchemaType.FLOAT)
+def _ensure_indexes(client, *, lang: str = "ja") -> None:
+    keyword_fields = (*_INDEX_FIELDS, "origin_languages") if lang == "es" else _INDEX_FIELDS
+    for field in keyword_fields:
+        client.create_payload_index(COLLECTION, field, PayloadSchemaType.KEYWORD)
+    for field in _FORMULA_FIELDS:
+        client.create_payload_index(COLLECTION, field, PayloadSchemaType.FLOAT)
 
 
-def recreate_collection(client) -> None:
+def recreate_collection(client, *, lang: str = "ja") -> None:
     if client.collection_exists(COLLECTION):
         log.info("  Dropping existing collection '%s' …", COLLECTION)
         client.delete_collection(COLLECTION)
@@ -150,12 +152,7 @@ def recreate_collection(client) -> None:
     # hold every variant form so exact match also fires on alternates
     # (斑馬, シマウマ …); infl_forms holds the inflected forms
     # (走った, 走りません) so typing a conjugation exact-matches its entry.
-    for field in _INDEX_FIELDS:
-        client.create_payload_index(COLLECTION, field, PayloadSchemaType.KEYWORD)
-    # wf_score/commonness feed the FormulaQuery mult expressions — strict mode
-    # (Qdrant Cloud default) requires an index on every filtered/formula field.
-    for field in _FORMULA_FIELDS:
-        client.create_payload_index(COLLECTION, field, PayloadSchemaType.FLOAT)
+    _ensure_indexes(client, lang=lang)
 
 
 def chunk_sig(chunk: dict) -> str:
@@ -190,6 +187,7 @@ def _payload(chunk: dict, sig: str) -> dict:
         # Native-Spanish definitions (es pack): the display glosses, kept
         # alongside the English `meanings` the vectors embed.
         "definitions_es": chunk.get("definitions_es"),
+        **{field: chunk[field] for field in ("etymology_es", "origin_languages") if chunk.get(field)},
         # Pronunciation (IPA) — display-only, no index.
         "ipa": chunk.get("ipa"),
         "text": chunk["text"],
@@ -458,7 +456,7 @@ def run(
                  f"{len(new_ids):,}", f"{len(todo) - len(new_ids):,}",
                  f"{len(todo):,}", f"{len(stale):,}")
     else:
-        recreate_collection(client)
+        recreate_collection(client, lang=lang)
         todo = chunks
         recreated = True  # its HNSW indexing is off; the bulk-load switch must run
 
@@ -468,7 +466,7 @@ def run(
         # fields already indexed, so this runs unconditionally. Strict-mode
         # filtering/formula on an unindexed field is a 400, so this must land
         # BEFORE the first re-upserted point is queryable with it.
-        _ensure_indexes(client)
+        _ensure_indexes(client, lang=lang)
 
     total = len(todo)
     if (seed_from or (reuse_vectors and update)) and todo:

@@ -240,4 +240,11 @@
 			</button>
 		{/each}
 	</div>
+	<div class="browse" aria-label={t('browse')}>
+		<a class="browse-tile" href="/etymology">
+			<span class="browse-icon"><Icon name="blend" size={22} /></span>
+			<span class="browse-name">Etymology</span>
+			<span class="browse-desc">Browse Spanish words by source language</span>
+		</a>
+	</div>
 {/if}

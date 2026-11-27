@@ -176,6 +176,34 @@ export function esSearch(q: string, n: number): Promise<SearchResponse> {
 	});
 }
 
+export function esConjugations(word: string): Promise<components['schemas']['EsConjugationsResponse']> {
+	return call(async (signal) => {
+		const { data, error, response } = await client.GET('/es/conjugations', {
+			params: { query: { word } }, signal
+		});
+		if (error) throw asError(error, response.status);
+		return data;
+	});
+}
+
+export function esEtymologyFacets(): Promise<LoanwordsResponse> {
+	return call(async (signal) => {
+		const { data, error, response } = await client.GET('/es/etymology', { signal });
+		if (!data) throw asError(error, response.status);
+		return data;
+	});
+}
+
+export function esEtymologyEntries(lang: string, n: number, offset: number): Promise<LoanwordsPageResponse> {
+	return call(async (signal) => {
+		const { data, error, response } = await client.GET('/es/etymology/entries', {
+			params: { query: { lang, n, offset } }, signal
+		});
+		if (error) throw asError(error, response.status);
+		return data;
+	});
+}
+
 export function apiKanjiBatch(chars: string): Promise<Record<string, KanjiHover | null>> {
 	return call(async (signal) => {
 		const { data, error, response } = await client.GET('/kanji', { params: { query: { chars } }, signal });

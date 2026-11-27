@@ -24,6 +24,7 @@ from qdrant_client.models import (
     Direction,
     FieldCondition,
     Filter,
+    MatchAny,
     MatchValue,
     OrderBy,
     OrderByQuery,
@@ -45,6 +46,7 @@ from app.retrieval import (
 )
 
 ES_COLLECTION = os.getenv("QDRANT_ES_COLLECTION", "es_words")
+_ORIGIN_FIELD = "origin_languages"
 
 # RRF's default k=60 flattens rank gaps: a rank-5 exact-gloss hit can tie a
 # rank-1 one once the other arms add up. With k=1 the exact arms' ordering
@@ -110,7 +112,7 @@ def _es_query(query: str, num_results: int, vectors=None) -> list[dict]:
     if not isinstance(vectors, tuple):
         # Cloud inference: the Document carries both vectors; Qdrant fuses.
         hits = client.query_points(ES_COLLECTION, query=vectors, limit=num_results).points
-        return [_hit_to_dict(h) for h in hits]
+        return [_es_hit_to_dict(h) for h in hits]
 
     dense, sparse = vectors
     sparse_arm: Prefetch | None = None
@@ -136,7 +138,74 @@ def _es_query(query: str, num_results: int, vectors=None) -> list[dict]:
     weights = [weight for arm, weight in arms if arm is not None]
     params = _rrf(prefetches, weights, limit=num_results, k=RRF_K)
     hits = client.query_points(ES_COLLECTION, **params).points
-    return [_hit_to_dict(h) for h in hits]
+    return [_es_hit_to_dict(h) for h in hits]
+
+
+def _es_hit_to_dict(hit, score: float | None = None) -> dict:
+    result = _hit_to_dict(hit, score=score)
+    payload = hit.payload or {}
+    # Chunks with English glosses carry a separate Spanish definitions list.
+    # Older native-only chunks leave that field null and store them in meanings.
+    definitions = payload.get("definitions_es")
+    result["definitions_es"] = result["meanings"] if definitions is None else definitions
+    for field in ("etymology_es", _ORIGIN_FIELD):
+        result[field] = payload.get(field) or []
+    return result
+
+
+def es_etymology_facets() -> list[dict]:
+    """Use the indexed keyword array to count tagged entries in Qdrant."""
+    hits = qdrant_client().facet(ES_COLLECTION, _ORIGIN_FIELD, limit=512, exact=True).hits
+    facets = [
+        {"lang": h.value, "name": h.value[0].upper() + h.value[1:], "count": h.count}
+        for h in hits if isinstance(h.value, str) and h.value
+    ]
+    return sorted(facets, key=lambda facet: (-facet["count"], facet["lang"]))
+
+
+def es_etymology_page(lang: str, offset: int, limit: int) -> dict | None:
+    """Page through entries with the selected Spanish Wiktionary origin tag."""
+    selection = Filter(must=[FieldCondition(key=_ORIGIN_FIELD, match=MatchValue(value=lang))])
+    client = qdrant_client()
+    total = client.count(ES_COLLECTION, count_filter=selection, exact=True).count
+    if not total:
+        return None
+    hits = []
+    if offset < total:
+        hits = client.query_points(
+            ES_COLLECTION,
+            query=OrderByQuery(order_by=OrderBy(key="wf_score", direction=Direction.DESC)),
+            query_filter=selection,
+            limit=limit,
+            offset=offset,
+        ).points
+    return {
+        "lang": lang,
+        "name": lang[0].upper() + lang[1:],
+        "total": total,
+        "offset": offset,
+        "results": [_es_hit_to_dict(hit, score=0.0) for hit in hits],
+    }
+
+
+def es_conjugations(word: str) -> dict | None:
+    """Read a verb table by headword, falling back to an exact inflection."""
+    normalized = " ".join(word.split())
+    forms = list(dict.fromkeys((normalized, normalized.lower())))
+    client = qdrant_client()
+    for field in ("reading", "infl_forms"):
+        points = client.query_points(
+            ES_COLLECTION,
+            query=OrderByQuery(order_by=OrderBy(key="wf_score", direction=Direction.DESC)),
+            query_filter=Filter(must=[FieldCondition(key=field, match=MatchAny(any=forms))]),
+            with_payload=["reading", "inflected_forms"],
+            limit=50,
+        ).points
+        for point in points:
+            payload = point.payload or {}
+            if payload.get("inflected_forms"):
+                return {"word": payload["reading"], "inflected_forms": payload["inflected_forms"]}
+    return None
 
 
 @lru_cache(maxsize=512)

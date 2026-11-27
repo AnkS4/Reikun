@@ -55,7 +55,7 @@ from app.grammar_explain import (
     validate_input,
 )
 from app.kanji_lookup import _load_kanji_table, is_kanji, jlpt_kanji, kanji_group_facets, random_kanji
-from app.lang.es import ES_COLLECTION, search_es
+from app.lang.es import ES_COLLECTION, es_conjugations, es_etymology_facets, es_etymology_page, search_es
 from app.lite import router as lite_router
 from app.loanwords import loanword_facets, loanwords_page
 from app.ratelimit import rate_limited
@@ -67,7 +67,7 @@ from app.render import (
     related_words,
     segment_chip,
 )
-from app.retrieval import MODES, is_headword, morph_hint, search, warm_headword_index
+from app.retrieval import MAX_QUERY_CHARS, MODES, is_headword, morph_hint, search, warm_headword_index
 from app.telemetry import telemetry
 
 
@@ -402,6 +402,8 @@ class SearchResult(BaseModel):
     # Native-Spanish definitions (es pack) — the display glosses beneath the
     # English `meanings`; JMdict entries carry none.
     definitions_es: list[str] = []
+    etymology_es: list[str] = []
+    origin_languages: list[str] = []
     reading_restrictions: dict[str, list[str]] = {}
     # Variant-forms block: per-keb reading bindings + ke_inf labels +
     # kana-only readings; None when the entry carries no restrictions or
@@ -577,6 +579,11 @@ class LoanwordsPageResponse(BaseModel):
     total: int
     offset: int
     results: list[SearchResult]
+
+
+class EsConjugationsResponse(BaseModel):
+    word: str
+    inflected_forms: list[InflectionRow]
 
 
 class ExplainRequest(BaseModel):
@@ -755,6 +762,26 @@ def search_endpoint(
 
 
 # ── Spanish pack (es_words) ──────────────────────────────────────────────────
+
+@app.get(
+    "/es/conjugations",
+    tags=["conjugations"],
+    response_model=EsConjugationsResponse,
+    responses={404: {"model": ErrorResponse, "description": "No sourced table for this verb"}},
+)
+def es_conjugations_endpoint(
+    word: Annotated[str, Query(pattern=r"\S", max_length=MAX_QUERY_CHARS, description="Spanish verb or inflection")],
+) -> dict:
+    """Load a Wiktionary conjugation table without running a dictionary search."""
+    try:
+        table = es_conjugations(word)
+    except Exception:
+        logger.exception("Spanish conjugations failed")
+        raise HTTPException(502, "Spanish conjugations are temporarily unavailable.") from None
+    if table is None:
+        raise HTTPException(404, "No conjugations available for this word.")
+    return table
+
 
 @app.get("/es/search", tags=["search"], response_model=SearchResponseModel, dependencies=[_search_limit])
 def es_search_endpoint(
@@ -983,6 +1010,40 @@ def kanji_endpoint(
 
 # The in-process index rebuilds every ~10 min; HTTP caches can be shorter.
 _CACHE_LOANWORDS = "public, max-age=300"
+
+
+@app.get("/es/etymology", tags=["etymology"], response_model=LoanwordsResponse)
+def es_etymology_facets_endpoint(response: Response) -> dict:
+    """Source-language categories and counts from Spanish Wiktionary."""
+    try:
+        sources = es_etymology_facets()
+    except Exception:
+        logger.exception("Spanish etymology facets failed")
+        raise HTTPException(502, "Spanish etymology is temporarily unavailable.") from None
+    response.headers["Cache-Control"] = _CACHE_LOANWORDS
+    return {"sources": sources}
+
+
+@app.get(
+    "/es/etymology/entries", tags=["etymology"], response_model=LoanwordsPageResponse,
+    responses={404: {"model": ErrorResponse, "description": "Unknown source language"}},
+)
+def es_etymology_entries_endpoint(
+    response: Response,
+    lang: Annotated[str, Query(pattern=r"\S", max_length=160, description="Spanish Wiktionary source label")],
+    n: Annotated[int, Query(ge=1, le=50, description="Page size")] = 25,
+    offset: Annotated[int, Query(ge=0, description="Items to skip")] = 0,
+) -> dict:
+    """Spanish entries with this source-language tag, most frequent first."""
+    try:
+        listing = es_etymology_page(lang.strip(), offset, n)
+    except Exception:
+        logger.exception("Spanish etymology listing failed")
+        raise HTTPException(502, "Spanish etymology is temporarily unavailable.") from None
+    if listing is None:
+        raise HTTPException(404, "Unknown source language.")
+    response.headers["Cache-Control"] = _CACHE_LOANWORDS
+    return listing
 
 
 @app.get(
