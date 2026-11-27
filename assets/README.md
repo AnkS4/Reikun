@@ -1,6 +1,6 @@
 # Reikun brand assets
 
-**Signal** (Penpot 11.1A) is the primary mark. **Graphite** (11.1C) is the neutral alternative. Both use the same flat-ended stem, diagonal foot, and solid disc.
+**Signal** (Penpot 11.1A) is the primary mark. Its Japanese sun uses flag red `#BC002D`; the Spanish variant uses flag gold `#F1BF00`. **Graphite** (11.1C) is the neutral alternative. All variants use the same flat-ended stem, diagonal foot, and solid disc.
 
 | Mark | On light backgrounds | On dark backgrounds |
 | --- | --- | --- |

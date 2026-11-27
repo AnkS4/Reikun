@@ -33,10 +33,10 @@ PATHS = {
         "C17.906 48.21 31.122 61.428 47.429 61.428Z"
     ),
 }
-SIGNAL = ("#202322", "#606A65", "#DA462B")
-# Dark variant keeps the SAME red accent as light — the sun is the brand's
-# constant; only the ink/foot flip for contrast.
-SIGNAL_DARK = ("#F1F2EC", "#ACB6B0", "#DA462B")
+JAPAN_RED = "#BC002D"  # Japanese flag red; the Signal sun stays consistent in every palette.
+SIGNAL = ("#202322", "#606A65", JAPAN_RED)
+# Dark variant keeps the SAME flag red; only the ink/foot flip for contrast.
+SIGNAL_DARK = ("#F1F2EC", "#ACB6B0", JAPAN_RED)
 # Spanish edition: the sun takes the Spanish flag's gold — the flag's dominant
 # color, distinct from the Japanese red, and it reads on both light and dark.
 SPANISH = ("#202322", "#606A65", "#F1BF00")
