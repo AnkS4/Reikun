@@ -531,6 +531,10 @@ margin:2.25rem 0 var(--space-3)}
 /* Sticky footer: main grows to fill short pages so the footer rests at the
    bottom of the viewport instead of floating under the content. */
 main{flex:1 0 auto}
+/* Home pages end with the Explore cards: don't let sticky-footer flex growth
+   open a void between them and the footer. */
+main:has(.browse-grid){flex-grow:0;padding-bottom:var(--space-3)}
+main:has(.browse-grid) + footer{margin-top:var(--space-3)}
 footer{margin-top:var(--space-7);border-top:1px solid var(--border-soft);padding-top:var(--space-5);
 font-size:var(--fs-md);color:var(--text);max-width:50rem;margin-left:auto;margin-right:auto}
 @media (min-width:1024px){body{max-width:60rem}footer{max-width:60rem}}

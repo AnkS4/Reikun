@@ -23,12 +23,14 @@ from app.lite import (
     _controls_lang,
     _fmt_count,
     _href,
+    _icon,
     _LiteRoute,
     _read_recent,
     _read_theme,
     _recent_cookie_value,
     _secure_cookie,
     esc,
+    lite_about,
 )
 from app.lite import (
     _header as _shared_header,
@@ -227,9 +229,11 @@ def es_lite_home(request: Request) -> HTMLResponse:
         f'<section class="es-lite-browse"><p class="pills-label">{esc(_t(lang, "es_lite_explore"))}</p>'
         '<div class="browse-grid two-up">'
         '<a class="browse-tile" href="/lite/etymology">'
+        f'<span class="browse-icon">{_icon("blend")}</span>'
         f'<span class="browse-name">{esc(_t(lang, "es_lite_etymology"))}</span>'
         f'<span class="browse-desc">{esc(_t(lang, "es_lite_browse_etymology"))}</span></a>'
         '<a class="browse-tile" href="/lite/families">'
+        f'<span class="browse-icon">{_icon("school")}</span>'
         f'<span class="browse-name">{esc(_t(lang, "es_lite_families"))}</span>'
         f'<span class="browse-desc">{esc(_t(lang, "es_lite_browse_families"))}</span></a></div></section>'
     )
@@ -359,16 +363,13 @@ def _conjugation_tables(rows: list[dict], lang: str) -> str:
 
 @router.get("/es/lite/about", response_class=HTMLResponse)
 def es_lite_about(request: Request) -> HTMLResponse:
+    """Same About document as Japanese Lite, with Spanish pack chrome/credits."""
     lang = _controls_lang(request)
-    title = _t(lang, "aboutTitle")
-    body = (
-        f'<h1>{esc(title)}</h1>'
-        f'<p>{esc(_t(lang, "es_lite_about_text"))}</p>'
-        f'<p>{esc(_t(lang, "es_lite_wiktionary"))} — CC BY-SA 4.0; '
-        f'wordfreq — MIT.</p>'
-        f'<p><a href="https://github.com/AnkS4/Reikun">GitHub</a></p>'
+    return lite_about(
+        request,
+        header_markup=_header(hero=False, lang=lang),
+        footer_markup=_FOOTER,
     )
-    return _render_page(request, title, body)
 
 
 @router.get("/es/lite/privacy", response_class=HTMLResponse)

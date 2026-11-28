@@ -2148,25 +2148,69 @@ def lite_kana(request: Request, variant: str = "") -> Response:
 # text from i18n.svelte.ts), adapted to what Lite itself does.
 
 @router.get("/lite/about", response_class=HTMLResponse)
-def lite_about(request: Request) -> HTMLResponse:
-    # Follows the interface language like the SPA's About page (same i18n
-    # keys). The footer and /lite/privacy stay English: those are the
-    # legal/credit lines (see web/src/lib/components/Footer.svelte).
-    lang = _read_lang(request)
-    data_para = (
-        f'{esc(_t(lang, "dataBefore"))}'
-        '<a href="https://www.edrdg.org/wiki/index.php/JMdict-EDICT_Dictionary_Project"'
-        ' target="_blank" rel="noopener noreferrer">JMdict</a>'
-        f'{esc(_t(lang, "dataAnd"))}'
-        '<a href="https://www.edrdg.org/wiki/index.php/KANJIDIC_Project"'
-        ' target="_blank" rel="noopener noreferrer">KANJIDIC2</a>'
-        f'{esc(_t(lang, "dataAfter"))}'
-        '<a href="https://www.edrdg.org/wiki/index.php/Tanaka_Corpus"'
-        ' target="_blank" rel="noopener noreferrer">Tanaka Corpus</a>'
-        f'{esc(_t(lang, "dataAfter2"))}'
-        '<a href="https://kanjivg.tagaini.net/" target="_blank" rel="noopener noreferrer">KanjiVG</a>'
-        f'{esc(_t(lang, "dataAfter3"))}'
-    )
+def lite_about(
+    request: Request,
+    *,
+    header_markup: str | None = None,
+    footer_markup: str | None = None,
+) -> HTMLResponse:
+    # One About document for both editions/variants: the same structure, with
+    # the data-source and feature paragraphs swapped for the active pack.
+    # Follows the interface language like the SPA's About page; the footer and
+    # /lite/privacy stay English (legal/credit lines).
+    es_pack = _is_es_pack(request)
+    lang = _controls_lang(request) if es_pack else _read_lang(request)
+    if es_pack:
+        # English-only credits, exactly like the Spanish edition's footer.
+        data_para = (
+            'Dictionary data from <a href="https://es.wiktionary.org/"'
+            ' target="_blank" rel="noopener noreferrer">Wiktionary</a>'
+            ' (Wikimedia contributors, CC BY-SA 4.0), extracted with'
+            ' <a href="https://github.com/tatuylonen/wiktextract"'
+            ' target="_blank" rel="noopener noreferrer">wiktextract</a>.'
+            ' Sentences from <a href="https://tatoeba.org/"'
+            ' target="_blank" rel="noopener noreferrer">Tatoeba</a> (CC-BY 2.0 FR).'
+            ' Frequency data from <a href="https://github.com/rspeer/wordfreq"'
+            ' target="_blank" rel="noopener noreferrer">wordfreq</a> (MIT).'
+        )
+        heading = esc(_t(lang, "aboutTitle"))
+        lede = esc(_t(lang, "es_lite_about_text"))
+        features = (
+            f'<li><b>{esc(_t(lang, "search"))}</b> — {esc(_t(lang, "es_lite_tagline"))}</li>'
+            f'<li><b>{esc(_t(lang, "es_lite_etymology"))}</b> — {esc(_t(lang, "es_lite_browse_etymology"))}</li>'
+            f'<li><b>{esc(_t(lang, "es_lite_families"))}</b> — {esc(_t(lang, "es_lite_browse_families"))}</li>'
+            f'<li><b>{esc(_t(lang, "conjugations"))}</b> — {esc(_t(lang, "conjugationsTitle"))}</li>'
+        )
+        extra_sections = ""
+        how = 'Every Lite page is one plain HTML document — no JavaScript and no tracker.'
+    else:
+        data_para = (
+            f'{esc(_t(lang, "dataBefore"))}'
+            '<a href="https://www.edrdg.org/wiki/index.php/JMdict-EDICT_Dictionary_Project"'
+            ' target="_blank" rel="noopener noreferrer">JMdict</a>'
+            f'{esc(_t(lang, "dataAnd"))}'
+            '<a href="https://www.edrdg.org/wiki/index.php/KANJIDIC_Project"'
+            ' target="_blank" rel="noopener noreferrer">KANJIDIC2</a>'
+            f'{esc(_t(lang, "dataAfter"))}'
+            '<a href="https://www.edrdg.org/wiki/index.php/Tanaka_Corpus"'
+            ' target="_blank" rel="noopener noreferrer">Tanaka Corpus</a>'
+            f'{esc(_t(lang, "dataAfter2"))}'
+            '<a href="https://kanjivg.tagaini.net/" target="_blank" rel="noopener noreferrer">KanjiVG</a>'
+            f'{esc(_t(lang, "dataAfter3"))}'
+        )
+        heading = f'{esc(_t(lang, "aboutTitle"))} <span lang="ja">(例訓)</span>'
+        lede = esc(_t(lang, "aboutLede"))
+        features = (
+            f'<li><b>{esc(_t(lang, "search"))}</b> — {esc(_t(lang, "searchText"))}</li>'
+            f'<li><b>{esc(_t(lang, "breakdownBold"))}</b> — {esc(_t(lang, "breakdownText"))}</li>'
+            f'<li><b>{esc(_t(lang, "kanjiBold"))}</b> — {esc(_t(lang, "kanjiText"))}</li>'
+        )
+        extra_sections = (
+            f'<h2>{esc(_t(lang, "loanwordsTitle"))}</h2>'
+            f'<p>{esc(_t(lang, "loanwordsAboutText"))} '
+            f'<a href="/lite/loanwords">{esc(_t(lang, "loanwordsBrowse"))}</a></p>'
+        )
+        how = esc(_t(lang, "lite_howTextLite"))
     notice_url = "https://github.com/AnkS4/Reikun/blob/main/NOTICE"
     credits_para = (
         f'{esc(_t(lang, "creditsLine"))} — '
@@ -2179,22 +2223,19 @@ def lite_about(request: Request) -> HTMLResponse:
         f'{esc(_t(lang, "sourceAfter"))}'
     )
     body = f"""<article class="about">
-<h1>{esc(_t(lang, "aboutTitle"))} <span lang="ja">(例訓)</span></h1>
-<p class="lede">{esc(_t(lang, "aboutLede"))}</p>
+<h1>{heading}</h1>
+<p class="lede">{lede}</p>
 <h2>{esc(_t(lang, "whatItDoes"))}</h2>
 <ul>
-<li><b>{esc(_t(lang, "search"))}</b> — {esc(_t(lang, "searchText"))}</li>
-<li><b>{esc(_t(lang, "breakdownBold"))}</b> — {esc(_t(lang, "breakdownText"))}</li>
-<li><b>{esc(_t(lang, "kanjiBold"))}</b> — {esc(_t(lang, "kanjiText"))}</li>
+{features}
 </ul>
 <h2 id="lite">{esc(_t(lang, "liteVsFull"))}</h2>
 <p>{esc(_t(lang, "liteVsFullText"))}</p>
 <h2>{esc(_t(lang, "howItWorks"))}</h2>
-<p>{esc(_t(lang, "lite_howTextLite"))}</p>
+<p>{how}</p>
 <h2>{esc(_t(lang, "dataSources"))}</h2>
 <p>{data_para}</p>
-<h2>{esc(_t(lang, "loanwordsTitle"))}</h2>
-<p>{esc(_t(lang, "loanwordsAboutText"))} <a href="/lite/loanwords">{esc(_t(lang, "loanwordsBrowse"))}</a></p>
+{extra_sections}
 <h2>{esc(_t(lang, "privacy"))}</h2>
 <p>{esc(_t(lang, "privacyText"))}</p>
 <p><a href="/lite/privacy">{esc(_t(lang, "privacyMore"))}</a></p>
@@ -2213,6 +2254,10 @@ def lite_about(request: Request) -> HTMLResponse:
         theme=_read_theme(request),
         lang=lang,
         canonical="/lite/about",
+        status_pack="es" if es_pack else "ja",
+        pack="es" if es_pack else "ja",
+        header_markup=header_markup,
+        footer_markup=footer_markup,
     )
 
 

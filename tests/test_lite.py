@@ -1029,3 +1029,24 @@ def test_lite_chips_share_the_same_wrapper_in_both_editions() -> None:
         assert f'<span class="header-tags">{chips}</span>' in home
     css = client.get("/lite/static/lite.css").text
     assert ".header-tags{display:inline-flex;align-items:center;gap:var(--space-1);" in css
+
+
+def test_lite_explore_cards_sit_close_to_the_footer() -> None:
+    css = client.get("/lite/static/lite.css").text
+    assert "main:has(.browse-grid){flex-grow:0;padding-bottom:var(--space-3)}" in css
+    assert "main:has(.browse-grid) + footer{margin-top:var(--space-3)}" in css
+
+
+def test_spanish_lite_explore_tiles_have_icons() -> None:
+    home = client.get("/es/lite", headers={"x-reikun-language-pack": "es"})
+    assert home.text.count('class="browse-icon"') >= 2
+    assert "icon icon-blend" in home.text and "icon icon-school" in home.text
+
+
+def test_spanish_lite_about_reuses_the_shared_document() -> None:
+    page = client.get("/es/lite/about", headers={"x-reikun-language-pack": "es"})
+    assert 'class="about"' in page.text and 'id="lite"' in page.text
+    assert "Reikun v" in page.text
+    assert "Wiktionary" in page.text and "Tatoeba" in page.text
+    assert "JMdict" not in page.text and "KanjiVG" not in page.text
+    assert "ALPHA" in page.text  # Spanish chrome, not the generic Japanese header
