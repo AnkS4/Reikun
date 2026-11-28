@@ -42,7 +42,7 @@ def test_spanish_lite_home_is_spanish_static_and_branded() -> None:
     assert "The open Spanish dictionary" in page.text
     assert "ALPHA" in page.text and ">Lite</span>" in page.text
     assert ">hablar<" in page.text and ">meander<" in page.text
-    assert ">vergüenza ajena<" in page.text and ">raining cats and dogs<" in page.text
+    assert ">sobremesa<" in page.text and ">raining cats and dogs<" in page.text
     assert "/lite/etymology" in page.text and "/lite/families" in page.text
     assert "/lite/conjugations" not in page.text.split("<main", 1)[1]
     assert "kanji" not in page.text.lower()
@@ -1010,6 +1010,14 @@ def test_theme_cookie_is_shared_across_editions_and_stays_local_offline() -> Non
         )
         assert r.status_code == 303
         assert "domain=reikun.app" in r.headers["set-cookie"].lower()
+    # The interface-language cookie uses the same parent domain: picking a
+    # language in any variant updates all four.
+    for host in ("reikun.app", "es.reikun.app"):
+        r = client.get(
+            "/lite/lang", params={"v": "hi", "next": "/lite"},
+            headers={"x-reikun-host": host}, follow_redirects=False,
+        )
+        assert "domain=reikun.app" in r.headers["set-cookie"].lower()
     local = TestClient(api_app, base_url="http://localhost:8000")
     r = local.get("/lite/theme", params={"v": "dark", "next": "/lite"}, follow_redirects=False)
     assert "domain=" not in r.headers["set-cookie"].lower()
@@ -1033,8 +1041,8 @@ def test_lite_chips_share_the_same_wrapper_in_both_editions() -> None:
 
 def test_lite_explore_cards_sit_close_to_the_footer() -> None:
     css = client.get("/lite/static/lite.css").text
-    assert "main:has(.browse-grid){flex-grow:0;padding-bottom:var(--space-3)}" in css
-    assert "main:has(.browse-grid) + footer{margin-top:var(--space-3)}" in css
+    assert "main:has(.browse-grid){flex-grow:0;padding-bottom:var(--space-1)}" in css
+    assert "main:has(.browse-grid) + footer{margin-top:var(--space-2)}" in css
 
 
 def test_spanish_lite_explore_tiles_have_icons() -> None:

@@ -52,12 +52,12 @@ _search_limit = Depends(rate_limited(RATE_LIMIT_SEARCH, TRUSTED_PROXY_HOPS))
 _PAGE_SIZE = 20
 _DEFAULT_COUNT = 10
 
-# Four pinned searches: a Spanish verb, an English verb (no "to"), and one
-# phrase in each language — a compact tour of what the dictionary handles.
+# Four pinned searches: a Spanish verb, an English verb (no "to"), a cultural
+# Spanish word, and an English phrase — a compact tour of the dictionary.
 _EXAMPLES = (
     ("hablar", "es"),
     ("meander", "en"),
-    ("vergüenza ajena", "es"),
+    ("sobremesa", "es"),
     ("raining cats and dogs", "en"),
 )
 

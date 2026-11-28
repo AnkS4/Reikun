@@ -3727,11 +3727,11 @@ main:has(.browse) {
 	/* Sticky-footer flex growth is what opens a huge void below the tiles on
 	   tall viewports; home pages let the footer follow the content instead. */
 	flex-grow: 0;
-	padding-bottom: var(--space-3);
+	padding-bottom: var(--space-1);
 }
 
 main:has(.browse) + .footer {
-	margin-top: var(--space-3);
+	margin-top: var(--space-2);
 }
 
 .browse-grid {

@@ -60,7 +60,11 @@ function readSharedCookie(): Locale | null {
 
 function syncSharedCookie(next: Locale): void {
 	if (!browser) return;
-	document.cookie = `${SHARED_COOKIE}=${next}; path=/; max-age=${COOKIE_AGE}; samesite=lax`;
+	// Parent-domain cookie: a language picked in any of the four variants
+	// (full/Lite × Japanese/Spanish) follows the visitor to the other three.
+	const host = location.hostname.toLowerCase();
+	const domain = host === 'reikun.app' || host.endsWith('.reikun.app') ? '; domain=reikun.app' : '';
+	document.cookie = `${SHARED_COOKIE}=${next}; path=/; max-age=${COOKIE_AGE}; samesite=lax${domain}`;
 }
 
 export type MessageKey = keyof typeof en;

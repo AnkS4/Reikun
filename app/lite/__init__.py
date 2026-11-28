@@ -949,7 +949,7 @@ def lite_theme(request: Request, v: str = "", next: str = "") -> Response:
         response.set_cookie(
             _THEME_COOKIE, v,
             max_age=_COOKIE_MAX_AGE, samesite="lax", secure=_secure_cookie(request),
-            domain=_theme_cookie_domain(request),
+            domain=_shared_cookie_domain(request),
         )
     return response
 
@@ -961,7 +961,11 @@ def lite_lang(request: Request, v: str = "", next: str = "") -> Response:
     (web/src/lib/i18n.svelte.ts), so one choice follows you across variants."""
     response = RedirectResponse(_safe_next(next), status_code=303, headers={"Cache-Control": "no-store"})
     if v in _LANGS:
-        response.set_cookie(_LANG_COOKIE, v, max_age=_COOKIE_MAX_AGE, samesite="lax", secure=_secure_cookie(request))
+        response.set_cookie(
+            _LANG_COOKIE, v,
+            max_age=_COOKIE_MAX_AGE, samesite="lax", secure=_secure_cookie(request),
+            domain=_shared_cookie_domain(request),
+        )
     return response
 
 
@@ -1004,8 +1008,8 @@ def _secure_cookie(request: Request) -> bool:
     return request.url.scheme == "https"
 
 
-def _theme_cookie_domain(request: Request) -> str | None:
-    """Make the theme cookie visible to both editions and both variants.
+def _shared_cookie_domain(request: Request) -> str | None:
+    """Make a shared preference cookie visible to both editions and variants.
 
     `reikun.app` and `es.reikun.app` are separate hosts; a host-only cookie
     set on one is invisible on the other. A parent-domain cookie keeps the

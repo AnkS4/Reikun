@@ -21,7 +21,7 @@
 	const EXAMPLES = [
 		['hablar', 'es'],
 		['meander', 'en'],
-		['vergüenza ajena', 'es'],
+		['sobremesa', 'es'],
 		['raining cats and dogs', 'en']
 	];
 
@@ -246,7 +246,7 @@
 				<span class="browse-desc">Browse Spanish words by source language</span>
 			</a>
 			<a class="browse-tile" href="/families">
-				<span class="browse-icon"><Icon name="split" size={22} /></span>
+				<span class="browse-icon"><Icon name="school" size={22} /></span>
 				<span class="browse-name">Word families</span>
 				<span class="browse-desc">Words that share an etymological root</span>
 			</a>
