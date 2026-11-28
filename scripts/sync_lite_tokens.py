@@ -56,6 +56,7 @@ TOKENS = [
     "--space-8",
     "--section-gap",
     "--rule-gap",
+    "--topbar-h",
     "--z-search",
     "--z-floating",
     "--z-header",

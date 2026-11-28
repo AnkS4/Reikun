@@ -7,6 +7,7 @@ hero are verified without them).
 """
 
 import json
+import re
 import time
 from urllib.parse import quote, unquote
 
@@ -173,17 +174,16 @@ def test_home_browse_links() -> None:
     assert 'icon-book-open-text' in home and 'icon-lang' in home
 
 
-def test_lite_chrome_scrolls_with_the_header() -> None:
-    """Lite chrome is in the header flow (visible again on scroll-up), with
-    the shared spacing tokens used by both variants."""
+def test_lite_top_bar_is_fixed_with_corner_chrome() -> None:
+    """Both halves of the top bar are viewport-fixed. The bar used to sit in
+    body's centered column, so right-alignment could never reach the corner."""
     css = client.get("/lite/static/lite.css").text
-    assert "position:relative;" in css and "margin-left:auto}" in css
+    assert ".page-header{position:fixed;top:0;left:0;right:0;" in css
+    assert "position:fixed;top:.6rem;right:.85rem" in css
+    assert "padding:var(--topbar-h) 1.25rem var(--space-8)" in css
+    assert "--topbar-h:4rem;" in css
     assert "--section-gap:var(--space-4);--rule-gap:var(--space-4);" in css
     assert ".header-tags{display:inline-flex;align-items:center;gap:var(--space-1);" in css  # 4px
-    # Mobile uses the same token so the hero rhythm never depends on a
-    # fixed overlay being cleared.
-    assert "@media (max-width:680px){" in css
-    assert "header.hero{margin:var(--section-gap) 0 var(--space-5)}" in css
 
 
 def test_lite_serves_the_plex_mirror() -> None:
@@ -244,7 +244,9 @@ def test_brand_lockup_follows_page_and_locale(lang: str) -> None:
     def brand_link(path: str) -> str:
         response = client.get(path, headers={"Cookie": f"lite_lang={lang}"})
         assert response.status_code == 200
-        return response.text.split("<header", 1)[1].split("</header>", 1)[0]
+        headers = re.findall(r"<header[^>]*>.*?</header>", response.text, re.S)
+        # The fixed bar's compact brand comes first; the hero header follows.
+        return headers[-1] if path == "/lite" else headers[0]
 
     home = brand_link("/lite")
     inside = brand_link("/lite/kana")

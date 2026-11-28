@@ -118,7 +118,8 @@ def _render_page(request: Request, title: str, body: str, *, hero: bool = False)
         lang=lang,
         furi=False,
         noindex=True,
-        header_markup=_header(hero=hero, lang=lang),
+        header_markup=_header(hero=True, lang=lang) if hero else "",
+        brand_markup=_header(hero=False, lang=lang),
         footer_markup=_FOOTER,
         description=description,
         status_pack="es",
@@ -367,7 +368,7 @@ def es_lite_about(request: Request) -> HTMLResponse:
     lang = _controls_lang(request)
     return lite_about(
         request,
-        header_markup=_header(hero=False, lang=lang),
+        brand_markup=_header(hero=False, lang=lang),
         footer_markup=_FOOTER,
     )
 

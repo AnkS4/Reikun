@@ -15,22 +15,6 @@
 	let { hero = false, home = false, tagline = '' }: { hero?: boolean; home?: boolean; tagline?: string } = $props();
 	const isHome = $derived(page.url.pathname === '/');
 
-	// The chrome cluster is fully visible on every page at rest. Scrolling
-	// down past a short threshold folds it into the single "more" control;
-	// scrolling back up (or returning to the top) restores the full row.
-	let compact = $state(false);
-	onMount(() => {
-		let lastY = window.scrollY;
-		const onScroll = () => {
-			const y = window.scrollY;
-			compact = y > 140 && y > lastY + 2;
-			if (y < 40) compact = false;
-			lastY = y;
-		};
-		onScroll();
-		window.addEventListener('scroll', onScroll, { passive: true });
-		return () => window.removeEventListener('scroll', onScroll);
-	});
 	// Fixed per origin (es.reikun.app vs everything else) — safe to read once.
 	const pack = currentPack();
 
@@ -132,17 +116,24 @@
 	}
 </script>
 
+<!-- Compact brand chip pinned to the viewport corner on every page, exactly
+     opposite the fixed chrome panel. The large home hero stays in flow. -->
+<div class="header-brand-chip">
+	<a class="title-home" href="/" title={isHome ? undefined : t('backToSearch')}>
+		<img src={emblemSrc()} alt="" class="brand-icon" aria-hidden="true" />
+		<span class="brand-wordmark" lang="en">{BRAND_SHORT}</span>
+		{#if pack === 'es'}<span class="alpha-tag" title="Initial release — the dictionary is still growing">ALPHA</span>{/if}
+	</a>
+</div>
+
 <div class="header-controls">
-	{#if compact}
-		<details class="header-more">
-			<summary class="btn tertiary" title={t('moreControls')} aria-label={t('moreControls')}>
-				<Icon name="expand-more" size={16} />
-			</summary>
-			<div class="header-actions">{@render controls()}</div>
-		</details>
-	{:else}
+	<!-- The collapse/expand control is always present; no scroll thresholds. -->
+	<details class="header-more">
+		<summary class="btn tertiary" title={t('moreControls')} aria-label={t('moreControls')}>
+			<Icon name="expand-more" size={16} />
+		</summary>
 		<div class="header-actions">{@render controls()}</div>
-	{/if}
+	</details>
 </div>
 
 {#snippet controls()}

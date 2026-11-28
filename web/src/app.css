@@ -87,6 +87,7 @@
 	   equally above/below a horizontal rule. */
 	--section-gap: var(--space-4);
 	--rule-gap: var(--space-4);
+	--topbar-h: 4rem;
 
 	/* Z-index ladder — reuse, don't invent (see Design.md → Layering). */
 	--z-inline: 1; --z-stroke-art: 2; --z-replay: 10;
@@ -407,6 +408,30 @@ ruby rt {
 	   inside the title make a stacking context, so the brand tip's own
 	   z-index cannot escape it; this is what lets it overlap the bar. */
 	z-index: var(--z-brand-kanji);
+}
+
+/* Pinned brand chip: mirrors the control cluster's viewport-edge offset so
+   the whole top bar (brand left, chrome right) stays put while content scrolls. */
+.header-brand-chip {
+	position: fixed;
+	top: 0.6rem;
+	left: 0.85rem;
+	margin-left: -8px;
+	z-index: var(--z-header);
+	display: flex;
+	align-items: center;
+	font-size: var(--fs-md);
+}
+
+.header-brand-chip .brand-icon {
+	width: 1.1rem;
+	height: 1.1rem;
+}
+
+.header-bar.compact .title-heading {
+	/* The fixed chip is the visible brand on inner pages; keep the heading's
+	   box for layout/a11y without painting a duplicate wordmark. */
+	visibility: hidden;
 }
 
 /* Floating control cluster — bare ghost icons at the viewport edge,

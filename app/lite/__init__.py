@@ -672,6 +672,7 @@ def _page(
     noindex: bool = False,
     cache_lang: str | None = None,
     header_markup: str | None = None,
+    brand_markup: str | None = None,
     footer_markup: str | None = None,
     description: str | None = None,
     status_pack: str = "ja",
@@ -694,9 +695,10 @@ def _page(
 <body>
 <a class="skip-link" href="#main">{esc(_t(lang, "skipToContent"))}</a>
 <div class="page-header">
-{header_markup if header_markup is not None else _header(hero, lang)}
+{brand_markup if brand_markup is not None else _header(False, lang, pack=pack)}
 {controls}
 </div>
+{header_markup if header_markup is not None else (_header(hero, lang, pack=pack) if hero else "")}
 <main id="main" tabindex="-1">
 {body}
 </main>
@@ -2156,6 +2158,7 @@ def lite_about(
     request: Request,
     *,
     header_markup: str | None = None,
+    brand_markup: str | None = None,
     footer_markup: str | None = None,
 ) -> HTMLResponse:
     # One About document for both editions/variants: the same structure, with
@@ -2261,6 +2264,7 @@ def lite_about(
         status_pack="es" if es_pack else "ja",
         pack="es" if es_pack else "ja",
         header_markup=header_markup,
+        brand_markup=brand_markup,
         footer_markup=footer_markup,
     )
 
