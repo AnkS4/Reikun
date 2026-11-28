@@ -14,6 +14,23 @@
 
 	let { hero = false, home = false, tagline = '' }: { hero?: boolean; home?: boolean; tagline?: string } = $props();
 	const isHome = $derived(page.url.pathname === '/');
+
+	// The chrome cluster is fully visible on every page at rest. Scrolling
+	// down past a short threshold folds it into the single "more" control;
+	// scrolling back up (or returning to the top) restores the full row.
+	let compact = $state(false);
+	onMount(() => {
+		let lastY = window.scrollY;
+		const onScroll = () => {
+			const y = window.scrollY;
+			compact = y > 140 && y > lastY + 2;
+			if (y < 40) compact = false;
+			lastY = y;
+		};
+		onScroll();
+		window.addEventListener('scroll', onScroll, { passive: true });
+		return () => window.removeEventListener('scroll', onScroll);
+	});
 	// Fixed per origin (es.reikun.app vs everything else) — safe to read once.
 	const pack = currentPack();
 
@@ -116,15 +133,15 @@
 </script>
 
 <div class="header-controls">
-	{#if home}
-		<div class="header-actions">{@render controls()}</div>
-	{:else}
+	{#if compact}
 		<details class="header-more">
 			<summary class="btn tertiary" title={t('moreControls')} aria-label={t('moreControls')}>
 				<Icon name="expand-more" size={16} />
 			</summary>
 			<div class="header-actions">{@render controls()}</div>
 		</details>
+	{:else}
+		<div class="header-actions">{@render controls()}</div>
 	{/if}
 </div>
 

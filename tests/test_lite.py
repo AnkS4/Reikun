@@ -173,14 +173,17 @@ def test_home_browse_links() -> None:
     assert 'icon-book-open-text' in home and 'icon-lang' in home
 
 
-def test_lite_chrome_hugs_the_viewport_corner() -> None:
-    """The full UI pins its controls to the viewport; Lite must do the same,
-    and the Spanish hero's two chips need their own inline gap."""
+def test_lite_chrome_scrolls_with_the_header() -> None:
+    """Lite chrome is in the header flow (visible again on scroll-up), with
+    the shared spacing tokens used by both variants."""
     css = client.get("/lite/static/lite.css").text
-    assert "position:fixed;top:.6rem;right:.85rem" in css
+    assert "position:relative;" in css and "margin-left:auto}" in css
+    assert "--section-gap:var(--space-4);--rule-gap:var(--space-4);" in css
     assert ".header-tags{display:inline-flex;align-items:center;gap:var(--space-1);" in css  # 4px
-    # The fixed cluster must not sit on top of the hero on small screens.
-    assert "header.hero{margin:2.75rem 0 var(--space-5)}" in css
+    # Mobile uses the same token so the hero rhythm never depends on a
+    # fixed overlay being cleared.
+    assert "@media (max-width:680px){" in css
+    assert "header.hero{margin:var(--section-gap) 0 var(--space-5)}" in css
 
 
 def test_lite_serves_the_plex_mirror() -> None:
@@ -1041,8 +1044,8 @@ def test_lite_chips_share_the_same_wrapper_in_both_editions() -> None:
 
 def test_lite_explore_cards_sit_close_to_the_footer() -> None:
     css = client.get("/lite/static/lite.css").text
-    assert "main:has(.browse-grid){flex-grow:0;padding-bottom:var(--space-1)}" in css
-    assert "main:has(.browse-grid) + footer{margin-top:var(--space-2)}" in css
+    assert "main:has(.browse-grid){flex-grow:0;padding-bottom:0}" in css
+    assert "main:has(.browse-grid) + footer{margin-top:var(--rule-gap)}" in css
 
 
 def test_spanish_lite_explore_tiles_have_icons() -> None:

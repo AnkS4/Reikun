@@ -82,6 +82,12 @@
 	--space-1: 0.25rem; --space-2: 0.5rem; --space-3: 0.75rem; --space-4: 1rem;
 	--space-5: 1.5rem; --space-6: 2rem; --space-7: 3rem; --space-8: 4rem;
 
+	/* Shared vertical rhythm — synced into Lite by scripts/sync_lite_tokens.py,
+	   so all four variants use the same spacing between major sections and
+	   equally above/below a horizontal rule. */
+	--section-gap: var(--space-4);
+	--rule-gap: var(--space-4);
+
 	/* Z-index ladder — reuse, don't invent (see Design.md → Layering). */
 	--z-inline: 1; --z-stroke-art: 2; --z-replay: 10;
 	--z-popover: 40; --z-tooltip: 50; --z-card: 60; --z-search: 80;
@@ -1183,7 +1189,7 @@ ruby rt {
 	display: flex;
 	flex-wrap: wrap;
 	gap: 0.45rem;
-	margin-top: 1.125rem;
+	margin-top: var(--section-gap);
 	justify-content: center;
 }
 
@@ -2890,11 +2896,12 @@ a.kanji-tip {
 .footer {
 	/* The layout renders <Footer> as a sibling of <main>, so unlike page
 	   content the footer does not inherit main's centered 50rem column —
-	   carry the same metrics here or it stretches edge-to-edge. */
+	   carry the same metrics here or it stretches edge-to-edge. Equal space
+	   above and below the border comes from --rule-gap on both sides. */
 	flex-shrink: 0;
 	max-width: 50rem;
 	margin: var(--space-7) auto 0;
-	padding: var(--space-5) 1.25rem;
+	padding: var(--rule-gap) 1.25rem;
 	border-top: 1px solid var(--border-soft);
 }
 
@@ -3717,7 +3724,7 @@ button, a, input, summary {
 }
 
 .browse {
-	margin-top: var(--space-5);
+	margin-top: var(--section-gap);
 }
 
 /* The Explore tiles are the last thing on either homepage: drop the usual
@@ -3727,11 +3734,11 @@ main:has(.browse) {
 	/* Sticky-footer flex growth is what opens a huge void below the tiles on
 	   tall viewports; home pages let the footer follow the content instead. */
 	flex-grow: 0;
-	padding-bottom: var(--space-1);
+	padding-bottom: 0;
 }
 
 main:has(.browse) + .footer {
-	margin-top: var(--space-2);
+	margin-top: var(--rule-gap);
 }
 
 .browse-grid {

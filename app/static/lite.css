@@ -52,7 +52,7 @@
    or a system won't decode WOFF2, every face above falls back to the system
    stacks below — lite then behaves exactly like it did before the mirror. */
 /* >>> generated from web/src/app.css (scripts/sync_lite_tokens.py) — do not edit */
-:root{--font:'IBM Plex Sans', 'Segoe UI', Roboto, var(--font-japanese), var(--font-devanagari), -apple-system, BlinkMacSystemFont, sans-serif;--font-display:'IBM Plex Sans', 'Segoe UI', Roboto, var(--font-japanese), var(--font-devanagari), -apple-system, BlinkMacSystemFont, sans-serif;--font-japanese:'IBM Plex Sans JP', 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Yu Gothic';--font-devanagari:'IBM Plex Sans Devanagari', 'Nirmala UI', 'Mangal', 'Lohit Devanagari';--font-mono:'IBM Plex Mono', 'DM Mono', SFMono-Regular, Menlo, Monaco, Consolas, var(--font-japanese), var(--font-devanagari), ui-monospace, monospace;--radius-xs:4px;--radius-sm:8px;--radius-md:12px;--radius-lg:16px;--radius-xl:22px;--radius-pill:9999px;--shadow-sm:0 1px 3px rgba(35, 30, 25, 0.05);--fs-2xs:0.72rem;--fs-xs:0.78rem;--fs-sm:0.85rem;--fs-md:0.9rem;--fs-base:0.95rem;--fs-body:1rem;--fs-lg:1.05rem;--fs-xl:1.15rem;--fs-2xl:1.25rem;--space-1:0.25rem;--space-2:0.5rem;--space-3:0.75rem;--space-4:1rem;--space-5:1.5rem;--space-6:2rem;--space-7:3rem;--space-8:4rem;--z-search:80;--z-floating:90;--z-header:200;--z-skip:1000;--dur-fast:100ms;--dur-base:150ms;--dur-slow:250ms;}
+:root{--font:'IBM Plex Sans', 'Segoe UI', Roboto, var(--font-japanese), var(--font-devanagari), -apple-system, BlinkMacSystemFont, sans-serif;--font-display:'IBM Plex Sans', 'Segoe UI', Roboto, var(--font-japanese), var(--font-devanagari), -apple-system, BlinkMacSystemFont, sans-serif;--font-japanese:'IBM Plex Sans JP', 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Yu Gothic';--font-devanagari:'IBM Plex Sans Devanagari', 'Nirmala UI', 'Mangal', 'Lohit Devanagari';--font-mono:'IBM Plex Mono', 'DM Mono', SFMono-Regular, Menlo, Monaco, Consolas, var(--font-japanese), var(--font-devanagari), ui-monospace, monospace;--radius-xs:4px;--radius-sm:8px;--radius-md:12px;--radius-lg:16px;--radius-xl:22px;--radius-pill:9999px;--shadow-sm:0 1px 3px rgba(35, 30, 25, 0.05);--fs-2xs:0.72rem;--fs-xs:0.78rem;--fs-sm:0.85rem;--fs-md:0.9rem;--fs-base:0.95rem;--fs-body:1rem;--fs-lg:1.05rem;--fs-xl:1.15rem;--fs-2xl:1.25rem;--space-1:0.25rem;--space-2:0.5rem;--space-3:0.75rem;--space-4:1rem;--space-5:1.5rem;--space-6:2rem;--space-7:3rem;--space-8:4rem;--section-gap:var(--space-4);--rule-gap:var(--space-4);--z-search:80;--z-floating:90;--z-header:200;--z-skip:1000;--dur-fast:100ms;--dur-base:150ms;--dur-slow:250ms;}
 /* <<< generated from web/src/app.css */
 /* Body metrics mirror the SPA's main container (web/src/app.css): 50rem
    column, same side padding and bottom scroll room — more air, same rhythm. */
@@ -69,10 +69,10 @@ text-rendering:optimizeLegibility}
 a{color:inherit;text-decoration:none}
 .page-header{display:flex;flex-wrap:wrap;align-items:center;gap:var(--space-2);margin-bottom:.35rem}
 header{display:flex;align-items:baseline}
-/* The controls are viewport-fixed (see .controls), so the hero needs enough
-   top margin to clear them — including the larger 2.75rem touch targets. */
+/* The Lite chrome scrolls with the header (no fixed overlay), so the hero
+   uses the same top rhythm as every other section. */
 header.hero{display:block;order:1;flex-basis:100%;text-align:center;
-margin:max(clamp(var(--space-4),5vh,var(--space-7)),2.75rem) 0 var(--space-5)}
+margin:var(--section-gap) 0 var(--space-5)}
 .hero-tag{display:inline-block;font-family:var(--font-mono);font-size:var(--fs-xs);font-weight:500;
 letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted);background:var(--surface-soft);
 border:1px solid var(--border-soft);border-radius:var(--radius-pill);padding:var(--space-1) var(--space-3);margin:0 0 var(--space-4)}
@@ -113,11 +113,10 @@ padding:.1rem var(--space-2);text-transform:uppercase;letter-spacing:.05em;white
    the gap before ALPHA and between ALPHA/LITE is the same 4px everywhere. */
 .header-tags{display:inline-flex;align-items:center;gap:var(--space-1);
  margin-left:var(--space-1);vertical-align:baseline}
-/* Viewport-corner cluster, matching the full UI's fixed top-right controls.
-   A centered content column would otherwise park it ~190px from the corner
-   on desktop; only the menus below overlay content. */
-.controls{--control-size:2rem;--controls-gap:.15rem;position:fixed;top:.6rem;right:.85rem;
- margin-right:-8px;z-index:var(--z-header);display:flex;align-items:center;gap:var(--controls-gap)}
+/* Top-right cluster in the header flow: it scrolls away with the page and is
+   fully visible again when you scroll back up. Menus still overlay content. */
+.controls{--control-size:2rem;--controls-gap:.15rem;position:relative;
+ z-index:var(--z-header);display:flex;align-items:center;gap:var(--controls-gap);margin-left:auto}
 /* Top-right icon buttons, mirroring the SPA's header cluster: same 2rem round
    hit area, muted until hover. Titles + aria-labels carry the meaning. */
 .controls .icon-link{display:inline-flex;align-items:center;justify-content:center;
@@ -233,7 +232,7 @@ padding:.55rem .95rem;font-size:var(--fs-md);font-weight:500;background:var(--su
 ;text-decoration:none;white-space:nowrap;color:var(--text);
 }
 .furi.off{opacity:.55;color:var(--text-muted)}
-.pills{display:flex;flex-wrap:wrap;gap:.45rem;margin:1.125rem 0 0;padding:0;justify-content:center}
+.pills{display:flex;flex-wrap:wrap;gap:.45rem;margin:var(--section-gap) 0 0;padding:0;justify-content:center}
 .pill{display:inline-flex;align-items:center;gap:.35rem;border:1px solid var(--border-soft);
 border-radius:var(--radius-pill);padding:.375rem .85rem;text-decoration:none;font-size:var(--fs-md);
 background:var(--surface);color:var(--text-muted);
@@ -241,7 +240,7 @@ background:var(--surface);color:var(--text-muted);
 .pill:active{transform:translateY(0)}
 .pills-label{font-family:var(--font-mono);font-size:var(--fs-2xs);
 font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);
-margin:1.4rem 0 .6rem;text-align:left}
+margin:var(--section-gap) 0 var(--space-2);text-align:left}
 .history-list a{overflow-wrap:anywhere}
 /* Spanish-pack word cards, shared etymology and the bilingual home page. */
 .es-headword{font-family:var(--font);overflow-wrap:anywhere}
@@ -258,12 +257,12 @@ margin:1.4rem 0 .6rem;text-align:left}
 .es-lite-examples ul{margin:.3rem 0 0;padding-left:1.2rem}
 .es-lite-examples li{margin:.4rem 0}
 .es-lite-examples li p{margin:.1rem 0}
-.es-lite-browse{margin-top:var(--space-5)}
+.es-lite-browse{margin-top:var(--section-gap)}
 .es-lite-browse .browse-tile{max-width:23rem}
 .es-conj-table{width:100%;border-collapse:collapse;background:var(--surface);font-size:var(--fs-sm)}
 .es-conj-table th,.es-conj-table td{padding:.35rem .5rem;border-bottom:1px solid var(--border-soft);text-align:left}
 .es-conj-table tbody th{font-weight:500;color:var(--text-muted)}
-.browse-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:var(--space-3);margin-top:var(--space-3)}
+.browse-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:var(--space-3);margin-top:var(--section-gap)}
 @media (max-width:40rem){.browse-grid{grid-template-columns:repeat(2,1fr)}}
 /* Spanish Explore has two cards; let them fill the row like the full UI. */
 .browse-grid.two-up{grid-template-columns:repeat(2,minmax(0,1fr))}
@@ -506,7 +505,7 @@ line-height:1.15;white-space:normal;word-break:break-word}
 @media (max-width:680px){
 body{padding:1.25rem var(--space-4) var(--space-7)}
 .controls{--controls-gap:var(--space-1)}
-header.hero{margin:2.75rem 0 var(--space-5)}
+header.hero{margin:var(--section-gap) 0 var(--space-5)}
 .hero-tag{font-size:var(--fs-2xs);letter-spacing:.04em;padding:.2rem .65rem}
 .tagline{font-size:var(--fs-md);line-height:1.5;max-width:22rem;color:var(--text-faint)}
 input[name=q]{font-size:var(--fs-body)}
@@ -533,9 +532,9 @@ margin:2.25rem 0 var(--space-3)}
 main{flex:1 0 auto}
 /* Home pages end with the Explore cards: don't let sticky-footer flex growth
    open a void between them and the footer. */
-main:has(.browse-grid){flex-grow:0;padding-bottom:var(--space-1)}
-main:has(.browse-grid) + footer{margin-top:var(--space-2)}
-footer{margin-top:var(--space-7);border-top:1px solid var(--border-soft);padding-top:var(--space-5);
+main:has(.browse-grid){flex-grow:0;padding-bottom:0}
+main:has(.browse-grid) + footer{margin-top:var(--rule-gap)}
+footer{margin-top:var(--space-7);border-top:1px solid var(--border-soft);padding-top:var(--rule-gap);
 font-size:var(--fs-md);color:var(--text);max-width:50rem;margin-left:auto;margin-right:auto}
 @media (min-width:1024px){body{max-width:60rem}footer{max-width:60rem}}
 footer p:first-of-type{font-weight:500}
